@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}Properties - Real Estate CRM{% endblock %}
+{% block page_title %}Properties{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
+<li class="breadcrumb-item active" aria-current="page">Properties</li>
+{% endblock %}
+
+{% block content %}
+<!-- Search and Filter Section -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <div class="row align-items-center">
+            <div class="col">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-search me-2"></i>
+                    Search & Filter Properties
+                </h6>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addPropertyModal">
+                    <i class="fas fa-plus me-1"></i>
+                    Add Property
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       placeholder="Title, address..." value="{{ request.args.get('search', '') }}">
+            </div>
+            <div class="col-md-2">
+                <label for="type" class="form-label">Type</label>
+                <select class="form-select" id="type" name="type">
+                    <option value="">All Types</option>
+                    <option value="house" {{ 'selected' if request.args.get('type') == 'house' }}>House</option>
+                    <option value="condo" {{ 'selected' if request.args.get('type') == 'condo' }}>Condo</option>
+                    <option value="loft" {{ 'selected' if request.args.get('type') == 'loft' }}>Loft</option>
+                    <option value="townhouse" {{ 'selected' if request.args.get('type') == 'townhouse' }}>Townhouse</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="min_price" class="form-label">Min Price</label>
+                <input type="number" class="form-control" id="min_price" name="min_price" 
+                       placeholder="0" value="{{ request.args.get('min_price', '') }}">
+            </div>
+            <div class="col-md-2">
+                <label for="max_price" class="form-label">Max Price</label>
+                <input type="number" class="form-control" id="max_price" name="max_price" 
+                       placeholder="999999999" value="{{ request.args.get('max_price', '') }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>
+                        Search
+                    </button>
+                    <a href="{{ url_for('properties') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>
+                        Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Properties Grid -->
+<div class="row">
+    {% if properties %}
+        {% for property in properties %}
+        <div class="col-xl-4 col-lg-6 mb-4">
+            <div class="card property-card h-100">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge bg-{{ 'success' if property.status == 'active' else 'secondary' }}">
+                            {{ property.status.title() }}
+                        </span>
+                        <span class="badge bg-primary">{{ property.property_type.title() }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ property.title }}</h5>
+                    <p class="card-text text-muted">
+                        <i class="fas fa-map-marker-alt me-1"></i>
+                        {{ property.address }}
+                    </p>
+                    
+                    <div class="property-details mb-3">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="detail-item">
+                                    <i class="fas fa-bed text-primary"></i>
+                                    <div class="small">{{ property.bedrooms }} Beds</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="detail-item">
+                                    <i class="fas fa-bath text-primary"></i>
+                                    <div class="small">{{ property.bathrooms }} Baths</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="detail-item">
+                                    <i class="fas fa-ruler-combined text-primary"></i>
+                                    <div class="small">{{ "{:,}".format(property.square_feet) }} sqft</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="price mb-3">
+                        <h4 class="text-success mb-0">${{ "{:,.0f}".format(property.price) }}</h4>
+                        <small class="text-muted">${{ "{:.0f}".format(property.price / property.square_feet) }}/sqft</small>
+                    </div>
+                    
+                    <p class="card-text">{{ property.description[:100] }}...</p>
+                    
+                    <div class="agent-info">
+                        <small class="text-muted">
+                            <i class="fas fa-user me-1"></i>
+                            Listed by: {{ property.agent_name }}
+                        </small>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary btn-sm flex-fill">
+                            <i class="fas fa-eye me-1"></i>
+                            View Details
+                        </button>
+                        <button class="btn btn-outline-success btn-sm flex-fill">
+                            <i class="fas fa-edit me-1"></i>
+                            Edit
+                        </button>
+                        <button class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-building fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Properties Found</h5>
+                    <p class="text-muted">Try adjusting your search criteria or add a new property.</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPropertyModal">
+                        <i class="fas fa-plus me-2"></i>
+                        Add Your First Property
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Add Property Modal -->
+<div class="modal fade" id="addPropertyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>
+                    Add New Property
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_property') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="title" class="form-label">Property Title *</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="property_type" class="form-label">Type *</label>
+                            <select class="form-select" id="property_type" name="property_type" required>
+                                <option value="">Select Type</option>
+                                <option value="House">House</option>
+                                <option value="Condo">Condo</option>
+                                <option value="Loft">Loft</option>
+                                <option value="Townhouse">Townhouse</option>
+                                <option value="Commercial">Commercial</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address *</label>
+                        <input type="text" class="form-control" id="address" name="address" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="price" class="form-label">Price *</label>
+                            <input type="number" class="form-control" id="price" name="price" step="1000" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="bedrooms" class="form-label">Bedrooms</label>
+                            <input type="number" class="form-control" id="bedrooms" name="bedrooms" min="0" max="20">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="bathrooms" class="form-label">Bathrooms</label>
+                            <input type="number" class="form-control" id="bathrooms" name="bathrooms" min="0" max="20" step="0.5">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="square_feet" class="form-label">Square Feet</label>
+                            <input type="number" class="form-control" id="square_feet" name="square_feet" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="agent_id" class="form-label">Assigned Agent</label>
+                        <select class="form-select" id="agent_id" name="agent_id">
+                            <option value="">Unassigned</option>
+                            {% for agent in agents %}
+                            <option value="{{ agent.id }}">{{ agent.name }} - {{ agent.specialization }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" 
+                                  placeholder="Describe the property features, amenities, and highlights..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>
+                        Add Property
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-format price input
+document.getElementById('price').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/,/g, '');
+    if (!isNaN(value) && value !== '') {
+        e.target.value = parseInt(value).toLocaleString();
+    }
+});
+
+// Calculate price per square foot
+document.addEventListener('DOMContentLoaded', function() {
+    const priceInput = document.getElementById('price');
+    const sqftInput = document.getElementById('square_feet');
+    
+    function updatePricePerSqft() {
+        const price = parseFloat(priceInput.value.replace(/,/g, ''));
+        const sqft = parseFloat(sqftInput.value);
+        
+        if (price && sqft) {
+            const pricePerSqft = price / sqft;
+            console.log(`Price per sqft: $${pricePerSqft.toFixed(2)}`);
+        }
+    }
+    
+    priceInput.addEventListener('input', updatePricePerSqft);
+    sqftInput.addEventListener('input', updatePricePerSqft);
+});
+</script>
+{% endblock %}

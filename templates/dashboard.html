@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Real Estate CRM{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Key Metrics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Properties
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_properties }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-building fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Active Properties
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.active_properties }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-home fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Total Customers
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_customers }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-friends fa-2x text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Active Deals
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.active_deals }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-handshake fa-2x text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Deal Value and Market Analysis -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-dollar-sign me-2"></i>
+                    Pipeline Value
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <h3 class="text-success">${{ "{:,.0f}".format(stats.total_deal_value) }}</h3>
+                    <p class="text-muted">Total Deal Value in Pipeline</p>
+                </div>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h5 class="text-primary">{{ stats.total_deals }}</h5>
+                            <small class="text-muted">Total Deals</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-warning">{{ stats.active_deals }}</h5>
+                        <small class="text-muted">Active Deals</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Market Analysis
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="marketAnalysis">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Generating AI market analysis...</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline-success btn-sm" onclick="refreshMarketAnalysis()">
+                    <i class="fas fa-refresh me-1"></i>
+                    Refresh Analysis
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities -->
+<div class="row">
+    <!-- Recent Properties -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-building me-2"></i>
+                    Recent Properties
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_properties %}
+                <div class="list-group list-group-flush">
+                    {% for property in recent_properties %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ property.title }}</h6>
+                                <p class="mb-1 text-muted small">{{ property.address }}</p>
+                                <small class="text-success fw-bold">${{ "{:,.0f}".format(property.price) }}</small>
+                            </div>
+                            <span class="badge bg-{{ 'success' if property.status == 'active' else 'secondary' }}">
+                                {{ property.status.title() }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center p-4 text-muted">
+                    <i class="fas fa-building fa-3x mb-3"></i>
+                    <p>No properties available</p>
+                </div>
+                {% endif %}
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('properties') }}" class="btn btn-sm btn-outline-primary">
+                        View All Properties
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Deals -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-handshake me-2"></i>
+                    Recent Deals
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_deals %}
+                <div class="list-group list-group-flush">
+                    {% for deal in recent_deals %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ deal.property_name }}</h6>
+                                <p class="mb-1 text-muted small">{{ deal.customer_name }}</p>
+                                <small class="text-muted">Agent: {{ deal.agent_name }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-{{ 'success' if deal.status == 'closed_won' else 'warning' if deal.status in ['qualified', 'proposal'] else 'primary' }}">
+                                    {{ deal.status.replace('_', ' ').title() }}
+                                </span>
+                                {% if deal.offer_amount > 0 %}
+                                <div class="small text-success fw-bold mt-1">${{ "{:,.0f}".format(deal.offer_amount) }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center p-4 text-muted">
+                    <i class="fas fa-handshake fa-3x mb-3"></i>
+                    <p>No deals available</p>
+                </div>
+                {% endif %}
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('deals') }}" class="btn btn-sm btn-outline-warning">
+                        View All Deals
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Tasks -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-tasks me-2"></i>
+                    Pending Tasks
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                {% if pending_tasks %}
+                <div class="list-group list-group-flush">
+                    {% for task in pending_tasks %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ task.title }}</h6>
+                                <p class="mb-1 text-muted small">{{ task.description[:50] }}...</p>
+                                <small class="text-muted">Assigned to: {{ task.agent_name }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-{{ 'danger' if task.priority == 'high' else 'warning' if task.priority == 'medium' else 'secondary' }}">
+                                    {{ task.priority.title() }}
+                                </span>
+                                {% if task.due_date %}
+                                <div class="small text-muted mt-1">Due: {{ task.due_date.strftime('%m/%d') }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center p-4 text-muted">
+                    <i class="fas fa-tasks fa-3x mb-3"></i>
+                    <p>No pending tasks</p>
+                </div>
+                {% endif %}
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('tasks') }}" class="btn btn-sm btn-outline-info">
+                        View All Tasks
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Quick Actions
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('properties') }}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-plus me-2"></i>
+                            Add Property
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('customers') }}" class="btn btn-outline-success w-100">
+                            <i class="fas fa-user-plus me-2"></i>
+                            Add Customer
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('deals') }}" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-handshake me-2"></i>
+                            Create Deal
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('recommendations') }}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-magic me-2"></i>
+                            AI Recommendations
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function refreshMarketAnalysis() {
+    const analysisDiv = document.getElementById('marketAnalysis');
+    analysisDiv.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Generating AI market analysis...</p>
+        </div>
+    `;
+    
+    fetch('/api/market-analysis')
+        .then(response => response.json())
+        .then(data => {
+            if (data.analysis) {
+                analysisDiv.innerHTML = `<div class="small">${data.analysis.substring(0, 300)}...</div>`;
+            } else {
+                analysisDiv.innerHTML = '<div class="text-muted">Analysis unavailable</div>';
+            }
+        })
+        .catch(error => {
+            analysisDiv.innerHTML = '<div class="text-danger">Error loading analysis</div>';
+        });
+}
+
+// Load market analysis on page load
+document.addEventListener('DOMContentLoaded', function() {
+    refreshMarketAnalysis();
+});
+</script>
+{% endblock %}
