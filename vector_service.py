@@ -39,12 +39,15 @@ class VectorService:
         )
         
         # Initialize TF-IDF vectorizer for text embeddings
+        # Use parameters that work with small datasets
         self.vectorizer = TfidfVectorizer(
-            max_features=1000,
+            max_features=500,  # Reduced for small datasets
             stop_words='english',
             ngram_range=(1, 2),
             min_df=1,
-            max_df=0.95
+            max_df=1.0,  # Allow all documents to contain terms
+            smooth_idf=True,  # Prevents division by zero
+            sublinear_tf=True  # Use log scaling
         )
         
         self.vectorizer_fitted = False
@@ -120,8 +123,12 @@ class VectorService:
             return embedding.toarray()[0].tolist()
         except Exception as e:
             self.logger.error(f"Error generating embedding: {e}")
-            # Return zero vector as fallback
-            return [0.0] * 100
+            # Return zero vector with correct dimensions
+            if hasattr(self.vectorizer, 'n_features_in_'):
+                dim = getattr(self.vectorizer, 'n_features_in_', 500)
+            else:
+                dim = getattr(self.vectorizer, 'max_features', 500)
+            return [0.0] * dim
     
     def _generate_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
         """
@@ -138,8 +145,12 @@ class VectorService:
             return embeddings.toarray().tolist()
         except Exception as e:
             self.logger.error(f"Error generating batch embeddings: {e}")
-            # Return zero vectors as fallback
-            return [[0.0] * 100 for _ in texts]
+            # Return zero vectors with correct dimensions
+            if hasattr(self.vectorizer, 'n_features_in_'):
+                dim = getattr(self.vectorizer, 'n_features_in_', 500)
+            else:
+                dim = getattr(self.vectorizer, 'max_features', 500)
+            return [[0.0] * dim for _ in texts]
     
     def index_properties(self, properties: List[Property]) -> bool:
         """
@@ -150,15 +161,50 @@ class VectorService:
                 self.logger.warning("No properties to index")
                 return True
             
-            # Clear existing data
+            # Reset vectorizer for fresh start
+            self.vectorizer_fitted = False
+            
+            # Clear existing data and recreate collection to handle dimension changes
             try:
-                self.properties_collection.delete(where={})
+                self.chroma_client.delete_collection("properties")
             except Exception:
-                pass  # Collection might be empty
+                pass  # Collection might not exist
+            
+            # Recreate collection
+            self.properties_collection = self.chroma_client.create_collection(
+                name="properties",
+                metadata={"description": "Property embeddings for semantic search"}
+            )
             
             # Prepare data for batch processing
             property_texts = [self._create_property_text(prop) for prop in properties]
+            
+            # Handle edge case with small datasets
+            if len(property_texts) < 2:
+                # For very small datasets, duplicate text to avoid TF-IDF issues
+                property_texts.extend(property_texts)
+                properties = properties + properties
+            
             embeddings = self._generate_embeddings_batch(property_texts)
+            
+            # Remove duplicates if we added them
+            if len(properties) > len(set(prop.id for prop in properties)):
+                # Remove duplicates
+                unique_properties = []
+                unique_embeddings = []
+                unique_texts = []
+                seen_ids = set()
+                
+                for prop, emb, text in zip(properties, embeddings, property_texts):
+                    if prop.id not in seen_ids:
+                        unique_properties.append(prop)
+                        unique_embeddings.append(emb)
+                        unique_texts.append(text)
+                        seen_ids.add(prop.id)
+                
+                properties = unique_properties
+                embeddings = unique_embeddings
+                property_texts = unique_texts
             
             # Prepare data for Chroma
             ids = [f"property_{prop.id}" for prop in properties]
@@ -186,7 +232,7 @@ class VectorService:
                 ids=ids
             )
             
-            self.logger.info(f"Successfully indexed {len(properties)} properties")
+            self.logger.info(f"Successfully indexed {len(properties)} properties with {len(embeddings[0]) if embeddings else 0}-dimensional embeddings")
             return True
             
         except Exception as e:
@@ -205,9 +251,20 @@ class VectorService:
                 if not self.index_properties(properties):
                     return self._fallback_search(customer, properties, top_k)
             
+            # Ensure vectorizer is fitted before generating customer embedding
+            if not self.vectorizer_fitted:
+                self.logger.warning("Vectorizer not fitted, re-indexing properties...")
+                if not self.index_properties(properties):
+                    return self._fallback_search(customer, properties, top_k)
+            
             # Create customer preference embedding
             customer_text = self._create_customer_text(customer)
             customer_embedding = self._generate_embedding(customer_text)
+            
+            # Validate embedding dimensions
+            if not customer_embedding or all(x == 0 for x in customer_embedding):
+                self.logger.warning("Customer embedding is zero vector, using fallback search")
+                return self._fallback_search(customer, properties, top_k)
             
             # Perform vector search
             results = self.properties_collection.query(
