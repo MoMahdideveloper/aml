@@ -27,17 +27,31 @@ class DatabaseService:
                     listing_type: str = "sale", rahn: Optional[float] = None,
                     ejare: Optional[float] = None) -> Property:
         """Add a new property to the database"""
-        property_obj = Property(
-            title=title, address=address, price=price, property_type=property_type,
-            bedrooms=bedrooms, bathrooms=bathrooms, square_feet=square_feet,
-            description=description, status=status, agent_id=agent_id,
-            year_built=year_built, parking_spaces=parking_spaces, floors=floors,
-            units=units, property_condition=property_condition,
-            heating_type=heating_type, cooling_type=cooling_type,
-            rental_price=rental_price, property_features=property_features,
-            neighborhood=neighborhood, property_category=property_category,
-            listing_type=listing_type, rahn=rahn, ejare=ejare
-        )
+        property_obj = Property()
+        property_obj.title = title
+        property_obj.address = address
+        property_obj.price = price
+        property_obj.property_type = property_type
+        property_obj.bedrooms = bedrooms
+        property_obj.bathrooms = bathrooms
+        property_obj.square_feet = square_feet
+        property_obj.description = description
+        property_obj.status = status
+        property_obj.agent_id = agent_id
+        property_obj.year_built = year_built
+        property_obj.parking_spaces = parking_spaces
+        property_obj.floors = floors
+        property_obj.units = units
+        property_obj.property_condition = property_condition
+        property_obj.heating_type = heating_type
+        property_obj.cooling_type = cooling_type
+        property_obj.rental_price = rental_price
+        property_obj.property_features = property_features
+        property_obj.neighborhood = neighborhood
+        property_obj.property_category = property_category
+        property_obj.listing_type = listing_type
+        property_obj.rahn = rahn
+        property_obj.ejare = ejare
         db.session.add(property_obj)
         db.session.commit()
         return property_obj
@@ -127,8 +141,12 @@ class DatabaseService:
     def add_agent(self, name: str, email: str, phone: str,
                  specialization: str = "", bio: str = "") -> Agent:
         """Add a new agent"""
-        agent = Agent(name=name, email=email, phone=phone,
-                     specialization=specialization, bio=bio)
+        agent = Agent()
+        agent.name = name
+        agent.email = email
+        agent.phone = phone
+        agent.specialization = specialization
+        agent.bio = bio
         db.session.add(agent)
         db.session.commit()
         return agent
@@ -147,12 +165,16 @@ class DatabaseService:
                     preferred_bedrooms: int = 0, preferred_bathrooms: int = 0,
                     preferred_type: str = "", location_preference: str = "") -> Customer:
         """Add a new customer"""
-        customer = Customer(
-            name=name, email=email, phone=phone, budget_min=budget_min,
-            budget_max=budget_max, preferred_bedrooms=preferred_bedrooms,
-            preferred_bathrooms=preferred_bathrooms, preferred_type=preferred_type,
-            location_preference=location_preference
-        )
+        customer = Customer()
+        customer.name = name
+        customer.email = email
+        customer.phone = phone
+        customer.budget_min = budget_min
+        customer.budget_max = budget_max
+        customer.preferred_bedrooms = preferred_bedrooms
+        customer.preferred_bathrooms = preferred_bathrooms
+        customer.preferred_type = preferred_type
+        customer.location_preference = location_preference
         db.session.add(customer)
         db.session.commit()
         return customer
@@ -169,8 +191,12 @@ class DatabaseService:
     def add_deal(self, property_id: int, customer_id: int, agent_id: int,
                 status: str = "prospecting", offer_amount: float = 0) -> Deal:
         """Add a new deal"""
-        deal = Deal(property_id=property_id, customer_id=customer_id,
-                   agent_id=agent_id, status=status, offer_amount=offer_amount)
+        deal = Deal()
+        deal.property_id = property_id
+        deal.customer_id = customer_id
+        deal.agent_id = agent_id
+        deal.status = status
+        deal.offer_amount = offer_amount
         db.session.add(deal)
         db.session.commit()
         return deal
@@ -188,8 +214,13 @@ class DatabaseService:
                 priority: str = "medium", status: str = "pending",
                 due_date: Optional[datetime] = None) -> Task:
         """Add a new task"""
-        task = Task(title=title, description=description, agent_id=agent_id,
-                   priority=priority, status=status, due_date=due_date)
+        task = Task()
+        task.title = title
+        task.description = description
+        task.agent_id = agent_id
+        task.priority = priority
+        task.status = status
+        task.due_date = due_date
         db.session.add(task)
         db.session.commit()
         return task
