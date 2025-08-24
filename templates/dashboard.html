@@ -348,11 +348,8 @@ function refreshMarketAnalysis() {
         })
         .then(data => {
             if (data.analysis) {
-                // Format the analysis better
+                // Format the analysis better without truncating
                 let analysisText = data.analysis;
-                if (analysisText.length > 800) {
-                    analysisText = analysisText.substring(0, 800) + '...';
-                }
                 
                 // Convert markdown-style formatting to HTML
                 analysisText = analysisText
@@ -360,7 +357,11 @@ function refreshMarketAnalysis() {
                     .replace(/\*(.*?)\*/g, '<em>$1</em>')
                     .replace(/\n/g, '<br>');
                 
-                analysisDiv.innerHTML = `<div class="small">${analysisText}</div>`;
+                analysisDiv.innerHTML = `
+                    <div class="small" style="max-height: 400px; overflow-y: auto;">
+                        ${analysisText}
+                    </div>
+                `;
             } else {
                 analysisDiv.innerHTML = `
                     <div class="text-muted">
