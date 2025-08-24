@@ -31,31 +31,36 @@ class DataManager:
         self.add_agent("Lisa Rodriguez", "lisa.rodriguez@realestate.com", "+1-555-0103", 
                       "First-Time Buyers", "Dedicated to helping first-time homebuyers navigate the market")
 
-        # Create sample properties
+        # Create sample properties with enhanced data
         self.add_property("Modern Downtown Condo", "123 Main St, Downtown", 450000, 
                          "Condo", 2, 2, 1200, 
                          "Beautiful modern condo with city views, granite countertops, and hardwood floors", 
-                         "active", 1)
+                         "active", 1, 2018, 1, 1, 1, "excellent", "Central Air", "Central Air", 
+                         2800, "Granite Countertops, Hardwood Floors, City Views, Balcony", "Downtown", "residential")
         
         self.add_property("Suburban Family Home", "456 Oak Avenue, Suburbia", 650000, 
                          "House", 4, 3, 2800, 
                          "Spacious family home with large backyard, updated kitchen, and 3-car garage", 
-                         "active", 1)
+                         "active", 1, 2010, 3, 2, 1, "good", "Gas", "Central Air",
+                         None, "Updated Kitchen, Large Backyard, 3-Car Garage, Walk-in Closets", "Suburbia", "residential")
         
         self.add_property("Luxury Waterfront Estate", "789 Lake Drive, Waterfront", 1250000, 
                          "House", 5, 4, 4500, 
                          "Stunning waterfront estate with private dock, infinity pool, and panoramic lake views", 
-                         "active", 1)
+                         "active", 1, 2015, 4, 3, 1, "excellent", "Radiant Floor", "Central Air",
+                         None, "Private Dock, Infinity Pool, Lake Views, Wine Cellar, Smart Home", "Waterfront", "residential")
         
         self.add_property("Urban Loft", "321 Industrial Blvd, Arts District", 380000, 
                          "Loft", 1, 1, 950, 
                          "Converted industrial loft with exposed brick, high ceilings, and modern amenities", 
-                         "active", 2)
+                         "active", 2, 1995, 1, 1, 1, "good", "Electric", "Window Units",
+                         2200, "Exposed Brick, High Ceilings, Industrial Design, Artist Space", "Arts District", "residential")
         
         self.add_property("Starter Home", "654 Pine Street, Neighborhood", 285000, 
                          "House", 3, 2, 1450, 
                          "Perfect starter home with updated appliances, new roof, and fenced yard", 
-                         "active", 3)
+                         "active", 3, 2005, 2, 1, 1, "good", "Gas", "Central Air",
+                         1800, "Updated Appliances, New Roof, Fenced Yard, Quiet Street", "Neighborhood", "residential")
 
         # Create sample customers
         self.add_customer("John Smith", "john.smith@email.com", "+1-555-1001", 
@@ -86,9 +91,17 @@ class DataManager:
     # Property methods
     def add_property(self, title: str, address: str, price: float, property_type: str, 
                     bedrooms: int, bathrooms: int, square_feet: int, description: str, 
-                    status: str = "active", agent_id: Optional[int] = None) -> Property:
+                    status: str = "active", agent_id: Optional[int] = None,
+                    year_built: int = None, parking_spaces: int = 0, 
+                    floors: int = 1, units: int = 1, property_condition: str = "good",
+                    heating_type: str = "", cooling_type: str = "", 
+                    rental_price: float = None, property_features: str = "",
+                    neighborhood: str = "", property_category: str = "residential") -> Property:
         property_obj = Property(self.next_property_id, title, address, price, property_type, 
-                               bedrooms, bathrooms, square_feet, description, status, agent_id)
+                               bedrooms, bathrooms, square_feet, description, status, agent_id,
+                               year_built, parking_spaces, floors, units, property_condition,
+                               heating_type, cooling_type, rental_price, property_features,
+                               neighborhood, property_category)
         self.properties[self.next_property_id] = property_obj
         self.next_property_id += 1
         
@@ -98,10 +111,64 @@ class DataManager:
         
         return property_obj
 
-    def get_properties(self, status: Optional[str] = None) -> List[Property]:
+    def get_properties(self, status: Optional[str] = None, search: str = "", 
+                      property_type: str = "", min_price: float = None, max_price: float = None,
+                      bedrooms: int = None, bathrooms: int = None, min_sqft: int = None,
+                      max_sqft: int = None, neighborhood: str = "", property_condition: str = "",
+                      property_category: str = "", year_built_min: int = None, year_built_max: int = None,
+                      agent_id: int = None) -> List[Property]:
         properties = list(self.properties.values())
+        
+        # Apply filters
         if status:
             properties = [p for p in properties if p.status == status]
+        
+        if search:
+            search_lower = search.lower()
+            properties = [p for p in properties if 
+                         search_lower in p.title.lower() or 
+                         search_lower in p.address.lower() or 
+                         search_lower in p.description.lower()]
+        
+        if property_type:
+            properties = [p for p in properties if p.property_type.lower() == property_type.lower()]
+        
+        if min_price is not None:
+            properties = [p for p in properties if p.price >= min_price]
+        
+        if max_price is not None:
+            properties = [p for p in properties if p.price <= max_price]
+        
+        if bedrooms is not None:
+            properties = [p for p in properties if p.bedrooms >= bedrooms]
+        
+        if bathrooms is not None:
+            properties = [p for p in properties if p.bathrooms >= bathrooms]
+        
+        if min_sqft is not None:
+            properties = [p for p in properties if p.square_feet >= min_sqft]
+        
+        if max_sqft is not None:
+            properties = [p for p in properties if p.square_feet <= max_sqft]
+        
+        if neighborhood:
+            properties = [p for p in properties if neighborhood.lower() in p.neighborhood.lower()]
+        
+        if property_condition:
+            properties = [p for p in properties if p.property_condition.lower() == property_condition.lower()]
+        
+        if property_category:
+            properties = [p for p in properties if p.property_category.lower() == property_category.lower()]
+        
+        if year_built_min is not None:
+            properties = [p for p in properties if p.year_built and p.year_built >= year_built_min]
+        
+        if year_built_max is not None:
+            properties = [p for p in properties if p.year_built and p.year_built <= year_built_max]
+        
+        if agent_id is not None:
+            properties = [p for p in properties if p.agent_id == agent_id]
+        
         return properties
 
     def get_property(self, property_id: int) -> Optional[Property]:

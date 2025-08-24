@@ -5,7 +5,12 @@ class Property:
     def __init__(self, id: int, title: str, address: str, price: float, 
                  property_type: str, bedrooms: int, bathrooms: int, 
                  square_feet: int, description: str, status: str = "active",
-                 agent_id: Optional[int] = None):
+                 agent_id: Optional[int] = None, year_built: Optional[int] = None,
+                 parking_spaces: int = 0, floors: int = 1, units: int = 1,
+                 property_condition: str = "good", heating_type: str = "",
+                 cooling_type: str = "", rental_price: Optional[float] = None,
+                 property_features: str = "", neighborhood: str = "",
+                 property_category: str = "residential"):
         self.id = id
         self.title = title
         self.address = address
@@ -17,6 +22,20 @@ class Property:
         self.description = description
         self.status = status
         self.agent_id = agent_id
+        
+        # Enhanced fields inspired by the images
+        self.year_built = year_built
+        self.parking_spaces = parking_spaces
+        self.floors = floors
+        self.units = units
+        self.property_condition = property_condition  # excellent, good, fair, needs_renovation
+        self.heating_type = heating_type
+        self.cooling_type = cooling_type
+        self.rental_price = rental_price
+        self.property_features = property_features  # comma-separated features
+        self.neighborhood = neighborhood
+        self.property_category = property_category  # residential, commercial, industrial
+        
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
 
@@ -33,9 +52,41 @@ class Property:
             'description': self.description,
             'status': self.status,
             'agent_id': self.agent_id,
+            'year_built': self.year_built,
+            'parking_spaces': self.parking_spaces,
+            'floors': self.floors,
+            'units': self.units,
+            'property_condition': self.property_condition,
+            'heating_type': self.heating_type,
+            'cooling_type': self.cooling_type,
+            'rental_price': self.rental_price,
+            'property_features': self.property_features,
+            'neighborhood': self.neighborhood,
+            'property_category': self.property_category,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }
+    
+    @property
+    def age(self) -> Optional[int]:
+        """Calculate property age"""
+        if self.year_built:
+            return datetime.now().year - self.year_built
+        return None
+    
+    @property
+    def features_list(self) -> List[str]:
+        """Get property features as a list"""
+        if self.property_features:
+            return [feature.strip() for feature in self.property_features.split(',')]
+        return []
+    
+    @property
+    def price_per_sqft(self) -> float:
+        """Calculate price per square foot"""
+        if self.square_feet > 0:
+            return self.price / self.square_feet
+        return 0
 
 class Agent:
     def __init__(self, id: int, name: str, email: str, phone: str, 
