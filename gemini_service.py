@@ -249,19 +249,34 @@ class GeminiService:
             properties_text = "\n".join(property_summary)
 
             prompt = f"""
-            Analyze the following real estate properties and provide market insights:
+            You are a real estate market analyst. Analyze the following {len(properties)} properties and provide specific, actionable market insights:
 
             Properties:
             {properties_text}
 
-            Provide analysis on:
-            1. Average pricing by property type
-            2. Price per square foot trends
-            3. Most common property configurations
-            4. Market observations and trends
-            5. Investment opportunities
+            Provide a detailed analysis with specific numbers and percentages covering:
 
-            Keep the analysis professional and data-driven, suitable for real estate professionals.
+            **PRICING ANALYSIS:**
+            - Average price by property type (House, Condo, Townhouse, etc.)
+            - Price per square foot by type
+            - Price ranges and distribution
+
+            **MARKET TRENDS:**
+            - Most common bedroom/bathroom configurations
+            - Square footage trends
+            - Geographic price variations
+
+            **INVESTMENT INSIGHTS:**
+            - Best value properties (price per sq ft)
+            - Rental potential properties
+            - Emerging opportunities
+
+            **KEY METRICS:**
+            - Market statistics with specific numbers
+            - Comparative analysis between property types
+            - Recommendations for buyers/investors
+
+            Format your response with clear headings and bullet points. Include specific dollar amounts, percentages, and actionable insights that real estate professionals can use immediately.
             """
 
             response = self.client.models.generate_content(
@@ -273,7 +288,25 @@ class GeminiService:
 
         except Exception as e:
             self.logger.error(f"Error analyzing market trends: {e}")
-            return "Market analysis unavailable due to technical issues."
+            return f"""
+            **Market Analysis Error**
+            
+            Unable to generate market analysis at this time. This could be due to:
+            - AI service connectivity issues
+            - Insufficient data (need more properties)
+            - API rate limits
+            
+            **Current Status:**
+            - Properties in database: {len(properties)}
+            - Recommended minimum: 10+ properties
+            
+            **Suggestions:**
+            1. Add more property listings to your database
+            2. Check your Gemini API key configuration
+            3. Try refreshing the analysis in a few minutes
+            
+            Error details: {str(e)}
+            """
 
 # Global Gemini service instance
 gemini_service = GeminiService()
