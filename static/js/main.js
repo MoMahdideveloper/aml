@@ -107,6 +107,9 @@ function initializeFormValidation() {
     currencyInputs.forEach(input => {
         input.addEventListener('input', formatCurrency);
     });
+    
+    // Initialize Iranian property pricing system
+    initializePropertyPricing();
 }
 
 /**
@@ -219,6 +222,120 @@ function initializeAutoRefresh() {
             refreshDashboardStats();
         }, 300000);
     }
+}
+
+/**
+ * Initialize Iranian Property Pricing System
+ */
+function initializePropertyPricing() {
+    const listingTypeRadios = document.querySelectorAll('input[name="listing_type"]');
+    const salePricing = document.getElementById('sale-pricing');
+    const rentalPricing = document.getElementById('rental-pricing');
+    const squareFootInput = document.getElementById('square_feet');
+    
+    // Price input fields
+    const salePriceInput = document.getElementById('sale_price');
+    const rahnInput = document.getElementById('rahn');
+    const ejareInput = document.getElementById('ejare');
+    const salePricePerMeterInput = document.getElementById('sale_price_per_meter');
+    const rahnPerMeterInput = document.getElementById('rahn_per_meter');
+    const ejarePerMeterInput = document.getElementById('ejare_per_meter');
+    
+    if (!listingTypeRadios.length) return; // Only run on pages with property forms
+    
+    // Toggle pricing sections based on listing type
+    function togglePricingSections() {
+        const selectedType = document.querySelector('input[name="listing_type"]:checked').value;
+        
+        if (selectedType === 'sale') {
+            salePricing.style.display = 'block';
+            rentalPricing.style.display = 'none';
+            
+            // Make sale price required
+            if (salePriceInput) salePriceInput.required = true;
+            if (rahnInput) rahnInput.required = false;
+            if (ejareInput) ejareInput.required = false;
+        } else {
+            salePricing.style.display = 'none';
+            rentalPricing.style.display = 'block';
+            
+            // Make rental fields required
+            if (salePriceInput) salePriceInput.required = false;
+            if (rahnInput) rahnInput.required = true;
+            if (ejareInput) ejareInput.required = true;
+        }
+        
+        // Recalculate per-meter prices
+        calculatePerMeterPrices();
+    }
+    
+    // Calculate per-meter prices in real-time
+    function calculatePerMeterPrices() {
+        const squareMeters = parseFloat(squareFootInput?.value) || 0;
+        
+        if (squareMeters <= 0) {
+            // Clear per-meter fields if no valid area
+            if (salePricePerMeterInput) salePricePerMeterInput.value = '';
+            if (rahnPerMeterInput) rahnPerMeterInput.value = '';
+            if (ejarePerMeterInput) ejarePerMeterInput.value = '';
+            return;
+        }
+        
+        // Calculate sale price per meter
+        if (salePriceInput && salePricePerMeterInput) {
+            const salePrice = parseFloat(salePriceInput.value) || 0;
+            if (salePrice > 0) {
+                const pricePerMeter = (salePrice / squareMeters).toFixed(0);
+                salePricePerMeterInput.value = `$${parseInt(pricePerMeter).toLocaleString()}/m²`;
+            } else {
+                salePricePerMeterInput.value = '';
+            }
+        }
+        
+        // Calculate rahn per meter
+        if (rahnInput && rahnPerMeterInput) {
+            const rahn = parseFloat(rahnInput.value) || 0;
+            if (rahn > 0) {
+                const rahnPerMeter = (rahn / squareMeters).toFixed(0);
+                rahnPerMeterInput.value = `${parseInt(rahnPerMeter).toLocaleString()} تومان/متر`;
+            } else {
+                rahnPerMeterInput.value = '';
+            }
+        }
+        
+        // Calculate ejare per meter
+        if (ejareInput && ejarePerMeterInput) {
+            const ejare = parseFloat(ejareInput.value) || 0;
+            if (ejare > 0) {
+                const ejarePerMeter = (ejare / squareMeters).toFixed(0);
+                ejarePerMeterInput.value = `${parseInt(ejarePerMeter).toLocaleString()} تومان/متر`;
+            } else {
+                ejarePerMeterInput.value = '';
+            }
+        }
+    }
+    
+    // Add event listeners for listing type change
+    listingTypeRadios.forEach(radio => {
+        radio.addEventListener('change', togglePricingSections);
+    });
+    
+    // Add event listeners for real-time calculation
+    if (salePriceInput) {
+        salePriceInput.addEventListener('input', calculatePerMeterPrices);
+    }
+    if (rahnInput) {
+        rahnInput.addEventListener('input', calculatePerMeterPrices);
+    }
+    if (ejareInput) {
+        ejareInput.addEventListener('input', calculatePerMeterPrices);
+    }
+    if (squareFootInput) {
+        squareFootInput.addEventListener('input', calculatePerMeterPrices);
+    }
+    
+    // Initialize on page load
+    togglePricingSections();
 }
 
 /**
