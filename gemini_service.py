@@ -4,6 +4,7 @@ from typing import List, Dict, Any
 from google import genai
 from google.genai import types
 from models import Property, Customer
+from vector_service import vector_service
 
 class GeminiService:
     def __init__(self):
@@ -12,71 +13,42 @@ class GeminiService:
 
     def get_property_recommendations(self, customer: Customer, properties: List[Property]) -> List[Dict[str, Any]]:
         """
-        Get AI-powered property recommendations for a customer based on their preferences
+        Get AI-powered property recommendations using vector search with semantic matching
         """
         try:
-            # Limit properties to avoid timeout (process max 10 properties at a time)
-            properties_subset = properties[:10] if len(properties) > 10 else properties
+            self.logger.info(f"Getting recommendations for customer {customer.name} from {len(properties)} properties")
             
-            # Prepare customer preferences
-            customer_profile = f"""
-            Customer Profile:
-            - Name: {customer.name}
-            - Budget: ${customer.budget_min:,} - ${customer.budget_max:,}
-            - Preferred Bedrooms: {customer.preferred_bedrooms}
-            - Preferred Bathrooms: {customer.preferred_bathrooms}
-            - Preferred Property Type: {customer.preferred_type}
-            - Location Preference: {customer.location_preference}
-            """
-
-            # Prepare property data (condensed version)
-            property_data = []
-            for prop in properties_subset:
-                property_info = f"""
-                Property {prop.id}: {prop.title}
-                Address: {prop.address}
-                Price: ${prop.price:,}
-                Type: {prop.property_type}
-                Bedrooms: {prop.bedrooms}
-                Bathrooms: {prop.bathrooms}
-                Square Feet: {prop.square_feet:,}
-                """
-                property_data.append(property_info)
-
-            properties_text = "\n".join(property_data)
-
-            prompt = f"""
-            {customer_profile}
-
-            Available Properties:
-            {properties_text}
-
-            Analyze each property and provide a match score (1-100) with brief reasons. Focus on budget fit, bedroom/bathroom match, property type preference, and location.
-            
-            Format: "Property [ID]: Score [X]/100 - [Brief reasoning]"
-            """
-
-            response = self.client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    temperature=0.3,
-                    max_output_tokens=1000,
-                )
+            # Use vector service for semantic search
+            vector_recommendations = vector_service.search_properties(
+                customer=customer,
+                properties=properties,
+                top_k=min(10, len(properties))
             )
-
-            if response.text:
-                # Parse the AI response and create recommendations
-                recommendations = self._parse_recommendations(response.text, properties_subset)
-                return recommendations
+            
+            if vector_recommendations:
+                # Convert vector service format to expected format
+                formatted_recommendations = []
+                for rec in vector_recommendations:
+                    # Create analysis text from match reasons
+                    analysis_parts = [f"Match Score: {rec['hybrid_score']:.1f}/100"]
+                    analysis_parts.extend(f"• {reason}" for reason in rec['match_reasons'])
+                    
+                    formatted_recommendations.append({
+                        'property': rec['property'],
+                        'analysis': '\n'.join(analysis_parts),
+                        'match_score': int(rec['hybrid_score'])
+                    })
+                
+                self.logger.info(f"Vector search returned {len(formatted_recommendations)} recommendations")
+                return formatted_recommendations
             else:
-                self.logger.error("Empty response from Gemini API")
-                return self._create_fallback_recommendations(customer, properties_subset)
+                self.logger.warning("Vector search failed, using fallback recommendations")
+                return self._create_fallback_recommendations(customer, properties[:10])
 
         except Exception as e:
             self.logger.error(f"Error getting property recommendations: {e}")
             # Return fallback recommendations based on simple criteria
-            return self._create_fallback_recommendations(customer, properties[:5])
+            return self._create_fallback_recommendations(customer, properties[:10])
 
     def _parse_recommendations(self, ai_response: str, properties: List[Property]) -> List[Dict[str, Any]]:
         """

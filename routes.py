@@ -2,6 +2,7 @@ from flask import render_template, request, redirect, url_for, flash, jsonify
 from app import app
 from data_manager import data_manager
 from gemini_service import gemini_service
+from vector_init import ensure_vector_database_ready, vector_initializer
 from datetime import datetime
 import logging
 
@@ -283,9 +284,12 @@ def get_customer_recommendations(customer_id):
             flash('Customer not found!', 'error')
             return redirect(url_for('recommendations'))
         
+        # Ensure vector database is ready
+        ensure_vector_database_ready()
+        
         properties = data_manager.get_properties(status="active")
         
-        # Get AI-powered recommendations
+        # Get AI-powered recommendations using vector search
         recommendations = gemini_service.get_property_recommendations(customer, properties)
         
         if not recommendations:
@@ -311,6 +315,42 @@ def market_analysis():
     except Exception as e:
         logging.error(f"Error getting market analysis: {e}")
         return jsonify({'error': 'Unable to generate market analysis'}), 500
+
+@app.route('/api/vector-status')
+def vector_status():
+    """Get vector database status and statistics"""
+    try:
+        stats = vector_initializer.get_vector_database_stats()
+        return jsonify(stats)
+    except Exception as e:
+        logging.error(f"Error getting vector status: {e}")
+        return jsonify({'error': 'Unable to get vector status'}), 500
+
+@app.route('/api/init-vector-db')
+def init_vector_db():
+    """Initialize vector database with current properties"""
+    try:
+        success = vector_initializer.initialize_vector_database()
+        if success:
+            return jsonify({'success': True, 'message': 'Vector database initialized successfully'})
+        else:
+            return jsonify({'success': False, 'message': 'Failed to initialize vector database'}), 500
+    except Exception as e:
+        logging.error(f"Error initializing vector database: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/test-vector-search')
+def test_vector_search():
+    """Test vector search functionality"""
+    try:
+        success = vector_initializer.test_vector_search()
+        if success:
+            return jsonify({'success': True, 'message': 'Vector search test passed'})
+        else:
+            return jsonify({'success': False, 'message': 'Vector search test failed'}), 500
+    except Exception as e:
+        logging.error(f"Error testing vector search: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # Error handlers
 @app.errorhandler(404)
