@@ -1772,8 +1772,10 @@ dependencies = [
     { name = "gunicorn" },
     { name = "numpy" },
     { name = "psycopg2-binary" },
+    { name = "pydantic" },
     { name = "scikit-learn" },
     { name = "sift-stack-py" },
+    { name = "sqlalchemy" },
 ]
 
 [package.metadata]
@@ -1788,8 +1790,10 @@ requires-dist = [
     { name = "gunicorn", specifier = ">=23.0.0" },
     { name = "numpy", specifier = ">=2.3.2" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
+    { name = "pydantic", specifier = ">=2.11.7" },
     { name = "scikit-learn", specifier = ">=1.7.1" },
     { name = "sift-stack-py", specifier = ">=0.8.4" },
+    { name = "sqlalchemy", specifier = ">=2.0.43" },
 ]
 
 [[package]]

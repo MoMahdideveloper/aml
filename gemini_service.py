@@ -1,10 +1,58 @@
 import os
 import logging
+import json
+import re
 from typing import List, Dict, Any
 from google import genai
 from google.genai import types
 from sqlalchemy_models import Property, Customer
 from vector_service import vector_service
+from schemas import PropertyAI, CustomerAI
+
+JSON_INSTRUCTIONS = """
+Return ONLY valid JSON. Do not include backticks or prose.
+Numbers must be numbers. Booleans must be booleans. Use null if unknown.
+"""
+
+PROPERTY_SCHEMA_HINT = {
+  "title": "string or null",
+  "address": "string or null",
+  "price": 0,
+  "property_type": "string or null",
+  "bedrooms": 0,
+  "bathrooms": 0,
+  "square_feet": 0,
+  "description": "string or null",
+  "status": "active|pending|sold|null",
+  "agent_id": 0,
+  "year_built": 0,
+  "parking_spaces": 0,
+  "floors": 1,
+  "units": 1,
+  "property_condition": "excellent|good|fair|needs_renovation|null",
+  "heating_type": "string or null",
+  "cooling_type": "string or null",
+  "rental_price": 0,
+  "property_features": ["comma, separated, items"],
+  "neighborhood": "string or null",
+  "property_category": "residential|commercial|null",
+  "listing_type": "sale|rental|null",
+  "rahn": 0,
+  "ejare": 0
+}
+
+CUSTOMER_SCHEMA_HINT = {
+  "name": "string or null",
+  "email": "string or null",
+  "phone": "string or null",
+  "preferences": "string or null",
+  "budget_min": 0,
+  "budget_max": 0,
+  "desired_neighborhoods": ["comma, separated"],
+  "desired_property_type": "string or null",
+  "bedrooms_min": 0,
+  "bathrooms_min": 0
+}
 
 class GeminiService:
     def __init__(self):
@@ -386,6 +434,73 @@ class GeminiService:
 """
         
         return analysis
+
+    def _extract_json(self, prompt: str) -> dict:
+        """Extract JSON from Gemini response with fallback handling"""
+        if not self.client:
+            # Fallback: try to find key/value pairs as a naive baseline
+            return {}
+        
+        try:
+            response = self.client.models.generate_content(
+                model="gemini-2.0-flash-exp",
+                contents=prompt
+            )
+            text = (getattr(response, "text", None) or "").strip()
+            # Remove code fences if any
+            text = re.sub(r"^```(?:json)?|```$", "", text, flags=re.MULTILINE).strip()
+            return json.loads(text)
+        except Exception as e:
+            self.logger.warning(f"Failed to parse strict JSON: {e}")
+            return {}
+
+    def extract_property_from_text(self, blob: str) -> dict:
+        """Extract property information from free text using AI"""
+        prompt = f"""
+You are an information extraction assistant for real estate listings.
+Extract all possible fields from the text below and output a single JSON object
+matching this example schema (values can be null when unknown):
+
+{json.dumps(PROPERTY_SCHEMA_HINT, ensure_ascii=False, indent=2)}
+
+{JSON_INSTRUCTIONS}
+
+TEXT:
+{blob}
+"""
+        data = self._extract_json(prompt)
+        try:
+            model = PropertyAI(**data or {})
+            payload = model.dict()
+            missing = [k for k, v in payload.items() if v in (None, [], "")]
+            return {"entity": "property", "data": payload, "missing": missing, "confidence": 0.75 if data else 0.3}
+        except Exception as e:
+            self.logger.error(f"Error processing property extraction: {e}")
+            return {"entity": "property", "data": {}, "missing": [], "confidence": 0.0}
+
+    def extract_customer_from_text(self, blob: str) -> dict:
+        """Extract customer information from free text using AI"""
+        prompt = f"""
+You are an information extraction assistant for real estate customers.
+Extract all possible fields from the text below and output a single JSON object
+matching this example schema (values can be null when unknown):
+
+{json.dumps(CUSTOMER_SCHEMA_HINT, ensure_ascii=False, indent=2)}
+
+{JSON_INSTRUCTIONS}
+
+TEXT:
+{blob}
+"""
+        data = self._extract_json(prompt)
+        try:
+            model = CustomerAI(**data or {})
+            payload = model.dict()
+            missing = [k for k, v in payload.items() if v in (None, [], "")]
+            return {"entity": "customer", "data": payload, "missing": missing, "confidence": 0.75 if data else 0.3}
+        except Exception as e:
+            self.logger.error(f"Error processing customer extraction: {e}")
+            return {"entity": "customer", "data": {}, "missing": [], "confidence": 0.0}
 
 # Global Gemini service instance
 gemini_service = GeminiService()

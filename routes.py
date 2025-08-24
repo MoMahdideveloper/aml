@@ -368,6 +368,30 @@ def market_analysis():
         logging.error(f"Error getting market analysis: {e}")
         return jsonify({'error': 'Unable to generate market analysis'}), 500
 
+@app.route('/api/ai/parse/property', methods=['POST'])
+def ai_parse_property():
+    """
+    Body JSON: { "text": "<free form description>" }
+    Returns: { entity, data: {...}, missing: [...], confidence: float }
+    """
+    blob = (request.json or {}).get("text", "").strip()
+    if not blob:
+        return jsonify({"error": "text is required"}), 400
+    result = gemini_service.extract_property_from_text(blob)
+    return jsonify(result)
+
+@app.route('/api/ai/parse/customer', methods=['POST'])
+def ai_parse_customer():
+    """
+    Body JSON: { "text": "<free form description>" }
+    Returns: { entity, data: {...}, missing: [...], confidence: float }
+    """
+    blob = (request.json or {}).get("text", "").strip()
+    if not blob:
+        return jsonify({"error": "text is required"}), 400
+    result = gemini_service.extract_customer_from_text(blob)
+    return jsonify(result)
+
 @app.route('/api/vector-status')
 def vector_status():
     """Get vector database status and statistics"""

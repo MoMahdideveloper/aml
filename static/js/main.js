@@ -29,6 +29,9 @@ function initializeApp() {
     // Initialize auto-refresh
     initializeAutoRefresh();
     
+    // Initialize AI autofill
+    initializeAIAutofill();
+    
     console.log('Real Estate CRM initialized successfully');
 }
 
@@ -637,6 +640,122 @@ const Animate = {
         requestAnimationFrame(animate);
     }
 };
+
+/**
+ * Initialize AI Autofill functionality
+ */
+function initializeAIAutofill() {
+    const btn = document.getElementById('ai_autofill_btn');
+    if (!btn) return;
+
+    btn.addEventListener('click', async () => {
+        const text = document.getElementById('ai_blob').value.trim();
+        const status = document.getElementById('ai_autofill_status');
+        
+        if (!text) { 
+            status.textContent = "Please paste some text."; 
+            status.className = "text-warning small";
+            return; 
+        }
+
+        status.textContent = "Asking AI...";
+        status.className = "text-info small";
+        btn.disabled = true;
+        
+        try {
+            const res = await fetch('/api/ai/parse/property', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+            
+            const payload = await res.json();
+            if (!res.ok) throw new Error(payload.error || "Request failed");
+
+            // Map JSON to form fields
+            const d = payload.data || {};
+            const fieldMap = {
+                title: 'title',
+                address: 'address', 
+                price: 'sale_price',
+                property_type: 'property_type',
+                bedrooms: 'bedrooms',
+                bathrooms: 'bathrooms',
+                square_feet: 'square_feet',
+                description: 'description',
+                year_built: 'year_built',
+                parking_spaces: 'parking_spaces',
+                floors: 'floors',
+                units: 'units',
+                property_condition: 'property_condition',
+                neighborhood: 'neighborhood',
+                property_category: 'property_category',
+                listing_type: 'listing_type',
+                rahn: 'rahn',
+                ejare: 'ejare'
+            };
+
+            // Fill form fields
+            Object.entries(fieldMap).forEach(([dataKey, fieldName]) => {
+                if (d[dataKey] !== null && d[dataKey] !== undefined && d[dataKey] !== '') {
+                    const element = document.getElementById(fieldName) || document.querySelector(`[name="${fieldName}"]`);
+                    if (!element) return;
+                    
+                    if (Array.isArray(d[dataKey])) {
+                        element.value = d[dataKey].join(', ');
+                    } else {
+                        element.value = d[dataKey];
+                    }
+                    
+                    // Trigger change event for radio buttons and selects
+                    if (element.type === 'radio' && d[dataKey] === element.value) {
+                        element.checked = true;
+                        element.dispatchEvent(new Event('change'));
+                    } else if (element.tagName === 'SELECT') {
+                        element.dispatchEvent(new Event('change'));
+                    }
+                }
+            });
+
+            // Handle listing type switching
+            if (d.listing_type) {
+                const listingTypeRadio = document.querySelector(`input[name="listing_type"][value="${d.listing_type}"]`);
+                if (listingTypeRadio) {
+                    listingTypeRadio.checked = true;
+                    listingTypeRadio.dispatchEvent(new Event('change'));
+                }
+            }
+
+            // Handle property features if it's an array
+            if (d.property_features && Array.isArray(d.property_features)) {
+                const featuresField = document.getElementById('property_features') || document.querySelector('[name="property_features"]');
+                if (featuresField) {
+                    featuresField.value = d.property_features.join(', ');
+                }
+            }
+
+            const confidence = Math.round((payload.confidence || 0) * 100);
+            const missingFields = payload.missing && payload.missing.length > 0 ? payload.missing.join(', ') : 'none';
+            
+            status.innerHTML = `
+                <div class="text-success">
+                    <i class="fas fa-check-circle me-1"></i>
+                    Autofilled (${confidence}% confidence)
+                </div>
+                <div class="text-muted" style="font-size: 0.8em;">
+                    Missing: ${missingFields}
+                </div>
+            `;
+            
+        } catch (e) {
+            status.textContent = "AI autofill failed. Please try again.";
+            status.className = "text-danger small";
+            console.error('AI Autofill error:', e);
+        } finally {
+            btn.disabled = false;
+        }
+    });
+}
 
 // Expose utilities globally
 window.CRM = {
