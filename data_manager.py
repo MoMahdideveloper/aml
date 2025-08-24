@@ -10,14 +10,14 @@ class DataManager:
         self.customers: Dict[int, Customer] = {}
         self.deals: Dict[int, Deal] = {}
         self.tasks: Dict[int, Task] = {}
-        
+
         # Auto-increment IDs
         self.next_property_id = 1
         self.next_agent_id = 1
         self.next_customer_id = 1
         self.next_deal_id = 1
         self.next_task_id = 1
-        
+
         # Initialize with sample data
         self._initialize_data()
 
@@ -37,42 +37,107 @@ class DataManager:
                          "Beautiful modern condo with city views, granite countertops, and hardwood floors", 
                          "active", 1, 2018, 1, 1, 1, "excellent", "Central Air", "Central Air", 
                          None, "Granite Countertops, Hardwood Floors, City Views, Balcony", "Downtown", "residential", "sale")
-        
+
         self.add_property("Suburban Family Home", "456 Oak Avenue, Suburbia", 650000, 
                          "House", 4, 3, 2800, 
                          "Spacious family home with large backyard, updated kitchen, and 3-car garage", 
                          "active", 1, 2010, 3, 2, 1, "good", "Gas", "Central Air",
                          None, "Updated Kitchen, Large Backyard, 3-Car Garage, Walk-in Closets", "Suburbia", "residential", "sale")
-        
+
         self.add_property("Luxury Waterfront Estate", "789 Lake Drive, Waterfront", 1250000, 
                          "House", 5, 4, 4500, 
                          "Stunning waterfront estate with private dock, infinity pool, and panoramic lake views", 
                          "active", 1, 2015, 4, 3, 1, "excellent", "Radiant Floor", "Central Air",
                          None, "Private Dock, Infinity Pool, Lake Views, Wine Cellar, Smart Home", "Waterfront", "residential", "sale")
-        
+
         # Add rental property with Iranian pricing system
         self.add_property("Urban Loft", "321 Industrial Blvd, Arts District", 0, 
                          "Loft", 1, 1, 950, 
                          "Converted industrial loft with exposed brick, high ceilings, and modern amenities", 
                          "active", 2, 1995, 1, 1, 1, "good", "Electric", "Window Units",
                          None, "Exposed Brick, High Ceilings, Industrial Design, Artist Space", "Arts District", "residential", "rental", 400000000, 2500000)
-        
+
         self.add_property("Starter Home", "654 Pine Street, Neighborhood", 285000, 
                          "House", 3, 2, 1450, 
                          "Perfect starter home with updated appliances, new roof, and fenced yard", 
                          "active", 3, 2005, 2, 1, 1, "good", "Gas", "Central Air",
                          None, "Updated Appliances, New Roof, Fenced Yard, Quiet Street", "Neighborhood", "residential", "sale")
 
+        # Add sample properties
+        self.add_property(
+            "Modern Downtown Condo", "123 Main St, Downtown", 450000, "Condo",
+            2, 2, 1200, "Luxury condo with city views", "active", 1
+        )
+        self.add_property(
+            "Suburban Family Home", "456 Oak Ave, Suburbia", 285000, "House",
+            3, 2, 1800, "Perfect for families", "active", 2
+        )
+        self.add_property(
+            "Cozy Starter Home", "789 Pine St, Westside", 195000, "House",
+            2, 1, 950, "Great first home", "active", 1
+        )
+        self.add_property(
+            "Luxury Estate", "321 Elite Drive, Hills", 1250000, "House",
+            5, 4, 4500, "Premium luxury living", "active", 3
+        )
+        self.add_property(
+            "Investment Duplex", "654 Rental Rd, Midtown", 380000, "Duplex",
+            4, 3, 2400, "Great rental income potential", "active", 2
+        )
+
+        # Add more properties for better market analysis
+        self.add_property(
+            "Penthouse Suite", "100 Sky Tower, Downtown", 875000, "Condo",
+            3, 3, 2100, "Top floor penthouse with panoramic views", "active", 1
+        )
+        self.add_property(
+            "Victorian Townhouse", "567 Heritage Lane, Historic District", 525000, "Townhouse",
+            3, 2.5, 1650, "Restored Victorian with modern amenities", "active", 2
+        )
+        self.add_property(
+            "Ranch Style Home", "890 Country Road, Suburbs", 335000, "House",
+            3, 2, 1600, "Single story ranch on large lot", "active", 3
+        )
+        self.add_property(
+            "Urban Loft", "45 Industrial Way, Arts District", 395000, "Loft",
+            1, 1, 1100, "Converted warehouse loft with exposed brick", "active", 1
+        )
+        self.add_property(
+            "Garden Apartment", "234 Green Street, Westside", 275000, "Condo",
+            2, 1.5, 980, "Ground floor with private garden", "active", 2
+        )
+        self.add_property(
+            "Executive Home", "777 Executive Circle, Uptown", 695000, "House",
+            4, 3.5, 2800, "Executive home in gated community", "active", 3
+        )
+        self.add_property(
+            "Beachfront Condo", "888 Ocean View, Coastal", 620000, "Condo",
+            2, 2, 1350, "Direct beach access with ocean views", "active", 1
+        )
+        self.add_property(
+            "Affordable Starter", "999 Budget Lane, Eastside", 165000, "House",
+            2, 1, 850, "Perfect for first-time buyers", "active", 2
+        )
+        self.add_property(
+            "Commercial Space", "1010 Business Blvd, Commercial District", 850000, "Commercial",
+            0, 2, 3500, "Prime retail/office space", "active", 3
+        )
+        self.add_property(
+            "Family Estate", "1111 Family Way, Prestigious", 925000, "House",
+            5, 4, 3200, "Large family home with pool", "active", 1
+        )
+
+
         # Create sample customers
         self.add_customer("John Smith", "john.smith@email.com", "+1-555-1001", 
                          400000, 500000, 2, 2, "Condo", "Downtown")
-        
+
         self.add_customer("Emily Davis", "emily.davis@email.com", "+1-555-1002", 
                          600000, 750000, 3, 2, "House", "Suburbia")
-        
+
         self.add_customer("Robert Wilson", "robert.wilson@email.com", "+1-555-1003", 
                          1000000, 1500000, 4, 3, "House", "Waterfront")
-        
+
         self.add_customer("Maria Garcia", "maria.garcia@email.com", "+1-555-1004", 
                          250000, 350000, 2, 1, "Any", "Any")
 
@@ -106,11 +171,11 @@ class DataManager:
                                neighborhood, property_category, listing_type, rahn, ejare)
         self.properties[self.next_property_id] = property_obj
         self.next_property_id += 1
-        
+
         # Update agent's active listings count
         if agent_id and agent_id in self.agents:
             self.agents[agent_id].active_listings += 1
-        
+
         return property_obj
 
     def get_properties(self, status: Optional[str] = None, search: str = "", 
@@ -120,57 +185,57 @@ class DataManager:
                       property_category: str = "", year_built_min: int = None, year_built_max: int = None,
                       agent_id: int = None) -> List[Property]:
         properties = list(self.properties.values())
-        
+
         # Apply filters
         if status:
             properties = [p for p in properties if p.status == status]
-        
+
         if search:
             search_lower = search.lower()
             properties = [p for p in properties if 
                          search_lower in p.title.lower() or 
                          search_lower in p.address.lower() or 
                          search_lower in p.description.lower()]
-        
+
         if property_type:
             properties = [p for p in properties if p.property_type.lower() == property_type.lower()]
-        
+
         if min_price is not None:
             properties = [p for p in properties if p.price >= min_price]
-        
+
         if max_price is not None:
             properties = [p for p in properties if p.price <= max_price]
-        
+
         if bedrooms is not None:
             properties = [p for p in properties if p.bedrooms >= bedrooms]
-        
+
         if bathrooms is not None:
             properties = [p for p in properties if p.bathrooms >= bathrooms]
-        
+
         if min_sqft is not None:
             properties = [p for p in properties if p.square_feet >= min_sqft]
-        
+
         if max_sqft is not None:
             properties = [p for p in properties if p.square_feet <= max_sqft]
-        
+
         if neighborhood:
             properties = [p for p in properties if neighborhood.lower() in p.neighborhood.lower()]
-        
+
         if property_condition:
             properties = [p for p in properties if p.property_condition.lower() == property_condition.lower()]
-        
+
         if property_category:
             properties = [p for p in properties if p.property_category.lower() == property_category.lower()]
-        
+
         if year_built_min is not None:
             properties = [p for p in properties if p.year_built and p.year_built >= year_built_min]
-        
+
         if year_built_max is not None:
             properties = [p for p in properties if p.year_built and p.year_built <= year_built_max]
-        
+
         if agent_id is not None:
             properties = [p for p in properties if p.agent_id == agent_id]
-        
+
         return properties
 
     def get_property(self, property_id: int) -> Optional[Property]:
@@ -278,10 +343,10 @@ class DataManager:
         total_customers = len(self.customers)
         total_deals = len(self.deals)
         active_deals = len([d for d in self.deals.values() if d.status not in ["closed_won", "closed_lost"]])
-        
+
         # Calculate total deal value
         total_deal_value = sum(deal.offer_amount for deal in self.deals.values() if deal.offer_amount > 0)
-        
+
         return {
             'total_properties': total_properties,
             'active_properties': active_properties,
