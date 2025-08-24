@@ -15,6 +15,9 @@ class GeminiService:
         Get AI-powered property recommendations for a customer based on their preferences
         """
         try:
+            # Limit properties to avoid timeout (process max 10 properties at a time)
+            properties_subset = properties[:10] if len(properties) > 10 else properties
+            
             # Prepare customer preferences
             customer_profile = f"""
             Customer Profile:
@@ -26,23 +29,21 @@ class GeminiService:
             - Location Preference: {customer.location_preference}
             """
 
-            # Prepare property data
+            # Prepare property data (condensed version)
             property_data = []
-            for prop in properties:
+            for prop in properties_subset:
                 property_info = f"""
-                Property ID: {prop.id}
-                Title: {prop.title}
+                Property {prop.id}: {prop.title}
                 Address: {prop.address}
                 Price: ${prop.price:,}
                 Type: {prop.property_type}
                 Bedrooms: {prop.bedrooms}
                 Bathrooms: {prop.bathrooms}
                 Square Feet: {prop.square_feet:,}
-                Description: {prop.description}
                 """
                 property_data.append(property_info)
 
-            properties_text = "\n\n".join(property_data)
+            properties_text = "\n".join(property_data)
 
             prompt = f"""
             {customer_profile}
@@ -50,33 +51,32 @@ class GeminiService:
             Available Properties:
             {properties_text}
 
-            Based on the customer's preferences and budget, analyze each property and provide recommendations.
-            For each property, provide:
-            1. A match score from 1-100 (100 being perfect match)
-            2. Reasons why it matches or doesn't match the customer's preferences
-            3. Highlight key selling points for this customer
-            4. Any potential concerns or drawbacks
-
-            Format your response as a structured analysis for each property, focusing on the best matches first.
-            Be specific about how each property aligns with the customer's stated preferences.
+            Analyze each property and provide a match score (1-100) with brief reasons. Focus on budget fit, bedroom/bathroom match, property type preference, and location.
+            
+            Format: "Property [ID]: Score [X]/100 - [Brief reasoning]"
             """
 
             response = self.client.models.generate_content(
                 model="gemini-2.5-flash",
-                contents=prompt
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.3,
+                    max_output_tokens=1000,
+                )
             )
 
             if response.text:
                 # Parse the AI response and create recommendations
-                recommendations = self._parse_recommendations(response.text, properties)
+                recommendations = self._parse_recommendations(response.text, properties_subset)
                 return recommendations
             else:
                 self.logger.error("Empty response from Gemini API")
-                return []
+                return self._create_fallback_recommendations(customer, properties_subset)
 
         except Exception as e:
             self.logger.error(f"Error getting property recommendations: {e}")
-            return []
+            # Return fallback recommendations based on simple criteria
+            return self._create_fallback_recommendations(customer, properties[:5])
 
     def _parse_recommendations(self, ai_response: str, properties: List[Property]) -> List[Dict[str, Any]]:
         """
@@ -84,43 +84,100 @@ class GeminiService:
         """
         recommendations = []
         
-        # For now, create a simple structure based on the AI response
-        # In a production system, you might want to use structured output from Gemini
+        # Parse the simplified format: "Property [ID]: Score [X]/100 - [Brief reasoning]"
         lines = ai_response.split('\n')
-        current_property_id = None
-        current_analysis = []
         
         for line in lines:
             line = line.strip()
-            if 'Property ID:' in line:
-                # Save previous analysis if exists
-                if current_property_id and current_analysis:
-                    prop = next((p for p in properties if p.id == current_property_id), None)
-                    if prop:
-                        recommendations.append({
-                            'property': prop,
-                            'analysis': '\n'.join(current_analysis),
-                            'match_score': self._extract_score('\n'.join(current_analysis))
-                        })
-                
-                # Start new property analysis
+            if 'Property' in line and ':' in line:
                 try:
-                    current_property_id = int(line.split('Property ID:')[1].strip())
-                    current_analysis = []
-                except:
-                    current_property_id = None
-            elif current_property_id and line:
-                current_analysis.append(line)
+                    # Extract property ID
+                    if 'Property ' in line:
+                        id_part = line.split('Property ')[1].split(':')[0].strip()
+                        property_id = int(id_part)
+                        
+                        # Find the property
+                        prop = next((p for p in properties if p.id == property_id), None)
+                        if prop:
+                            # Extract the analysis text
+                            analysis_text = line.split(':', 1)[1].strip()
+                            
+                            recommendations.append({
+                                'property': prop,
+                                'analysis': analysis_text,
+                                'match_score': self._extract_score(analysis_text)
+                            })
+                except Exception as e:
+                    self.logger.warning(f"Could not parse line: {line} - {e}")
+                    continue
         
-        # Add the last property if exists
-        if current_property_id and current_analysis:
-            prop = next((p for p in properties if p.id == current_property_id), None)
-            if prop:
-                recommendations.append({
-                    'property': prop,
-                    'analysis': '\n'.join(current_analysis),
-                    'match_score': self._extract_score('\n'.join(current_analysis))
-                })
+        # If no recommendations were parsed, try fallback parsing
+        if not recommendations and properties:
+            self.logger.info("Using fallback parsing for AI response")
+            # Split response into chunks and match with properties
+            chunks = ai_response.split('\n\n')
+            for i, chunk in enumerate(chunks):
+                if i < len(properties) and chunk.strip():
+                    recommendations.append({
+                        'property': properties[i],
+                        'analysis': chunk.strip(),
+                        'match_score': self._extract_score(chunk)
+                    })
+        
+        # Sort by match score (highest first)
+        recommendations.sort(key=lambda x: x['match_score'], reverse=True)
+        
+        return recommendations
+
+    def _create_fallback_recommendations(self, customer: Customer, properties: List[Property]) -> List[Dict[str, Any]]:
+        """
+        Create basic recommendations when AI is unavailable
+        """
+        recommendations = []
+        
+        for prop in properties:
+            # Simple scoring based on basic criteria
+            score = 0
+            reasons = []
+            
+            # Budget match (40 points max)
+            if customer.budget_min <= prop.price <= customer.budget_max:
+                score += 40
+                reasons.append("Within budget range")
+            elif prop.price <= customer.budget_max:
+                score += 20
+                reasons.append("Slightly below budget")
+            
+            # Bedroom match (20 points max)
+            if prop.bedrooms == customer.preferred_bedrooms:
+                score += 20
+                reasons.append("Matches bedroom preference")
+            elif abs(prop.bedrooms - customer.preferred_bedrooms) <= 1:
+                score += 10
+                reasons.append("Close to bedroom preference")
+            
+            # Bathroom match (20 points max)
+            if prop.bathrooms >= customer.preferred_bathrooms:
+                score += 20
+                reasons.append("Meets bathroom needs")
+            elif prop.bathrooms >= customer.preferred_bathrooms - 0.5:
+                score += 10
+                reasons.append("Close to bathroom preference")
+            
+            # Property type match (20 points max)
+            if prop.property_type.lower() == customer.preferred_type.lower():
+                score += 20
+                reasons.append("Matches property type preference")
+            
+            analysis = f"Match Score: {score}/100\n" + "\n".join(f"• {reason}" for reason in reasons)
+            if not reasons:
+                analysis = "This property may not fully match your preferences, but could still be worth considering."
+            
+            recommendations.append({
+                'property': prop,
+                'analysis': analysis,
+                'match_score': score
+            })
         
         # Sort by match score (highest first)
         recommendations.sort(key=lambda x: x['match_score'], reverse=True)
