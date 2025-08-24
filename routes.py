@@ -32,41 +32,77 @@ def dashboard():
 
 @app.route('/properties')
 def properties():
-    """Property management page"""
+    """Properties listing page with advanced search and filtering"""
+    # Get all search parameters
     search_query = request.args.get('search', '')
     property_type = request.args.get('type', '')
-    min_price = request.args.get('min_price', '', type=str)
-    max_price = request.args.get('max_price', '', type=str)
+    property_category = request.args.get('category', '')
+    property_condition = request.args.get('condition', '')
+    neighborhood = request.args.get('neighborhood', '')
+    min_price = request.args.get('min_price', type=float)
+    max_price = request.args.get('max_price', type=float)
+    bedrooms = request.args.get('bedrooms', type=int)
+    bathrooms = request.args.get('bathrooms', type=int)
+    min_sqft = request.args.get('min_sqft', type=int)
+    max_sqft = request.args.get('max_sqft', type=int)
+    year_built_min = request.args.get('year_built_min', type=int)
+    year_built_max = request.args.get('year_built_max', type=int)
+    agent_id = request.args.get('agent_id', type=int)
     
-    properties = data_manager.get_properties()
+    # Get filtered properties
+    properties = data_manager.get_properties(
+        search=search_query,
+        property_type=property_type,
+        property_category=property_category,
+        property_condition=property_condition,
+        neighborhood=neighborhood,
+        min_price=min_price,
+        max_price=max_price,
+        bedrooms=bedrooms,
+        bathrooms=bathrooms,
+        min_sqft=min_sqft,
+        max_sqft=max_sqft,
+        year_built_min=year_built_min,
+        year_built_max=year_built_max,
+        agent_id=agent_id
+    )
+    
+    # Get agents for dropdown
     agents = data_manager.get_agents()
     
-    # Apply filters
-    if search_query:
-        properties = [p for p in properties if search_query.lower() in p.title.lower() or search_query.lower() in p.address.lower()]
-    
-    if property_type:
-        properties = [p for p in properties if p.property_type.lower() == property_type.lower()]
-    
-    if min_price:
-        try:
-            min_price_val = float(min_price)
-            properties = [p for p in properties if p.price >= min_price_val]
-        except ValueError:
-            pass
-    
-    if max_price:
-        try:
-            max_price_val = float(max_price)
-            properties = [p for p in properties if p.price <= max_price_val]
-        except ValueError:
-            pass
+    # Get unique values for filter dropdowns
+    all_properties = data_manager.get_properties()
+    property_types = sorted(set(p.property_type for p in all_properties))
+    neighborhoods = sorted(set(p.neighborhood for p in all_properties if p.neighborhood))
+    property_conditions = ['excellent', 'good', 'fair', 'needs_renovation']
+    property_categories = ['residential', 'commercial', 'industrial']
     
     # Add agent names to properties
     for prop in properties:
         prop.agent_name = data_manager.get_agent(prop.agent_id).name if prop.agent_id and data_manager.get_agent(prop.agent_id) else "Unassigned"
     
-    return render_template('properties.html', properties=properties, agents=agents)
+    return render_template('properties.html', 
+                         properties=properties, 
+                         agents=agents,
+                         property_types=property_types,
+                         neighborhoods=neighborhoods,
+                         property_conditions=property_conditions,
+                         property_categories=property_categories,
+                         # Current filter values
+                         search_query=search_query,
+                         property_type=property_type,
+                         property_category=property_category,
+                         property_condition=property_condition,
+                         neighborhood=neighborhood,
+                         min_price=min_price,
+                         max_price=max_price,
+                         bedrooms=bedrooms,
+                         bathrooms=bathrooms,
+                         min_sqft=min_sqft,
+                         max_sqft=max_sqft,
+                         year_built_min=year_built_min,
+                         year_built_max=year_built_max,
+                         agent_id=agent_id)
 
 @app.route('/properties/add', methods=['POST'])
 def add_property():
@@ -232,7 +268,7 @@ def tasks():
     for task in tasks:
         task.agent_obj = data_manager.get_agent(task.agent_id)
     
-    return render_template('tasks.html', tasks=tasks, agents=agents)
+    return render_template('tasks.html', tasks=tasks, agents=agents, current_date=datetime.now())
 
 @app.route('/tasks/add', methods=['POST'])
 def add_task():

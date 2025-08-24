@@ -9,14 +9,14 @@
 {% endblock %}
 
 {% block content %}
-<!-- Search and Filter Section -->
+<!-- Advanced Search and Filter Section -->
 <div class="card mb-4">
     <div class="card-header bg-primary text-white">
         <div class="row align-items-center">
             <div class="col">
                 <h6 class="card-title mb-0">
                     <i class="fas fa-search me-2"></i>
-                    Search & Filter Properties
+                    Advanced Property Search & Filters
                 </h6>
             </div>
             <div class="col-auto">
@@ -28,43 +28,129 @@
         </div>
     </div>
     <div class="card-body">
-        <form method="GET" class="row g-3">
-            <div class="col-md-3">
-                <label for="search" class="form-label">Search</label>
-                <input type="text" class="form-control" id="search" name="search" 
-                       placeholder="Title, address..." value="{{ request.args.get('search', '') }}">
+        <form method="GET" action="{{ url_for('properties') }}" id="advancedSearchForm">
+            <!-- Basic Search Row -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Search Keywords</label>
+                    <input type="text" class="form-control" name="search" id="search"
+                           placeholder="Search by title, address, or description..." 
+                           value="{{ search_query or '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="neighborhood" class="form-label">Neighborhood</label>
+                    <select name="neighborhood" class="form-select" id="neighborhood">
+                        <option value="">All Neighborhoods</option>
+                        {% for n in neighborhoods %}
+                        <option value="{{ n }}" {{ 'selected' if neighborhood == n }}>{{ n }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="agent_id" class="form-label">Agent</label>
+                    <select name="agent_id" class="form-select" id="agent_id">
+                        <option value="">All Agents</option>
+                        {% for agent in agents %}
+                        <option value="{{ agent.id }}" {{ 'selected' if agent_id == agent.id }}>{{ agent.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
-            <div class="col-md-2">
-                <label for="type" class="form-label">Type</label>
-                <select class="form-select" id="type" name="type">
-                    <option value="">All Types</option>
-                    <option value="house" {{ 'selected' if request.args.get('type') == 'house' }}>House</option>
-                    <option value="condo" {{ 'selected' if request.args.get('type') == 'condo' }}>Condo</option>
-                    <option value="loft" {{ 'selected' if request.args.get('type') == 'loft' }}>Loft</option>
-                    <option value="townhouse" {{ 'selected' if request.args.get('type') == 'townhouse' }}>Townhouse</option>
-                </select>
+
+            <!-- Property Type and Category Row -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <label for="type" class="form-label">Property Type</label>
+                    <select name="type" class="form-select" id="type">
+                        <option value="">All Types</option>
+                        {% for pt in property_types %}
+                        <option value="{{ pt }}" {{ 'selected' if property_type == pt }}>{{ pt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="category" class="form-label">Category</label>
+                    <select name="category" class="form-select" id="category">
+                        <option value="">All Categories</option>
+                        {% for pc in property_categories %}
+                        <option value="{{ pc }}" {{ 'selected' if property_category == pc }}>{{ pc.title() }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="condition" class="form-label">Condition</label>
+                    <select name="condition" class="form-select" id="condition">
+                        <option value="">All Conditions</option>
+                        {% for cond in property_conditions %}
+                        <option value="{{ cond }}" {{ 'selected' if property_condition == cond }}>{{ cond.replace('_', ' ').title() }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="bedrooms" class="form-label">Min Bedrooms</label>
+                    <select name="bedrooms" class="form-select" id="bedrooms">
+                        <option value="">Any</option>
+                        {% for i in range(1, 6) %}
+                        <option value="{{ i }}" {{ 'selected' if bedrooms == i }}>{{ i }}+</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
-            <div class="col-md-2">
-                <label for="min_price" class="form-label">Min Price</label>
-                <input type="number" class="form-control" id="min_price" name="min_price" 
-                       placeholder="0" value="{{ request.args.get('min_price', '') }}">
+
+            <!-- Price and Size Range Row -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <label for="min_price" class="form-label">Min Price ($)</label>
+                    <input type="number" class="form-control" name="min_price" id="min_price"
+                           placeholder="0" value="{{ min_price or '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="max_price" class="form-label">Max Price ($)</label>
+                    <input type="number" class="form-control" name="max_price" id="max_price"
+                           placeholder="No limit" value="{{ max_price or '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="min_sqft" class="form-label">Min Sq Ft</label>
+                    <input type="number" class="form-control" name="min_sqft" id="min_sqft"
+                           placeholder="Any size" value="{{ min_sqft or '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="max_sqft" class="form-label">Max Sq Ft</label>
+                    <input type="number" class="form-control" name="max_sqft" id="max_sqft"
+                           placeholder="No limit" value="{{ max_sqft or '' }}">
+                </div>
             </div>
-            <div class="col-md-2">
-                <label for="max_price" class="form-label">Max Price</label>
-                <input type="number" class="form-control" id="max_price" name="max_price" 
-                       placeholder="999999999" value="{{ request.args.get('max_price', '') }}">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">&nbsp;</label>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-search me-1"></i>
-                        Search
-                    </button>
-                    <a href="{{ url_for('properties') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-times me-1"></i>
-                        Clear
-                    </a>
+
+            <!-- Additional Filters Row -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label for="bathrooms" class="form-label">Min Bathrooms</label>
+                    <select name="bathrooms" class="form-select" id="bathrooms">
+                        <option value="">Any</option>
+                        {% for i in range(1, 5) %}
+                        <option value="{{ i }}" {{ 'selected' if bathrooms == i }}>{{ i }}+</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="year_built_min" class="form-label">Built After</label>
+                    <input type="number" class="form-control" name="year_built_min" id="year_built_min"
+                           placeholder="e.g. 2000" value="{{ year_built_min or '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="year_built_max" class="form-label">Built Before</label>
+                    <input type="number" class="form-control" name="year_built_max" id="year_built_max"
+                           placeholder="e.g. 2024" value="{{ year_built_max or '' }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="btn-group w-100" role="group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                        <a href="{{ url_for('properties') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Clear
+                        </a>
+                    </div>
                 </div>
             </div>
         </form>
@@ -93,31 +179,86 @@
                     </p>
                     
                     <div class="property-details mb-3">
-                        <div class="row text-center">
-                            <div class="col-4">
+                        <div class="row text-center mb-2">
+                            <div class="col-3">
                                 <div class="detail-item">
                                     <i class="fas fa-bed text-primary"></i>
                                     <div class="small">{{ property.bedrooms }} Beds</div>
                                 </div>
                             </div>
-                            <div class="col-4">
+                            <div class="col-3">
                                 <div class="detail-item">
                                     <i class="fas fa-bath text-primary"></i>
                                     <div class="small">{{ property.bathrooms }} Baths</div>
                                 </div>
                             </div>
-                            <div class="col-4">
+                            <div class="col-3">
                                 <div class="detail-item">
                                     <i class="fas fa-ruler-combined text-primary"></i>
                                     <div class="small">{{ "{:,}".format(property.square_feet) }} sqft</div>
                                 </div>
                             </div>
+                            <div class="col-3">
+                                <div class="detail-item">
+                                    <i class="fas fa-car text-primary"></i>
+                                    <div class="small">{{ property.parking_spaces }} Parking</div>
+                                </div>
+                            </div>
                         </div>
+                        
+                        <!-- Additional property details -->
+                        <div class="row small text-muted">
+                            <div class="col-6">
+                                <i class="fas fa-building"></i> {{ property.floors }} Floor{{ 's' if property.floors != 1 else '' }}
+                            </div>
+                            <div class="col-6">
+                                {% if property.year_built %}
+                                <i class="fas fa-calendar"></i> Built {{ property.year_built }}
+                                {% endif %}
+                            </div>
+                            <div class="col-6">
+                                <i class="fas fa-home"></i> {{ property.units }} Unit{{ 's' if property.units != 1 else '' }}
+                            </div>
+                            <div class="col-6">
+                                <i class="fas fa-star"></i> {{ property.property_condition.replace('_', ' ').title() }}
+                            </div>
+                        </div>
+                        
+                        {% if property.neighborhood %}
+                        <div class="mt-2 small">
+                            <i class="fas fa-map-marker-alt text-secondary"></i>
+                            <span class="badge bg-light text-dark">{{ property.neighborhood }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if property.features_list %}
+                        <div class="mt-2">
+                            <small class="text-muted">Features:</small>
+                            <div class="features-list">
+                                {% for feature in property.features_list[:3] %}
+                                <span class="badge bg-secondary me-1">{{ feature }}</span>
+                                {% endfor %}
+                                {% if property.features_list|length > 3 %}
+                                <span class="badge bg-light text-dark">+{{ property.features_list|length - 3 }} more</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                     
-                    <div class="price mb-3">
-                        <h4 class="text-success mb-0">${{ "{:,.0f}".format(property.price) }}</h4>
-                        <small class="text-muted">${{ "{:.0f}".format(property.price / property.square_feet) }}/sqft</small>
+                    <div class="price-section mb-3">
+                        <h4 class="text-primary mb-1">${{ "{:,.0f}".format(property.price) }}</h4>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Listed Price</small>
+                            {% if property.price_per_sqft > 0 %}
+                            <small class="text-muted">${{ "{:.0f}".format(property.price_per_sqft) }}/sqft</small>
+                            {% endif %}
+                        </div>
+                        {% if property.rental_price %}
+                        <div class="mt-1">
+                            <span class="badge bg-success">${{ "{:,.0f}".format(property.rental_price) }}/month rental</span>
+                        </div>
+                        {% endif %}
                     </div>
                     
                     <p class="card-text">{{ property.description[:100] }}...</p>
