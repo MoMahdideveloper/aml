@@ -247,18 +247,45 @@
                     </div>
                     
                     <div class="price-section mb-3">
-                        <h4 class="text-primary mb-1">${{ "{:,.0f}".format(property.price) }}</h4>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-muted">Listed Price</small>
-                            {% if property.price_per_sqft > 0 %}
-                            <small class="text-muted">${{ "{:.0f}".format(property.price_per_sqft) }}/sqft</small>
+                        {% if property.listing_type == 'rental' %}
+                            <!-- Iranian Rental Pricing System -->
+                            {% if property.rahn %}
+                            <h4 class="text-primary mb-1">{{ "{:,.0f}".format(property.rahn) }} تومان</h4>
+                            <small class="text-muted">رهن (Rahn/Deposit)</small>
                             {% endif %}
-                        </div>
-                        {% if property.rental_price %}
-                        <div class="mt-1">
-                            <span class="badge bg-success">${{ "{:,.0f}".format(property.rental_price) }}/month rental</span>
-                        </div>
+                            
+                            {% if property.ejare %}
+                            <div class="mt-2">
+                                <h5 class="text-success mb-1">{{ "{:,.0f}".format(property.ejare) }} تومان</h5>
+                                <small class="text-muted">اجاره (Ejare/Monthly Rent)</small>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="mt-2 d-flex justify-content-between align-items-center">
+                                {% if property.rahn_per_meter > 0 %}
+                                <small class="text-muted">{{ "{:,.0f}".format(property.rahn_per_meter) }} تومان/متر رهن</small>
+                                {% endif %}
+                                {% if property.ejare_per_meter > 0 %}
+                                <small class="text-muted">{{ "{:,.0f}".format(property.ejare_per_meter) }} تومان/متر اجاره</small>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <!-- Sale Pricing System -->
+                            <h4 class="text-primary mb-1">${{ "{:,.0f}".format(property.price) }}</h4>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">Sale Price</small>
+                                {% if property.sale_price_per_meter > 0 %}
+                                <small class="text-muted">${{ "{:.0f}".format(property.sale_price_per_meter) }}/meter</small>
+                                {% endif %}
+                            </div>
                         {% endif %}
+                        
+                        <!-- Listing Type Badge -->
+                        <div class="mt-2">
+                            <span class="badge bg-{{ 'info' if property.listing_type == 'rental' else 'warning' }}">
+                                {{ property.listing_type.title() }}
+                            </span>
+                        </div>
                     </div>
                     
                     <p class="card-text">{{ property.description[:100] }}...</p>
@@ -341,33 +368,132 @@
                         <input type="text" class="form-control" id="address" name="address" required>
                     </div>
                     
+                    <!-- Iranian Listing Type Selection -->
+                    <div class="mb-4">
+                        <label class="form-label">Listing Type *</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="listing_type" id="listing_sale" value="sale" checked>
+                                    <label class="form-check-label" for="listing_sale">
+                                        <i class="fas fa-dollar-sign me-1"></i> For Sale
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="listing_type" id="listing_rental" value="rental">
+                                    <label class="form-check-label" for="listing_rental">
+                                        <i class="fas fa-home me-1"></i> For Rent (Iranian System)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dynamic Pricing Section -->
+                    <div id="pricing-section">
+                        <!-- Sale Pricing (Default) -->
+                        <div id="sale-pricing" class="pricing-option">
+                            <h6 class="text-primary mb-3">Sale Pricing</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="sale_price" class="form-label">Sale Price *</label>
+                                    <input type="number" class="form-control" id="sale_price" name="sale_price" step="1000" placeholder="e.g. 450000">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="sale_price_per_meter" class="form-label">Price per Meter (Auto)</label>
+                                    <input type="text" class="form-control" id="sale_price_per_meter" readonly placeholder="Calculated automatically">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Rental Pricing (Hidden by default) -->
+                        <div id="rental-pricing" class="pricing-option" style="display: none;">
+                            <h6 class="text-primary mb-3">Iranian Rental System</h6>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="rahn" class="form-label">رهن (Rahn/Deposit)</label>
+                                    <input type="number" class="form-control" id="rahn" name="rahn" step="1000000" placeholder="e.g. 400000000">
+                                    <small class="text-muted">In Toman</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="ejare" class="form-label">اجاره (Ejare/Monthly Rent)</label>
+                                    <input type="number" class="form-control" id="ejare" name="ejare" step="100000" placeholder="e.g. 2500000">
+                                    <small class="text-muted">In Toman</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Per Meter (Auto)</label>
+                                    <input type="text" class="form-control" id="rahn_per_meter" readonly placeholder="Rahn per m²">
+                                    <input type="text" class="form-control mt-1" id="ejare_per_meter" readonly placeholder="Ejare per m²">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="row">
                         <div class="col-md-3 mb-3">
-                            <label for="price" class="form-label">Price *</label>
-                            <input type="number" class="form-control" id="price" name="price" step="1000" required>
+                            <label for="square_feet" class="form-label">Square Meters *</label>
+                            <input type="number" class="form-control" id="square_feet" name="square_feet" min="0" placeholder="e.g. 120" required>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label for="bedrooms" class="form-label">Bedrooms</label>
-                            <input type="number" class="form-control" id="bedrooms" name="bedrooms" min="0" max="20">
+                            <input type="number" class="form-control" id="bedrooms" name="bedrooms" min="0" max="20" placeholder="e.g. 3">
                         </div>
                         <div class="col-md-3 mb-3">
                             <label for="bathrooms" class="form-label">Bathrooms</label>
-                            <input type="number" class="form-control" id="bathrooms" name="bathrooms" min="0" max="20" step="0.5">
+                            <input type="number" class="form-control" id="bathrooms" name="bathrooms" min="0" max="20" step="0.5" placeholder="e.g. 2">
                         </div>
                         <div class="col-md-3 mb-3">
-                            <label for="square_feet" class="form-label">Square Feet</label>
-                            <input type="number" class="form-control" id="square_feet" name="square_feet" min="0">
+                            <label for="parking_spaces" class="form-label">Parking</label>
+                            <input type="number" class="form-control" id="parking_spaces" name="parking_spaces" min="0" max="10" placeholder="e.g. 1">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="floors" class="form-label">Floors</label>
+                            <input type="number" class="form-control" id="floors" name="floors" min="1" max="50" value="1">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="units" class="form-label">Units</label>
+                            <input type="number" class="form-control" id="units" name="units" min="1" max="100" value="1">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="year_built" class="form-label">Year Built</label>
+                            <input type="number" class="form-control" id="year_built" name="year_built" min="1900" max="2024" placeholder="e.g. 2020">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="property_condition" class="form-label">Condition</label>
+                            <select class="form-select" id="property_condition" name="property_condition">
+                                <option value="excellent">Excellent</option>
+                                <option value="good" selected>Good</option>
+                                <option value="fair">Fair</option>
+                                <option value="needs_renovation">Needs Renovation</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="neighborhood" class="form-label">Neighborhood</label>
+                            <input type="text" class="form-control" id="neighborhood" name="neighborhood" placeholder="e.g. Downtown">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="agent_id" class="form-label">Assigned Agent</label>
+                            <select class="form-select" id="agent_id" name="agent_id">
+                                <option value="">Unassigned</option>
+                                {% for agent in agents %}
+                                <option value="{{ agent.id }}">{{ agent.name }} - {{ agent.specialization }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="agent_id" class="form-label">Assigned Agent</label>
-                        <select class="form-select" id="agent_id" name="agent_id">
-                            <option value="">Unassigned</option>
-                            {% for agent in agents %}
-                            <option value="{{ agent.id }}">{{ agent.name }} - {{ agent.specialization }}</option>
-                            {% endfor %}
-                        </select>
+                        <label for="property_features" class="form-label">Features</label>
+                        <input type="text" class="form-control" id="property_features" name="property_features" 
+                               placeholder="e.g. Swimming Pool, Gym, Parking, Balcony (comma-separated)">
                     </div>
                     
                     <div class="mb-3">
@@ -391,31 +517,104 @@
 
 {% block scripts %}
 <script>
-// Auto-format price input
-document.getElementById('price').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/,/g, '');
-    if (!isNaN(value) && value !== '') {
-        e.target.value = parseInt(value).toLocaleString();
-    }
-});
-
-// Calculate price per square foot
+// Iranian Real Estate Pricing System with Dynamic Forms
 document.addEventListener('DOMContentLoaded', function() {
-    const priceInput = document.getElementById('price');
-    const sqftInput = document.getElementById('square_feet');
+    const listingTypeRadios = document.querySelectorAll('input[name="listing_type"]');
+    const salePricing = document.getElementById('sale-pricing');
+    const rentalPricing = document.getElementById('rental-pricing');
     
-    function updatePricePerSqft() {
-        const price = parseFloat(priceInput.value.replace(/,/g, ''));
-        const sqft = parseFloat(sqftInput.value);
+    // Form inputs
+    const squareFeetInput = document.getElementById('square_feet');
+    const salePriceInput = document.getElementById('sale_price');
+    const salePricePerMeterInput = document.getElementById('sale_price_per_meter');
+    const rahnInput = document.getElementById('rahn');
+    const ejareInput = document.getElementById('ejare');
+    const rahnPerMeterInput = document.getElementById('rahn_per_meter');
+    const ejarePerMeterInput = document.getElementById('ejare_per_meter');
+    
+    // Switch between Sale and Rental pricing
+    listingTypeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'sale') {
+                salePricing.style.display = 'block';
+                rentalPricing.style.display = 'none';
+                salePriceInput.required = true;
+                rahnInput.required = false;
+                ejareInput.required = false;
+            } else {
+                salePricing.style.display = 'none';
+                rentalPricing.style.display = 'block';
+                salePriceInput.required = false;
+                rahnInput.required = true;
+                ejareInput.required = true;
+            }
+            // Recalculate when switching
+            calculatePrices();
+        });
+    });
+    
+    // Real-time price per meter calculations
+    function calculatePrices() {
+        const squareMeters = parseFloat(squareFeetInput.value) || 0;
         
-        if (price && sqft) {
-            const pricePerSqft = price / sqft;
-            console.log(`Price per sqft: $${pricePerSqft.toFixed(2)}`);
+        if (squareMeters > 0) {
+            // Calculate sale price per meter
+            const salePrice = parseFloat(salePriceInput.value) || 0;
+            if (salePrice > 0) {
+                const salePricePerMeter = (salePrice / squareMeters).toFixed(0);
+                salePricePerMeterInput.value = `$${parseInt(salePricePerMeter).toLocaleString()}/m²`;
+            } else {
+                salePricePerMeterInput.value = '';
+            }
+            
+            // Calculate rahn per meter
+            const rahn = parseFloat(rahnInput.value) || 0;
+            if (rahn > 0) {
+                const rahnPerMeter = (rahn / squareMeters).toFixed(0);
+                rahnPerMeterInput.value = `${parseInt(rahnPerMeter).toLocaleString()} تومان/متر`;
+            } else {
+                rahnPerMeterInput.value = '';
+            }
+            
+            // Calculate ejare per meter
+            const ejare = parseFloat(ejareInput.value) || 0;
+            if (ejare > 0) {
+                const ejarePerMeter = (ejare / squareMeters).toFixed(0);
+                ejarePerMeterInput.value = `${parseInt(ejarePerMeter).toLocaleString()} تومان/متر`;
+            } else {
+                ejarePerMeterInput.value = '';
+            }
+        } else {
+            // Clear all per-meter calculations
+            salePricePerMeterInput.value = '';
+            rahnPerMeterInput.value = '';
+            ejarePerMeterInput.value = '';
         }
     }
     
-    priceInput.addEventListener('input', updatePricePerSqft);
-    sqftInput.addEventListener('input', updatePricePerSqft);
+    // Add event listeners for real-time calculations
+    if (squareFeetInput) squareFeetInput.addEventListener('input', calculatePrices);
+    if (salePriceInput) salePriceInput.addEventListener('input', calculatePrices);
+    if (rahnInput) rahnInput.addEventListener('input', calculatePrices);
+    if (ejareInput) ejareInput.addEventListener('input', calculatePrices);
+    
+    // Auto-format large numbers with commas for Iranian currency
+    function formatIranianNumber(input) {
+        input.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/,/g, '');
+            if (!isNaN(value) && value !== '') {
+                e.target.value = parseInt(value).toLocaleString();
+            }
+        });
+    }
+    
+    // Apply formatting to relevant inputs
+    if (salePriceInput) formatIranianNumber(salePriceInput);
+    if (rahnInput) formatIranianNumber(rahnInput);
+    if (ejareInput) formatIranianNumber(ejareInput);
+    
+    // Initialize calculations
+    calculatePrices();
 });
 </script>
 {% endblock %}

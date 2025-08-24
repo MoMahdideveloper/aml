@@ -10,7 +10,8 @@ class Property:
                  property_condition: str = "good", heating_type: str = "",
                  cooling_type: str = "", rental_price: Optional[float] = None,
                  property_features: str = "", neighborhood: str = "",
-                 property_category: str = "residential"):
+                 property_category: str = "residential", listing_type: str = "sale",
+                 rahn: Optional[float] = None, ejare: Optional[float] = None):
         self.id = id
         self.title = title
         self.address = address
@@ -35,6 +36,11 @@ class Property:
         self.property_features = property_features  # comma-separated features
         self.neighborhood = neighborhood
         self.property_category = property_category  # residential, commercial, industrial
+        
+        # Iranian real estate pricing system
+        self.listing_type = listing_type  # "sale" or "rental"
+        self.rahn = rahn  # Deposit amount for rentals in Iranian system
+        self.ejare = ejare  # Monthly rent amount for rentals in Iranian system
         
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
@@ -63,6 +69,9 @@ class Property:
             'property_features': self.property_features,
             'neighborhood': self.neighborhood,
             'property_category': self.property_category,
+            'listing_type': self.listing_type,
+            'rahn': self.rahn,
+            'ejare': self.ejare,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }
@@ -85,6 +94,27 @@ class Property:
     def price_per_sqft(self) -> float:
         """Calculate price per square foot"""
         if self.square_feet > 0:
+            return self.price / self.square_feet
+        return 0
+    
+    @property
+    def rahn_per_meter(self) -> float:
+        """Calculate rahn (deposit) per square meter for rentals"""
+        if self.listing_type == "rental" and self.rahn and self.square_feet > 0:
+            return self.rahn / self.square_feet
+        return 0
+    
+    @property
+    def ejare_per_meter(self) -> float:
+        """Calculate ejare (monthly rent) per square meter for rentals"""
+        if self.listing_type == "rental" and self.ejare and self.square_feet > 0:
+            return self.ejare / self.square_feet
+        return 0
+    
+    @property
+    def sale_price_per_meter(self) -> float:
+        """Calculate sale price per square meter for sales"""
+        if self.listing_type == "sale" and self.price and self.square_feet > 0:
             return self.price / self.square_feet
         return 0
 
