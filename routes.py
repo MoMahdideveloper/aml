@@ -106,11 +106,10 @@ def properties():
 
 @app.route('/properties/add', methods=['POST'])
 def add_property():
-    """Add a new property"""
+    """Add a new property with Iranian pricing system support"""
     try:
         title = request.form.get('title')
         address = request.form.get('address')
-        price = float(request.form.get('price', 0))
         property_type = request.form.get('property_type')
         bedrooms = int(request.form.get('bedrooms', 0))
         bathrooms = int(request.form.get('bathrooms', 0))
@@ -119,9 +118,35 @@ def add_property():
         agent_id = request.form.get('agent_id')
         agent_id = int(agent_id) if agent_id else None
         
-        property_obj = data_manager.add_property(title, address, price, property_type, 
-                                               bedrooms, bathrooms, square_feet, 
-                                               description, "active", agent_id)
+        # Enhanced fields
+        year_built = request.form.get('year_built')
+        year_built = int(year_built) if year_built else None
+        parking_spaces = int(request.form.get('parking_spaces', 0))
+        floors = int(request.form.get('floors', 1))
+        units = int(request.form.get('units', 1))
+        property_condition = request.form.get('property_condition', 'good')
+        property_features = request.form.get('property_features', '')
+        neighborhood = request.form.get('neighborhood', '')
+        property_category = request.form.get('property_category', 'residential')
+        
+        # Iranian pricing system
+        listing_type = request.form.get('listing_type', 'sale')
+        
+        if listing_type == 'sale':
+            price = float(request.form.get('sale_price', 0))
+            rahn = None
+            ejare = None
+        else:  # rental
+            price = 0
+            rahn = float(request.form.get('rahn', 0)) if request.form.get('rahn') else None
+            ejare = float(request.form.get('ejare', 0)) if request.form.get('ejare') else None
+        
+        property_obj = data_manager.add_property(
+            title, address, price, property_type, bedrooms, bathrooms, square_feet, 
+            description, "active", agent_id, year_built, parking_spaces, floors, units,
+            property_condition, "", "", None, property_features, neighborhood, 
+            property_category, listing_type, rahn, ejare
+        )
         
         flash(f'Property "{title}" added successfully!', 'success')
     except Exception as e:

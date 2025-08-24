@@ -31,36 +31,37 @@ class DataManager:
         self.add_agent("Lisa Rodriguez", "lisa.rodriguez@realestate.com", "+1-555-0103", 
                       "First-Time Buyers", "Dedicated to helping first-time homebuyers navigate the market")
 
-        # Create sample properties with enhanced data
+        # Create sample properties with enhanced data (mix of sale and rental)
         self.add_property("Modern Downtown Condo", "123 Main St, Downtown", 450000, 
                          "Condo", 2, 2, 1200, 
                          "Beautiful modern condo with city views, granite countertops, and hardwood floors", 
                          "active", 1, 2018, 1, 1, 1, "excellent", "Central Air", "Central Air", 
-                         2800, "Granite Countertops, Hardwood Floors, City Views, Balcony", "Downtown", "residential")
+                         None, "Granite Countertops, Hardwood Floors, City Views, Balcony", "Downtown", "residential", "sale")
         
         self.add_property("Suburban Family Home", "456 Oak Avenue, Suburbia", 650000, 
                          "House", 4, 3, 2800, 
                          "Spacious family home with large backyard, updated kitchen, and 3-car garage", 
                          "active", 1, 2010, 3, 2, 1, "good", "Gas", "Central Air",
-                         None, "Updated Kitchen, Large Backyard, 3-Car Garage, Walk-in Closets", "Suburbia", "residential")
+                         None, "Updated Kitchen, Large Backyard, 3-Car Garage, Walk-in Closets", "Suburbia", "residential", "sale")
         
         self.add_property("Luxury Waterfront Estate", "789 Lake Drive, Waterfront", 1250000, 
                          "House", 5, 4, 4500, 
                          "Stunning waterfront estate with private dock, infinity pool, and panoramic lake views", 
                          "active", 1, 2015, 4, 3, 1, "excellent", "Radiant Floor", "Central Air",
-                         None, "Private Dock, Infinity Pool, Lake Views, Wine Cellar, Smart Home", "Waterfront", "residential")
+                         None, "Private Dock, Infinity Pool, Lake Views, Wine Cellar, Smart Home", "Waterfront", "residential", "sale")
         
-        self.add_property("Urban Loft", "321 Industrial Blvd, Arts District", 380000, 
+        # Add rental property with Iranian pricing system
+        self.add_property("Urban Loft", "321 Industrial Blvd, Arts District", 0, 
                          "Loft", 1, 1, 950, 
                          "Converted industrial loft with exposed brick, high ceilings, and modern amenities", 
                          "active", 2, 1995, 1, 1, 1, "good", "Electric", "Window Units",
-                         2200, "Exposed Brick, High Ceilings, Industrial Design, Artist Space", "Arts District", "residential")
+                         None, "Exposed Brick, High Ceilings, Industrial Design, Artist Space", "Arts District", "residential", "rental", 400000000, 2500000)
         
         self.add_property("Starter Home", "654 Pine Street, Neighborhood", 285000, 
                          "House", 3, 2, 1450, 
                          "Perfect starter home with updated appliances, new roof, and fenced yard", 
                          "active", 3, 2005, 2, 1, 1, "good", "Gas", "Central Air",
-                         1800, "Updated Appliances, New Roof, Fenced Yard, Quiet Street", "Neighborhood", "residential")
+                         None, "Updated Appliances, New Roof, Fenced Yard, Quiet Street", "Neighborhood", "residential", "sale")
 
         # Create sample customers
         self.add_customer("John Smith", "john.smith@email.com", "+1-555-1001", 
@@ -96,12 +97,13 @@ class DataManager:
                     floors: int = 1, units: int = 1, property_condition: str = "good",
                     heating_type: str = "", cooling_type: str = "", 
                     rental_price: float = None, property_features: str = "",
-                    neighborhood: str = "", property_category: str = "residential") -> Property:
+                    neighborhood: str = "", property_category: str = "residential",
+                    listing_type: str = "sale", rahn: float = None, ejare: float = None) -> Property:
         property_obj = Property(self.next_property_id, title, address, price, property_type, 
                                bedrooms, bathrooms, square_feet, description, status, agent_id,
                                year_built, parking_spaces, floors, units, property_condition,
                                heating_type, cooling_type, rental_price, property_features,
-                               neighborhood, property_category)
+                               neighborhood, property_category, listing_type, rahn, ejare)
         self.properties[self.next_property_id] = property_obj
         self.next_property_id += 1
         
