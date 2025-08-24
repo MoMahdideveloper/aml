@@ -22,7 +22,8 @@ def dashboard():
     
     # Get agent names for tasks (SQLAlchemy relationships handle this)
     for task in pending_tasks:
-        task.agent_name = task.agent.name if task.agent else "Unknown Agent"
+        # Create a temporary attribute for display purposes
+        setattr(task, 'agent_name', task.agent.name if task.agent else "Unknown Agent")
     
     return render_template('dashboard.html', 
                          stats=stats, 
@@ -79,7 +80,7 @@ def properties():
     
     # Add agent names to properties (SQLAlchemy relationships handle this)
     for prop in properties:
-        prop.agent_name = prop.agent.name if prop.agent else "Unassigned"
+        setattr(prop, 'agent_name', prop.agent.name if prop.agent else "Unassigned")
     
     return render_template('properties.html', 
                          properties=properties, 
@@ -141,6 +142,11 @@ def add_property():
             rahn = float(request.form.get('rahn', 0)) if request.form.get('rahn') else None
             ejare = float(request.form.get('ejare', 0)) if request.form.get('ejare') else None
         
+        # Validate required fields
+        if not title or not address or not property_type:
+            flash('Title, address, and property type are required fields.', 'error')
+            return redirect(url_for('properties'))
+        
         property_obj = database_service.add_property(
             title, address, price, property_type, bedrooms, bathrooms, square_feet, 
             description, "active", agent_id, year_built, parking_spaces, floors, units,
@@ -161,9 +167,9 @@ def agents():
     
     # Calculate agent statistics using SQLAlchemy relationships
     for agent in agents:
-        agent.active_listings = len([p for p in agent.properties if p.status == "active"])
-        agent.total_deals = len(agent.deals)
-        agent.pending_tasks = len([t for t in agent.tasks if t.status == "pending"])
+        setattr(agent, 'active_listings', len([p for p in agent.properties if p.status == "active"]))
+        setattr(agent, 'total_deals', len(agent.deals))
+        setattr(agent, 'pending_tasks', len([t for t in agent.tasks if t.status == "pending"]))
     
     return render_template('agents.html', agents=agents)
 
@@ -176,6 +182,11 @@ def add_agent():
         phone = request.form.get('phone')
         specialization = request.form.get('specialization', '')
         bio = request.form.get('bio', '')
+        
+        # Validate required fields
+        if not name or not email or not phone:
+            flash('Name, email, and phone are required fields.', 'error')
+            return redirect(url_for('agents'))
         
         agent = database_service.add_agent(name, email, phone, specialization, bio)
         flash(f'Agent "{name}" added successfully!', 'success')
@@ -191,8 +202,8 @@ def customers():
     
     # Add deal and interaction counts using SQLAlchemy relationships
     for customer in customers:
-        customer.total_deals = len(customer.deals)
-        customer.active_deals = len([d for d in customer.deals if d.status not in ["closed_won", "closed_lost"]])
+        setattr(customer, 'total_deals', len(customer.deals))
+        setattr(customer, 'active_deals', len([d for d in customer.deals if d.status not in ["closed_won", "closed_lost"]]))
     
     return render_template('customers.html', customers=customers)
 
@@ -209,6 +220,11 @@ def add_customer():
         preferred_bathrooms = int(request.form.get('preferred_bathrooms', 0))
         preferred_type = request.form.get('preferred_type', '')
         location_preference = request.form.get('location_preference', '')
+        
+        # Validate required fields
+        if not name or not email or not phone:
+            flash('Name, email, and phone are required fields.', 'error')
+            return redirect(url_for('customers'))
         
         customer = database_service.add_customer(name, email, phone, budget_min, budget_max,
                                                preferred_bedrooms, preferred_bathrooms,
@@ -238,9 +254,17 @@ def deals():
 def add_deal():
     """Add a new deal"""
     try:
-        property_id = int(request.form.get('property_id'))
-        customer_id = int(request.form.get('customer_id'))
-        agent_id = int(request.form.get('agent_id'))
+        property_id_str = request.form.get('property_id')
+        customer_id_str = request.form.get('customer_id')
+        agent_id_str = request.form.get('agent_id')
+        
+        if not property_id_str or not customer_id_str or not agent_id_str:
+            flash('Property, customer, and agent are required fields.', 'error')
+            return redirect(url_for('deals'))
+        
+        property_id = int(property_id_str)
+        customer_id = int(customer_id_str)
+        agent_id = int(agent_id_str)
         status = request.form.get('status', 'prospecting')
         offer_amount = float(request.form.get('offer_amount', 0))
         
@@ -258,9 +282,15 @@ def update_deal(deal_id):
         status = request.form.get('status')
         offer_amount = request.form.get('offer_amount')
         
-        updates = {'status': status}
+        updates = {}
+        if status:
+            updates['status'] = status
         if offer_amount:
-            updates['offer_amount'] = float(offer_amount)
+            try:
+                updates['offer_amount'] = float(offer_amount)
+            except ValueError:
+                flash('Invalid offer amount format.', 'error')
+                return redirect(url_for('deals'))
         
         deal = database_service.update_deal(deal_id, **updates)
         if deal:
@@ -292,7 +322,12 @@ def add_task():
     try:
         title = request.form.get('title')
         description = request.form.get('description')
-        agent_id = int(request.form.get('agent_id'))
+        agent_id_str = request.form.get('agent_id')
+        if not agent_id_str:
+            flash('Agent is required for the task.', 'error')
+            return redirect(url_for('tasks'))
+        
+        agent_id = int(agent_id_str)
         priority = request.form.get('priority', 'medium')
         due_date_str = request.form.get('due_date')
         
@@ -300,7 +335,12 @@ def add_task():
         if due_date_str:
             due_date = datetime.strptime(due_date_str, '%Y-%m-%d')
         
-        task = database_service.add_task(title, description, agent_id, priority, due_date)
+        # Validate required fields
+        if not title or not description:
+            flash('Title and description are required fields.', 'error')
+            return redirect(url_for('tasks'))
+        
+        task = database_service.add_task(title, description, agent_id, priority, "pending", due_date)
         flash('Task added successfully!', 'success')
     except Exception as e:
         flash(f'Error adding task: {str(e)}', 'error')

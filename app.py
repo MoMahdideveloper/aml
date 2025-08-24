@@ -17,4 +17,5 @@ db = init_db(app)
 from routes import *
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Note: Database tables are created through Flask-Migrate when needed
+    pass
