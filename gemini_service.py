@@ -234,79 +234,158 @@ class GeminiService:
 
     def analyze_market_trends(self, properties: List[Property]) -> str:
         """
-        Analyze market trends based on available properties
+        Analyze market trends based on available properties with timeout handling
         """
         try:
-            # If no client available, return basic analysis
-            if not self.client:
-                return "Market analysis unavailable - AI service not configured."
-                
-            # Prepare property data for analysis
+            # If no client available or no properties, return manual analysis
+            if not self.client or not properties:
+                return self._generate_manual_market_analysis(properties)
+            
+            # Use a shorter, more focused prompt to reduce API call time
             property_summary = []
-            for prop in properties:
+            for prop in properties[:20]:  # Limit to first 20 properties to reduce processing time
                 property_summary.append(f"{prop.property_type}: ${prop.price:,} - {prop.bedrooms}bed/{prop.bathrooms}bath - {prop.square_feet}sqft")
 
             properties_text = "\n".join(property_summary)
 
+            # Shorter, more focused prompt
             prompt = f"""
-            You are a real estate market analyst. Analyze the following {len(properties)} properties and provide specific, actionable market insights:
+            Analyze these {len(property_summary)} real estate properties. Be concise and specific:
 
-            Properties:
             {properties_text}
 
-            Provide a detailed analysis with specific numbers and percentages covering:
+            Provide a brief analysis with:
+            1. Average prices by property type
+            2. Price per square foot ranges
+            3. Most common configurations
+            4. Key market insights
+            5. Investment recommendations
 
-            **PRICING ANALYSIS:**
-            - Average price by property type (House, Condo, Townhouse, etc.)
-            - Price per square foot by type
-            - Price ranges and distribution
-
-            **MARKET TRENDS:**
-            - Most common bedroom/bathroom configurations
-            - Square footage trends
-            - Geographic price variations
-
-            **INVESTMENT INSIGHTS:**
-            - Best value properties (price per sq ft)
-            - Rental potential properties
-            - Emerging opportunities
-
-            **KEY METRICS:**
-            - Market statistics with specific numbers
-            - Comparative analysis between property types
-            - Recommendations for buyers/investors
-
-            Format your response with clear headings and bullet points. Include specific dollar amounts, percentages, and actionable insights that real estate professionals can use immediately.
+            Keep response under 500 words with specific numbers and percentages.
             """
 
-            response = self.client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt
-            )
-
-            return response.text if response.text else "Market analysis unavailable at this time."
+            # Add timeout to the API call
+            import signal
+            import time
+            
+            def timeout_handler(signum, frame):
+                raise TimeoutError("API call timed out")
+            
+            # Set a 15-second timeout for the API call
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(15)
+            
+            try:
+                response = self.client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt
+                )
+                signal.alarm(0)  # Cancel the alarm
+                
+                if response.text:
+                    return response.text
+                else:
+                    return self._generate_manual_market_analysis(properties)
+                    
+            except TimeoutError:
+                signal.alarm(0)  # Cancel the alarm
+                self.logger.warning("Gemini API call timed out, using manual analysis")
+                return self._generate_manual_market_analysis(properties)
 
         except Exception as e:
             self.logger.error(f"Error analyzing market trends: {e}")
-            return f"""
-            **Market Analysis Error**
+            return self._generate_manual_market_analysis(properties)
+
+    def _generate_manual_market_analysis(self, properties: List[Property]) -> str:
+        """
+        Generate a manual market analysis when AI is unavailable
+        """
+        if not properties:
+            return """
+            **Market Analysis**
             
-            Unable to generate market analysis at this time. This could be due to:
-            - AI service connectivity issues
-            - Insufficient data (need more properties)
-            - API rate limits
-            
-            **Current Status:**
-            - Properties in database: {len(properties)}
-            - Recommended minimum: 10+ properties
-            
-            **Suggestions:**
-            1. Add more property listings to your database
-            2. Check your Gemini API key configuration
-            3. Try refreshing the analysis in a few minutes
-            
-            Error details: {str(e)}
+            No properties available for analysis. Add some property listings to get market insights.
             """
+        
+        # Calculate basic statistics
+        total_properties = len(properties)
+        
+        # Group by property type
+        type_stats = {}
+        for prop in properties:
+            prop_type = prop.property_type
+            if prop_type not in type_stats:
+                type_stats[prop_type] = {'prices': [], 'sqft': [], 'bedrooms': [], 'count': 0}
+            
+            type_stats[prop_type]['prices'].append(prop.price)
+            type_stats[prop_type]['sqft'].append(prop.square_feet)
+            type_stats[prop_type]['bedrooms'].append(prop.bedrooms)
+            type_stats[prop_type]['count'] += 1
+        
+        # Overall statistics
+        all_prices = [p.price for p in properties if p.price > 0]
+        all_sqft = [p.square_feet for p in properties if p.square_feet > 0]
+        
+        avg_price = sum(all_prices) / len(all_prices) if all_prices else 0
+        min_price = min(all_prices) if all_prices else 0
+        max_price = max(all_prices) if all_prices else 0
+        
+        avg_sqft = sum(all_sqft) / len(all_sqft) if all_sqft else 0
+        avg_price_per_sqft = avg_price / avg_sqft if avg_sqft > 0 else 0
+        
+        # Most common bedroom count
+        bedroom_counts = {}
+        for prop in properties:
+            bedrooms = prop.bedrooms
+            bedroom_counts[bedrooms] = bedroom_counts.get(bedrooms, 0) + 1
+        most_common_bedrooms = max(bedroom_counts.items(), key=lambda x: x[1])[0] if bedroom_counts else 0
+        
+        analysis = f"""
+**MARKET ANALYSIS REPORT**
+
+**OVERVIEW:**
+• Total Properties Analyzed: {total_properties}
+• Average Price: ${avg_price:,.0f}
+• Price Range: ${min_price:,.0f} - ${max_price:,.0f}
+• Average Size: {avg_sqft:,.0f} sq ft
+• Average Price/Sq Ft: ${avg_price_per_sqft:.0f}
+
+**BY PROPERTY TYPE:**
+"""
+        
+        for prop_type, stats in type_stats.items():
+            if stats['prices']:
+                type_avg_price = sum(stats['prices']) / len(stats['prices'])
+                type_avg_sqft = sum(stats['sqft']) / len(stats['sqft']) if stats['sqft'] else 0
+                type_price_per_sqft = type_avg_price / type_avg_sqft if type_avg_sqft > 0 else 0
+                
+                analysis += f"""
+• {prop_type.title()}: {stats['count']} properties
+  - Average Price: ${type_avg_price:,.0f}
+  - Average Size: {type_avg_sqft:,.0f} sq ft
+  - Price/Sq Ft: ${type_price_per_sqft:.0f}
+"""
+
+        analysis += f"""
+
+**MARKET INSIGHTS:**
+• Most Common Configuration: {most_common_bedrooms} bedrooms
+• Property Type Distribution: {', '.join([f"{k}: {v['count']}" for k, v in type_stats.items()])}
+
+**INVESTMENT OPPORTUNITIES:**
+• Properties under ${avg_price * 0.8:,.0f} may offer good value
+• {most_common_bedrooms}-bedroom properties are in high demand
+• Average price per sq ft of ${avg_price_per_sqft:.0f} can guide pricing decisions
+
+**RECOMMENDATIONS:**
+1. Focus on {most_common_bedrooms}-bedroom properties for broader appeal
+2. Consider properties priced below ${avg_price:,.0f} for potential value
+3. Target price per sq ft around ${avg_price_per_sqft:.0f} for competitive pricing
+
+*Note: This analysis is based on your current property database. For more detailed AI-powered insights, ensure your Gemini API is properly configured.*
+"""
+        
+        return analysis
 
 # Global Gemini service instance
 gemini_service = GeminiService()
