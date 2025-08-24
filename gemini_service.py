@@ -8,8 +8,15 @@ from vector_service import vector_service
 
 class GeminiService:
     def __init__(self):
-        self.client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", "default_key"))
-        self.logger = logging.getLogger(__name__)
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key or api_key == "default_key":
+            # Use a mock/fallback mode instead of failing
+            self.client = None
+            self.logger = logging.getLogger(__name__)
+            self.logger.warning("GEMINI_API_KEY not found, running in fallback mode")
+        else:
+            self.client = genai.Client(api_key=api_key)
+            self.logger = logging.getLogger(__name__)
 
     def get_property_recommendations(self, customer: Customer, properties: List[Property]) -> List[Dict[str, Any]]:
         """
@@ -17,6 +24,11 @@ class GeminiService:
         """
         try:
             self.logger.info(f"Getting recommendations for customer {customer.name} from {len(properties)} properties")
+            
+            # If no client available, use fallback immediately
+            if not self.client:
+                self.logger.info("No Gemini client available, using fallback recommendations")
+                return self._create_fallback_recommendations(customer, properties[:10])
             
             # Use vector service for semantic search
             vector_recommendations = vector_service.search_properties(
@@ -184,6 +196,10 @@ class GeminiService:
         Generate an enhanced property description using AI
         """
         try:
+            # If no client available, return original description
+            if not self.client:
+                return property_data.get('description', '')
+                
             prompt = f"""
             Create an engaging and professional property description based on the following details:
             
@@ -221,6 +237,10 @@ class GeminiService:
         Analyze market trends based on available properties
         """
         try:
+            # If no client available, return basic analysis
+            if not self.client:
+                return "Market analysis unavailable - AI service not configured."
+                
             # Prepare property data for analysis
             property_summary = []
             for prop in properties:
