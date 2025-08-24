@@ -1,0 +1,320 @@
+Love this idea. Here’s a clean way to add an **“AI Autofill”** feature so users can paste a single free-text description and have Gemini fill the structured fields for **Properties** or **Customers**.
+
+# Overview (UX + flow)
+
+1. On **Add Property / Add Customer** forms, add a big textarea: “Paste details here…”.
+2. Add a button **“Autofill with AI”**.
+3. When clicked, it POSTs the text to a small API (`/api/ai/parse/property` or `/api/ai/parse/customer`).
+4. Backend calls **Gemini** with a *strict JSON* prompt, parses & validates the result, and returns a typed JSON payload + confidence + missing fields.
+5. Frontend maps that JSON back into the form inputs (user can edit before saving).
+
+---
+
+# Backend changes
+
+## 1) Add lightweight schemas (server-side validation)
+
+Create `schemas.py` to coerce/validate what Gemini returns (using Pydantic to keep it robust):
+
+```py
+# schemas.py
+from typing import Optional, List
+from pydantic import BaseModel, Field, validator
+
+class PropertyAI(BaseModel):
+    title: Optional[str] = None
+    address: Optional[str] = None
+    price: Optional[float] = None
+    property_type: Optional[str] = None
+    bedrooms: Optional[int] = None
+    bathrooms: Optional[int] = None
+    square_feet: Optional[int] = None
+    description: Optional[str] = None
+    status: Optional[str] = "active"
+    agent_id: Optional[int] = None
+    year_built: Optional[int] = None
+    parking_spaces: Optional[int] = 0
+    floors: Optional[int] = 1
+    units: Optional[int] = 1
+    property_condition: Optional[str] = "good"
+    heating_type: Optional[str] = None
+    cooling_type: Optional[str] = None
+    rental_price: Optional[float] = None
+    property_features: Optional[List[str]] = None
+    neighborhood: Optional[str] = None
+    property_category: Optional[str] = "residential"
+    listing_type: Optional[str] = "sale"
+    rahn: Optional[float] = None  # for deposit (Iran market)
+    ejare: Optional[float] = None # for monthly rent (Iran market)
+
+    @validator("property_features", pre=True)
+    def split_features(cls, v):
+        if isinstance(v, str):
+            return [x.strip() for x in v.split(",") if x.strip()]
+        return v
+
+class CustomerAI(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    preferences: Optional[str] = None
+    budget_min: Optional[float] = None
+    budget_max: Optional[float] = None
+    desired_neighborhoods: Optional[List[str]] = None
+    desired_property_type: Optional[str] = None
+    bedrooms_min: Optional[int] = None
+    bathrooms_min: Optional[int] = None
+
+    @validator("desired_neighborhoods", pre=True)
+    def split_neighborhoods(cls, v):
+        if isinstance(v, str):
+            return [x.strip() for x in v.split(",") if x.strip()]
+        return v
+```
+
+## 2) Extend `gemini_service.py` (structured extraction)
+
+Add a method that asks Gemini for **JSON only** and then `json.loads` it (with fallbacks):
+
+````py
+# gemini_service.py (add imports at top)
+import json, re
+from schemas import PropertyAI, CustomerAI
+
+JSON_INSTRUCTIONS = """
+Return ONLY valid JSON. Do not include backticks or prose.
+Numbers must be numbers. Booleans must be booleans. Use null if unknown.
+"""
+
+PROPERTY_SCHEMA_HINT = {
+  "title": "string or null",
+  "address": "string or null",
+  "price": 0,
+  "property_type": "string or null",
+  "bedrooms": 0,
+  "bathrooms": 0,
+  "square_feet": 0,
+  "description": "string or null",
+  "status": "active|pending|sold|null",
+  "agent_id": 0,
+  "year_built": 0,
+  "parking_spaces": 0,
+  "floors": 1,
+  "units": 1,
+  "property_condition": "excellent|good|fair|needs_renovation|null",
+  "heating_type": "string or null",
+  "cooling_type": "string or null",
+  "rental_price": 0,
+  "property_features": ["comma, separated, items"],
+  "neighborhood": "string or null",
+  "property_category": "residential|commercial|null",
+  "listing_type": "sale|rent|null",
+  "rahn": 0,
+  "ejare": 0
+}
+
+CUSTOMER_SCHEMA_HINT = {
+  "name": "string or null",
+  "email": "string or null",
+  "phone": "string or null",
+  "preferences": "string or null",
+  "budget_min": 0,
+  "budget_max": 0,
+  "desired_neighborhoods": ["comma, separated"],
+  "desired_property_type": "string or null",
+  "bedrooms_min": 0,
+  "bathrooms_min": 0
+}
+
+class GeminiService:
+    # ... keep __init__ as-is
+
+    def _extract_json(self, prompt: str) -> dict:
+        if not self.client:
+            # Fallback: try to find key/value pairs as a naive baseline
+            return {}
+        response = self.client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+        text = (getattr(response, "text", None) or "").strip()
+        # Remove code fences if any
+        text = re.sub(r"^```(?:json)?|```$", "", text, flags=re.MULTILINE).strip()
+        try:
+            return json.loads(text)
+        except Exception:
+            self.logger.warning("Failed to parse strict JSON; returning empty dict")
+            return {}
+
+    def extract_property_from_text(self, blob: str) -> dict:
+        prompt = f"""
+You are an information extraction assistant for real estate listings.
+Extract all possible fields from the text below and output a single JSON object
+matching this example schema (values can be null when unknown):
+
+{json.dumps(PROPERTY_SCHEMA_HINT, ensure_ascii=False, indent=2)}
+
+{JSON_INSTRUCTIONS}
+
+TEXT:
+{blob}
+"""
+        data = self._extract_json(prompt)
+        model = PropertyAI(**data or {})
+        payload = model.dict()
+        missing = [k for k, v in payload.items() if v in (None, [], "")]
+        return {"entity": "property", "data": payload, "missing": missing, "confidence": 0.75 if data else 0.3}
+
+    def extract_customer_from_text(self, blob: str) -> dict:
+        prompt = f"""
+You are an information extraction assistant for real estate customers.
+Extract all possible fields from the text below and output a single JSON object
+matching this example schema (values can be null when unknown):
+
+{json.dumps(CUSTOMER_SCHEMA_HINT, ensure_ascii=False, indent=2)}
+
+{JSON_INSTRUCTIONS}
+
+TEXT:
+{blob}
+"""
+        data = self._extract_json(prompt)
+        model = CustomerAI(**data or {})
+        payload = model.dict()
+        missing = [k for k, v in payload.items() if v in (None, [], "")]
+        return {"entity": "customer", "data": payload, "missing": missing, "confidence": 0.75 if data else 0.3}
+````
+
+## 3) Add two API routes
+
+In `routes.py` add endpoints to call these extractors:
+
+```py
+# routes.py (add near other imports)
+from flask import request, jsonify
+from gemini_service import gemini_service
+
+@app.route('/api/ai/parse/property', methods=['POST'])
+def ai_parse_property():
+    """
+    Body JSON: { "text": "<free form description>" }
+    Returns: { entity, data: {...}, missing: [...], confidence: float }
+    """
+    blob = (request.json or {}).get("text", "").strip()
+    if not blob:
+        return jsonify({"error": "text is required"}), 400
+    result = gemini_service.extract_property_from_text(blob)
+    return jsonify(result)
+
+@app.route('/api/ai/parse/customer', methods=['POST'])
+def ai_parse_customer():
+    blob = (request.json or {}).get("text", "").strip()
+    if not blob:
+        return jsonify({"error": "text is required"}), 400
+    result = gemini_service.extract_customer_from_text(blob)
+    return jsonify(result)
+```
+
+> Note: If you later add CSRF protection, mark these API routes as exempt or use a token header.
+
+---
+
+# Frontend changes
+
+## 1) Add the “AI text” field + button (example for `templates/properties.html`)
+
+Place this above your existing form inputs:
+
+```html
+<div class="card">
+  <h3>Paste details (AI Autofill)</h3>
+  <textarea id="ai_blob" rows="6" placeholder="Paste property info here..."></textarea>
+  <button type="button" id="ai_autofill_btn">Autofill with AI</button>
+  <div id="ai_autofill_status" class="muted"></div>
+</div>
+```
+
+## 2) Wire it in `static/js/main.js`
+
+Map returned keys to your existing input `name`/`id` attributes:
+
+```js
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('ai_autofill_btn');
+  if (!btn) return;
+
+  btn.addEventListener('click', async () => {
+    const text = document.getElementById('ai_blob').value.trim();
+    const status = document.getElementById('ai_autofill_status');
+    if (!text) { status.textContent = "Please paste some text."; return; }
+
+    status.textContent = "Asking AI...";
+    try {
+      const res = await fetch('/api/ai/parse/property', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error || "Request failed");
+
+      // Map JSON to form fields
+      const d = payload.data || {};
+      const map = {
+        title: 'title', address: 'address', price: 'price',
+        property_type: 'property_type', bedrooms: 'bedrooms', bathrooms: 'bathrooms',
+        square_feet: 'square_feet', description: 'description',
+        status: 'status', agent_id: 'agent_id', year_built: 'year_built',
+        parking_spaces: 'parking_spaces', floors: 'floors', units: 'units',
+        property_condition: 'property_condition', heating_type: 'heating_type',
+        cooling_type: 'cooling_type', rental_price: 'rental_price',
+        neighborhood: 'neighborhood', property_category: 'property_category',
+        listing_type: 'listing_type', rahn: 'rahn', ejare: 'ejare'
+      };
+
+      Object.entries(map).forEach(([k, id]) => {
+        if (d[k] !== null && d[k] !== undefined && d[k] !== '') {
+          const el = document.getElementById(id) || document.querySelector(`[name="${id}"]`);
+          if (!el) return;
+          if (Array.isArray(d[k])) {
+            el.value = d[k].join(', ');
+          } else {
+            el.value = d[k];
+          }
+        }
+      });
+
+      status.textContent = `Autofilled (confidence ~${Math.round((payload.confidence||0)*100)}%). Missing: ${payload.missing?.join(', ') || '—'}`;
+    } catch (e) {
+      status.textContent = "AI autofill failed. Please try again.";
+      console.error(e);
+    }
+  });
+});
+```
+
+> For **customers**, replicate the textarea/button and call `/api/ai/parse/customer`, with a different field map.
+
+---
+
+# Prompting & data quality tips
+
+* Keep the **JSON-only** instruction. Models sometimes add prose; the cleanup step strips code fences and attempts `json.loads`.
+* You can raise reliability by:
+
+  * Adding explicit **examples** in the prompt (few-shot).
+  * Returning a **schema version** and **confidence** from the model.
+  * Enforcing **structured output** features when you’re ready (the Google SDK supports schema-guided output; for now we used strict JSON prompting + Pydantic validation, which is solid and simple).
+
+---
+
+# Security & performance notes
+
+* Ensure `GEMINI_API_KEY` is set in env; show a user message if not (fallback will return empty data with low confidence).
+* Consider **rate limiting** the AI endpoints if this is public.
+* Log minimal info; **don’t log raw user text** in production (PII).
+* If your forms later add CSRF, exempt these JSON POST endpoints or adopt token headers.
+
+---
+
+If you want, I can go ahead and **drop these snippets into your project** (adding `schemas.py`, updating `gemini_service.py`, `routes.py`, and small changes to `templates` + `main.js`) so it’s ready to run.

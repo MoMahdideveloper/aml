@@ -345,6 +345,28 @@
             </div>
             <form method="POST" action="{{ url_for('add_property') }}">
                 <div class="modal-body">
+                    <!-- AI Autofill Section -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-magic me-2"></i>
+                                AI Autofill
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-3">Paste property details and let AI automatically fill the form fields for you.</p>
+                            <textarea id="ai_blob" class="form-control mb-3" rows="4" 
+                                placeholder="Paste property info here... e.g., 'Modern 3-bedroom house in downtown, 150 sqm, built in 2020, asking $450,000'"></textarea>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <button type="button" id="ai_autofill_btn" class="btn btn-info">
+                                    <i class="fas fa-wand-magic-sparkles me-1"></i>
+                                    Autofill with AI
+                                </button>
+                                <div id="ai_autofill_status" class="text-muted small"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="row">
                         <div class="col-md-8 mb-3">
                             <label for="title" class="form-label">Property Title *</label>
