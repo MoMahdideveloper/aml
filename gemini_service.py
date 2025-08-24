@@ -3,7 +3,7 @@ import logging
 from typing import List, Dict, Any
 from google import genai
 from google.genai import types
-from models import Property, Customer
+from sqlalchemy_models import Property, Customer
 from vector_service import vector_service
 
 class GeminiService:

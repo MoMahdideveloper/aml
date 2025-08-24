@@ -1,8 +1,8 @@
 import logging
 from typing import List
 from vector_service import vector_service
-from data_manager import data_manager
-from models import Property
+from database_service import database_service
+from sqlalchemy_models import Property
 
 class VectorInitializer:
     """
@@ -20,7 +20,7 @@ class VectorInitializer:
             self.logger.info("Initializing vector database...")
             
             # Get all properties from data manager
-            properties = data_manager.get_properties()
+            properties = database_service.get_properties()
             
             if not properties:
                 self.logger.warning("No properties found to index")
@@ -46,7 +46,7 @@ class VectorInitializer:
         """
         try:
             if properties is None:
-                properties = data_manager.get_properties()
+                properties = database_service.get_properties()
             
             self.logger.info(f"Refreshing property index with {len(properties)} properties")
             return vector_service.index_properties(properties)
@@ -63,13 +63,13 @@ class VectorInitializer:
             self.logger.info("Testing vector search functionality...")
             
             # Get a sample customer
-            customers = data_manager.get_customers()
+            customers = database_service.get_customers()
             if not customers:
                 self.logger.warning("No customers found for testing")
                 return False
             
             customer = customers[0]
-            properties = data_manager.get_properties()
+            properties = database_service.get_properties()
             
             if not properties:
                 self.logger.warning("No properties found for testing")

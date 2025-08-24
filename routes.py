@@ -1,6 +1,6 @@
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from app import app
-from data_manager import data_manager
+from database_service import database_service
 from gemini_service import gemini_service
 from vector_init import ensure_vector_database_ready, vector_initializer
 from datetime import datetime
@@ -9,20 +9,20 @@ import logging
 @app.route('/')
 def dashboard():
     """Main dashboard with key metrics and recent activities"""
-    stats = data_manager.get_dashboard_stats()
-    recent_properties = data_manager.get_properties()[:5]
-    recent_deals = data_manager.get_deals()[:5]
-    pending_tasks = data_manager.get_tasks(status="pending")[:5]
+    stats = database_service.get_dashboard_stats()
+    recent_properties = stats['recent_properties']
+    recent_deals = stats['recent_deals']
+    pending_tasks = database_service.get_tasks(status="pending")[:5]
     
-    # Get property and customer names for deals
+    # Get property and customer names for deals (SQLAlchemy relationships handle this)
     for deal in recent_deals:
-        deal.property_name = data_manager.get_property(deal.property_id).title if data_manager.get_property(deal.property_id) else "Unknown Property"
-        deal.customer_name = data_manager.get_customer(deal.customer_id).name if data_manager.get_customer(deal.customer_id) else "Unknown Customer"
-        deal.agent_name = data_manager.get_agent(deal.agent_id).name if data_manager.get_agent(deal.agent_id) else "Unknown Agent"
+        deal.property_name = deal.property.title if deal.property else "Unknown Property"
+        deal.customer_name = deal.customer.name if deal.customer else "Unknown Customer"
+        deal.agent_name = deal.agent.name if deal.agent else "Unknown Agent"
     
-    # Get agent names for tasks
+    # Get agent names for tasks (SQLAlchemy relationships handle this)
     for task in pending_tasks:
-        task.agent_name = data_manager.get_agent(task.agent_id).name if data_manager.get_agent(task.agent_id) else "Unknown Agent"
+        task.agent_name = task.agent.name if task.agent else "Unknown Agent"
     
     return render_template('dashboard.html', 
                          stats=stats, 
@@ -50,7 +50,7 @@ def properties():
     agent_id = request.args.get('agent_id', type=int)
     
     # Get filtered properties
-    properties = data_manager.get_properties(
+    properties = database_service.get_properties(
         search=search_query,
         property_type=property_type,
         property_category=property_category,
@@ -68,18 +68,18 @@ def properties():
     )
     
     # Get agents for dropdown
-    agents = data_manager.get_agents()
+    agents = database_service.get_agents()
     
     # Get unique values for filter dropdowns
-    all_properties = data_manager.get_properties()
+    all_properties = database_service.get_properties()
     property_types = sorted(set(p.property_type for p in all_properties))
     neighborhoods = sorted(set(p.neighborhood for p in all_properties if p.neighborhood))
     property_conditions = ['excellent', 'good', 'fair', 'needs_renovation']
     property_categories = ['residential', 'commercial', 'industrial']
     
-    # Add agent names to properties
+    # Add agent names to properties (SQLAlchemy relationships handle this)
     for prop in properties:
-        prop.agent_name = data_manager.get_agent(prop.agent_id).name if prop.agent_id and data_manager.get_agent(prop.agent_id) else "Unassigned"
+        prop.agent_name = prop.agent.name if prop.agent else "Unassigned"
     
     return render_template('properties.html', 
                          properties=properties, 
@@ -141,7 +141,7 @@ def add_property():
             rahn = float(request.form.get('rahn', 0)) if request.form.get('rahn') else None
             ejare = float(request.form.get('ejare', 0)) if request.form.get('ejare') else None
         
-        property_obj = data_manager.add_property(
+        property_obj = database_service.add_property(
             title, address, price, property_type, bedrooms, bathrooms, square_feet, 
             description, "active", agent_id, year_built, parking_spaces, floors, units,
             property_condition, "", "", None, property_features, neighborhood, 
@@ -157,17 +157,13 @@ def add_property():
 @app.route('/agents')
 def agents():
     """Agent management page"""
-    agents = data_manager.get_agents()
+    agents = database_service.get_agents()
     
-    # Calculate agent statistics
+    # Calculate agent statistics using SQLAlchemy relationships
     for agent in agents:
-        agent_properties = [p for p in data_manager.get_properties() if p.agent_id == agent.id]
-        agent_deals = [d for d in data_manager.get_deals() if d.agent_id == agent.id]
-        agent_tasks = data_manager.get_tasks(agent_id=agent.id)
-        
-        agent.active_listings = len([p for p in agent_properties if p.status == "active"])
-        agent.total_deals = len(agent_deals)
-        agent.pending_tasks = len([t for t in agent_tasks if t.status == "pending"])
+        agent.active_listings = len([p for p in agent.properties if p.status == "active"])
+        agent.total_deals = len(agent.deals)
+        agent.pending_tasks = len([t for t in agent.tasks if t.status == "pending"])
     
     return render_template('agents.html', agents=agents)
 
@@ -181,7 +177,7 @@ def add_agent():
         specialization = request.form.get('specialization', '')
         bio = request.form.get('bio', '')
         
-        agent = data_manager.add_agent(name, email, phone, specialization, bio)
+        agent = database_service.add_agent(name, email, phone, specialization, bio)
         flash(f'Agent "{name}" added successfully!', 'success')
     except Exception as e:
         flash(f'Error adding agent: {str(e)}', 'error')
@@ -191,13 +187,12 @@ def add_agent():
 @app.route('/customers')
 def customers():
     """Customer management page"""
-    customers = data_manager.get_customers()
+    customers = database_service.get_customers()
     
-    # Add deal and interaction counts
+    # Add deal and interaction counts using SQLAlchemy relationships
     for customer in customers:
-        customer_deals = [d for d in data_manager.get_deals() if d.customer_id == customer.id]
-        customer.total_deals = len(customer_deals)
-        customer.active_deals = len([d for d in customer_deals if d.status not in ["closed_won", "closed_lost"]])
+        customer.total_deals = len(customer.deals)
+        customer.active_deals = len([d for d in customer.deals if d.status not in ["closed_won", "closed_lost"]])
     
     return render_template('customers.html', customers=customers)
 
@@ -215,9 +210,9 @@ def add_customer():
         preferred_type = request.form.get('preferred_type', '')
         location_preference = request.form.get('location_preference', '')
         
-        customer = data_manager.add_customer(name, email, phone, budget_min, budget_max,
-                                           preferred_bedrooms, preferred_bathrooms,
-                                           preferred_type, location_preference)
+        customer = database_service.add_customer(name, email, phone, budget_min, budget_max,
+                                               preferred_bedrooms, preferred_bathrooms,
+                                               preferred_type, location_preference)
         
         flash(f'Customer "{name}" added successfully!', 'success')
     except Exception as e:
@@ -228,16 +223,13 @@ def add_customer():
 @app.route('/deals')
 def deals():
     """Deal management page"""
-    deals = data_manager.get_deals()
-    properties = data_manager.get_properties()
-    customers = data_manager.get_customers()
-    agents = data_manager.get_agents()
+    deals = database_service.get_deals()
+    properties = database_service.get_properties()
+    customers = database_service.get_customers()
+    agents = database_service.get_agents()
     
-    # Add related information to deals
-    for deal in deals:
-        deal.property_obj = data_manager.get_property(deal.property_id)
-        deal.customer_obj = data_manager.get_customer(deal.customer_id)
-        deal.agent_obj = data_manager.get_agent(deal.agent_id)
+    # SQLAlchemy relationships automatically provide related objects
+    # No need to manually add property_obj, customer_obj, agent_obj
     
     return render_template('deals.html', deals=deals, properties=properties, 
                          customers=customers, agents=agents)
@@ -252,7 +244,7 @@ def add_deal():
         status = request.form.get('status', 'prospecting')
         offer_amount = float(request.form.get('offer_amount', 0))
         
-        deal = data_manager.add_deal(property_id, customer_id, agent_id, status, offer_amount)
+        deal = database_service.add_deal(property_id, customer_id, agent_id, status, offer_amount)
         flash('Deal added successfully!', 'success')
     except Exception as e:
         flash(f'Error adding deal: {str(e)}', 'error')
@@ -270,7 +262,7 @@ def update_deal(deal_id):
         if offer_amount:
             updates['offer_amount'] = float(offer_amount)
         
-        deal = data_manager.update_deal(deal_id, **updates)
+        deal = database_service.update_deal(deal_id, **updates)
         if deal:
             flash('Deal updated successfully!', 'success')
         else:
@@ -286,12 +278,11 @@ def tasks():
     agent_id = request.args.get('agent', type=int)
     status = request.args.get('status')
     
-    tasks = data_manager.get_tasks(agent_id=agent_id, status=status)
-    agents = data_manager.get_agents()
+    tasks = database_service.get_tasks(agent_id=agent_id, status=status)
+    agents = database_service.get_agents()
     
-    # Add agent names to tasks
-    for task in tasks:
-        task.agent_obj = data_manager.get_agent(task.agent_id)
+    # SQLAlchemy relationships automatically provide agent objects
+    # No need to manually add agent_obj
     
     return render_template('tasks.html', tasks=tasks, agents=agents, current_date=datetime.now())
 
@@ -309,7 +300,7 @@ def add_task():
         if due_date_str:
             due_date = datetime.strptime(due_date_str, '%Y-%m-%d')
         
-        task = data_manager.add_task(title, description, agent_id, priority, due_date)
+        task = database_service.add_task(title, description, agent_id, priority, due_date)
         flash('Task added successfully!', 'success')
     except Exception as e:
         flash(f'Error adding task: {str(e)}', 'error')
@@ -320,7 +311,7 @@ def add_task():
 def complete_task(task_id):
     """Mark task as completed"""
     try:
-        task = data_manager.complete_task(task_id)
+        task = database_service.complete_task(task_id)
         if task:
             flash('Task completed successfully!', 'success')
         else:
@@ -333,14 +324,14 @@ def complete_task(task_id):
 @app.route('/recommendations')
 def recommendations():
     """AI-powered property recommendations page"""
-    customers = data_manager.get_customers()
+    customers = database_service.get_customers()
     return render_template('recommendations.html', customers=customers)
 
 @app.route('/recommendations/<int:customer_id>')
 def get_customer_recommendations(customer_id):
     """Get AI recommendations for a specific customer"""
     try:
-        customer = data_manager.get_customer(customer_id)
+        customer = database_service.get_customer(customer_id)
         if not customer:
             flash('Customer not found!', 'error')
             return redirect(url_for('recommendations'))
@@ -348,7 +339,7 @@ def get_customer_recommendations(customer_id):
         # Ensure vector database is ready
         ensure_vector_database_ready()
         
-        properties = data_manager.get_properties(status="active")
+        properties = database_service.get_properties()
         
         # Get AI-powered recommendations using vector search
         recommendations = gemini_service.get_property_recommendations(customer, properties)
@@ -357,7 +348,7 @@ def get_customer_recommendations(customer_id):
             flash('Unable to generate recommendations at this time. Please try again later.', 'warning')
         
         return render_template('recommendations.html', 
-                             customers=data_manager.get_customers(),
+                             customers=database_service.get_customers(),
                              selected_customer=customer,
                              recommendations=recommendations)
         
@@ -370,7 +361,7 @@ def get_customer_recommendations(customer_id):
 def market_analysis():
     """Get AI-powered market analysis"""
     try:
-        properties = data_manager.get_properties()
+        properties = database_service.get_properties()
         analysis = gemini_service.analyze_market_trends(properties)
         return jsonify({'analysis': analysis})
     except Exception as e:
