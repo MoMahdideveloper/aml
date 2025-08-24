@@ -327,21 +327,72 @@ function refreshMarketAnalysis() {
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
-            <p class="mt-2">Generating AI market analysis...</p>
+            <p class="mt-2">Generating market analysis...</p>
+            <small class="text-muted">This may take a few seconds</small>
         </div>
     `;
 
-    fetch('/api/market-analysis')
-        .then(response => response.json())
+    // Set a timeout for the fetch request
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
+
+    fetch('/api/market-analysis', {
+        signal: controller.signal
+    })
+        .then(response => {
+            clearTimeout(timeoutId);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.analysis) {
-                analysisDiv.innerHTML = `<div class="small">${data.analysis.substring(0, 300)}...</div>`;
+                // Format the analysis better
+                let analysisText = data.analysis;
+                if (analysisText.length > 800) {
+                    analysisText = analysisText.substring(0, 800) + '...';
+                }
+                
+                // Convert markdown-style formatting to HTML
+                analysisText = analysisText
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/\n/g, '<br>');
+                
+                analysisDiv.innerHTML = `<div class="small">${analysisText}</div>`;
             } else {
-                analysisDiv.innerHTML = '<div class="text-muted">Analysis unavailable</div>';
+                analysisDiv.innerHTML = `
+                    <div class="text-muted">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Market analysis unavailable. Check your API configuration.
+                    </div>
+                `;
             }
         })
         .catch(error => {
-            analysisDiv.innerHTML = '<div class="text-danger">Error loading analysis</div>';
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                analysisDiv.innerHTML = `
+                    <div class="text-warning">
+                        <i class="fas fa-clock me-2"></i>
+                        Analysis timed out. Using fallback analysis instead.
+                        <button class="btn btn-sm btn-outline-warning ms-2" onclick="refreshMarketAnalysis()">
+                            Try Again
+                        </button>
+                    </div>
+                `;
+            } else {
+                analysisDiv.innerHTML = `
+                    <div class="text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error loading analysis: ${error.message}
+                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="refreshMarketAnalysis()">
+                            Retry
+                        </button>
+                    </div>
+                `;
+            }
         });
 }
 
