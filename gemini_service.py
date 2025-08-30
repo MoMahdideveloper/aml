@@ -15,44 +15,45 @@ Numbers must be numbers. Booleans must be booleans. Use null if unknown.
 """
 
 PROPERTY_SCHEMA_HINT = {
-  "title": "string or null",
-  "address": "string or null",
-  "price": 0,
-  "property_type": "string or null",
-  "bedrooms": 0,
-  "bathrooms": 0,
-  "square_feet": 0,
-  "description": "string or null",
-  "status": "active|pending|sold|null",
-  "agent_id": 0,
-  "year_built": 0,
-  "parking_spaces": 0,
-  "floors": 1,
-  "units": 1,
-  "property_condition": "excellent|good|fair|needs_renovation|null",
-  "heating_type": "string or null",
-  "cooling_type": "string or null",
-  "rental_price": 0,
-  "property_features": ["comma, separated, items"],
-  "neighborhood": "string or null",
-  "property_category": "residential|commercial|null",
-  "listing_type": "sale|rental|null",
-  "rahn": 0,
-  "ejare": 0
+    "title": "string or null",
+    "address": "string or null",
+    "price": 0,
+    "property_type": "string or null",
+    "bedrooms": 0,
+    "bathrooms": 0,
+    "square_feet": 0,
+    "description": "string or null",
+    "status": "active|pending|sold|null",
+    "agent_id": 0,
+    "year_built": 0,
+    "parking_spaces": 0,
+    "floors": 1,
+    "units": 1,
+    "property_condition": "excellent|good|fair|needs_renovation|null",
+    "heating_type": "string or null",
+    "cooling_type": "string or null",
+    "rental_price": 0,
+    "property_features": ["comma, separated, items"],
+    "neighborhood": "string or null",
+    "property_category": "residential|commercial|null",
+    "listing_type": "sale|rental|null",
+    "rahn": 0,
+    "ejare": 0,
 }
 
 CUSTOMER_SCHEMA_HINT = {
-  "name": "string or null",
-  "email": "string or null",
-  "phone": "string or null",
-  "preferences": "string or null",
-  "budget_min": 0,
-  "budget_max": 0,
-  "desired_neighborhoods": ["comma, separated"],
-  "desired_property_type": "string or null",
-  "bedrooms_min": 0,
-  "bathrooms_min": 0
+    "name": "string or null",
+    "email": "string or null",
+    "phone": "string or null",
+    "preferences": "string or null",
+    "budget_min": 0,
+    "budget_max": 0,
+    "desired_neighborhoods": ["comma, separated"],
+    "desired_property_type": "string or null",
+    "bedrooms_min": 0,
+    "bathrooms_min": 0,
 }
+
 
 class GeminiService:
     def __init__(self):
@@ -66,40 +67,46 @@ class GeminiService:
             self.client = genai.Client(api_key=api_key)
             self.logger = logging.getLogger(__name__)
 
-    def get_property_recommendations(self, customer: Customer, properties: List[Property]) -> List[Dict[str, Any]]:
+    def get_property_recommendations(
+        self, customer: Customer, properties: List[Property]
+    ) -> List[Dict[str, Any]]:
         """
         Get AI-powered property recommendations using vector search with semantic matching
         """
         try:
-            self.logger.info(f"Getting recommendations for customer {customer.name} from {len(properties)} properties")
-            
+            self.logger.info(
+                f"Getting recommendations for customer {customer.name} from {len(properties)} properties"
+            )
+
             # If no client available, use fallback immediately
             if not self.client:
                 self.logger.info("No Gemini client available, using fallback recommendations")
                 return self._create_fallback_recommendations(customer, properties[:10])
-            
+
             # Use vector service for semantic search
             vector_recommendations = vector_service.search_properties(
-                customer=customer,
-                properties=properties,
-                top_k=min(10, len(properties))
+                customer=customer, properties=properties, top_k=min(10, len(properties))
             )
-            
+
             if vector_recommendations:
                 # Convert vector service format to expected format
                 formatted_recommendations = []
                 for rec in vector_recommendations:
                     # Create analysis text from match reasons
                     analysis_parts = [f"Match Score: {rec['hybrid_score']:.1f}/100"]
-                    analysis_parts.extend(f"• {reason}" for reason in rec['match_reasons'])
-                    
-                    formatted_recommendations.append({
-                        'property': rec['property'],
-                        'analysis': '\n'.join(analysis_parts),
-                        'match_score': int(rec['hybrid_score'])
-                    })
-                
-                self.logger.info(f"Vector search returned {len(formatted_recommendations)} recommendations")
+                    analysis_parts.extend(f"• {reason}" for reason in rec["match_reasons"])
+
+                    formatted_recommendations.append(
+                        {
+                            "property": rec["property"],
+                            "analysis": "\n".join(analysis_parts),
+                            "match_score": int(rec["hybrid_score"]),
+                        }
+                    )
+
+                self.logger.info(
+                    f"Vector search returned {len(formatted_recommendations)} recommendations"
+                )
                 return formatted_recommendations
             else:
                 self.logger.warning("Vector search failed, using fallback recommendations")
@@ -110,68 +117,76 @@ class GeminiService:
             # Return fallback recommendations based on simple criteria
             return self._create_fallback_recommendations(customer, properties[:10])
 
-    def _parse_recommendations(self, ai_response: str, properties: List[Property]) -> List[Dict[str, Any]]:
+    def _parse_recommendations(
+        self, ai_response: str, properties: List[Property]
+    ) -> List[Dict[str, Any]]:
         """
         Parse the AI response and create structured recommendations
         """
         recommendations = []
-        
+
         # Parse the simplified format: "Property [ID]: Score [X]/100 - [Brief reasoning]"
-        lines = ai_response.split('\n')
-        
+        lines = ai_response.split("\n")
+
         for line in lines:
             line = line.strip()
-            if 'Property' in line and ':' in line:
+            if "Property" in line and ":" in line:
                 try:
                     # Extract property ID
-                    if 'Property ' in line:
-                        id_part = line.split('Property ')[1].split(':')[0].strip()
+                    if "Property " in line:
+                        id_part = line.split("Property ")[1].split(":")[0].strip()
                         property_id = int(id_part)
-                        
+
                         # Find the property
                         prop = next((p for p in properties if p.id == property_id), None)
                         if prop:
                             # Extract the analysis text
-                            analysis_text = line.split(':', 1)[1].strip()
-                            
-                            recommendations.append({
-                                'property': prop,
-                                'analysis': analysis_text,
-                                'match_score': self._extract_score(analysis_text)
-                            })
+                            analysis_text = line.split(":", 1)[1].strip()
+
+                            recommendations.append(
+                                {
+                                    "property": prop,
+                                    "analysis": analysis_text,
+                                    "match_score": self._extract_score(analysis_text),
+                                }
+                            )
                 except Exception as e:
                     self.logger.warning(f"Could not parse line: {line} - {e}")
                     continue
-        
+
         # If no recommendations were parsed, try fallback parsing
         if not recommendations and properties:
             self.logger.info("Using fallback parsing for AI response")
             # Split response into chunks and match with properties
-            chunks = ai_response.split('\n\n')
+            chunks = ai_response.split("\n\n")
             for i, chunk in enumerate(chunks):
                 if i < len(properties) and chunk.strip():
-                    recommendations.append({
-                        'property': properties[i],
-                        'analysis': chunk.strip(),
-                        'match_score': self._extract_score(chunk)
-                    })
-        
+                    recommendations.append(
+                        {
+                            "property": properties[i],
+                            "analysis": chunk.strip(),
+                            "match_score": self._extract_score(chunk),
+                        }
+                    )
+
         # Sort by match score (highest first)
-        recommendations.sort(key=lambda x: x['match_score'], reverse=True)
-        
+        recommendations.sort(key=lambda x: x["match_score"], reverse=True)
+
         return recommendations
 
-    def _create_fallback_recommendations(self, customer: Customer, properties: List[Property]) -> List[Dict[str, Any]]:
+    def _create_fallback_recommendations(
+        self, customer: Customer, properties: List[Property]
+    ) -> List[Dict[str, Any]]:
         """
         Create basic recommendations when AI is unavailable
         """
         recommendations = []
-        
+
         for prop in properties:
             # Simple scoring based on basic criteria
             score = 0
             reasons = []
-            
+
             # Budget match (40 points max)
             if customer.budget_min <= prop.price <= customer.budget_max:
                 score += 40
@@ -179,7 +194,7 @@ class GeminiService:
             elif prop.price <= customer.budget_max:
                 score += 20
                 reasons.append("Slightly below budget")
-            
+
             # Bedroom match (20 points max)
             if prop.bedrooms == customer.preferred_bedrooms:
                 score += 20
@@ -187,7 +202,7 @@ class GeminiService:
             elif abs(prop.bedrooms - customer.preferred_bedrooms) <= 1:
                 score += 10
                 reasons.append("Close to bedroom preference")
-            
+
             # Bathroom match (20 points max)
             if prop.bathrooms >= customer.preferred_bathrooms:
                 score += 20
@@ -195,25 +210,23 @@ class GeminiService:
             elif prop.bathrooms >= customer.preferred_bathrooms - 0.5:
                 score += 10
                 reasons.append("Close to bathroom preference")
-            
+
             # Property type match (20 points max)
             if prop.property_type.lower() == customer.preferred_type.lower():
                 score += 20
                 reasons.append("Matches property type preference")
-            
-            analysis = f"Match Score: {score}/100\n" + "\n".join(f"• {reason}" for reason in reasons)
+
+            analysis = f"Match Score: {score}/100\n" + "\n".join(
+                f"• {reason}" for reason in reasons
+            )
             if not reasons:
                 analysis = "This property may not fully match your preferences, but could still be worth considering."
-            
-            recommendations.append({
-                'property': prop,
-                'analysis': analysis,
-                'match_score': score
-            })
-        
+
+            recommendations.append({"property": prop, "analysis": analysis, "match_score": score})
+
         # Sort by match score (highest first)
-        recommendations.sort(key=lambda x: x['match_score'], reverse=True)
-        
+        recommendations.sort(key=lambda x: x["match_score"], reverse=True)
+
         return recommendations
 
     def _extract_score(self, analysis: str) -> int:
@@ -222,20 +235,21 @@ class GeminiService:
         """
         # Look for patterns like "score: 85" or "match score: 92"
         import re
+
         score_patterns = [
-            r'score[:\s]+(\d+)',
-            r'match[:\s]+(\d+)',
-            r'rating[:\s]+(\d+)',
-            r'(\d+)[:/]100',
-            r'(\d+)%'
+            r"score[:\s]+(\d+)",
+            r"match[:\s]+(\d+)",
+            r"rating[:\s]+(\d+)",
+            r"(\d+)[:/]100",
+            r"(\d+)%",
         ]
-        
+
         for pattern in score_patterns:
             match = re.search(pattern, analysis.lower())
             if match:
                 score = int(match.group(1))
                 return min(100, max(0, score))  # Ensure score is between 0-100
-        
+
         # Default score if none found
         return 50
 
@@ -246,8 +260,8 @@ class GeminiService:
         try:
             # If no client available, return original description
             if not self.client:
-                return property_data.get('description', '')
-                
+                return property_data.get("description", "")
+
             prompt = f"""
             Create an engaging and professional property description based on the following details:
             
@@ -270,15 +284,14 @@ class GeminiService:
             """
 
             response = self.client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt
+                model="gemini-2.5-flash", contents=prompt
             )
 
-            return response.text if response.text else property_data.get('description', '')
+            return response.text if response.text else property_data.get("description", "")
 
         except Exception as e:
             self.logger.error(f"Error generating property description: {e}")
-            return property_data.get('description', '')
+            return property_data.get("description", "")
 
     def analyze_market_trends(self, properties: List[Property]) -> str:
         """
@@ -288,11 +301,13 @@ class GeminiService:
             # If no client available or no properties, return manual analysis
             if not self.client or not properties:
                 return self._generate_manual_market_analysis(properties)
-            
+
             # Use a shorter, more focused prompt to reduce API call time
             property_summary = []
             for prop in properties[:20]:  # Limit to first 20 properties to reduce processing time
-                property_summary.append(f"{prop.property_type}: ${prop.price:,} - {prop.bedrooms}bed/{prop.bathrooms}bath - {prop.square_feet}sqft")
+                property_summary.append(
+                    f"{prop.property_type}: ${prop.price:,} - {prop.bedrooms}bed/{prop.bathrooms}bath - {prop.square_feet}sqft"
+                )
 
             properties_text = "\n".join(property_summary)
 
@@ -315,26 +330,25 @@ class GeminiService:
             # Add timeout to the API call
             import signal
             import time
-            
+
             def timeout_handler(signum, frame):
                 raise TimeoutError("API call timed out")
-            
+
             # Set a 15-second timeout for the API call
             signal.signal(signal.SIGALRM, timeout_handler)
             signal.alarm(15)
-            
+
             try:
                 response = self.client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=prompt
+                    model="gemini-2.5-flash", contents=prompt
                 )
                 signal.alarm(0)  # Cancel the alarm
-                
+
                 if response.text:
                     return response.text
                 else:
                     return self._generate_manual_market_analysis(properties)
-                    
+
             except TimeoutError:
                 signal.alarm(0)  # Cancel the alarm
                 self.logger.warning("Gemini API call timed out, using manual analysis")
@@ -354,40 +368,42 @@ class GeminiService:
             
             No properties available for analysis. Add some property listings to get market insights.
             """
-        
+
         # Calculate basic statistics
         total_properties = len(properties)
-        
+
         # Group by property type
         type_stats = {}
         for prop in properties:
             prop_type = prop.property_type
             if prop_type not in type_stats:
-                type_stats[prop_type] = {'prices': [], 'sqft': [], 'bedrooms': [], 'count': 0}
-            
-            type_stats[prop_type]['prices'].append(prop.price)
-            type_stats[prop_type]['sqft'].append(prop.square_feet)
-            type_stats[prop_type]['bedrooms'].append(prop.bedrooms)
-            type_stats[prop_type]['count'] += 1
-        
+                type_stats[prop_type] = {"prices": [], "sqft": [], "bedrooms": [], "count": 0}
+
+            type_stats[prop_type]["prices"].append(prop.price)
+            type_stats[prop_type]["sqft"].append(prop.square_feet)
+            type_stats[prop_type]["bedrooms"].append(prop.bedrooms)
+            type_stats[prop_type]["count"] += 1
+
         # Overall statistics
         all_prices = [p.price for p in properties if p.price > 0]
         all_sqft = [p.square_feet for p in properties if p.square_feet > 0]
-        
+
         avg_price = sum(all_prices) / len(all_prices) if all_prices else 0
         min_price = min(all_prices) if all_prices else 0
         max_price = max(all_prices) if all_prices else 0
-        
+
         avg_sqft = sum(all_sqft) / len(all_sqft) if all_sqft else 0
         avg_price_per_sqft = avg_price / avg_sqft if avg_sqft > 0 else 0
-        
+
         # Most common bedroom count
         bedroom_counts = {}
         for prop in properties:
             bedrooms = prop.bedrooms
             bedroom_counts[bedrooms] = bedroom_counts.get(bedrooms, 0) + 1
-        most_common_bedrooms = max(bedroom_counts.items(), key=lambda x: x[1])[0] if bedroom_counts else 0
-        
+        most_common_bedrooms = (
+            max(bedroom_counts.items(), key=lambda x: x[1])[0] if bedroom_counts else 0
+        )
+
         analysis = f"""
 **MARKET ANALYSIS REPORT**
 
@@ -400,13 +416,13 @@ class GeminiService:
 
 **BY PROPERTY TYPE:**
 """
-        
+
         for prop_type, stats in type_stats.items():
-            if stats['prices']:
-                type_avg_price = sum(stats['prices']) / len(stats['prices'])
-                type_avg_sqft = sum(stats['sqft']) / len(stats['sqft']) if stats['sqft'] else 0
+            if stats["prices"]:
+                type_avg_price = sum(stats["prices"]) / len(stats["prices"])
+                type_avg_sqft = sum(stats["sqft"]) / len(stats["sqft"]) if stats["sqft"] else 0
                 type_price_per_sqft = type_avg_price / type_avg_sqft if type_avg_sqft > 0 else 0
-                
+
                 analysis += f"""
 • {prop_type.title()}: {stats['count']} properties
   - Average Price: ${type_avg_price:,.0f}
@@ -432,7 +448,7 @@ class GeminiService:
 
 *Note: This analysis is based on your current property database. For more detailed AI-powered insights, ensure your Gemini API is properly configured.*
 """
-        
+
         return analysis
 
     def _extract_json(self, prompt: str) -> dict:
@@ -440,11 +456,10 @@ class GeminiService:
         if not self.client:
             # Fallback: try to find key/value pairs as a naive baseline
             return {}
-        
+
         try:
             response = self.client.models.generate_content(
-                model="gemini-2.0-flash-exp",
-                contents=prompt
+                model="gemini-2.0-flash-exp", contents=prompt
             )
             text = (getattr(response, "text", None) or "").strip()
             # Remove code fences if any
@@ -473,7 +488,12 @@ TEXT:
             model = PropertyAI(**data or {})
             payload = model.dict()
             missing = [k for k, v in payload.items() if v in (None, [], "")]
-            return {"entity": "property", "data": payload, "missing": missing, "confidence": 0.75 if data else 0.3}
+            return {
+                "entity": "property",
+                "data": payload,
+                "missing": missing,
+                "confidence": 0.75 if data else 0.3,
+            }
         except Exception as e:
             self.logger.error(f"Error processing property extraction: {e}")
             return {"entity": "property", "data": {}, "missing": [], "confidence": 0.0}
@@ -497,10 +517,16 @@ TEXT:
             model = CustomerAI(**data or {})
             payload = model.dict()
             missing = [k for k, v in payload.items() if v in (None, [], "")]
-            return {"entity": "customer", "data": payload, "missing": missing, "confidence": 0.75 if data else 0.3}
+            return {
+                "entity": "customer",
+                "data": payload,
+                "missing": missing,
+                "confidence": 0.75 if data else 0.3,
+            }
         except Exception as e:
             self.logger.error(f"Error processing customer extraction: {e}")
             return {"entity": "customer", "data": {}, "missing": [], "confidence": 0.0}
+
 
 # Global Gemini service instance
 gemini_service = GeminiService()

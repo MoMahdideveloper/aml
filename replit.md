@@ -56,3 +56,5 @@ Preferred communication style: Simple, everyday language.
 - **Session Secret**: Configurable via SESSION_SECRET environment variable
 - **Gemini API Key**: Required GEMINI_API_KEY environment variable for AI features
 - **Development Mode**: Debug mode enabled for development with hot reloading
+<!-- Update OWNER/REPO with your GitHub org and repo name -->
+[![CI](https://github.com/OWNER/REPO/actions/workflows/tests.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/tests.yml)

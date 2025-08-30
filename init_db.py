@@ -1,58 +1,54 @@
 """
 Database initialization script with sample data seeding
 """
-import os
+
 from datetime import datetime, timedelta
 from app import app
 from database import db
 from sqlalchemy_models import Property, Agent, Customer, Deal, Task
 
+
 def create_tables():
     """Create all database tables"""
     with app.app_context():
         db.create_all()
-        print("✓ Database tables created successfully")
+        print("Database tables created successfully")
+
 
 def seed_data():
     """Seed the database with sample data"""
     with app.app_context():
-        # Check if data already exists
         if Agent.query.first():
-            print("✓ Database already has data, skipping seeding")
+            print("Database already has data, skipping seeding")
             return
-        
-        # Create sample agents
+
         agents = [
             Agent(
                 name="Sarah Johnson",
                 email="sarah.johnson@realestate.com",
                 phone="+1-555-0101",
                 specialization="Luxury Homes",
-                bio="Specializing in high-end residential properties with 10+ years experience"
+                bio="High-end residential properties",
             ),
             Agent(
                 name="Mike Chen",
-                email="mike.chen@realestate.com", 
+                email="mike.chen@realestate.com",
                 phone="+1-555-0102",
                 specialization="Commercial Properties",
-                bio="Expert in commercial real estate and investment properties"
+                bio="Commercial and investments",
             ),
             Agent(
                 name="Lisa Rodriguez",
                 email="lisa.rodriguez@realestate.com",
-                phone="+1-555-0103", 
+                phone="+1-555-0103",
                 specialization="First-Time Buyers",
-                bio="Dedicated to helping first-time homebuyers navigate the market"
-            )
+                bio="Guiding first-time buyers",
+            ),
         ]
-        
-        for agent in agents:
-            db.session.add(agent)
-        
+        db.session.add_all(agents)
         db.session.commit()
-        print("✓ Sample agents created")
-        
-        # Create sample properties
+        print("Sample agents created")
+
         properties = [
             Property(
                 title="Modern Downtown Condo",
@@ -62,7 +58,7 @@ def seed_data():
                 bedrooms=2,
                 bathrooms=2,
                 square_feet=1200,
-                description="Beautiful modern condo with city views, granite countertops, and hardwood floors",
+                description="Modern condo with city views",
                 status="active",
                 agent_id=1,
                 year_built=2018,
@@ -75,7 +71,7 @@ def seed_data():
                 property_features="Granite Countertops, Hardwood Floors, City Views, Balcony",
                 neighborhood="Downtown",
                 property_category="residential",
-                listing_type="sale"
+                listing_type="sale",
             ),
             Property(
                 title="Suburban Family Home",
@@ -85,7 +81,7 @@ def seed_data():
                 bedrooms=4,
                 bathrooms=3,
                 square_feet=2800,
-                description="Spacious family home with large backyard, updated kitchen, and 3-car garage",
+                description="Spacious family home",
                 status="active",
                 agent_id=1,
                 year_built=2010,
@@ -98,30 +94,7 @@ def seed_data():
                 property_features="Updated Kitchen, Large Backyard, 3-Car Garage, Walk-in Closets",
                 neighborhood="Suburbia",
                 property_category="residential",
-                listing_type="sale"
-            ),
-            Property(
-                title="Luxury Waterfront Estate",
-                address="789 Lake Drive, Waterfront",
-                price=1250000,
-                property_type="House",
-                bedrooms=5,
-                bathrooms=4,
-                square_feet=4500,
-                description="Stunning waterfront estate with private dock, infinity pool, and panoramic lake views",
-                status="active",
-                agent_id=1,
-                year_built=2015,
-                parking_spaces=4,
-                floors=3,
-                units=1,
-                property_condition="excellent",
-                heating_type="Radiant Floor",
-                cooling_type="Central Air",
-                property_features="Private Dock, Infinity Pool, Lake Views, Wine Cellar, Smart Home",
-                neighborhood="Waterfront",
-                property_category="residential",
-                listing_type="sale"
+                listing_type="sale",
             ),
             Property(
                 title="Urban Loft - Iranian Rental",
@@ -131,7 +104,7 @@ def seed_data():
                 bedrooms=1,
                 bathrooms=1,
                 square_feet=950,
-                description="Converted industrial loft with exposed brick, high ceilings, and modern amenities",
+                description="Converted industrial loft",
                 status="active",
                 agent_id=2,
                 year_built=1995,
@@ -145,41 +118,14 @@ def seed_data():
                 neighborhood="Arts District",
                 property_category="residential",
                 listing_type="rental",
-                rahn=400000000,  # 400 million toman deposit
-                ejare=2500000    # 2.5 million toman monthly rent
+                rahn=400000000,
+                ejare=2500000,
             ),
-            Property(
-                title="Starter Home",
-                address="654 Pine Street, Neighborhood",
-                price=285000,
-                property_type="House",
-                bedrooms=3,
-                bathrooms=2,
-                square_feet=1450,
-                description="Perfect starter home with updated appliances, new roof, and fenced yard",
-                status="active",
-                agent_id=3,
-                year_built=2005,
-                parking_spaces=2,
-                floors=1,
-                units=1,
-                property_condition="good",
-                heating_type="Gas",
-                cooling_type="Central Air",
-                property_features="Updated Appliances, New Roof, Fenced Yard, Quiet Street",
-                neighborhood="Neighborhood",
-                property_category="residential",
-                listing_type="sale"
-            )
         ]
-        
-        for property_obj in properties:
-            db.session.add(property_obj)
-        
+        db.session.add_all(properties)
         db.session.commit()
-        print("✓ Sample properties created")
-        
-        # Create sample customers
+        print("Sample properties created")
+
         customers = [
             Customer(
                 name="John Smith",
@@ -190,7 +136,7 @@ def seed_data():
                 preferred_bedrooms=3,
                 preferred_bathrooms=2,
                 preferred_type="House",
-                location_preference="Suburbia"
+                location_preference="Suburbia",
             ),
             Customer(
                 name="Emma Wilson",
@@ -201,90 +147,43 @@ def seed_data():
                 preferred_bedrooms=4,
                 preferred_bathrooms=3,
                 preferred_type="House",
-                location_preference="Waterfront"
+                location_preference="Waterfront",
             ),
-            Customer(
-                name="David Brown",
-                email="david.brown@email.com",
-                phone="+1-555-1003",
-                budget_min=200000,
-                budget_max=350000,
-                preferred_bedrooms=2,
-                preferred_bathrooms=1,
-                preferred_type="Condo",
-                location_preference="Downtown"
-            )
         ]
-        
-        for customer in customers:
-            db.session.add(customer)
-        
+        db.session.add_all(customers)
         db.session.commit()
-        print("✓ Sample customers created")
-        
-        # Create sample deals
+        print("Sample customers created")
+
         deals = [
-            Deal(
-                property_id=1,
-                customer_id=3,
-                agent_id=1,
-                status="negotiation",
-                offer_amount=435000
-            ),
-            Deal(
-                property_id=2,
-                customer_id=1,
-                agent_id=1,
-                status="qualified",
-                offer_amount=625000
-            ),
-            Deal(
-                property_id=3,
-                customer_id=2,
-                agent_id=1,
-                status="proposal",
-                offer_amount=1200000
-            )
+            Deal(property_id=1, customer_id=1, agent_id=1, status="qualified", offer_amount=625000),
+            Deal(property_id=2, customer_id=2, agent_id=1, status="proposal", offer_amount=1200000),
         ]
-        
-        for deal in deals:
-            db.session.add(deal)
-        
+        db.session.add_all(deals)
         db.session.commit()
-        print("✓ Sample deals created")
-        
-        # Create sample tasks
+        print("Sample deals created")
+
         tasks = [
             Task(
                 title="Follow up with John Smith",
-                description="Call John about the Oak Avenue property showing",
+                description="Call about property showing",
                 agent_id=1,
                 priority="high",
-                due_date=datetime.utcnow() + timedelta(days=1)
+                due_date=datetime.utcnow() + timedelta(days=1),
             ),
             Task(
                 title="Prepare market analysis",
-                description="Create CMA for the Waterfront Estate listing",
+                description="Create CMA for listing",
                 agent_id=1,
                 priority="medium",
-                due_date=datetime.utcnow() + timedelta(days=3)
+                due_date=datetime.utcnow() + timedelta(days=3),
             ),
-            Task(
-                title="Schedule property photos",
-                description="Book photographer for new downtown listing",
-                agent_id=2,
-                priority="medium",
-                due_date=datetime.utcnow() + timedelta(days=2)
-            )
         ]
-        
-        for task in tasks:
-            db.session.add(task)
-        
+        db.session.add_all(tasks)
         db.session.commit()
-        print("✓ Sample tasks created")
-        
-        print("✓ Database seeded successfully with sample data")
+        print("Sample tasks created")
+
+        print("Database seeded successfully with sample data")
+
 
 def init_database():
     """Initialize database with tables and sample data"""
@@ -292,6 +191,7 @@ def init_database():
     create_tables()
     seed_data()
     print("Database initialization complete!")
+
 
 if __name__ == "__main__":
     init_database()

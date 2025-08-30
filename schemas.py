@@ -2,6 +2,7 @@
 from typing import Optional, List
 from pydantic import BaseModel, Field, validator
 
+
 class PropertyAI(BaseModel):
     title: Optional[str] = None
     address: Optional[str] = None
@@ -26,13 +27,14 @@ class PropertyAI(BaseModel):
     property_category: Optional[str] = "residential"
     listing_type: Optional[str] = "sale"
     rahn: Optional[float] = None  # for deposit (Iran market)
-    ejare: Optional[float] = None # for monthly rent (Iran market)
+    ejare: Optional[float] = None  # for monthly rent (Iran market)
 
     @validator("property_features", pre=True)
     def split_features(cls, v):
         if isinstance(v, str):
             return [x.strip() for x in v.split(",") if x.strip()]
         return v
+
 
 class CustomerAI(BaseModel):
     name: Optional[str] = None
