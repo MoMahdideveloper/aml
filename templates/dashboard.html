@@ -320,86 +320,129 @@
 
 {% block scripts %}
 <script>
-function refreshMarketAnalysis() {
-    const analysisDiv = document.getElementById('marketAnalysis');
-    analysisDiv.innerHTML = `
-        <div class="text-center">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
+    function renderAnalysis(data) {
+        const analysisDiv = document.getElementById('marketAnalysis');
+        if (!data) return;
+        const updated = data.updated_at ? `<small class="text-muted">Updated: ${new Date(data.updated_at).toLocaleString()}</small>` : '';
+
+        if (Array.isArray(data.bullets) && data.bullets.length > 0) {
+            const bullets = data.bullets.map(b => `<li>${b}</li>`).join('');
+            const overview = data.analysis ? `<p class="mb-2">${data.analysis}</p>` : '';
+            analysisDiv.innerHTML = `
+                <div class="small" style="max-height: 400px; overflow-y: auto;">
+                    ${overview}
+                    <ul class="mb-2">${bullets}</ul>
+                    ${updated}
+                </div>
+            `;
+            return;
+        }
+
+        if (data.analysis) {
+            let analysisText = data.analysis;
+            analysisText = analysisText
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+            analysisDiv.innerHTML = `
+                <div class="small" style="max-height: 400px; overflow-y: auto;">
+                    ${analysisText}
+                    ${updated}
+                </div>
+            `;
+            return;
+        }
+
+        analysisDiv.innerHTML = `
+            <div class="text-muted">
+                <i class="fas fa-info-circle me-2"></i>
+                Market analysis unavailable. Check your API configuration.
             </div>
-            <p class="mt-2">Generating market analysis...</p>
-            <small class="text-muted">This may take a few seconds</small>
-        </div>
-    `;
+        `;
+    }
 
-    // Set a timeout for the fetch request
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
+    function saveAnalysis(data) {
+        try {
+            localStorage.setItem('marketAnalysis', JSON.stringify(data));
+        } catch {}
+    }
 
-    fetch('/api/market-analysis', {
-        signal: controller.signal
-    })
-        .then(response => {
-            clearTimeout(timeoutId);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.analysis) {
-                // Format the analysis better without truncating
-                let analysisText = data.analysis;
-                
-                // Convert markdown-style formatting to HTML
-                analysisText = analysisText
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                    .replace(/\n/g, '<br>');
-                
-                analysisDiv.innerHTML = `
-                    <div class="small" style="max-height: 400px; overflow-y: auto;">
-                        ${analysisText}
-                    </div>
-                `;
-            } else {
-                analysisDiv.innerHTML = `
-                    <div class="text-muted">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Market analysis unavailable. Check your API configuration.
-                    </div>
-                `;
-            }
-        })
-        .catch(error => {
-            clearTimeout(timeoutId);
-            if (error.name === 'AbortError') {
-                analysisDiv.innerHTML = `
-                    <div class="text-warning">
-                        <i class="fas fa-clock me-2"></i>
-                        Analysis timed out. Using fallback analysis instead.
-                        <button class="btn btn-sm btn-outline-warning ms-2" onclick="refreshMarketAnalysis()">
-                            Try Again
-                        </button>
-                    </div>
-                `;
-            } else {
-                analysisDiv.innerHTML = `
-                    <div class="text-danger">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Error loading analysis: ${error.message}
-                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="refreshMarketAnalysis()">
-                            Retry
-                        </button>
-                    </div>
-                `;
-            }
-        });
-}
+    function loadSavedAnalysis() {
+        try {
+            const raw = localStorage.getItem('marketAnalysis');
+            if (!raw) return null;
+            return JSON.parse(raw);
+        } catch { return null; }
+    }
 
-// Load market analysis on page load
-document.addEventListener('DOMContentLoaded', function() {
-    refreshMarketAnalysis();
-});
+    function setLoading() {
+        const analysisDiv = document.getElementById('marketAnalysis');
+        analysisDiv.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Generating market analysis...</p>
+                <small class="text-muted">This may take a few seconds</small>
+            </div>
+        `;
+    }
+
+    async function fetchWithRetry(url, options, retries=2, backoff=800) {
+        try {
+            const controller = new AbortController();
+            const to = setTimeout(() => controller.abort(), 25000);
+            const resp = await fetch(url, { ...(options||{}), signal: controller.signal });
+            clearTimeout(to);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            return await resp.json();
+        } catch (e) {
+            if (retries > 0) {
+                await new Promise(r => setTimeout(r, backoff));
+                return fetchWithRetry(url, options, retries-1, backoff*2);
+            }
+            throw e;
+        }
+    }
+
+    function refreshMarketAnalysis() {
+        setLoading();
+        fetchWithRetry('/api/market-analysis', null, 2, 800)
+            .then(data => {
+                if (data) {
+                    renderAnalysis(data);
+                    saveAnalysis(data);
+                }
+            })
+            .catch(error => {
+                const analysisDiv = document.getElementById('marketAnalysis');
+                const saved = loadSavedAnalysis();
+                if (saved) {
+                    analysisDiv.innerHTML = `
+                        <div class="text-warning">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Live analysis unavailable ( ${error.message} ). Showing last saved.
+                            <button class="btn btn-sm btn-outline-warning ms-2" onclick="refreshMarketAnalysis()">Retry</button>
+                        </div>
+                    `;
+                    renderAnalysis(saved);
+                } else {
+                    analysisDiv.innerHTML = `
+                        <div class="text-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Error loading analysis: ${error.message}
+                            <button class="btn btn-sm btn-outline-danger ms-2" onclick="refreshMarketAnalysis()">Retry</button>
+                        </div>
+                    `;
+                }
+            });
+    }
+
+    // Load saved analysis first for fast UX, then refresh
+    document.addEventListener('DOMContentLoaded', function() {
+        const saved = loadSavedAnalysis();
+        if (saved) renderAnalysis(saved);
+        refreshMarketAnalysis();
+    });
 </script>
 {% endblock %}

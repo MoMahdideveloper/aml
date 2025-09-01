@@ -1,13 +1,13 @@
 import logging
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from sqlalchemy import func
 from sqlalchemy.orm import selectinload
 
 from database import db
 from database_service import database_service
-from sqlalchemy_models import Property
 from forms import PropertyForm
-
+from sqlalchemy_models import Property
 
 bp = Blueprint("properties", __name__)
 

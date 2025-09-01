@@ -1,8 +1,10 @@
-import os
 import logging
+import os
+
 from flask import Flask
-from database import init_db
 from flask_wtf import CSRFProtect
+
+from database import init_db
 
 
 def create_app(config: str | None = None) -> Flask:
@@ -26,11 +28,11 @@ def create_app(config: str | None = None) -> Flask:
     globals()["app"] = flask_app
 
     # Register blueprints
-    from views.main import bp as main_bp
-    from views.properties import bp as properties_bp
     from views.agents import bp as agents_bp
     from views.customers import bp as customers_bp
     from views.deals import bp as deals_bp
+    from views.main import bp as main_bp
+    from views.properties import bp as properties_bp
     from views.tasks import bp as tasks_bp
 
     for bp in (main_bp, properties_bp, agents_bp, customers_bp, deals_bp, tasks_bp):

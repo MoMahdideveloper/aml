@@ -1,13 +1,11 @@
-import os
 import logging
-import hashlib
-import numpy as np
-from typing import List, Dict, Any, Optional
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+from typing import Any
+
 import chromadb
 from chromadb.config import Settings
-from models import Property, Customer
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+from models import Customer, Property
 
 
 class VectorService:
@@ -104,7 +102,7 @@ class VectorService:
         else:
             return "ultra-luxury exclusive"
 
-    def _generate_embedding(self, text: str) -> List[float]:
+    def _generate_embedding(self, text: str) -> list[float]:
         """
         Generate TF-IDF embedding for text
         """
@@ -127,7 +125,7 @@ class VectorService:
                 dim = getattr(self.vectorizer, "max_features", 500)
             return [0.0] * dim
 
-    def _generate_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
+    def _generate_embeddings_batch(self, texts: list[str]) -> list[list[float]]:
         """
         Generate embeddings for multiple texts efficiently
         """
@@ -149,7 +147,7 @@ class VectorService:
                 dim = getattr(self.vectorizer, "max_features", 500)
             return [[0.0] * dim for _ in texts]
 
-    def index_properties(self, properties: List[Property]) -> bool:
+    def index_properties(self, properties: list[Property]) -> bool:
         """
         Index all properties in the vector database
         """
@@ -238,8 +236,8 @@ class VectorService:
             return False
 
     def search_properties(
-        self, customer: Customer, properties: List[Property], top_k: int = 10
-    ) -> List[Dict[str, Any]]:
+        self, customer: Customer, properties: list[Property], top_k: int = 10
+    ) -> list[dict[str, Any]]:
         """
         Perform semantic search for properties matching customer preferences
         """
@@ -373,7 +371,7 @@ class VectorService:
 
     def _generate_match_reasons(
         self, customer: Customer, property: Property, similarity_score: float
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Generate human-readable reasons for the match
         """
@@ -402,8 +400,8 @@ class VectorService:
         return reasons[:4]  # Limit to top 4 reasons
 
     def _fallback_search(
-        self, customer: Customer, properties: List[Property], top_k: int
-    ) -> List[Dict[str, Any]]:
+        self, customer: Customer, properties: list[Property], top_k: int
+    ) -> list[dict[str, Any]]:
         """
         Fallback to rule-based search when vector search fails
         """

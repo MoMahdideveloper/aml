@@ -1,8 +1,8 @@
 import os
 import sys
 import types
-import pytest
 
+import pytest
 
 # Use in-memory SQLite for tests and avoid touching local files
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
@@ -61,8 +61,8 @@ def client(app):
 @pytest.fixture()
 def db_setup(app):
     # Ensure models are imported and tables are created for each test
-    from database import db
     import sqlalchemy_models  # noqa: F401
+    from database import db
 
     with app.app_context():
         db.drop_all()

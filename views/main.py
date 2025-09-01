@@ -1,8 +1,7 @@
-from datetime import datetime
-from flask import Blueprint, render_template
+from flask import Blueprint, jsonify, render_template
 
 from database_service import database_service
-
+from gemini_service import gemini_service
 
 bp = Blueprint("main", __name__)
 
@@ -35,3 +34,19 @@ def dashboard():
 def recommendations():
     customers = database_service.get_customers()
     return render_template("recommendations.html", customers=customers)
+
+
+@bp.route("/api/market-analysis")
+def api_market_analysis():
+    try:
+        from datetime import datetime
+
+        stats = database_service.get_dashboard_stats()
+        properties = database_service.get_properties()
+        result = gemini_service.generate_market_analysis(stats, properties)
+        if isinstance(result, dict):
+            result["updated_at"] = datetime.utcnow().isoformat() + "Z"
+            return jsonify(result)
+        return jsonify({"analysis": str(result), "bullets": [], "updated_at": datetime.utcnow().isoformat() + "Z"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

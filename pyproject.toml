@@ -8,8 +8,17 @@ line-length = 100
 exclude = ["migrations", "__pycache__"]
 
 [tool.ruff.lint]
-select = ["E", "F"]
-ignore = ["E501", "F401"]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"data_manager.py" = ["UP006", "UP035"]
+"database_service.py" = ["UP006", "UP035"]
+"gemini_service.py" = ["UP006", "UP035"]
+"sqlalchemy_models.py" = ["UP006", "UP035"]
+"vector_init.py" = ["UP006", "UP035"]
+"models.py" = ["UP006", "UP035"]
+"schemas.py" = ["UP006", "UP035"]
 
 [tool.mypy]
 python_version = "3.11"

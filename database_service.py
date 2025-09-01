@@ -2,13 +2,14 @@
 Database service to replace the in-memory DataManager with SQLAlchemy operations
 """
 
-from typing import Dict, List, Optional
-from sqlalchemy import and_, or_, desc, asc, func
-from sqlalchemy.orm import sessionmaker
-from database import db
-from sqlalchemy_models import Property, Agent, Customer, Deal, Task
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime
+from typing import Dict, List, Optional
+
+from sqlalchemy import desc, func, or_
+
+from database import db
+from sqlalchemy_models import Agent, Customer, Deal, Property, Task
 
 
 class DatabaseService:
@@ -135,11 +136,11 @@ class DatabaseService:
 
     def get_property(self, property_id: int) -> Optional[Property]:
         """Get a property by ID"""
-        return Property.query.get(property_id)
+        return db.session.get(Property, property_id)
 
     def update_property(self, property_id: int, **kwargs) -> Optional[Property]:
         """Update a property"""
-        property_obj = Property.query.get(property_id)
+        property_obj = db.session.get(Property, property_id)
         if property_obj:
             for key, value in kwargs.items():
                 if hasattr(property_obj, key):
@@ -150,7 +151,7 @@ class DatabaseService:
 
     def delete_property(self, property_id: int) -> bool:
         """Delete a property"""
-        property_obj = Property.query.get(property_id)
+        property_obj = db.session.get(Property, property_id)
         if property_obj:
             db.session.delete(property_obj)
             db.session.commit()
@@ -159,7 +160,7 @@ class DatabaseService:
 
     def update_deal(self, deal_id: int, **kwargs) -> Optional[Deal]:
         """Update a deal"""
-        deal = Deal.query.get(deal_id)
+        deal = db.session.get(Deal, deal_id)
         if deal:
             for key, value in kwargs.items():
                 if hasattr(deal, key):
@@ -189,7 +190,7 @@ class DatabaseService:
 
     def get_agent(self, agent_id: int) -> Optional[Agent]:
         """Get an agent by ID"""
-        return Agent.query.get(agent_id)
+        return db.session.get(Agent, agent_id)
 
     # Customer operations
     def add_customer(
@@ -225,7 +226,7 @@ class DatabaseService:
 
     def get_customer(self, customer_id: int) -> Optional[Customer]:
         """Get a customer by ID"""
-        return Customer.query.get(customer_id)
+        return db.session.get(Customer, customer_id)
 
     # Deal operations
     def add_deal(
@@ -253,7 +254,7 @@ class DatabaseService:
 
     def get_deal(self, deal_id: int) -> Optional[Deal]:
         """Get a deal by ID"""
-        return Deal.query.get(deal_id)
+        return db.session.get(Deal, deal_id)
 
     # Task operations
     def add_task(
@@ -290,11 +291,11 @@ class DatabaseService:
 
     def get_task(self, task_id: int) -> Optional[Task]:
         """Get a task by ID"""
-        return Task.query.get(task_id)
+        return db.session.get(Task, task_id)
 
     def complete_task(self, task_id: int) -> Optional[Task]:
         """Mark a task as completed"""
-        task = Task.query.get(task_id)
+        task = db.session.get(Task, task_id)
         if task:
             task.status = "completed"
             task.completed_at = datetime.utcnow()

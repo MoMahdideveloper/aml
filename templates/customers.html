@@ -137,7 +137,7 @@
                                         <i class="fas fa-ellipsis-h"></i>
                                     </button>
                                     <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="{{ url_for('get_customer_recommendations', customer_id=customer.id) }}">
+                                        <li><a class="dropdown-item" href="{{ url_for('recommendations') }}">
                                             <i class="fas fa-magic me-2"></i>AI Recommendations
                                         </a></li>
                                         <li><a class="dropdown-item" href="{{ url_for('deals') }}?customer={{ customer.id }}">
@@ -188,6 +188,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form method="POST" action="{{ url_for('add_customer') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
                 <div class="modal-body">
                     <!-- Basic Information -->
                     <h6 class="fw-semibold text-primary mb-3">

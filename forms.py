@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, IntegerField, FloatField, SelectField
-from wtforms.validators import DataRequired, Email, Optional, NumberRange, Length
+from wtforms import FloatField, IntegerField, SelectField, StringField, TextAreaField
+from wtforms.validators import DataRequired, Email, Length, NumberRange, Optional
 
 
 class BaseNoCSRFForm(FlaskForm):

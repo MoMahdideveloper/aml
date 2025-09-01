@@ -1,6 +1,7 @@
 # schemas.py
-from typing import Optional, List
-from pydantic import BaseModel, Field, validator
+from typing import List, Optional
+
+from pydantic import BaseModel, validator
 
 
 class PropertyAI(BaseModel):

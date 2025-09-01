@@ -1,9 +1,9 @@
 import logging
-from flask import Blueprint, render_template, redirect, url_for, flash
+
+from flask import Blueprint, flash, redirect, render_template, url_for
 
 from database_service import database_service
 from forms import AgentForm
-
 
 bp = Blueprint("agents", __name__)
 

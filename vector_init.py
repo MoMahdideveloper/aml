@@ -1,8 +1,9 @@
 import logging
 from typing import List
-from vector_service import vector_service
+
 from database_service import database_service
 from sqlalchemy_models import Property
+from vector_service import vector_service
 
 
 class VectorInitializer:

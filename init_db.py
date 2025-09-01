@@ -3,9 +3,10 @@ Database initialization script with sample data seeding
 """
 
 from datetime import datetime, timedelta
+
 from app import app
 from database import db
-from sqlalchemy_models import Property, Agent, Customer, Deal, Task
+from sqlalchemy_models import Agent, Customer, Deal, Property, Task
 
 
 def create_tables():

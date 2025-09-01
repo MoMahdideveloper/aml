@@ -344,6 +344,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form method="POST" action="{{ url_for('add_property') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
                 <div class="modal-body">
                     <!-- AI Autofill Section -->
                     <div class="card bg-light mb-4">

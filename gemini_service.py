@@ -1,13 +1,21 @@
-import os
-import logging
 import json
+import logging
+import os
 import re
-from typing import List, Dict, Any
-from google import genai
-from google.genai import types
-from sqlalchemy_models import Property, Customer
-from vector_service import vector_service
-from schemas import PropertyAI, CustomerAI
+from typing import Any, Dict, List
+
+# Safe import: if google-genai is not installed or namespace conflicted,
+# fall back to None and run in non-AI mode gracefully.
+try:
+    from google import genai  # type: ignore
+except Exception:  # pragma: no cover
+    genai = None
+
+from schemas import CustomerAI, PropertyAI
+from sqlalchemy_models import Customer, Property
+# Avoid importing heavy vector_service at module import time to keep runtime light when
+# optional dependencies (e.g., chromadb) are not installed. We'll import lazily.
+vector_service = None  # type: ignore
 
 JSON_INSTRUCTIONS = """
 Return ONLY valid JSON. Do not include backticks or prose.
@@ -58,11 +66,16 @@ CUSTOMER_SCHEMA_HINT = {
 class GeminiService:
     def __init__(self):
         api_key = os.environ.get("GEMINI_API_KEY")
-        if not api_key or api_key == "default_key":
+        if not api_key or api_key == "default_key" or genai is None:
             # Use a mock/fallback mode instead of failing
             self.client = None
             self.logger = logging.getLogger(__name__)
-            self.logger.warning("GEMINI_API_KEY not found, running in fallback mode")
+            if genai is None:
+                self.logger.warning(
+                    "google-genai not available; Market Analysis will use fallback."
+                )
+            else:
+                self.logger.warning("GEMINI_API_KEY not found; using fallback mode")
         else:
             self.client = genai.Client(api_key=api_key)
             self.logger = logging.getLogger(__name__)
@@ -83,7 +96,19 @@ class GeminiService:
                 self.logger.info("No Gemini client available, using fallback recommendations")
                 return self._create_fallback_recommendations(customer, properties[:10])
 
-            # Use vector service for semantic search
+            # Use vector service for semantic search (lazy import)
+            global vector_service
+            if vector_service is None:
+                try:
+                    from vector_service import vector_service as _vs  # type: ignore
+
+                    vector_service = _vs
+                except Exception as e:
+                    self.logger.warning(
+                        f"Vector service unavailable ({e}); using fallback recommendations"
+                    )
+                    return self._create_fallback_recommendations(customer, properties[:10])
+
             vector_recommendations = vector_service.search_properties(
                 customer=customer, properties=properties, top_k=min(10, len(properties))
             )
@@ -229,6 +254,114 @@ class GeminiService:
 
         return recommendations
 
+    def generate_market_analysis(self, stats: dict, properties: List[Property]) -> Dict[str, Any]:
+        """Generate a succinct market analysis.
+        Returns a dict with keys: analysis (str), bullets (List[str]).
+        Uses Gemini if available; falls back otherwise.
+        """
+        try:
+            total = stats.get("total_properties", len(properties) if properties is not None else 0)
+            active = stats.get("active_properties", 0)
+            avg_price = stats.get("avg_property_price", 0)
+
+            # Top neighborhoods
+            try:
+                from collections import Counter
+
+                neighborhoods = [getattr(p, "neighborhood", None) for p in properties or []]
+                neighborhoods = [n for n in neighborhoods if n]
+                top_parts = [f"{name} ({cnt})" for name, cnt in Counter(neighborhoods).most_common(3)]
+                top = ", ".join(top_parts)
+            except Exception:
+                top = ""
+
+            fallback = (
+                f"Market snapshot: {total} properties ({active} active). "
+                f"Average price ${avg_price:,.0f}.\n"
+            )
+            if top:
+                fallback += f"Top neighborhoods: {top}.\n"
+            else:
+                fallback += "Top neighborhoods: N/A.\n"
+            active_ratio = (active / total) if total else 0
+            if active_ratio > 0.7:
+                fallback += "High supply relative to total listings; buyers may have leverage."
+            elif active_ratio < 0.3:
+                fallback += "Tight inventory; sellers may have leverage."
+            else:
+                fallback += "Balanced conditions across most segments."
+
+            fallback_bullets: List[str] = []
+            fallback_bullets.append(f"Listings: {total} total, {active} active")
+            fallback_bullets.append(f"Average price: ${avg_price:,.0f}")
+            if top:
+                fallback_bullets.append(f"Top neighborhoods: {top}")
+            fallback_bullets.append(
+                "Supply: high" if active_ratio > 0.7 else "Supply: tight" if active_ratio < 0.3 else "Supply: balanced"
+            )
+
+            if not self.client:
+                return {"analysis": fallback, "bullets": fallback_bullets}
+
+            context_lines = [
+                f"Total properties: {total}",
+                f"Active properties: {active}",
+                f"Average price: {avg_price:,.0f}",
+                f"Top neighborhoods: {top or 'N/A'}",
+            ]
+            prompt = (
+                "You are a real estate market analyst. Based on the context, "
+                "produce a concise snapshot for agents and clients. Avoid hype; be factual and helpful.\n\n"
+                + "\n".join(context_lines)
+                + "\n\nFormat strictly as:\n"
+                  "Overview: <one sentence overview>\n"
+                  "- <short bullet 1>\n- <short bullet 2>\n- <short bullet 3>\n- <short bullet 4>\n"
+            )
+
+            try:
+                response = self.client.models.generate_content(
+                    model="gemini-1.5-flash", contents=prompt
+                )
+                text = getattr(response, "text", None)
+                if isinstance(text, str) and text.strip():
+                    overview, bullets = self._parse_bullets(text)
+                    analysis_text = overview or fallback
+                    return {"analysis": analysis_text, "bullets": bullets or fallback_bullets}
+                candidates = getattr(response, "candidates", None)
+                if candidates:
+                    for c in candidates:
+                        content = getattr(c, "content", None)
+                        parts = getattr(content, "parts", None)
+                        if parts:
+                            joined = "\n".join(str(p) for p in parts if p)
+                            if joined.strip():
+                                overview, bullets = self._parse_bullets(joined)
+                                analysis_text = overview or fallback
+                                return {"analysis": analysis_text, "bullets": bullets or fallback_bullets}
+            except Exception as e:
+                self.logger.warning(f"Gemini generation failed; using fallback: {e}")
+            return {"analysis": fallback, "bullets": fallback_bullets}
+        except Exception as e:
+            self.logger.error(f"Error generating market analysis: {e}")
+            return {"analysis": "Market analysis unavailable.", "bullets": []}
+
+    def _parse_bullets(self, text: str) -> (str, List[str]):
+        """Parse 'Overview:' and '- bullet' lines into overview + bullet list."""
+        overview = ""
+        bullets: List[str] = []
+        try:
+            for line in text.splitlines():
+                s = line.strip()
+                if not s:
+                    continue
+                if s.lower().startswith("overview:"):
+                    overview = s.split(":", 1)[1].strip()
+                elif s.startswith("- "):
+                    bullets.append(s[2:].strip())
+        except Exception:
+            pass
+        return overview, bullets
+
     def _extract_score(self, analysis: str) -> int:
         """
         Extract match score from analysis text
@@ -329,7 +462,6 @@ class GeminiService:
 
             # Add timeout to the API call
             import signal
-            import time
 
             def timeout_handler(signum, frame):
                 raise TimeoutError("API call timed out")

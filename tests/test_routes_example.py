@@ -1,6 +1,3 @@
-from flask import url_for
-
-
 def test_properties_page_lists_inserted_property(client, db_setup, app):
     # Arrange: create minimal agent and property
     from database import db

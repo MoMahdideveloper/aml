@@ -1,16 +1,16 @@
-from typing import Dict, List, Optional
-from models import Property, Agent, Customer, Deal, Task
 from datetime import datetime, timedelta
-import logging
+from typing import Optional
+
+from models import Agent, Customer, Deal, Property, Task
 
 
 class DataManager:
     def __init__(self):
-        self.properties: Dict[int, Property] = {}
-        self.agents: Dict[int, Agent] = {}
-        self.customers: Dict[int, Customer] = {}
-        self.deals: Dict[int, Deal] = {}
-        self.tasks: Dict[int, Task] = {}
+        self.properties: dict[int, Property] = {}
+        self.agents: dict[int, Agent] = {}
+        self.customers: dict[int, Customer] = {}
+        self.deals: dict[int, Deal] = {}
+        self.tasks: dict[int, Task] = {}
 
         # Auto-increment IDs
         self.next_property_id = 1
@@ -503,22 +503,22 @@ class DataManager:
 
     def get_properties(
         self,
-        status: Optional[str] = None,
+        status: str | None = None,
         search: str = "",
         property_type: str = "",
-        min_price: float = None,
-        max_price: float = None,
-        bedrooms: int = None,
-        bathrooms: int = None,
-        min_sqft: int = None,
-        max_sqft: int = None,
+        min_price: float | None = None,
+        max_price: float | None = None,
+        bedrooms: int | None = None,
+        bathrooms: int | None = None,
+        min_sqft: int | None = None,
+        max_sqft: int | None = None,
         neighborhood: str = "",
         property_condition: str = "",
         property_category: str = "",
-        year_built_min: int = None,
-        year_built_max: int = None,
-        agent_id: int = None,
-    ) -> List[Property]:
+        year_built_min: int | None = None,
+        year_built_max: int | None = None,
+        agent_id: int | None = None,
+    ) -> list[Property]:
         properties = list(self.properties.values())
 
         # Apply filters
@@ -580,10 +580,10 @@ class DataManager:
 
         return properties
 
-    def get_property(self, property_id: int) -> Optional[Property]:
+    def get_property(self, property_id: int) -> Property | None:
         return self.properties.get(property_id)
 
-    def update_property(self, property_id: int, **kwargs) -> Optional[Property]:
+    def update_property(self, property_id: int, **kwargs) -> Property | None:
         if property_id in self.properties:
             property_obj = self.properties[property_id]
             for key, value in kwargs.items():
@@ -602,10 +602,10 @@ class DataManager:
         self.next_agent_id += 1
         return agent
 
-    def get_agents(self) -> List[Agent]:
+    def get_agents(self) -> list[Agent]:
         return list(self.agents.values())
 
-    def get_agent(self, agent_id: int) -> Optional[Agent]:
+    def get_agent(self, agent_id: int) -> Agent | None:
         return self.agents.get(agent_id)
 
     # Customer methods
@@ -637,10 +637,10 @@ class DataManager:
         self.next_customer_id += 1
         return customer
 
-    def get_customers(self) -> List[Customer]:
+    def get_customers(self) -> list[Customer]:
         return list(self.customers.values())
 
-    def get_customer(self, customer_id: int) -> Optional[Customer]:
+    def get_customer(self, customer_id: int) -> Customer | None:
         return self.customers.get(customer_id)
 
     # Deal methods
@@ -657,16 +657,16 @@ class DataManager:
         self.next_deal_id += 1
         return deal
 
-    def get_deals(self, agent_id: Optional[int] = None) -> List[Deal]:
+    def get_deals(self, agent_id: int | None = None) -> list[Deal]:
         deals = list(self.deals.values())
         if agent_id:
             deals = [d for d in deals if d.agent_id == agent_id]
         return deals
 
-    def get_deal(self, deal_id: int) -> Optional[Deal]:
+    def get_deal(self, deal_id: int) -> Deal | None:
         return self.deals.get(deal_id)
 
-    def update_deal(self, deal_id: int, **kwargs) -> Optional[Deal]:
+    def update_deal(self, deal_id: int, **kwargs) -> Deal | None:
         if deal_id in self.deals:
             deal = self.deals[deal_id]
             for key, value in kwargs.items():
@@ -683,14 +683,14 @@ class DataManager:
         description: str,
         agent_id: int,
         priority: str = "medium",
-        due_date: Optional[datetime] = None,
+        due_date: datetime | None = None,
     ) -> Task:
         task = Task(self.next_task_id, title, description, agent_id, priority, "pending", due_date)
         self.tasks[self.next_task_id] = task
         self.next_task_id += 1
         return task
 
-    def get_tasks(self, agent_id: Optional[int] = None, status: Optional[str] = None) -> List[Task]:
+    def get_tasks(self, agent_id: int | None = None, status: str | None = None) -> list[Task]:
         tasks = list(self.tasks.values())
         if agent_id:
             tasks = [t for t in tasks if t.agent_id == agent_id]
@@ -698,10 +698,10 @@ class DataManager:
             tasks = [t for t in tasks if t.status == status]
         return tasks
 
-    def get_task(self, task_id: int) -> Optional[Task]:
+    def get_task(self, task_id: int) -> Task | None:
         return self.tasks.get(task_id)
 
-    def complete_task(self, task_id: int) -> Optional[Task]:
+    def complete_task(self, task_id: int) -> Task | None:
         if task_id in self.tasks:
             task = self.tasks[task_id]
             task.status = "completed"
@@ -710,7 +710,7 @@ class DataManager:
         return None
 
     # Analytics methods
-    def get_dashboard_stats(self) -> Dict:
+    def get_dashboard_stats(self) -> dict:
         total_properties = len(self.properties)
         active_properties = len([p for p in self.properties.values() if p.status == "active"])
         total_customers = len(self.customers)
