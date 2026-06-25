@@ -27,7 +27,7 @@ def serve_code_html():
         # Log the error (optional)
         return f"Error reading file: {str(e)}", 500
 
-@bp.route("/")
+@bp.route("/dashboard")
 def dashboard():
     stats = database_service.get_dashboard_stats()
     recent_properties = stats["recent_properties"]
