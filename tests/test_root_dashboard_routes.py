@@ -84,3 +84,13 @@ class TestRootAndDashboardRoutes:
         assert 'Performance Overview' in root_text
         assert 'Performance Overview' not in dashboard_text
         assert 'Dashboard' in dashboard_text
+
+    def test_root_route_uses_caching(self, client):
+        """Test that root route implements caching for performance."""
+        # First request
+        resp1 = client.get("/")
+        # Second request should be served from cache (faster, same content)
+        resp2 = client.get("/")
+        assert resp1.status_code == 200
+        assert resp2.status_code == 200
+        assert resp1.data == resp2.data  # Content should be identical

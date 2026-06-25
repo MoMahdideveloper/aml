@@ -5,6 +5,7 @@ from flask import Flask
 from flask_wtf import CSRFProtect
 
 from database import init_db
+from extensions import init_extensions
 
 
 def create_app(config: str | None = None) -> Flask:
@@ -16,9 +17,14 @@ def create_app(config: str | None = None) -> Flask:
 
     # Secret/config
     flask_app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
+    flask_app.config['TEMPLATES_AUTO_RELOAD'] = True
+    flask_app.debug = os.environ.get("FLASK_DEBUG", "0") == "1"
 
     # Initialize database
     init_db(flask_app)
+
+    # Initialize extensions (cache, limiter, etc.)
+    init_extensions(flask_app)
 
     # Optional CSRF protection (enable by setting ENABLE_CSRF=1)
     if os.environ.get("ENABLE_CSRF", "0") == "1":

@@ -3,12 +3,14 @@ from flask import Blueprint, jsonify, render_template, send_file
 from database_service import database_service
 from gemini_service import gemini_service
 import os
+from extensions import cache
 
 bp = Blueprint("main", __name__)
 
 
 
 @bp.route('/')
+@cache.cached(timeout=300)  # Cache for 5 minutes
 def serve_code_html():
     """Serve the code.html file as the root page."""
     try:
