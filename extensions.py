@@ -16,10 +16,11 @@ limiter = Limiter(
 def init_extensions(app):
     """Initialize cross-cutting Flask extensions."""
     print(f"[DEBUG] Initializing extensions for app: {app}")
-    redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+    redis_url = os.environ.get("REDIS_URL")
 
     app.config.setdefault("RATELIMIT_STORAGE_URI", os.environ.get("RATELIMIT_STORAGE_URI", redis_url))
-    app.config.setdefault("CACHE_REDIS_URL", os.environ.get("CACHE_REDIS_URL", redis_url))
+    if redis_url:
+        app.config.setdefault("CACHE_REDIS_URL", redis_url)
 
     cache_type = "SimpleCache"
     cache_default_timeout = int(os.environ.get("CACHE_DEFAULT_TIMEOUT_SECONDS", "300"))

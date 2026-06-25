@@ -94,3 +94,44 @@ class TestRootAndDashboardRoutes:
         assert resp1.status_code == 200
         assert resp2.status_code == 200
         assert resp1.data == resp2.data  # Content should be identical
+
+    def test_root_route_handles_missing_file_gracefully(self, client, monkeypatch):
+        """Test that missing code.html returns appropriate 404 error."""
+        def mock_send_file(*args, **kwargs):
+            raise FileNotFoundError("code.html not found")
+
+        monkeypatch.setattr('flask.send_file', mock_send_file)
+        resp = client.get("/")
+        assert resp.status_code == 404
+        assert b"File not found" in resp.data
+
+    def test_root_route_handles_read_error_gracefully(self, client, monkeypatch):
+        """Test that file read errors return appropriate 500 error."""
+        def mock_send_file(*args, **kwargs):
+            raise PermissionError("Cannot read file")
+
+        monkeypatch.setattr('flask.send_file', mock_send_file)
+        resp = client.get("/")
+        assert resp.status_code == 500
+        assert b"Error reading file" in resp.data
+
+    def test_root_route_includes_security_headers(self, client):
+        """Test that root route response includes basic security headers."""
+        resp = client.get("/")
+        assert resp.status_code == 200
+        # Check for basic security headers that should be present
+        assert 'X-Content-Type-Options' in resp.headers
+        assert 'X-Frame-Options' in resp.headers
+
+    def test_code_html_references_valid_assets(self, client):
+        """Test that code.html references exist and are accessible."""
+        resp = client.get("/")
+        assert resp.status_code == 200
+
+        html_content = resp.data.decode('utf-8')
+
+        # Check that CSS and JS references exist in the HTML
+        # The code.html uses Google Fonts, Tailwind CDN, etc.
+        assert 'https://fonts.googleapis.com' in html_content
+        assert 'https://cdn.tailwindcss.com' in html_content
+        assert 'text/html' in resp.content_type.lower()

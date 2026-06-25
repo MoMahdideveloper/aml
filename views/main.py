@@ -1,16 +1,19 @@
-from flask import Blueprint, jsonify, render_template, send_file
+from flask import Blueprint, jsonify, render_template
+import flask
+from io import BytesIO
+import logging
+import os
 
 from database_service import database_service
 from gemini_service import gemini_service
-import os
 from extensions import cache
 
 bp = Blueprint("main", __name__)
+logger = logging.getLogger(__name__)
 
 
 
 @bp.route('/')
-@cache.cached(timeout=300)  # Cache for 5 minutes
 def serve_code_html():
     """Serve the code.html file as the root page."""
     try:
@@ -21,11 +24,13 @@ def serve_code_html():
             'dashboard_overview',
             'code.html'
         )
-        return send_file(file_path, mimetype='text/html')
+        logger.info(f"Serving code.html from {file_path}")
+        return flask.send_file(file_path, mimetype='text/html')
     except FileNotFoundError:
+        logger.warning("code.html file not found")
         return "File not found: code.html", 404
     except Exception as e:
-        # Log the error (optional)
+        logger.error(f"Error reading code.html: {str(e)}")
         return f"Error reading file: {str(e)}", 500
 
 @bp.route("/dashboard")
