@@ -1,0 +1,2 @@
+[DELETE] http://127.0.0.1:5000/tasks/3 => [200] OK
+[DELETE] http://127.0.0.1:5000/tasks/3 => [200] OK

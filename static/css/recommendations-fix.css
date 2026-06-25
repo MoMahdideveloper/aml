@@ -1,0 +1,351 @@
+/* Recommendations Page Fixes */
+
+/* Container and Layout Fixes */
+.recommendations-container {
+    max-width: 100%;
+    padding: 0 15px;
+}
+
+/* Customer Selection Cards */
+.customer-selection-card {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    min-height: 200px;
+}
+
+.customer-selection-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.customer-selection-card.border-primary {
+    border-color: var(--bs-primary) !important;
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.customer-avatar .avatar-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+}
+
+.preference-item {
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.preference-item i {
+    font-size: 1.2rem;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+/* Recommendation Cards */
+.recommendation-card {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    min-height: 400px;
+}
+
+.recommendation-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+}
+
+.recommendation-card .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    padding: 0.75rem 1rem;
+}
+
+.recommendation-card .property-details {
+    background-color: #f8f9fa;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.recommendation-card .detail-item {
+    text-align: center;
+    padding: 0.5rem;
+}
+
+.recommendation-card .detail-item i {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.ai-analysis {
+    background-color: white;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    margin: 1rem 0;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(13, 110, 253, 0.1);
+}
+
+.analysis-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.pros-list,
+.cons-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 1rem;
+}
+
+.pros-list li,
+.cons-list li {
+    font-size: 0.85rem;
+    padding: 0.25rem 0;
+    display: flex;
+    align-items: flex-start;
+}
+
+.pros-list li i {
+    color: var(--bs-success);
+    margin-right: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.cons-list li i {
+    color: var(--bs-warning);
+    margin-right: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.hybrid-rank-info {
+    font-size: 0.75rem;
+    background: #f8f9fa;
+    padding: 0.5rem 0.75rem;
+    border-radius: 2rem;
+    display: inline-flex;
+    align-items: center;
+    color: #6c757d;
+}
+
+.hybrid-rank-info i {
+    margin-right: 0.5rem;
+}
+
+.analysis-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #495057;
+}
+
+.full-analysis {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #495057;
+}
+
+/* Responsive Design Fixes */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        padding: 0;
+    }
+
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    .sidebar.show {
+        transform: translateX(0);
+    }
+
+    .content {
+        padding: 1rem;
+    }
+
+    .recommendations-container {
+        padding: 0 10px;
+    }
+
+    .customer-selection-card {
+        margin-bottom: 1rem;
+        min-height: auto;
+    }
+
+    .recommendation-card {
+        margin-bottom: 1.5rem;
+        min-height: auto;
+    }
+
+    .property-details .row {
+        text-align: center;
+    }
+
+    .property-details .col-3 {
+        margin-bottom: 0.5rem;
+    }
+
+    .card-footer .d-flex {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .card-footer .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .customer-preferences .row {
+        flex-direction: column;
+    }
+
+    .customer-preferences .col-4 {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .recommendation-card .property-details .col-3 {
+        width: 50%;
+        margin-bottom: 1rem;
+    }
+
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+}
+
+/* Loading States */
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.loading-spinner .spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Error States */
+.error-state {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+
+.error-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Success States */
+.success-state {
+    text-align: center;
+    padding: 2rem;
+    color: #198754;
+}
+
+.success-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Badge Improvements */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.badge.bg-primary {
+    background-color: var(--bs-primary) !important;
+}
+
+.badge.bg-success {
+    background-color: var(--bs-success) !important;
+}
+
+.badge.bg-warning {
+    background-color: var(--bs-warning) !important;
+    color: #000 !important;
+}
+
+.badge.bg-secondary {
+    background-color: var(--bs-secondary) !important;
+}
+
+/* Button Improvements */
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: white;
+}
+
+.btn-outline-success:hover {
+    background-color: var(--bs-success);
+    border-color: var(--bs-success);
+    color: white;
+}
+
+.btn-outline-info:hover {
+    background-color: var(--bs-info);
+    border-color: var(--bs-info);
+    color: white;
+}
+
+/* Animation Improvements */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.recommendation-card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.customer-selection-card {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Print Styles */
+@media print {
+
+    .sidebar,
+    .top-navbar,
+    .btn,
+    .modal {
+        display: none !important;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+    }
+
+    .recommendation-card {
+        break-inside: avoid;
+        margin-bottom: 1rem;
+    }
+}

@@ -1,0 +1,25 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - heading "LUXE REALTY" [level=1] [ref=e4]
+    - paragraph [ref=e5]: Sign in to your account
+  - generic [ref=e6]:
+    - generic [ref=e7]: Account created successfully! Please sign in.
+    - generic [ref=e8]:
+      - generic [ref=e9]: Username or Email
+      - textbox "Username or Email" [ref=e10]:
+        - /placeholder: Enter your username or email
+    - generic [ref=e11]:
+      - generic [ref=e12]: Password
+      - textbox "Password" [ref=e13]:
+        - /placeholder: Enter your password
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - checkbox "Remember me" [ref=e16]
+        - text: Remember me
+      - link "Forgot password?" [ref=e17] [cursor=pointer]:
+        - /url: /auth/login
+    - button "Sign In" [ref=e18] [cursor=pointer]
+    - generic [ref=e19]:
+      - text: Don't have an account?
+      - link "Sign Up" [ref=e20] [cursor=pointer]:
+        - /url: /auth/register

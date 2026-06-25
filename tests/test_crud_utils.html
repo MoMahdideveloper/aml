@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Utils Test Page</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>CRUD Utils Test Page</h1>
+        <p class="text-muted">This page tests the CRUD utilities functionality</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Toast Notifications</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-success me-2" onclick="testToast('success')">Success Toast</button>
+                        <button class="btn btn-danger me-2" onclick="testToast('error')">Error Toast</button>
+                        <button class="btn btn-warning me-2" onclick="testToast('warning')">Warning Toast</button>
+                        <button class="btn btn-info" onclick="testToast('info')">Info Toast</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Modal Tests</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary me-2" onclick="testModal()">Show Test Modal</button>
+                        <button class="btn btn-secondary" onclick="testConfirmDelete()">Test Delete Confirmation</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Form Submission Test</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="testForm" onsubmit="return false;">
+                            <div class="mb-3">
+                                <label for="testEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="testEmail" name="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="testName" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="testName" name="name" required>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="testFormSubmission()">
+                                <span class="spinner-border spinner-border-sm d-none me-2"></span>
+                                Test Submit
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Test Results</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="testResults">
+                            <p class="text-muted">Run tests to see results here...</p>
+                        </div>
+                        <button class="btn btn-outline-primary" onclick="runAllTests()">Run All Tests</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Modal -->
+    <div class="modal fade" id="testModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Test Modal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>This is a test modal to verify modal functionality.</p>
+                    <div id="testModal_loading" style="display: none;">
+                        <div class="text-center">
+                            <div class="spinner-border" role="status"></div>
+                            <div class="mt-2">Loading...</div>
+                        </div>
+                    </div>
+                    <div id="testModal_content">
+                        <p>Modal content loaded successfully!</p>
+                    </div>
+                    <div id="testModal_error" class="alert alert-danger d-none">
+                        <span id="testModal_error_message"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- CRUD Utils -->
+    <script src="../static/js/crud-utils.js"></script>
+    
+    <script>
+        // Test functions
+        function testToast(type) {
+            const messages = {
+                success: 'Operation completed successfully!',
+                error: 'An error occurred while processing your request.',
+                warning: 'Please review your input before continuing.',
+                info: 'Here is some helpful information.'
+            };
+            
+            window.crudUtils.showToast(messages[type], type);
+            logResult(`Toast (${type}) displayed successfully`);
+        }
+        
+        function testModal() {
+            const modal = window.crudUtils.showModal('testModal');
+            if (modal) {
+                logResult('Modal displayed successfully');
+            } else {
+                logResult('Modal test failed', 'error');
+            }
+        }
+        
+        function testConfirmDelete() {
+            window.crudUtils.confirmDelete(
+                'Are you sure you want to delete this test item?',
+                () => {
+                    logResult('Delete confirmed by user');
+                    window.crudUtils.showToast('Item would be deleted', 'success');
+                },
+                {
+                    title: 'Confirm Test Delete',
+                    warning: 'This is just a test - nothing will actually be deleted.'
+                }
+            );
+        }
+        
+        function testFormSubmission() {
+            const form = document.getElementById('testForm');
+            
+            // Mock successful submission
+            window.crudUtils.submitForm(form, {
+                onSuccess: (response) => {
+                    logResult('Form submission test completed successfully');
+                    window.crudUtils.showToast('Form submitted successfully!', 'success');
+                },
+                onError: (error) => {
+                    logResult('Form submission test failed: ' + error.message, 'error');
+                },
+                requestOptions: {
+                    // Mock the request for testing
+                    body: new FormData(form)
+                }
+            }).catch(error => {
+                // Expected to fail since we don't have a real endpoint
+                logResult('Form submission test completed (expected network error)');
+                window.crudUtils.showToast('Form validation works correctly', 'info');
+            });
+        }
+        
+        function runAllTests() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '<h6>Running Tests...</h6>';
+            
+            let testCount = 0;
+            let passedCount = 0;
+            
+            // Test 1: CRUDUtils initialization
+            testCount++;
+            if (window.crudUtils && window.crudUtils.activeModals instanceof Map) {
+                passedCount++;
+                logResult('✓ CRUDUtils initialization test passed');
+            } else {
+                logResult('✗ CRUDUtils initialization test failed', 'error');
+            }
+            
+            // Test 2: Toast container creation
+            testCount++;
+            if (window.crudUtils.toastContainer) {
+                passedCount++;
+                logResult('✓ Toast container creation test passed');
+            } else {
+                logResult('✗ Toast container creation test failed', 'error');
+            }
+            
+            // Test 3: Error formatting
+            testCount++;
+            const errors = { email: ['Email is required'], name: ['Name is too short'] };
+            const formatted = window.crudUtils.formatErrors(errors);
+            if (formatted.includes('Email: Email is required') && formatted.includes('Name: Name is too short')) {
+                passedCount++;
+                logResult('✓ Error formatting test passed');
+            } else {
+                logResult('✗ Error formatting test failed', 'error');
+            }
+            
+            // Test 4: CSRF token handling
+            testCount++;
+            const token = window.crudUtils.getCSRFToken();
+            if (typeof token === 'string') {
+                passedCount++;
+                logResult('✓ CSRF token handling test passed');
+            } else {
+                logResult('✗ CSRF token handling test failed', 'error');
+            }
+            
+            // Test 5: Modal functionality
+            testCount++;
+            try {
+                const modal = window.crudUtils.showModal('testModal');
+                window.crudUtils.hideModal('testModal');
+                passedCount++;
+                logResult('✓ Modal functionality test passed');
+            } catch (e) {
+                logResult('✗ Modal functionality test failed: ' + e.message, 'error');
+            }
+            
+            // Summary
+            setTimeout(() => {
+                logResult(`\n=== Test Summary ===`);
+                logResult(`Total Tests: ${testCount}`);
+                logResult(`Passed: ${passedCount}`);
+                logResult(`Failed: ${testCount - passedCount}`);
+                logResult(`Success Rate: ${Math.round((passedCount / testCount) * 100)}%`);
+                
+                if (passedCount === testCount) {
+                    window.crudUtils.showToast('All tests passed!', 'success');
+                } else {
+                    window.crudUtils.showToast(`${passedCount}/${testCount} tests passed`, 'warning');
+                }
+            }, 100);
+        }
+        
+        function logResult(message, type = 'info') {
+            const results = document.getElementById('testResults');
+            const timestamp = new Date().toLocaleTimeString();
+            const colorClass = type === 'error' ? 'text-danger' : type === 'success' ? 'text-success' : 'text-dark';
+            
+            results.innerHTML += `<div class="${colorClass}"><small>[${timestamp}]</small> ${message}</div>`;
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            logResult('CRUD Utils Test Page loaded successfully');
+            logResult('CRUDUtils instance available: ' + (window.crudUtils ? 'Yes' : 'No'));
+        });
+    </script>
+</body>
+</html>

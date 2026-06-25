@@ -1,0 +1,431 @@
+{
+  "name": "Comprehensive CRM Automation Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/crm-trigger",
+        "responseMode": "onReceived",
+        "responseData": {
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": "{\"status\": \"received\"}"
+        }
+      },
+      "name": "CRM Trigger Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "id": "crm-trigger"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract and validate trigger data\nconst triggerData = Object.assign({}, $json[\"body\"] || {});\n\n// Determine trigger type and extract relevant context\nconst triggerType = triggerData.type || \"lead_created\";\nconst entityId = triggerData.id || triggerData.customer_id || triggerData.property_id;\n\n// Prepare context for subsequent steps\nreturn [{\n  json: {\n    triggerType: triggerType,\n    entityId: entityId,\n    triggerData: triggerData,\n    timestamp: new Date().toISOString(),\n    workflowId: \"comprehensive_crm_automation\"\n  }\n}];"
+      },
+      "name": "Extract Context",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        500,
+        0
+      ],
+      "id": "extract-context"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "SELECT * FROM crm_events WHERE entity_id = $1 AND event_type = $2 ORDER BY created_at DESC LIMIT 1",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {}
+            }
+          ]
+        }
+      },
+      "name": "Get Context from CRM DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        750,
+        -100
+      ],
+      "id": "get-crm-context"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Combine webhook data with database context\nconst dbResult = $json[0] || {};\nconst webhookData = $node[\"Extract Context\"].json.triggerData;\n\n// Build comprehensive context\nconst context = {\n  ...webhookData,\n  dbRecord: dbResult,\n  contextTimestamp: new Date().toISOString(),\n  dataSources: [\"webhook\", \"database\"]\n};\n\nreturn [{ json: context }];"
+      },
+      "name": "Combine Context Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        0
+      ],
+      "id": "combine-context"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "UPDATE crm_entities SET last_updated = NOW(), processed_by_workflow = $1 WHERE id = $2",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {}
+            }
+          ]
+        }
+      },
+      "name": "Update CRM Record",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        -100
+      ],
+      "id": "update-crm-record"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Prepare form data for external web form submission\nconst context = $json;\n\n// Example: Prepare data for a property listing web form\nconst formData = {\n  property_title: context.property_title || \"\",\n  property_address: context.property_address || \"\",\n  price: context.price || 0,\n  bedrooms: context.bedrooms || 0,\n  bathrooms: context.bathrooms || 0,\n  square_feet: context.square_feet || 0,\n  description: context.description || \"\",\n  features: JSON.stringify(context.features || []),\n  agent_id: context.agent_id || \"\",\n  listing_date: context.listing_date || new Date().toISOString().split('T')[0]\n};\n\nreturn [{ json: { formData: formData, targetUrl: \"https://example-realestate-site.com/submit-property\" } }];"
+      },
+      "name": "Prepare Form Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        200
+      ],
+      "id": "prepare-form-data"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json[\"targetUrl\"] }}",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{ JSON.stringify($json[\"formData\"]) }}",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "CRM-Automation-Bot/1.0"
+            }
+          ]
+        }
+      },
+      "name": "Submit Web Form",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        200
+      ],
+      "id": "submit-web-form"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Send notifications via multiple channels\nconst context = $json;\nconst notifications = [];\n\n// Email notification\nnotifications.push({\n  channel: \"email\",\n  to: context.agent_email || \"manager@company.com\",\n  subject: `Property Update: ${context.property_title || 'Property'}`,\n  body: `\\n\\nProperty details:\\n- Title: ${context.property_title}\\n- Address: ${context.property_address}\\n- Price: $${context.price}\\n- Updated via CRM automation at ${new Date().toLocaleString()}\\n\\nView details: ${context.property_url || '#'}`\n});\n\n// SMS notification (if phone available)\nif (context.agent_phone) {\n  notifications.push({\n    channel: \"sms\",\n    to: context.agent_phone,\n    message: `Property update: ${context.property_title} - $${context.price}. Check email for details.`\n  });\n}\n\n// Slack notification\nnotifications.push({\n  channel: \"slack\",\n  channel: \"#property-updates\",\n  message: `*Property Updated*: ${context.property_title}\\n*Price*: $${context.price}\\n*Agent*: ${context.agent_name || 'Unknown'}\\n<${context.property_url || '#'}|View Property>`\n});\n\nreturn [{ json: { notifications: notifications } }];"
+      },
+      "name": "Prepare Notifications",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1500,
+        0
+      ],
+      "id": "prepare-notifications"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Send email notifications\nconst notifications = $json[\"notifications\"] || [];\nconst emailNotifications = notifications.filter(n => n.channel === \"email\");\n\nconst emailPromises = emailNotifications.map(email => (\n  fetch(\"http://host.docker.internal:5000/api/email/send\", {\n    method: \"POST\",\n    headers: { \"Content-Type\": \"application/json\" },\n    body: JSON.stringify({\n      to: email.to,\n      subject: email.subject,\n      body: email.body,\n      html: email.body.replace(/\\\\n/g, '<br>')\n    })\n  ))\n));\n\nreturn [{ json: { emailResults: await Promise.all(emailPromises) } }];"
+      },
+      "name": "Send Emails",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1750,
+        -100
+      ],
+      "id": "send-emails"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Send SMS notifications\nconst notifications = $json[\"notifications\"] || [];\nconst smsNotifications = notifications.filter(n => n.channel === \"sms\");\n\nconst smsPromises = smsNotifications.map(sms => (\n  fetch(\"http://host.docker.internal:5000/api/sms/send\", {\n    method: \"POST\",\n    headers: { \"Content-Type\": \"application/json\" },\n    body: JSON.stringify({\n      to: sms.to,\n      message: sms.message\n    })\n  }))\n));\n\nreturn [{ json: { smsResults: await Promise.all(smsPromises) } }];"
+      },
+      "name": "Send SMS",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1750,
+        100
+      ],
+      "id": "send-sms"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Send Slack notifications\nconst notifications = $json[\"notifications\"] || [];\nconst slackNotifications = notifications.filter(n => n.channel === \"slack\");\n\nconst slackPromises = slackNotifications.map(slack => (\n  fetch(\"http://host.docker.internal:5000/api/slack/post\", {\n    method: \"POST\",\n    headers: { \"Content-Type\": \"application/json\" },\n    body: JSON.stringify({\n      channel: slack.channel,\n      message: slack.message\n    })\n  }))\n));\n\nreturn [{ json: { slackResults: await Promise.all(slackPromises) } }];"
+      },
+      "name": "Send Slack",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1750,
+        300
+      ],
+      "id": "send-slack"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Scrape website for additional property data (example)\nconst context = $json;\n\n// Only run if we have a property URL to scrape\nif (!context.property_url) {\n  return [{ json: { scrapedData: null, skipped: true } }];\n}\n\nreturn [{ \n  json: { \n    scrapedData: {\n      property_url: context.property_url,\n      scrape_timestamp: new Date().toISOString(),\n      notes: \"Web scraping would happen here - in real implementation, use HTTP request or browser automation\",\n      status: \"simulated\"\n    }\n  } \n}];"
+      },
+      "name": "Scrape Website Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1500,
+        200
+      ],
+      "id": "scrape-website"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Final consolidation and logging\nconst context = $node[\"Combine Context\"].json;\nconst formResult = $node[\"Submit Web Form\"]?.json || {};\nconst emailResults = $node[\"Send Emails\"]?.json?.emailResults || [];\nconst smsResults = $node[\"Send SMS\"]?.json?.smsResults || [];\nconst slackResults = $node[\"Send Slack\"]?.json?.slackResults || [];\nconst scrapedData = $node[\"Scrape Website Data\"]?.json?.scrapedData || {};\n\nconst executionSummary = {\n  workflowId: \"comprehensive_crm_automation\",\n  executionId: crypto.randomUUID(),\n  timestamp: new Date().toISOString(),\n  triggerType: context.triggerType,\n  entityId: context.entityId,\n  actionsPerformed: {\n    contextGathered: !!context.dbRecord,\n    crmUpdated: true,\n    webFormSubmitted: !!formResult.success,\n    emailsSent: emailResults.length,\n    smsSent: smsResults.length,\n    slackNotifications: slackResults.length,\n    websiteScraped: !!scrapedData.property_url\n  },\n  dataSources: [...(context.dataSources || []), \"webform\", \"notification_services\", \"website_scraper\"],\n  status: \"completed\"\n};\n\n// Log execution to database for audit\nreturn [{ json: { executionSummary: executionSummary } }];"
+      },
+      "name": "Generate Execution Summary",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        0
+      ],
+      "id": "generate-summary"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "INSERT INTO workflow_executions (workflow_id, execution_id, status, data, created_at) VALUES ($1, $2, $3, $4, NOW())",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {}
+            }
+          ]
+        }
+      },
+      "name": "Log Execution",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        2250,
+        0
+      ],
+      "id": "log-execution"
+    }
+  ],
+  "connections": {
+    "CRM Trigger Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Context": {
+      "main": [
+        [
+          {
+            "node": "Get Context from CRM DB",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Combine Context Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get Context from CRM DB": {
+      "main": [
+        [
+          {
+            "node": "Combine Context Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Context Data": {
+      "main": [
+        [
+          {
+            "node": "Update CRM Record",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Form Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Update CRM Record": {
+      "main": [
+        [
+          {
+            "node": "Prepare Notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Form Data": {
+      "main": [
+        [
+          {
+            "node": "Submit Web Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Submit Web Form": {
+      "main": [
+        [
+          {
+            "node": "Generate Execution Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Notifications": {
+      "main": [
+        [
+          {
+            "node": "Send Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send SMS",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Send Slack",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Send Emails": {
+      "main": [
+        [
+          {
+            "node": "Generate Execution Summary",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Send SMS": {
+      "main": [
+        [
+          {
+            "node": "Generate Execution Summary",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Send Slack": {
+      "main": [
+        [
+          {
+            "node": "Generate Execution Summary",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Scrape Website Data": {
+      "main": [
+        [
+          {
+            "node": "Generate Execution Summary",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Generate Execution Summary": {
+      "main": [
+        [
+          {
+            "node": "Log Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "comprehensive_crm_automation"
+}

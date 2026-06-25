@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Environment Variables - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                "outline": "#74777d",
+                "inverse-primary": "#b7c8dd",
+                "secondary-fixed-dim": "#c6c6c6",
+                "on-primary-fixed": "#0c1d2d",
+                "surface-container-highest": "#d8e4f3",
+                "on-background": "#111d27",
+                "on-secondary-fixed-variant": "#464747",
+                "tertiary-fixed": "#e5e3d6",
+                "secondary-fixed": "#e3e2e2",
+                "on-secondary": "#ffffff",
+                "on-secondary-container": "#626363",
+                "tertiary": "#23241c",
+                "on-surface-variant": "#44474c",
+                "on-surface": "#111d27",
+                "on-primary": "#ffffff",
+                "surface-container-high": "#dee9f8",
+                "on-primary-container": "#93a4b8",
+                "on-error-container": "#93000a",
+                "surface-tint": "#506072",
+                "on-error": "#ffffff",
+                "on-primary-fixed-variant": "#38485a",
+                "background": "#f7f9ff",
+                "surface": "#f7f9ff",
+                "primary-fixed-dim": "#b7c8dd",
+                "tertiary-container": "#393930",
+                "tertiary-fixed-dim": "#c8c7bb",
+                "on-tertiary-fixed-variant": "#47473e",
+                "on-tertiary-container": "#a3a297",
+                "inverse-on-surface": "#e8f2ff",
+                "surface-container": "#e3effe",
+                "primary": "#142435",
+                "outline-variant": "#c4c6cc",
+                "error-red": "#BA1A1A",
+                "surface-container-low": "#edf4ff",
+                "on-tertiary-fixed": "#1c1c14",
+                "surface-dim": "#d0dbea",
+                "inverse-surface": "#26313d",
+                "primary-container": "#2a3a4b",
+                "primary-fixed": "#d3e4fa",
+                "error-container": "#ffdad6",
+                "secondary": "#5d5e5f",
+                "surface-container-lowest": "#ffffff",
+                "secondary-container": "#e0dfdf",
+                "surface-variant": "#d8e4f3",
+                "surface-white": "#FFFFFF",
+                "error": "#ba1a1a",
+                "surface-bright": "#f7f9ff",
+                "on-secondary-fixed": "#1a1c1c",
+                "on-tertiary": "#ffffff"
+              },
+              "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+              },
+              "spacing": {
+                "max-width": "1280px",
+                "gutter": "24px",
+                "base": "8px",
+                "margin-mobile": "16px",
+                "margin-desktop": "64px"
+              },
+              "fontFamily": {
+                "display-lg": ["IBM Plex Sans"],
+                "label-sm": ["IBM Plex Sans"],
+                "headline-md": ["IBM Plex Sans"],
+                "body-md": ["IBM Plex Sans"],
+                "headline-lg-mobile": ["IBM Plex Sans"],
+                "headline-lg": ["IBM Plex Sans"],
+                "label-md": ["IBM Plex Sans"],
+                "body-lg": ["IBM Plex Sans"]
+              },
+              "fontSize": {
+                "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #F4F2E5; /* Cream background from style guidance */
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .card-shadow {
+            box-shadow: 0 8px 30px rgba(27, 38, 49, 0.06);
+        }
+        input[type="checkbox"]:checked {
+            background-color: #142435; /* Deep Blue primary */
+            border-color: #142435;
+        }
+    </style>
+</head>
+<body class="text-on-background font-body-md min-h-screen pb-[80px] flex items-center justify-center">
+    <div class="w-full max-w-4xl p-6 bg-surface-white rounded-lg card-shadow w-[90vw] max-w-4xl">
+        <div class="mb-6">
+            <h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">Environment Variables</h1>
+            <p class="font-body-md text-body-md text-on-surface-variant">Manage system environment variables</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-4 p-4 rounded-lg {{ 'bg-error-container text-on-error-container' if category == 'error' else 'bg-success-container text-on-success-container' if category == 'success' else 'bg-warning-container text-on-warning-container' }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="mb-6">
+            <a href="{{ url_for('admin_environment.admin_login') }}" class="inline-flex items-center px-3 py-2 bg-primary text-on-primary rounded-lg hover:bg-primary-container transition-colors text-sm font-medium">
+                <span class="material-symbols-outlined">login</span>
+                Admin Login
+            </a>
+        </div>
+
+        {% if admin_authenticated %}
+        <div class="mb-4 flex justify-between items-center">
+            <div>
+                <h2 class="font-headline-md text-headline-md text-primary">Environment Variables List</h2>
+                <p class="text-body-md text-on-surface-variant">Total: {{ variables|length }} variables</p>
+            </div>
+            <a href="{{ url_for('admin_environment.environment') }}" class="inline-flex items-center px-3 py-2 bg-surface-white border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors text-sm text-on-surface-variant">
+                <span class="material-symbols-outlined">refresh</span>
+                Refresh
+            </a>
+        </div>
+
+        {% if variables %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-surface-white border border-outline-variant">
+                <thead>
+                    <tr class="bg-surface-variant">
+                        <th class="px-4 py-2 text-left text-label-sm font-label-md text-on-surface-variant">Key</th>
+                        <th class="px-4 py-2 text-left text-label-sm font-label-md text-on-surface-variant">Value</th>
+                        <th class="px-4 py-2 text-left text-label-sm font-label-md text-on-surface-variant">Description</th>
+                        <th class="px-4 py-2 text-left text-label-sm font-label-md text-on-surface-variant">Required</th>
+                        <th class="px-4 py-2 text-left text-label-sm font-label-md text-on-surface-variant">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for var in variables %}
+                    <tr class="border-t border-outline-variant/50">
+                        <td class="px-4 py-2 text-body-md font-mono">{{ var.key }}</td>
+                        <td class="px-4 py-2 text-body-md font-mono">{{ var.value if not var.is_sensitive else '********' }}</td>
+                        <td class="px-4 py-2 text-body-md">{{ var.description or '-' }}</td>
+                        <td class="px-4 py-2 text-center">
+                            {% if var.is_required %}
+                            <span class="px-2 py-0.5 bg-success-container text-on-success-container text-xs rounded-full">Yes</span>
+                            {% else %}
+                            <span class="px-2 py-0.5 bg-surface-variant text-on-surface-variant text-xs rounded-full">No</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-2 flex space-x-2">
+                            <a href="{{ url_for('admin_environment.update_environment_variable', key=var.key) }}" class="inline-flex items-center px-2 py-1 bg-primary text-on-primary rounded-hover text-xs hover:bg-primary-container transition-colors" title="Edit">
+                                <span class="material-symbols-outlined">edit</span>
+                            </a>
+                            <form action="{{ url_for('admin_environment.delete_environment_variable', key=var.key) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this variable?');">
+                                <button type="submit" class="inline-flex items-center px-2 py-1 bg-error-container text-on-error-container rounded-hover text-xs hover:bg-error-container/80 transition-colors" title="Delete">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center text-on-surface-variant py-8">No environment variables found.</p>
+        {% endif %}
+
+        <div class="mt-8">
+            <h2 class="font-headline-md text-headline-md text-primary mb-4">Add New Environment Variable</h2>
+            <form action="{{ url_for('admin_environment.create_environment_variable') }}" method="POST" class="space-y-4">
+                {{ form.csrf_token }}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="key" class="block text-sm font-medium text-on-surface-variant mb-1">Key</label>
+                        <input type="text" id="key" name="key" required class="w-full px-3 py-2 bg-surface-white border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary text-body-md" placeholder="e.g., API_KEY">
+                    </div>
+                    <div>
+                        <label for="value" class="block text-sm font-medium text-on-surface-variant mb-1">Value</label>
+                        <input type="text" id="value" name="value" required class="w-full px-3 py-2 bg-surface-white border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary text-body-md" placeholder="Enter value">
+                    </div>
+                </div>
+                <div>
+                    <label for="description" class="block text-sm font-medium text-on-surface-variant mb-1">Description (optional)</label>
+                    <input type="text" id="description" name="description" class="w-full px-3 py-2 bg-surface-white border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary text-body-md" placeholder="Enter description">
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="is_required" name="is_required" value="1" class="w-4 h-4 border-outline-variant rounded text-primary">
+                    <label for="is_required" class="ml-2 text-sm font-medium text-on-surface-variant">Required</label>
+                </div>
+                <button type="submit" class="w-full bg-primary text-on-primary px-4 py-2 rounded-lg hover:bg-primary-container transition-colors font-medium text-sm">
+                    Add Variable
+                </button>
+            </form>
+        </div>
+
+        {% else %}
+        <div class="text-center py-8">
+            <p class="text-on-surface-variant">Please log in as admin to manage environment variables.</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,226 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "EstateFlow" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img [ref=e7]
+          - heading "EstateFlow" [level=2] [ref=e9]
+        - generic [ref=e11]:
+          - generic [ref=e13]: search
+          - textbox "search" [ref=e14]:
+            - /placeholder: Search...
+      - generic [ref=e16]:
+        - button "notifications" [ref=e17] [cursor=pointer]:
+          - generic [ref=e18]: notifications
+        - button "settings" [ref=e19] [cursor=pointer]:
+          - generic [ref=e20]: settings
+    - generic [ref=e22]:
+      - complementary [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - heading "Real Estate CRM" [level=1] [ref=e26]
+            - paragraph [ref=e27]: Workflow Management
+          - navigation "Main navigation" [ref=e28]:
+            - link "grid_view Overview" [ref=e29] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e30]: grid_view
+              - paragraph [ref=e31]: Overview
+            - link "real_estate_agent Properties" [ref=e32] [cursor=pointer]:
+              - /url: /properties
+              - generic [ref=e33]: real_estate_agent
+              - paragraph [ref=e34]: Properties
+            - link "person_pin Agents" [ref=e35] [cursor=pointer]:
+              - /url: /agents
+              - generic [ref=e36]: person_pin
+              - paragraph [ref=e37]: Agents
+            - link "groups Customers" [ref=e38] [cursor=pointer]:
+              - /url: /customers
+              - generic [ref=e39]: groups
+              - paragraph [ref=e40]: Customers
+            - link "monetization_on Deals" [ref=e41] [cursor=pointer]:
+              - /url: /deals
+              - generic [ref=e42]: monetization_on
+              - paragraph [ref=e43]: Deals
+            - link "task_alt Tasks" [ref=e44] [cursor=pointer]:
+              - /url: /tasks
+              - generic [ref=e45]: task_alt
+              - paragraph [ref=e46]: Tasks
+            - link "auto_awesome Recommendations" [ref=e47] [cursor=pointer]:
+              - /url: /recommendations
+              - generic [ref=e48]: auto_awesome
+              - paragraph [ref=e49]: Recommendations
+            - link "bar_chart Reports" [ref=e50] [cursor=pointer]:
+              - /url: /market-analysis
+              - generic [ref=e51]: bar_chart
+              - paragraph [ref=e52]: Reports
+            - link "settings Settings" [ref=e53] [cursor=pointer]:
+              - /url: /settings
+              - generic [ref=e54]: settings
+              - paragraph [ref=e55]: Settings
+            - link "smart_toy Automations" [ref=e56] [cursor=pointer]:
+              - /url: /admin/automations
+              - generic [ref=e57]: smart_toy
+              - paragraph [ref=e58]: Automations
+          - generic [ref=e59]:
+            - generic [ref=e60]:
+              - paragraph [ref=e61]: Storage
+              - paragraph [ref=e64]: 15.2 GB of 20 GB used
+            - link "logout Logout" [ref=e65] [cursor=pointer]:
+              - /url: /admin/logout
+              - generic [ref=e66]: logout
+              - paragraph [ref=e67]: Logout
+      - main [ref=e68]:
+        - generic [ref=e69]:
+          - generic [ref=e70]:
+            - heading "AI Recommendations for Emma Wilson" [level=1] [ref=e71]
+            - paragraph [ref=e72]: Personalized matches generated from customer preferences and available properties.
+          - generic [ref=e73]: AI Analysis Complete
+          - generic [ref=e75]:
+            - generic [ref=e76]:
+              - generic [ref=e77]:
+                - generic [ref=e78]:
+                  - paragraph [ref=e79]: Emma Wilson
+                  - paragraph [ref=e80]: emma.wilson@email.com
+                - generic [ref=e81]: House
+              - generic [ref=e82]:
+                - paragraph [ref=e83]: "Budget: 800,000 - 1,500,000"
+                - paragraph [ref=e84]: "Location: Waterfront"
+              - link "Get Recommendations" [ref=e85] [cursor=pointer]:
+                - /url: /recommendations/2
+            - generic [ref=e86]:
+              - generic [ref=e87]:
+                - generic [ref=e88]:
+                  - paragraph [ref=e89]: John Smith
+                  - paragraph [ref=e90]: john.smith@email.com
+                - generic [ref=e91]: House
+              - generic [ref=e92]:
+                - paragraph [ref=e93]: "Budget: 300,000 - 500,000"
+                - paragraph [ref=e94]: "Location: Suburbia"
+              - link "Get Recommendations" [ref=e95] [cursor=pointer]:
+                - /url: /recommendations/1
+          - generic [ref=e97]:
+            - paragraph [ref=e98]: "Total Properties Analyzed: 3"
+            - paragraph [ref=e99]: "Excellent Matches (80%+): 1"
+          - generic [ref=e100]:
+            - generic [ref=e104]:
+              - generic [ref=e105]:
+                - generic [ref=e106]:
+                  - heading "Suburban Family Home" [level=3] [ref=e107]
+                  - paragraph [ref=e108]: 456 Oak Avenue, Suburbia
+                - generic [ref=e109]:
+                  - paragraph [ref=e110]: $650,000
+                  - text: "Match Score: 80/100"
+              - generic [ref=e111]:
+                - generic [ref=e112]: 4 Beds
+                - generic [ref=e113]: 3 Baths
+                - generic [ref=e114]: 2,800 sqft
+                - generic [ref=e115]: House
+              - generic [ref=e116]: "Match Score: 80/100 - Slightly below budget - Matches bedroom preference - Meets bathroom needs - Matches property type preference"
+              - generic [ref=e117]:
+                - link "View Details" [ref=e118] [cursor=pointer]:
+                  - /url: /properties/2/detail
+                - button "Create Deal" [ref=e119] [cursor=pointer]
+                - button "Schedule Viewing" [ref=e120] [cursor=pointer]
+                - button "Share" [ref=e121] [cursor=pointer]
+                - link "Export PDF" [ref=e122] [cursor=pointer]:
+                  - /url: /recommendations/export?customer_id=2&format=pdf
+            - generic [ref=e126]:
+              - generic [ref=e127]:
+                - generic [ref=e128]:
+                  - heading "Urban Loft - Iranian Rental" [level=3] [ref=e129]
+                  - paragraph [ref=e130]: 321 Industrial Blvd, Arts District
+                - generic [ref=e131]:
+                  - paragraph [ref=e132]: $0
+                  - text: "Match Score: 20/100"
+              - generic [ref=e133]:
+                - generic [ref=e134]: 1 Beds
+                - generic [ref=e135]: 1 Baths
+                - generic [ref=e136]: 950 sqft
+                - generic [ref=e137]: Loft
+              - generic [ref=e138]: "Match Score: 20/100 - Slightly below budget"
+              - generic [ref=e139]:
+                - link "View Details" [ref=e140] [cursor=pointer]:
+                  - /url: /properties/3/detail
+                - button "Create Deal" [ref=e141] [cursor=pointer]
+                - button "Schedule Viewing" [ref=e142] [cursor=pointer]
+                - button "Share" [ref=e143] [cursor=pointer]
+                - link "Export PDF" [ref=e144] [cursor=pointer]:
+                  - /url: /recommendations/export?customer_id=2&format=pdf
+            - generic [ref=e148]:
+              - generic [ref=e149]:
+                - generic [ref=e150]:
+                  - heading "Modern Downtown Condo" [level=3] [ref=e151]
+                  - paragraph [ref=e152]: 123 Main St, Downtown
+                - generic [ref=e153]:
+                  - paragraph [ref=e154]: $450,000
+                  - text: "Match Score: 20/100"
+              - generic [ref=e155]:
+                - generic [ref=e156]: 2 Beds
+                - generic [ref=e157]: 2 Baths
+                - generic [ref=e158]: 1,200 sqft
+                - generic [ref=e159]: Condo
+              - generic [ref=e160]: "Match Score: 20/100 - Slightly below budget"
+              - generic [ref=e161]:
+                - link "View Details" [ref=e162] [cursor=pointer]:
+                  - /url: /properties/1/detail
+                - button "Create Deal" [ref=e163] [cursor=pointer]
+                - button "Schedule Viewing" [ref=e164] [cursor=pointer]
+                - button "Share" [ref=e165] [cursor=pointer]
+                - link "Export PDF" [ref=e166] [cursor=pointer]:
+                  - /url: /recommendations/export?customer_id=2&format=pdf
+  - generic [ref=e168]:
+    - generic [ref=e169]:
+      - heading "Action" [level=3] [ref=e170]
+      - button "×" [ref=e171] [cursor=pointer]
+    - generic [ref=e175]:
+      - heading [level=5] [ref=e177]: Schedule Property Viewing
+      - generic [ref=e178]:
+        - generic [ref=e179]:
+          - generic [ref=e180]:
+            - heading [level=6] [ref=e182]: Property Details
+            - generic [ref=e184]:
+              - generic [ref=e185]:
+                - heading [level=6] [ref=e186]: Suburban Family Home
+                - paragraph [ref=e187]: 456 Oak Avenue, Suburbia
+                - generic [ref=e188]:
+                  - generic [ref=e189]: 4 Beds
+                  - generic [ref=e190]: 3 Baths
+                  - generic [ref=e191]: 2,800 sqft
+              - generic [ref=e193]:
+                - heading [level=4] [ref=e194]: $650,000
+                - text: House
+          - generic [ref=e195]:
+            - generic [ref=e197]:
+              - text: Customer *
+              - combobox [active] [ref=e198]
+              - generic [ref=e199]: Please select a customer.
+            - generic [ref=e201]:
+              - text: Assigned Agent *
+              - combobox [ref=e202]
+              - generic [ref=e203]: Please select an agent.
+          - generic [ref=e204]:
+            - generic [ref=e206]:
+              - text: Viewing Date *
+              - textbox [ref=e207]: 2026-02-09
+              - generic [ref=e208]: Please select a viewing date.
+            - generic [ref=e210]:
+              - text: Viewing Time *
+              - textbox [ref=e211]
+              - generic [ref=e212]: Please select a viewing time.
+          - generic [ref=e213]:
+            - text: Duration (minutes)
+            - combobox [ref=e214]
+          - generic [ref=e215]:
+            - text: Viewing Type
+            - combobox [ref=e216]
+          - generic [ref=e217]:
+            - text: Special Requirements
+            - textbox [ref=e218]:
+              - /placeholder: Any special requirements or notes for the viewing...
+          - generic [ref=e220]:
+            - checkbox [checked] [ref=e221]
+            - text: Send email notifications to customer and agent
+        - generic [ref=e222]:
+          - button [ref=e223] [cursor=pointer]: Cancel
+          - button [ref=e224] [cursor=pointer]: Schedule Viewing

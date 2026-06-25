@@ -1,0 +1,162 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "EstateFlow" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - heading "EstateFlow" [level=2] [ref=e9]
+      - generic [ref=e11]:
+        - generic [ref=e13]: search
+        - textbox "search" [ref=e14]:
+          - /placeholder: Search...
+    - generic [ref=e16]:
+      - button "notifications" [ref=e17] [cursor=pointer]:
+        - generic [ref=e18]: notifications
+      - button "settings" [ref=e19] [cursor=pointer]:
+        - generic [ref=e20]: settings
+  - generic [ref=e22]:
+    - complementary [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - heading "Real Estate CRM" [level=1] [ref=e26]
+          - paragraph [ref=e27]: Workflow Management
+        - navigation "Main navigation" [ref=e28]:
+          - link "grid_view Overview" [ref=e29] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e30]: grid_view
+            - paragraph [ref=e31]: Overview
+          - link "real_estate_agent Properties" [ref=e32] [cursor=pointer]:
+            - /url: /properties
+            - generic [ref=e33]: real_estate_agent
+            - paragraph [ref=e34]: Properties
+          - link "person_pin Agents" [ref=e35] [cursor=pointer]:
+            - /url: /agents
+            - generic [ref=e36]: person_pin
+            - paragraph [ref=e37]: Agents
+          - link "groups Customers" [ref=e38] [cursor=pointer]:
+            - /url: /customers
+            - generic [ref=e39]: groups
+            - paragraph [ref=e40]: Customers
+          - link "monetization_on Deals" [ref=e41] [cursor=pointer]:
+            - /url: /deals
+            - generic [ref=e42]: monetization_on
+            - paragraph [ref=e43]: Deals
+          - link "task_alt Tasks" [ref=e44] [cursor=pointer]:
+            - /url: /tasks
+            - generic [ref=e45]: task_alt
+            - paragraph [ref=e46]: Tasks
+          - link "auto_awesome Recommendations" [ref=e47] [cursor=pointer]:
+            - /url: /recommendations
+            - generic [ref=e48]: auto_awesome
+            - paragraph [ref=e49]: Recommendations
+          - link "bar_chart Reports" [ref=e50] [cursor=pointer]:
+            - /url: /market-analysis
+            - generic [ref=e51]: bar_chart
+            - paragraph [ref=e52]: Reports
+          - link "settings Settings" [ref=e53] [cursor=pointer]:
+            - /url: /settings
+            - generic [ref=e54]: settings
+            - paragraph [ref=e55]: Settings
+          - link "smart_toy Automations" [ref=e56] [cursor=pointer]:
+            - /url: /admin/automations
+            - generic [ref=e57]: smart_toy
+            - paragraph [ref=e58]: Automations
+        - generic [ref=e59]:
+          - generic [ref=e60]:
+            - paragraph [ref=e61]: Storage
+            - paragraph [ref=e64]: 15.2 GB of 20 GB used
+          - link "logout Logout" [ref=e65] [cursor=pointer]:
+            - /url: /admin/logout
+            - generic [ref=e66]: logout
+            - paragraph [ref=e67]: Logout
+    - main [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e71]:
+            - heading "Task Management" [level=1] [ref=e72]
+            - paragraph [ref=e73]: Task actions use add, complete, and delete routes directly.
+          - button "add_task Quick Add Task" [ref=e74] [cursor=pointer]:
+            - generic [ref=e75]: add_task
+            - text: Quick Add Task
+        - generic [ref=e76]:
+          - generic [ref=e77]:
+            - generic [ref=e79]:
+              - link "All" [ref=e80] [cursor=pointer]:
+                - /url: /tasks
+              - link "Pending" [ref=e81] [cursor=pointer]:
+                - /url: /tasks?status=pending
+              - link "In Progress" [ref=e82] [cursor=pointer]:
+                - /url: /tasks?status=in_progress
+              - link "Completed" [ref=e83] [cursor=pointer]:
+                - /url: /tasks?status=completed
+            - generic [ref=e84]:
+              - article [ref=e85]:
+                - generic [ref=e86]:
+                  - generic [ref=e87]:
+                    - paragraph [ref=e88]: Prepare market analysis
+                    - paragraph [ref=e89]: Create CMA for listing
+                  - generic [ref=e90]: medium
+                - generic [ref=e91]:
+                  - generic [ref=e92]: "Due: 2026-02-12 | Agent: Sarah Johnson | Status: Pending"
+                  - generic [ref=e93]:
+                    - button "Complete" [ref=e95] [cursor=pointer]
+                    - button "Delete" [ref=e96] [cursor=pointer]
+              - article [ref=e97]:
+                - generic [ref=e98]:
+                  - generic [ref=e99]:
+                    - paragraph [ref=e100]: Follow up with John Smith
+                    - paragraph [ref=e101]: Call about property showing
+                  - generic [ref=e102]: high
+                - generic [ref=e103]:
+                  - generic [ref=e104]: "Due: 2026-02-10 | Agent: Sarah Johnson | Status: Pending"
+                  - generic [ref=e105]:
+                    - button "Complete" [ref=e107] [cursor=pointer]
+                    - button "Delete" [ref=e108] [cursor=pointer]
+          - complementary [ref=e109]:
+            - generic [ref=e110]:
+              - heading "Calendar" [level=2] [ref=e111]
+              - generic [ref=e112]: February 2026
+            - generic [ref=e113]:
+              - generic [ref=e114]: Sun
+              - generic [ref=e115]: Mon
+              - generic [ref=e116]: Tue
+              - generic [ref=e117]: Wed
+              - generic [ref=e118]: Thu
+              - generic [ref=e119]: Fri
+              - generic [ref=e120]: Sat
+            - generic [ref=e121]:
+              - generic [ref=e123]: "1"
+              - generic [ref=e125]: "2"
+              - generic [ref=e127]: "3"
+              - generic [ref=e129]: "4"
+              - generic [ref=e131]: "5"
+              - generic [ref=e133]: "6"
+              - generic [ref=e135]: "7"
+              - generic [ref=e137]: "8"
+              - generic [ref=e139]: "9"
+              - generic [ref=e140]:
+                - generic [ref=e141]: "10"
+                - generic [ref=e143]: 1 task(s)
+              - generic [ref=e146]: "11"
+              - generic [ref=e147]:
+                - generic [ref=e148]: "12"
+                - generic [ref=e150]: 1 task(s)
+              - generic [ref=e153]: "13"
+              - generic [ref=e155]: "14"
+              - generic [ref=e157]: "15"
+              - generic [ref=e159]: "16"
+              - generic [ref=e161]: "17"
+              - generic [ref=e163]: "18"
+              - generic [ref=e165]: "19"
+              - generic [ref=e167]: "20"
+              - generic [ref=e169]: "21"
+              - generic [ref=e171]: "22"
+              - generic [ref=e173]: "23"
+              - generic [ref=e175]: "24"
+              - generic [ref=e177]: "25"
+              - generic [ref=e179]: "26"
+              - generic [ref=e181]: "27"
+              - generic [ref=e183]: "28"
+            - generic [ref=e184]:
+              - paragraph [ref=e185]: Pending or in progress
+              - paragraph [ref=e187]: Completed

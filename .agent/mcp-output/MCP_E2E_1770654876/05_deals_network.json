@@ -1,0 +1,7 @@
+[GET] http://127.0.0.1:5000/deals/3?format=json => [200] OK
+[GET] http://127.0.0.1:5000/deals/3/schedule-meeting => [200] OK
+[GET] http://127.0.0.1:5000/deals/3/send-email => [200] OK
+[GET] http://127.0.0.1:5000/deals/export?format=json => [200] OK
+[GET] http://127.0.0.1:5000/deals/export?format=json => [200] OK
+[DELETE] http://127.0.0.1:5000/deals/3 => [200] OK
+[DELETE] http://127.0.0.1:5000/deals/3 => [200] OK

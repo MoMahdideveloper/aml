@@ -1,0 +1,92 @@
+[
+  {
+    "route": "/",
+    "requestedUrl": "http://127.0.0.1:5000/",
+    "finalUrl": "http://127.0.0.1:5000/",
+    "status": 200
+  },
+  {
+    "route": "/properties",
+    "requestedUrl": "http://127.0.0.1:5000/properties",
+    "finalUrl": "http://127.0.0.1:5000/properties",
+    "status": 200
+  },
+  {
+    "route": "/agents",
+    "requestedUrl": "http://127.0.0.1:5000/agents",
+    "finalUrl": "http://127.0.0.1:5000/agents",
+    "status": 200
+  },
+  {
+    "route": "/customers",
+    "requestedUrl": "http://127.0.0.1:5000/customers",
+    "finalUrl": "http://127.0.0.1:5000/customers",
+    "status": 200
+  },
+  {
+    "route": "/deals",
+    "requestedUrl": "http://127.0.0.1:5000/deals",
+    "finalUrl": "http://127.0.0.1:5000/deals",
+    "status": 200
+  },
+  {
+    "route": "/tasks",
+    "requestedUrl": "http://127.0.0.1:5000/tasks",
+    "finalUrl": "http://127.0.0.1:5000/tasks",
+    "status": 200
+  },
+  {
+    "route": "/recommendations",
+    "requestedUrl": "http://127.0.0.1:5000/recommendations",
+    "finalUrl": "http://127.0.0.1:5000/recommendations",
+    "status": 200
+  },
+  {
+    "route": "/recommendations/3",
+    "requestedUrl": "http://127.0.0.1:5000/recommendations/3",
+    "finalUrl": "http://127.0.0.1:5000/recommendations/3",
+    "status": 200
+  },
+  {
+    "route": "/market-analysis",
+    "requestedUrl": "http://127.0.0.1:5000/market-analysis",
+    "finalUrl": "http://127.0.0.1:5000/market-analysis",
+    "status": 200
+  },
+  {
+    "route": "/settings",
+    "requestedUrl": "http://127.0.0.1:5000/settings",
+    "finalUrl": "http://127.0.0.1:5000/settings",
+    "status": 200
+  },
+  {
+    "route": "/admin/automations",
+    "requestedUrl": "http://127.0.0.1:5000/admin/automations",
+    "finalUrl": "http://127.0.0.1:5000/admin/automations",
+    "status": 401
+  },
+  {
+    "route": "/admin/login",
+    "requestedUrl": "http://127.0.0.1:5000/admin/login",
+    "finalUrl": "http://127.0.0.1:5000/admin/login",
+    "status": 200
+  },
+  {
+    "route": "/admin/environment",
+    "requestedUrl": "http://127.0.0.1:5000/admin/environment",
+    "finalUrl": "http://127.0.0.1:5000/admin/environment",
+    "status": 401
+  },
+  {
+    "route": "/properties/4/detail",
+    "requestedUrl": "http://127.0.0.1:5000/properties/4/detail",
+    "finalUrl": "http://127.0.0.1:5000/properties/4/detail",
+    "status": 200
+  },
+  {
+    "route": "/properties/compare?ids=4,5",
+    "requestedUrl": "http://127.0.0.1:5000/properties/compare?ids=4,5",
+    "finalUrl": "http://127.0.0.1:5000/properties/compare?ids=4,5",
+    "status": 200
+  }
+]

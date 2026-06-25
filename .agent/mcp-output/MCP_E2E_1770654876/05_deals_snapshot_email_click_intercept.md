@@ -1,0 +1,240 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "EstateFlow" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img [ref=e7]
+          - heading "EstateFlow" [level=2] [ref=e9]
+        - generic [ref=e11]:
+          - generic [ref=e13]: search
+          - textbox "search" [ref=e14]:
+            - /placeholder: Search...
+      - generic [ref=e16]:
+        - button "notifications" [ref=e17] [cursor=pointer]:
+          - generic [ref=e18]: notifications
+        - button "settings" [ref=e19] [cursor=pointer]:
+          - generic [ref=e20]: settings
+    - generic [ref=e22]:
+      - complementary [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - heading "Real Estate CRM" [level=1] [ref=e26]
+            - paragraph [ref=e27]: Workflow Management
+          - navigation "Main navigation" [ref=e28]:
+            - link "grid_view Overview" [ref=e29] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e30]: grid_view
+              - paragraph [ref=e31]: Overview
+            - link "real_estate_agent Properties" [ref=e32] [cursor=pointer]:
+              - /url: /properties
+              - generic [ref=e33]: real_estate_agent
+              - paragraph [ref=e34]: Properties
+            - link "person_pin Agents" [ref=e35] [cursor=pointer]:
+              - /url: /agents
+              - generic [ref=e36]: person_pin
+              - paragraph [ref=e37]: Agents
+            - link "groups Customers" [ref=e38] [cursor=pointer]:
+              - /url: /customers
+              - generic [ref=e39]: groups
+              - paragraph [ref=e40]: Customers
+            - link "monetization_on Deals" [ref=e41] [cursor=pointer]:
+              - /url: /deals
+              - generic [ref=e42]: monetization_on
+              - paragraph [ref=e43]: Deals
+            - link "task_alt Tasks" [ref=e44] [cursor=pointer]:
+              - /url: /tasks
+              - generic [ref=e45]: task_alt
+              - paragraph [ref=e46]: Tasks
+            - link "auto_awesome Recommendations" [ref=e47] [cursor=pointer]:
+              - /url: /recommendations
+              - generic [ref=e48]: auto_awesome
+              - paragraph [ref=e49]: Recommendations
+            - link "bar_chart Reports" [ref=e50] [cursor=pointer]:
+              - /url: /market-analysis
+              - generic [ref=e51]: bar_chart
+              - paragraph [ref=e52]: Reports
+            - link "settings Settings" [ref=e53] [cursor=pointer]:
+              - /url: /settings
+              - generic [ref=e54]: settings
+              - paragraph [ref=e55]: Settings
+            - link "smart_toy Automations" [ref=e56] [cursor=pointer]:
+              - /url: /admin/automations
+              - generic [ref=e57]: smart_toy
+              - paragraph [ref=e58]: Automations
+          - generic [ref=e59]:
+            - generic [ref=e60]:
+              - paragraph [ref=e61]: Storage
+              - paragraph [ref=e64]: 15.2 GB of 20 GB used
+            - link "logout Logout" [ref=e65] [cursor=pointer]:
+              - /url: /admin/logout
+              - generic [ref=e66]: logout
+              - paragraph [ref=e67]: Logout
+      - main [ref=e68]:
+        - generic [ref=e69]:
+          - generic [ref=e70]:
+            - generic [ref=e71]:
+              - heading "Deals and Commissions" [level=1] [ref=e72]
+              - paragraph [ref=e73]: Deal rows and actions are bound to backend deal routes.
+            - generic [ref=e74]:
+              - link "download Export JSON" [ref=e75] [cursor=pointer]:
+                - /url: /deals/export?format=json
+                - generic [ref=e76]: download
+                - text: Export JSON
+              - link "table_view Export CSV" [ref=e77] [cursor=pointer]:
+                - /url: /deals/export?format=csv
+                - generic [ref=e78]: table_view
+                - text: Export CSV
+              - button "add New Deal" [ref=e79] [cursor=pointer]:
+                - generic [ref=e80]: add
+                - text: New Deal
+          - generic [ref=e81]:
+            - article [ref=e82]:
+              - paragraph [ref=e83]: Pipeline Value
+              - paragraph [ref=e84]: $725,000
+            - article [ref=e85]:
+              - paragraph [ref=e86]: Projected Commission (3%)
+              - paragraph [ref=e87]: $21,750
+            - article [ref=e88]:
+              - paragraph [ref=e89]: Status Split
+              - paragraph [ref=e90]: 2 active / 0 closed
+          - generic [ref=e91]:
+            - generic [ref=e93]:
+              - link "All" [ref=e94] [cursor=pointer]:
+                - /url: /deals
+              - link "Prospecting" [ref=e95] [cursor=pointer]:
+                - /url: /deals?status=prospecting
+              - link "Qualified" [ref=e96] [cursor=pointer]:
+                - /url: /deals?status=qualified
+              - link "Proposal" [ref=e97] [cursor=pointer]:
+                - /url: /deals?status=proposal
+              - link "Negotiation" [ref=e98] [cursor=pointer]:
+                - /url: /deals?status=negotiation
+              - link "Closed Won" [ref=e99] [cursor=pointer]:
+                - /url: /deals?status=closed_won
+              - link "Closed Lost" [ref=e100] [cursor=pointer]:
+                - /url: /deals?status=closed_lost
+            - table [ref=e102]:
+              - rowgroup [ref=e103]:
+                - row "Property Customer Agent Offer Status Actions" [ref=e104]:
+                  - columnheader "Property" [ref=e105]
+                  - columnheader "Customer" [ref=e106]
+                  - columnheader "Agent" [ref=e107]
+                  - columnheader "Offer" [ref=e108]
+                  - columnheader "Status" [ref=e109]
+                  - columnheader "Actions" [ref=e110]
+              - rowgroup [ref=e111]:
+                - row "Suburban Family Home 456 Oak Avenue, Suburbia Emma Wilson Lisa Rodriguez $100,000 Qualified Save View Meeting Email Delete" [ref=e112]:
+                  - cell "Suburban Family Home 456 Oak Avenue, Suburbia" [ref=e113]:
+                    - paragraph [ref=e114]: Suburban Family Home
+                    - paragraph [ref=e115]: 456 Oak Avenue, Suburbia
+                  - cell "Emma Wilson" [ref=e116]
+                  - cell "Lisa Rodriguez" [ref=e117]
+                  - cell "$100,000" [ref=e118]
+                  - cell "Qualified Save" [ref=e119]:
+                    - generic [ref=e120]:
+                      - combobox [ref=e121]:
+                        - option "Prospecting"
+                        - option "Qualified" [selected]
+                        - option "Proposal"
+                        - option "Negotiation"
+                        - option "Closed Won"
+                        - option "Closed Lost"
+                      - button "Save" [ref=e122] [cursor=pointer]
+                  - cell "View Meeting Email Delete" [ref=e123]:
+                    - generic [ref=e124]:
+                      - button "View" [ref=e125] [cursor=pointer]
+                      - button "Meeting" [ref=e126] [cursor=pointer]
+                      - button "Email" [ref=e127] [cursor=pointer]
+                      - button "Delete" [ref=e128] [cursor=pointer]
+                - row "Modern Downtown Condo 123 Main St, Downtown John Smith Sarah Johnson $625,000 Qualified Save View Meeting Email Delete" [ref=e129]:
+                  - cell "Modern Downtown Condo 123 Main St, Downtown" [ref=e130]:
+                    - paragraph [ref=e131]: Modern Downtown Condo
+                    - paragraph [ref=e132]: 123 Main St, Downtown
+                  - cell "John Smith" [ref=e133]
+                  - cell "Sarah Johnson" [ref=e134]
+                  - cell "$625,000" [ref=e135]
+                  - cell "Qualified Save" [ref=e136]:
+                    - generic [ref=e137]:
+                      - combobox [ref=e138]:
+                        - option "Prospecting"
+                        - option "Qualified" [selected]
+                        - option "Proposal"
+                        - option "Negotiation"
+                        - option "Closed Won"
+                        - option "Closed Lost"
+                      - button "Save" [ref=e139] [cursor=pointer]
+                  - cell "View Meeting Email Delete" [ref=e140]:
+                    - generic [ref=e141]:
+                      - button "View" [ref=e142] [cursor=pointer]
+                      - button "Meeting" [ref=e143] [cursor=pointer]
+                      - button "Email" [ref=e144] [cursor=pointer]
+                      - button "Delete" [ref=e145] [cursor=pointer]
+  - generic [ref=e147]:
+    - generic [ref=e148]:
+      - heading "Schedule Meeting" [level=3] [ref=e169]
+      - button "×" [ref=e150] [cursor=pointer]
+    - generic [ref=e172]:
+      - heading [level=5] [ref=e174]: "Schedule Meeting - Deal #3"
+      - generic [ref=e175]:
+        - generic [ref=e176]:
+          - generic [ref=e178]:
+            - generic [ref=e179]:
+              - strong [ref=e180]: "Property:"
+              - text: Suburban Family Home
+              - strong [ref=e181]: "Customer:"
+              - text: Emma Wilson
+            - generic [ref=e182]:
+              - strong [ref=e183]: "Agent:"
+              - text: Lisa Rodriguez
+              - strong [ref=e184]: "Status:"
+              - text: Qualified
+          - generic [ref=e185]:
+            - generic [ref=e186]:
+              - text: Meeting Title *
+              - textbox [ref=e187]: Property Viewing - Suburban Family Home
+            - generic [ref=e188]:
+              - text: Meeting Type *
+              - combobox [ref=e189]
+          - generic [ref=e190]:
+            - generic [ref=e191]:
+              - text: Meeting Date *
+              - textbox [ref=e192]
+            - generic [ref=e193]:
+              - text: Meeting Time *
+              - textbox [ref=e194]
+          - generic [ref=e195]:
+            - generic [ref=e196]:
+              - text: Duration (minutes)
+              - combobox [ref=e197]
+            - generic [ref=e198]:
+              - text: Meeting Location
+              - textbox [ref=e199]:
+                - /placeholder: Enter meeting location
+                - text: 456 Oak Avenue, Suburbia
+          - generic [ref=e200]:
+            - text: Attendees
+            - generic [ref=e201]:
+              - generic [ref=e203]:
+                - checkbox [checked] [ref=e204]
+                - text: "Customer: Emma Wilson"
+              - generic [ref=e206]:
+                - checkbox [checked] [ref=e207]
+                - text: "Agent: Lisa Rodriguez"
+              - generic [ref=e209]:
+                - checkbox [ref=e210]
+                - text: Other Attendees
+          - generic [ref=e211]:
+            - text: Meeting Agenda/Notes
+            - textbox [ref=e212]:
+              - /placeholder: Enter meeting agenda, discussion points, or special notes...
+          - generic [ref=e213]:
+            - generic [ref=e215]:
+              - checkbox [checked] [ref=e216]
+              - text: Send calendar invitations to attendees
+            - generic [ref=e218]:
+              - checkbox [checked] [ref=e219]
+              - text: Send reminder 24 hours before meeting
+        - generic [ref=e220]:
+          - button [active] [ref=e221] [cursor=pointer]: Cancel
+          - button [ref=e222] [cursor=pointer]: Schedule Meeting

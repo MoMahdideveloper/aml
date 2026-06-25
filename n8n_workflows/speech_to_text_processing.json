@@ -1,0 +1,301 @@
+{
+  "name": "Speech-to-Text Processing (Google Cloud)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/process-audio",
+        "responseMode": "onReceived",
+        "responseData": {
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": "{\"status\": \"processing\"}"
+        }
+      },
+      "name": "Webhook: Audio Upload",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "id": "webhook1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Validate and prepare audio data\nconst body = $json[\"body\"] || {};\n\n// Expected fields:\n// - audioData: base64 encoded audio file\n// - audioFormat: encoding (e.g., 'linear16', 'flac', 'mp3')\n// - sampleRate: in hertz (e.g., 16000, 44100)\n// - languageCode: BCP-47 language code (e.g., 'en-US', 'es-ES')\n// - metadata: object with call context (callId, customerId, agentId, etc.)\n\nconst required = ['audioData', 'audioFormat', 'sampleRate', 'languageCode'];\nconst missing = required.filter(field => !body[field]);\n\nif (missing.length > 0) {\n  throw new Error(`Missing required fields: ${missing.join(', ')}`);\n}\n\n// Prepare for Google Speech-to-Text\nconst audioConfig = {\n  audio: {\n    content: body.audioData\n  },\n  config: {\n    encoding: body.audioFormat,\n    sampleRateHertz: parseInt(body.sampleRate),\n    languageCode: body.languageCode,\n    enableAutomaticPunctuation: true,\n    enableWordTimeOffsets: true\n  }\n};\n\nreturn [{
+  json: {\n    audioConfig: audioConfig,\n    metadata: body.metadata || {},\n    timestamp: new Date().toISOString()\n  }
+}];"
+      },
+      "name": "Validate Audio Input",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        500,
+        100
+      ],
+      "id": "function1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Prepare Google Speech-to-Text request\nreturn [{ json: {
+  googleRequest: $json[\"audioConfig\"],
+  metadata: $json[\"metadata\"]
+} }];"
+      },
+      "name": "Prepare Google Request",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        750,
+        100
+      ],
+      "id": "function2"
+    },
+    {
+      "parameters": {
+        "url": "https://speech.googleapis.com/v1/speech:recognize",
+        "method": "POST",
+        "jsonParameters": true,
+        "authentication": "Google Cloud Service Account",
+        "options": {},
+        "bodyParametersJson": "={{ $json[\"googleRequest\"] }}",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "name": "Call Google Speech-to-Text",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        100
+      ],
+      "id": "httpRequest1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process Google Speech-to-Text response\nconst response = $json;\n\nif (!response.results || response.results.length === 0) {\n  return [{ json: {\n    error: 'No transcription results returned',\n    rawResponse: response,\n    status: 'failed'\n  } }];\n}\n\n// Extract the best transcription\nconst result = response.results[0];\nif (!result.alternatives || result.alternatives.length === 0) {\n  return [{ json: {\n    error: 'No alternatives in transcription result',\n    rawResponse: response,\n    status: 'failed'\n  } }];\n}\n\nconst bestAlternative = result.alternatives[0];\n\nreturn [{ json: {\n    transcription: bestAlternative.transcript,\n    confidence: bestAlternative.confidence || 0,\n    wordCount: bestAlternative.transcript.trim().split(/\\s+/).length,\n    languageDetected: $json[\"metadata\"].languageCode || 'unknown',\n    words: bestAlternative.words || [],\n    rawResponse: response,\n    status: 'success'\n  } }];"
+      },
+      "name": "Process Transcription",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        100
+      ],
+      "id": "function3"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "INSERT INTO call_transcriptions (call_id, customer_id, agent_id, seller_id, audio_format, sample_rate, language_code, transcription_text, confidence_score, word_count, metadata, audio_duration_seconds, processed_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()) RETURNING id",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {
+                "parameters": {
+                  "value": "={{[\\n    $json[\"metadata\"].callId || null,\\n    $json[\"metadata\"].customerId || null,\\n    $json[\"metadata\"].agentId || null,\\n    $json[\"metadata\"].sellerId || null,\\n    '{{$json[\"metadata\"].audioFormat}}',\\n    {{$json[\"metadata\"].sampleRate}},\\n    '{{$json[\"metadata\"].languageCode}}',\\n    '{{$json[\"transcription\"]}}',\\n    {{$json[\"confidence\"]}},\\n    {{$json[\"wordCount\"]}},\\n    '{{JSON.stringify($json[\"metadata\"])}}',\\n    {{$json[\"metadata\"].audioDuration || 0}}\\n  ]}}"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "name": "Store Transcription",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        50
+      ],
+      "id": "postgres1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "UPDATE calls SET transcription_id = $1, transcribed_at = NOW() WHERE id = $2",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {
+                "parameters": {
+                  "value": "={{[$json[0].id, $json[\"metadata\"].callId]}}"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "name": "Update Call Record",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        200
+      ],
+      "id": "postgres2"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Optional: Trigger analysis on the transcription\n// This would send the transcription to your CRM's analysis API\nreturn [{ json: {\n    triggerAnalysis: true,\n    transcriptionId: $json[0].id,\n    textForAnalysis: $json[\"transformation\"],\n    metadata: $json[\"metadata\"]\n  } }];"
+      },
+      "name": "Prepare Analysis Trigger",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        300
+      ],
+      "id": "function4"
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:5000/api/analysis/trigger",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={\n  \"project_name\": \"Call Transcription Analysis {{ $json[\"metadata\"].callId || 'unknown' }}\",\n  \"analysis_type\": \"full\"\n}",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "name": "Trigger Transcription Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        500
+      ],
+      "id": "httpRequest2"
+    }
+  ],
+  "connections": {
+    "Webhook: Audio Upload": {
+      "main": [
+        [
+          {
+            "node": "Validate Audio Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Audio Input": {
+      "main": [
+        [
+          {
+            "node": "Prepare Google Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Google Request": {
+      "main": [
+        [
+          {
+            "node": "Call Google Speech-to-Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Google Speech-to-Text": {
+      "main": [
+        [
+          {
+            "node": "Process Transcription",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Transcription": {
+      "main": [
+        [
+          {
+            "node": "Store Transcription",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Analysis Trigger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Transcription": {
+      "main": [
+        [
+          {
+            "node": "Update Call Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Call Record": {
+      "main": [
+        [
+          {
+            "node": "Prepare Analysis Trigger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Analysis Trigger": {
+      "main": [
+        [
+          {
+            "node": "Trigger Transcription Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "speech_to_text_processing"
+}

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Deals Pipeline - LUXE ASSET</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-error-container": "#93000a",
+                      "inverse-surface": "#26313d",
+                      "secondary-container": "#e0dfdf",
+                      "inverse-on-surface": "#e8f2ff",
+                      "on-tertiary-fixed": "#1c1c14",
+                      "on-primary-fixed": "#0c1d2d",
+                      "surface-tint": "#506072",
+                      "surface-bright": "#f7f9ff",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-container": "#626363",
+                      "on-surface": "#111d27",
+                      "tertiary": "#23241c",
+                      "primary-fixed": "#d3e4fa",
+                      "on-primary-container": "#93a4b8",
+                      "on-error": "#ffffff",
+                      "secondary-fixed-dim": "#c6c6c6",
+                      "secondary-fixed": "#e3e2e2",
+                      "on-secondary-fixed-variant": "#464747",
+                      "surface-white": "#FFFFFF",
+                      "surface-container-highest": "#d8e4f3",
+                      "primary-container": "#2a3a4b",
+                      "on-surface-variant": "#44474c",
+                      "on-primary": "#ffffff",
+                      "surface-variant": "#d8e4f3",
+                      "primary": "#142435",
+                      "inverse-primary": "#b7c8dd",
+                      "outline-variant": "#c4c6cc",
+                      "surface": "#f7f9ff",
+                      "surface-container": "#e3effe",
+                      "surface-container-low": "#edf4ff",
+                      "on-secondary-fixed": "#1a1c1c",
+                      "error-container": "#ffdad6",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed-variant": "#38485a",
+                      "tertiary-fixed": "#e5e3d6",
+                      "outline": "#74777d",
+                      "on-secondary": "#ffffff",
+                      "tertiary-container": "#393930",
+                      "surface-container-high": "#dee9f8",
+                      "secondary": "#5d5e5f",
+                      "error": "#ba1a1a",
+                      "error-red": "#BA1A1A",
+                      "tertiary-fixed-dim": "#c8c7bb",
+                      "on-tertiary-container": "#a3a297",
+                      "surface-dim": "#d0dbea",
+                      "on-tertiary-fixed-variant": "#47473e",
+                      "on-background": "#111d27",
+                      "background": "#f7f9ff",
+                      "primary-fixed-dim": "#b7c8dd",
+                      "brand-cream": "#F4F2E5",
+                      "brand-platinum": "#C0C0C0",
+                      "brand-deep-blue": "#2A3A4B"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem",
+                      "brand": "4px"
+              },
+              "spacing": {
+                      "base": "8px",
+                      "max-width": "1280px",
+                      "margin-mobile": "16px",
+                      "margin-desktop": "64px",
+                      "gutter": "24px"
+              },
+              "fontFamily": {
+                      "headline-md": [
+                              "IBM Plex Sans"
+                      ],
+                      "body-md": [
+                              "IBM Plex Sans"
+                      ],
+                      "display-lg": [
+                              "IBM Plex Sans"
+                      ],
+                      "body-lg": [
+                              "IBM Plex Sans"
+                      ],
+                      "label-sm": [
+                              "IBM Plex Sans"
+                      ],
+                      "label-md": [
+                              "IBM Plex Sans"
+                      ],
+                      "headline-lg-mobile": [
+                              "IBM Plex Sans"
+                      ],
+                      "headline-lg": [
+                              "IBM Plex Sans"
+                      ]
+              },
+              "fontSize": {
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+          }
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: #F4F2E5; /* Cream/Off-white background */
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid #C0C0C0;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background min-h-screen pb-24 md:hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 border-b border-brand-platinum bg-brand-cream flat no shadows">
+<div class="flex justify-between items-center px-margin-mobile h-16 w-full">
+<button class="text-primary hover:bg-secondary-container transition-colors p-2 rounded-full active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-semibold text-brand-deep-blue tracking-tight">LUXE ASSET</h1>
+<button class="text-primary hover:bg-secondary-container transition-colors p-2 rounded-full active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="pt-20 px-margin-mobile">
+<!-- Page Header -->
+<div class="mb-6">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-brand-deep-blue mb-2">Pipeline</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage your active deals and track progress.</p>
+</div>
+<!-- Horizontal Scrolling Tabs -->
+<div class="overflow-x-auto hide-scrollbar mb-6 -mx-margin-mobile px-margin-mobile">
+<div class="flex space-x-2 pb-2">
+                    <button class="whitespace-nowrap px-4 py-2 rounded-brand bg-brand-deep-blue text-on-primary font-label-md text-label-md transition-colors shadow-sm">
+                    0
+                    <br>
+                    <span class="font-label-sm text-label-sm">0.0M</span>
+                </button>
+                    <button class="whitespace-nowrap px-4 py-2 rounded-brand bg-surface-white border border-brand-platinum text-brand-deep-blue font-label-md text-label-md hover:bg-surface-container-low transition-colors">
+                    0
+                    <br>
+                    <span class="font-label-sm text-label-sm">0.0M</span>
+                </button>
+                    <button class="whitespace-nowrap px-4 py-2 rounded-brand bg-surface-white border border-brand-platinum text-brand-deep-blue font-label-md text-label-md hover:bg-surface-container-low transition-colors">
+                    0
+                    <br>
+                    <span class="font-label-sm text-label-sm">0.0M</span>
+                </button>
+                    <button class="whitespace-nowhere-nowrap px-4 py-2 rounded-brand bg-surface-white border border-brand-platinum text-brand-deep-blue font-label-md text-label-md hover:bg-surface-container-low transition-colors">
+                    0
+                    <br>
+                    <span class="font-label-sm text-label-sm">0.0M</span>
+                </button>
+</div>
+</div>
+<!-- Deals Container (Prospecting Stage) -->
+<div class="flex flex-col space-y-4">
+<!-- Deal Card 1 -->
+<article class="glass-card rounded-brand overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+<div class="flex h-28">
+<!-- Thumbnail -->
+<div class="w-1/3 relative">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="A striking ultra-modern luxury villa exterior featuring sleek geometric lines, expansive floor-to-ceiling glass windows, and a minimalist white facade. The property is set against a clear blue sky during late afternoon golden hour lighting, highlighting the high-end architectural design. The scene is shot with premium real estate photography techniques, emphasizing exclusivity and the sophisticated corporate aesthetic of the brand." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCKw3N6rwBt3I8zse0qDtC5K_d-B9geNGNnIPYGJtT5aFRFAJtrylWhhMuAzlUTFK12R1KnTDkSP_-zNKuZq2cwQbDy7EccCoTKtN9vzWG1nVqYs_kQv2PuYdIKJ7TTLNfxXxVwd9N4qkssCCLoEy-Il9D7LBwIOOcosXKUMS7tjsJdM2lQuj6bb4Rm2no4aytOPWuUxJUx9uC_DQQNzyhg3vguB5wlHLX81a29Qzb0M8g5rk9QT-I');"></div>
+</div>
+<!-- Content -->
+<div class="w-2/3 p-3 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-label-md text-label-md text-brand-deep-blue font-bold truncate pr-2">Modern Estate Villa</h3>
+<span class="material-symbols-outlined text-outline-variant" style="font-size: 18px;">more_horiz</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant truncate">Client: Eleanor Vance</p>
+</div>
+<div class="flex justify-between items-end mt-2 pt-2 border-t border-brand-platinum">
+<span class="font-body-md text-body-md text-brand-deep-blue font-semibold">$4,250,000</span>
+<div class="flex items-center space-x-1">
+<span class="w-2 h-2 rounded-full bg-primary-fixed-dim"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">15%</span>
+</div>
+</div>
+</div>
+</div>
+</article>
+<!-- Deal Card 2 -->
+<article class="glass-card rounded-brand overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+<div class="flex h-28">
+<!-- Thumbnail -->
+<div class="w-1/3 relative">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="An elegant, contemporary suburban mansion with large glass panels and sharp architectural angles, surrounded by pristine landscaping. The home is illuminated with warm interior lights against a twilight sky, creating a secure and prestigious atmosphere. The image perfectly aligns with a high-end real estate portfolio, characterized by deep blues, crisp whites, and a polished, professional finish." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBvVeTHQRaPTj6PivTT3m2wiWX97jiIuaVioUJHVBsvhmfuFaBv9d-uKahIR_bwUJ3a3DZhylYjgru5it-eeUzc5auf6cwZmEK-uo3x1WogaDjeVvabyo_dl8egZEXo4PhCJ5pjBXp9_uUWlO0tXF-UKUz2nIhY89iuuwIkl3bT7LNLFXXh0KL7QjmLlPnC770KE7E_l1ouQIiChKyJ1TicQv5GRWLpvKFtfiJPGVR4hledGQUiL7Q');"></div>
+</div>
+<!-- Content -->
+<div class="w-2/3 p-3 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-label-md text-label-md text-brand-deep-blue font-bold truncate pr-2">The Glass Pavilion</h3>
+<span class="material-symbols-outlined text-outline-variant" style="font-size: 18px;">more_horiz</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant truncate">Client: Harrison Ford</p>
+</div>
+<div class="flex justify-between items-end mt-2 pt-2 border-t border-brand-platinum">
+<span class="font-body-md text-body-md text-brand-deep-blue font-semibold">$8,900,000</span>
+<div class="flex items-center space-x-1">
+<span class="w-2 h-2 rounded-full bg-primary-fixed-dim"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">20%</span>
+</div>
+</div>
+</div>
+</div>
+</article>
+<!-- Deal Card 3 -->
+<article class="glass-card rounded-brand overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+<div class="flex h-28">
+<!-- Thumbnail -->
+<div class="w-1/3 relative">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="A grand luxury manor estate featuring a sweeping driveway, immaculate lawns, and classic architectural detailing infused with modern sensibilities. Captured in bright daylight under a clear sky, conveying a timeless, trustworthy, and sophisticated brand personality. The aesthetic is highly polished, fitting a premium corporate real estate gallery layout with generous structural alignment." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBVwmEvRdvBPnrVwxIrX0cvP6_Zh9qfeeeFtec1h2YC_Q0kVhv1GSTJ0ggtYndZiEq_XKGB5vy-SnOUG03PXZ3wVe4WusGkF-LioBJCE-a1A_8M7ZdxloQlisNkolzCjbZ0QZ0qZ5THSLYFfBoSyGZcoIQCp6I-yqA_JVFdsVCUilkQvwHdMiVNB3aAJNRkoRTAd3obzEHb2X0UNckcWliY9ar66tNenIKqrLKeyXR-eyiLBh5Nz3Q');"></div>
+</div>
+<!-- Content -->
+<div class="w-2/3 p-3 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-label-md text-label-md text-brand-deep-blue font-bold truncate pr-2">Heritage Manor</h3>
+<span class="material-symbols-outlined text-outline-variant" style="font-size: 18px;">more_horiz</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant truncate">Client: Sophia Loren</p>
+</div>
+<div class="flex justify-between items-end mt-2 pt-2 border-t border-brand-platinum">
+<span class="font-body-md text-body-md text-brand-deep-blue font-semibold">$12,500,000</span>
+<div class="flex items-center space-x-1">
+<span class="w-2 h-2 rounded-full bg-primary-fixed-dim"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">10%</span>
+</div>
+</div>
+</div>
+</div>
+</article>
+</div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 right-4 w-14 h-14 bg-brand-deep-blue text-on-primary rounded-full shadow-lg flex items-center justify-center hover:bg-primary transition-colors z-40">
+<span class="material-symbols-outlined" style="font-size: 28px;">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 px-4 pb-safe bg-brand-cream border-t border-brand-platinum flat no shadows md:hidden">
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-opacity active:opacity-80">
+<span class="material-symbols-outlined mb-1" data-icon="domain">domain</span>
+<span class="font-label-sm text-label-sm">Portfolio</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 transition-opacity active:opacity-80">
+<span class="material-symbols-outlined mb-1" data-icon="explore" data-weight="fill" style="font-variation-settings: 'FILL' 1;">explore</span>
+<span class="font-label-sm text-label-sm">Market</span>
+</button>
+<button class="label=md=" text%= text-mp="%3Bf0x20%20%25B7EC%;:;181%

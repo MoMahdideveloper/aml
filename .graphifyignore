@@ -1,0 +1,21 @@
+# Only include code files
+*
+!*.py
+!*.js
+!*.jsx
+!*.ts
+!*.tsx
+!static/
+!static/**
+!templates/
+!templates/**
+
+# Ignore documents and images
+*.md
+*.txt
+*.pdf
+*.png
+*.jpg
+*.webp
+*.gif
+*.html

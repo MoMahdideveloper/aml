@@ -1,0 +1,306 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "EstateFlow" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - heading "EstateFlow" [level=2] [ref=e9]
+      - generic [ref=e11]:
+        - generic [ref=e13]: search
+        - textbox "search" [ref=e14]:
+          - /placeholder: Search...
+    - generic [ref=e16]:
+      - button "notifications" [ref=e17] [cursor=pointer]:
+        - generic [ref=e18]: notifications
+      - button "settings" [ref=e19] [cursor=pointer]:
+        - generic [ref=e20]: settings
+  - generic [ref=e22]:
+    - complementary [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - heading "Real Estate CRM" [level=1] [ref=e26]
+          - paragraph [ref=e27]: Workflow Management
+        - navigation "Main navigation" [ref=e28]:
+          - link "grid_view Overview" [ref=e29] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e30]: grid_view
+            - paragraph [ref=e31]: Overview
+          - link "real_estate_agent Properties" [ref=e32] [cursor=pointer]:
+            - /url: /properties
+            - generic [ref=e33]: real_estate_agent
+            - paragraph [ref=e34]: Properties
+          - link "person_pin Agents" [ref=e35] [cursor=pointer]:
+            - /url: /agents
+            - generic [ref=e36]: person_pin
+            - paragraph [ref=e37]: Agents
+          - link "groups Customers" [ref=e38] [cursor=pointer]:
+            - /url: /customers
+            - generic [ref=e39]: groups
+            - paragraph [ref=e40]: Customers
+          - link "monetization_on Deals" [ref=e41] [cursor=pointer]:
+            - /url: /deals
+            - generic [ref=e42]: monetization_on
+            - paragraph [ref=e43]: Deals
+          - link "task_alt Tasks" [ref=e44] [cursor=pointer]:
+            - /url: /tasks
+            - generic [ref=e45]: task_alt
+            - paragraph [ref=e46]: Tasks
+          - link "auto_awesome Recommendations" [ref=e47] [cursor=pointer]:
+            - /url: /recommendations
+            - generic [ref=e48]: auto_awesome
+            - paragraph [ref=e49]: Recommendations
+          - link "bar_chart Reports" [ref=e50] [cursor=pointer]:
+            - /url: /market-analysis
+            - generic [ref=e51]: bar_chart
+            - paragraph [ref=e52]: Reports
+          - link "settings Settings" [ref=e53] [cursor=pointer]:
+            - /url: /settings
+            - generic [ref=e54]: settings
+            - paragraph [ref=e55]: Settings
+          - link "smart_toy Automations" [ref=e56] [cursor=pointer]:
+            - /url: /admin/automations
+            - generic [ref=e57]: smart_toy
+            - paragraph [ref=e58]: Automations
+        - generic [ref=e59]:
+          - generic [ref=e60]:
+            - paragraph [ref=e61]: Storage
+            - paragraph [ref=e64]: 15.2 GB of 20 GB used
+          - link "logout Logout" [ref=e65] [cursor=pointer]:
+            - /url: /admin/logout
+            - generic [ref=e66]: logout
+            - paragraph [ref=e67]: Logout
+    - main [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e71]:
+            - heading "Property Inventory" [level=1] [ref=e72]
+            - paragraph [ref=e73]: Dynamic listing management connected to the property model.
+          - generic [ref=e74]:
+            - link "add Add Property" [ref=e75] [cursor=pointer]:
+              - /url: "#add-property-form"
+              - generic [ref=e76]: add
+              - text: Add Property
+            - link "download Export JSON" [ref=e77] [cursor=pointer]:
+              - /url: /properties?format=json
+              - generic [ref=e78]: download
+              - text: Export JSON
+        - generic [ref=e80]:
+          - generic [ref=e81]:
+            - text: Search
+            - textbox "Title, address, description" [ref=e82]
+          - generic [ref=e83]:
+            - text: Listing Type
+            - combobox [ref=e84]:
+              - option "All" [selected]
+              - option "Sale"
+              - option "Rental"
+          - generic [ref=e85]:
+            - text: Status
+            - combobox [ref=e86]:
+              - option "All" [selected]
+              - option "Active"
+              - option "Pending"
+              - option "Sold"
+              - option "Rented"
+              - option "Archived"
+          - generic [ref=e87]:
+            - text: Type
+            - combobox [ref=e88]:
+              - option "All" [selected]
+              - option "Condo"
+              - option "House"
+              - option "Loft"
+          - generic [ref=e89]:
+            - text: Neighborhood
+            - combobox [ref=e90]:
+              - option "All" [selected]
+              - option "Arts District"
+              - option "Downtown"
+              - option "Suburbia"
+          - generic [ref=e91]:
+            - text: Min Price
+            - spinbutton [ref=e92]
+          - generic [ref=e93]:
+            - text: Max Price
+            - spinbutton [ref=e94]
+          - generic [ref=e95]:
+            - text: Bedrooms
+            - spinbutton [ref=e96]
+          - generic [ref=e97]:
+            - text: Bathrooms
+            - spinbutton [ref=e98]
+          - generic [ref=e99]:
+            - text: Agent
+            - combobox [ref=e100]:
+              - option "All" [selected]
+              - option "Lisa Rodriguez"
+              - option "Mike Chen"
+              - option "Sarah Johnson"
+          - generic [ref=e101]:
+            - button "filter_alt Apply" [ref=e102] [cursor=pointer]:
+              - generic [ref=e103]: filter_alt
+              - text: Apply
+            - link "Clear" [ref=e104] [cursor=pointer]:
+              - /url: /properties
+        - table [ref=e107]:
+          - rowgroup [ref=e108]:
+            - row "Property Location Pricing Type Status Actions" [ref=e109]:
+              - columnheader "Property" [ref=e110]
+              - columnheader "Location" [ref=e111]
+              - columnheader "Pricing" [ref=e112]
+              - columnheader "Type" [ref=e113]
+              - columnheader "Status" [ref=e114]
+              - columnheader "Actions" [ref=e115]
+          - rowgroup [ref=e116]:
+            - 'row "Urban Loft - Iranian Rental 950 sqm | 1 BR | 1 floors 321 Industrial Blvd, Arts District Arts District Rahn: 400,000,000 Ejare: 2,500,000 Rental Active View Edit Delete" [ref=e117]':
+              - cell "Urban Loft - Iranian Rental 950 sqm | 1 BR | 1 floors" [ref=e118]:
+                - generic [ref=e119]:
+                  - link [ref=e120] [cursor=pointer]:
+                    - /url: /properties/3/detail
+                  - generic [ref=e121]:
+                    - link "Urban Loft - Iranian Rental" [ref=e122] [cursor=pointer]:
+                      - /url: /properties/3/detail
+                    - paragraph [ref=e123]: 950 sqm | 1 BR | 1 floors
+              - cell "321 Industrial Blvd, Arts District Arts District" [ref=e124]:
+                - paragraph [ref=e125]: 321 Industrial Blvd, Arts District
+                - paragraph [ref=e126]: Arts District
+              - 'cell "Rahn: 400,000,000 Ejare: 2,500,000" [ref=e127]':
+                - paragraph [ref=e128]: "Rahn: 400,000,000"
+                - paragraph [ref=e129]: "Ejare: 2,500,000"
+              - cell "Rental" [ref=e130]
+              - cell "Active" [ref=e131]
+              - cell "View Edit Delete" [ref=e132]:
+                - generic [ref=e133]:
+                  - link "View" [ref=e134] [cursor=pointer]:
+                    - /url: /properties/3/detail
+                  - link "Edit" [ref=e135] [cursor=pointer]:
+                    - /url: /properties/3/detail#propertyForm
+                  - button "Delete" [ref=e136] [cursor=pointer]
+            - 'row "Suburban Family Home 2800 sqm | 4 BR | 2 floors 456 Oak Avenue, Suburbia Suburbia Sale: 650,000 Sale Active View Edit Delete" [ref=e137]':
+              - cell "Suburban Family Home 2800 sqm | 4 BR | 2 floors" [ref=e138]:
+                - generic [ref=e139]:
+                  - link [ref=e140] [cursor=pointer]:
+                    - /url: /properties/2/detail
+                  - generic [ref=e141]:
+                    - link "Suburban Family Home" [ref=e142] [cursor=pointer]:
+                      - /url: /properties/2/detail
+                    - paragraph [ref=e143]: 2800 sqm | 4 BR | 2 floors
+              - cell "456 Oak Avenue, Suburbia Suburbia" [ref=e144]:
+                - paragraph [ref=e145]: 456 Oak Avenue, Suburbia
+                - paragraph [ref=e146]: Suburbia
+              - 'cell "Sale: 650,000" [ref=e147]':
+                - paragraph [ref=e148]: "Sale: 650,000"
+              - cell "Sale" [ref=e149]
+              - cell "Active" [ref=e150]
+              - cell "View Edit Delete" [ref=e151]:
+                - generic [ref=e152]:
+                  - link "View" [ref=e153] [cursor=pointer]:
+                    - /url: /properties/2/detail
+                  - link "Edit" [ref=e154] [cursor=pointer]:
+                    - /url: /properties/2/detail#propertyForm
+                  - button "Delete" [ref=e155] [cursor=pointer]
+            - 'row "Modern Downtown Condo 1200 sqm | 2 BR | 1 floors 123 Main St, Downtown Downtown Sale: 450,000 Sale Active View Edit Delete" [ref=e156]':
+              - cell "Modern Downtown Condo 1200 sqm | 2 BR | 1 floors" [ref=e157]:
+                - generic [ref=e158]:
+                  - link [ref=e159] [cursor=pointer]:
+                    - /url: /properties/1/detail
+                  - generic [ref=e160]:
+                    - link "Modern Downtown Condo" [ref=e161] [cursor=pointer]:
+                      - /url: /properties/1/detail
+                    - paragraph [ref=e162]: 1200 sqm | 2 BR | 1 floors
+              - cell "123 Main St, Downtown Downtown" [ref=e163]:
+                - paragraph [ref=e164]: 123 Main St, Downtown
+                - paragraph [ref=e165]: Downtown
+              - 'cell "Sale: 450,000" [ref=e166]':
+                - paragraph [ref=e167]: "Sale: 450,000"
+              - cell "Sale" [ref=e168]
+              - cell "Active" [ref=e169]
+              - cell "View Edit Delete" [ref=e170]:
+                - generic [ref=e171]:
+                  - link "View" [ref=e172] [cursor=pointer]:
+                    - /url: /properties/1/detail
+                  - link "Edit" [ref=e173] [cursor=pointer]:
+                    - /url: /properties/1/detail#propertyForm
+                  - button "Delete" [ref=e174] [cursor=pointer]
+        - generic [ref=e175]:
+          - heading "Add New Property" [level=2] [ref=e176]
+          - generic [ref=e177]:
+            - generic [ref=e178]:
+              - text: Title
+              - textbox [ref=e179]
+            - generic [ref=e180]:
+              - text: Address
+              - textbox [ref=e181]
+            - generic [ref=e182]:
+              - text: Listing Type
+              - combobox [ref=e183]:
+                - option "Sale" [selected]
+                - option "Rental"
+            - generic [ref=e184]:
+              - text: Property Type
+              - textbox [ref=e185]
+            - generic [ref=e186]:
+              - text: Sale Price
+              - spinbutton [ref=e187]
+            - generic [ref=e188]:
+              - text: Bedrooms
+              - spinbutton [ref=e189]
+            - generic [ref=e190]:
+              - text: Bathrooms
+              - spinbutton [ref=e191]
+            - generic [ref=e192]:
+              - text: Square Feet
+              - spinbutton [ref=e193]
+            - generic [ref=e194]:
+              - text: Agent
+              - combobox [ref=e195]:
+                - option "Unassigned" [selected]
+                - option "Lisa Rodriguez"
+                - option "Mike Chen"
+                - option "Sarah Johnson"
+            - generic [ref=e196]:
+              - text: Condition
+              - combobox [ref=e197]:
+                - option "Excellent" [selected]
+                - option "Good"
+                - option "Fair"
+                - option "Needs Renovation"
+            - generic [ref=e198]:
+              - text: Category
+              - combobox [ref=e199]:
+                - option "Residential" [selected]
+                - option "Commercial"
+                - option "Industrial"
+            - generic [ref=e200]:
+              - text: Neighborhood
+              - textbox [ref=e201]
+            - generic [ref=e202]:
+              - text: Year Built
+              - spinbutton [ref=e203]
+            - generic [ref=e204]:
+              - text: Parking Spaces
+              - spinbutton [ref=e205]
+            - generic [ref=e206]:
+              - text: Floors
+              - spinbutton [ref=e207]
+            - generic [ref=e208]:
+              - text: Units
+              - spinbutton [ref=e209]
+            - generic [ref=e210]:
+              - text: Property Features (comma separated)
+              - textbox [ref=e211]
+            - generic [ref=e212]:
+              - text: Description
+              - textbox [ref=e213]
+            - generic [ref=e214]:
+              - text: Latitude
+              - spinbutton [ref=e215]
+            - generic [ref=e216]:
+              - text: Longitude
+              - spinbutton [ref=e217]
+            - generic [ref=e218]:
+              - text: Image
+              - button "Choose File" [ref=e219]
+            - button "save Save Property" [ref=e221] [cursor=pointer]:
+              - generic [ref=e222]: save
+              - text: Save Property

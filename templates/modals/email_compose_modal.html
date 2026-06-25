@@ -1,0 +1,392 @@
+<!-- Email Compose Modal -->
+<div class="modal fade" id="emailComposeModal" tabindex="-1" aria-labelledby="emailComposeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="emailComposeModalLabel">
+                    <i class="fas fa-envelope me-2"></i>
+                    Compose Email - Deal #{{ deal.id if deal else '' }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" data-close-modal="dynamic-modal" aria-label="Close"></button>
+            </div>
+            
+            <form id="emailComposeForm" method="POST" action="/deals/{{ deal.id if deal else '' }}/send-email">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+                
+                <div class="modal-body">
+                    {% if deal %}
+                    <!-- Deal Summary -->
+                    <div class="alert alert-info mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Property:</strong> {{ deal.property.title if deal.property else 'N/A' }}<br>
+                                <strong>Customer:</strong> {{ deal.customer.name if deal.customer else 'N/A' }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Agent:</strong> {{ deal.agent.name if deal.agent else 'N/A' }}<br>
+                                <strong>Status:</strong> <span class="badge bg-secondary">{{ deal.status.replace('_', ' ').title() }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="recipient" class="form-label">To *</label>
+                            <select class="form-select" id="recipient" name="recipient" required>
+                                <option value="">Select recipient</option>
+                                {% if deal.customer %}
+                                <option value="{{ deal.customer.email }}" selected>
+                                    {{ deal.customer.name }} (Customer) - {{ deal.customer.email }}
+                                </option>
+                                {% endif %}
+                                {% if deal.agent %}
+                                <option value="{{ deal.agent.email }}">
+                                    {{ deal.agent.name }} (Agent) - {{ deal.agent.email }}
+                                </option>
+                                {% endif %}
+                                <option value="custom">Custom Email Address</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="email_template" class="form-label">Email Template</label>
+                            <select class="form-select" id="email_template" name="email_template">
+                                <option value="">Select template</option>
+                                <option value="property_inquiry">Property Inquiry Follow-up</option>
+                                <option value="viewing_confirmation">Viewing Confirmation</option>
+                                <option value="offer_submission">Offer Submission</option>
+                                <option value="negotiation_update">Negotiation Update</option>
+                                <option value="contract_ready">Contract Ready</option>
+                                <option value="closing_reminder">Closing Reminder</option>
+                                <option value="thank_you">Thank You Message</option>
+                                <option value="custom">Custom Email</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="custom_recipient_group" style="display: none;">
+                        <label for="custom_recipient" class="form-label">Custom Email Address *</label>
+                        <input type="email" class="form-control" id="custom_recipient" name="custom_recipient" 
+                               placeholder="Enter email address">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject *</label>
+                        <input type="text" class="form-control" id="subject" name="subject" 
+                               value="Regarding {{ deal.property.title if deal.property else 'Your Property Inquiry' }}" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message *</label>
+                        <textarea class="form-control" id="message" name="message" rows="12" required 
+                                  placeholder="Compose your email message..."></textarea>
+                        <div class="invalid-feedback"></div>
+                        <div class="form-text">
+                            <small class="text-muted">
+                                Available variables: {customer_name}, {property_title}, {property_address}, {agent_name}, {deal_status}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="copy_agent" name="copy_agent" 
+                                       {% if deal.agent %}checked{% endif %}>
+                                <label class="form-check-label" for="copy_agent">
+                                    CC Agent ({{ deal.agent.email if deal.agent else 'N/A' }})
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="save_template" name="save_template">
+                                <label class="form-check-label" for="save_template">
+                                    Save as template for future use
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                        <h5>Deal Not Found</h5>
+                        <p class="text-muted">Cannot compose email for an invalid deal.</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-close-modal="dynamic-modal">
+                        <i class="fas fa-times me-1"></i>
+                        Cancel
+                    </button>
+                    {% if deal %}
+                    <button type="button" class="btn btn-outline-primary" id="saveDraftBtn">
+                        <i class="fas fa-save me-1"></i>
+                        Save Draft
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="sendEmailBtn">
+                        <span class="spinner-border spinner-border-sm d-none me-2" role="status"></span>
+                        <i class="fas fa-paper-plane me-1"></i>
+                        Send Email
+                    </button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Email templates
+    const emailTemplates = {
+        property_inquiry: {
+            subject: "Thank you for your interest in {property_title}",
+            message: `Dear {customer_name},
+
+Thank you for your interest in {property_title} located at {property_address}.
+
+I wanted to follow up on your inquiry and provide you with additional information about this property. Based on our conversation, I believe this property aligns well with your requirements.
+
+Key highlights of this property:
+- Prime location with excellent amenities
+- Competitive pricing in the current market
+- Great potential for appreciation
+
+I would be happy to schedule a viewing at your convenience or answer any questions you may have about the property or the buying process.
+
+Please feel free to contact me at your earliest convenience.
+
+Best regards,
+{agent_name}`
+        },
+        viewing_confirmation: {
+            subject: "Property Viewing Confirmation - {property_title}",
+            message: `Dear {customer_name},
+
+This email confirms your scheduled property viewing for {property_title} at {property_address}.
+
+Viewing Details:
+- Property: {property_title}
+- Address: {property_address}
+- Date & Time: [Please specify]
+- Duration: Approximately 30-45 minutes
+
+Please bring a valid ID and feel free to ask any questions during the viewing. I'll be available to discuss the property features, neighborhood amenities, and answer any questions about the buying process.
+
+If you need to reschedule or have any questions, please don't hesitate to contact me.
+
+Looking forward to showing you this wonderful property!
+
+Best regards,
+{agent_name}`
+        },
+        offer_submission: {
+            subject: "Offer Submission Update - {property_title}",
+            message: `Dear {customer_name},
+
+I hope this email finds you well. I wanted to update you on the status of your offer for {property_title}.
+
+Current Status: {deal_status}
+
+I will continue to keep you informed of any developments and will contact you immediately if there are any updates from the seller's side.
+
+In the meantime, please don't hesitate to reach out if you have any questions or concerns about the process.
+
+Thank you for your patience and trust in my services.
+
+Best regards,
+{agent_name}`
+        },
+        negotiation_update: {
+            subject: "Negotiation Update - {property_title}",
+            message: `Dear {customer_name},
+
+I wanted to provide you with an update on the ongoing negotiations for {property_title}.
+
+Current Status: {deal_status}
+
+The negotiation process is progressing, and I'm working diligently to secure the best possible terms for you. I will keep you informed of any developments and will contact you immediately when we receive a response.
+
+Please let me know if you have any questions or if there's anything specific you'd like me to address in the negotiations.
+
+Thank you for your continued trust.
+
+Best regards,
+{agent_name}`
+        },
+        contract_ready: {
+            subject: "Contract Ready for Signature - {property_title}",
+            message: `Dear {customer_name},
+
+Great news! The contract for {property_title} is ready for your review and signature.
+
+Next Steps:
+1. Please review the attached contract carefully
+2. Schedule a meeting to discuss any questions
+3. Sign the contract once you're satisfied with the terms
+4. Submit any required documentation
+
+I'm available to walk through the contract with you and explain any terms or conditions. Please let me know when you'd like to schedule a meeting.
+
+Congratulations on reaching this milestone in your property purchase!
+
+Best regards,
+{agent_name}`
+        },
+        closing_reminder: {
+            subject: "Closing Reminder - {property_title}",
+            message: `Dear {customer_name},
+
+This is a friendly reminder about the upcoming closing for {property_title}.
+
+Closing Details:
+- Property: {property_title}
+- Address: {property_address}
+- Date: [Please specify]
+- Time: [Please specify]
+- Location: [Please specify]
+
+Please ensure you have:
+- Valid government-issued ID
+- Certified funds for closing costs
+- Homeowner's insurance policy
+- Any additional documents requested
+
+I'll be there to guide you through the process and ensure everything goes smoothly.
+
+Congratulations on your new property!
+
+Best regards,
+{agent_name}`
+        },
+        thank_you: {
+            subject: "Thank You - {property_title}",
+            message: `Dear {customer_name},
+
+Thank you for choosing me as your real estate agent for the purchase of {property_title}.
+
+It has been a pleasure working with you throughout this process. I hope you're settling in well and enjoying your new property.
+
+Please don't hesitate to reach out if you need any assistance in the future, whether it's for property management, future real estate needs, or referrals to trusted service providers.
+
+I would also greatly appreciate it if you could take a moment to leave a review of your experience. Your feedback helps me serve future clients better.
+
+Wishing you all the best in your new home!
+
+Warm regards,
+{agent_name}`
+        }
+    };
+    
+    // Handle recipient selection
+    const recipientSelect = document.getElementById('recipient');
+    const customRecipientGroup = document.getElementById('custom_recipient_group');
+    
+    if (recipientSelect) {
+        recipientSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customRecipientGroup.style.display = 'block';
+                document.getElementById('custom_recipient').required = true;
+            } else {
+                customRecipientGroup.style.display = 'none';
+                document.getElementById('custom_recipient').required = false;
+                document.getElementById('custom_recipient').value = '';
+            }
+        });
+    }
+    
+    // Handle email template selection
+    const templateSelect = document.getElementById('email_template');
+    const subjectInput = document.getElementById('subject');
+    const messageTextarea = document.getElementById('message');
+    
+    if (templateSelect) {
+        templateSelect.addEventListener('change', function() {
+            const templateKey = this.value;
+            if (templateKey && emailTemplates[templateKey]) {
+                const template = emailTemplates[templateKey];
+                subjectInput.value = template.subject;
+                messageTextarea.value = template.message;
+            } else if (templateKey === 'custom') {
+                subjectInput.value = '';
+                messageTextarea.value = '';
+            }
+        });
+    }
+    
+    // Handle save draft
+    const saveDraftBtn = document.getElementById('saveDraftBtn');
+    if (saveDraftBtn) {
+        saveDraftBtn.addEventListener('click', function() {
+            // Simulate saving draft
+            if (window.CRUDUtils) {
+                window.CRUDUtils.showToast('Draft saved successfully!', 'success');
+            } else {
+                console.log('Draft saved successfully!');
+            }
+        });
+    }
+    
+    // Handle form submission
+    const form = document.getElementById('emailComposeForm');
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const sendBtn = document.getElementById('sendEmailBtn');
+            const spinner = sendBtn.querySelector('.spinner-border');
+
+            // Validate form
+            const recipient = document.getElementById('recipient').value;
+            const customRecipient = document.getElementById('custom_recipient').value;
+            const subject = document.getElementById('subject').value;
+            const message = document.getElementById('message').value;
+
+            if (!recipient || (recipient === 'custom' && !customRecipient) || !subject || !message) {
+                if (window.CRUDUtils) {
+                    window.CRUDUtils.showToast('Please fill in all required fields', 'error');
+                } else {
+                    console.error('Please fill in all required fields');
+                }
+                return;
+            }
+
+            try {
+                // Show loading state
+                sendBtn.disabled = true;
+                spinner.classList.remove('d-none');
+
+                // Simulate API call (replace with actual implementation)
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Show success message
+                if (window.CRUDUtils) {
+                    window.CRUDUtils.showToast('Email sent successfully!', 'success');
+                } else {
+                    console.log('Email sent successfully!');
+                }
+
+
+            } catch (error) {
+                // Show error message
+                if (window.CRUDUtils) {
+                    window.CRUDUtils.showToast('Error sending email: ' + error.message, 'error');
+                } else {
+                    console.error('Error sending email: ' + error.message);
+                }
+            } finally {
+                // Reset loading state
+                sendBtn.disabled = false;
+                spinner.classList.add('d-none');
+            }
+        });
+    }
+});
+</script>

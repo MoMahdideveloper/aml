@@ -1,0 +1,267 @@
+{
+  "name": "CRM Event-Driven Multi-Channel Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/crm-event-notification",
+        "responseMode": "onReceived",
+        "responseData": {
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": "{\"status\": \"event received, processing notification\"}"
+        }
+      },
+      "name": "Webhook: CRM Event Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "id": "webhook1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse incoming CRM event\nconst body = $json[\"body\"] || {};\n\n// Validate required fields\nif (!body.eventType || !body.entityId || !body.entityType) {\n  throw new Error('Missing required fields: eventType, entityId, entityType');\n}\n\nreturn [{ json: {\n  eventType: body.eventType,\n  entityId: body.entityId,\n  entityType: body.entityType,\n  timestamp: body.timestamp || new Date().toISOString(),\n  rawData: body,\n  metadata: body.metadata || {}\n} }];"
+      },
+      "name": "Parse CRM Event",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        500,
+        100
+      ],
+      "id": "function1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Fetch entity details from CRM API\nconst { entityType, entityId } = $json;\nconst baseUrl = 'http://host.docker.internal:5000/api';\n\n// Map entity type to API endpoint\nconst endpointMap = {\n  'customer': '/customers',\n  'property': '/properties',\n  'deal': '/deals',\n  'agent': '/agents',\n  'task': '/tasks'\n};\n\nconst endpoint = endpointMap[entityType] || `/${entityType}`;\nconst url = `${baseUrl}${endpoint}/${entityId}`;\n\nreturn [{ json: {\n  ...$json,\n  crmApiUrl: url\n} }];"
+      },
+      "name": "Prepare CRM API Request",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        750,
+        100
+      ],
+      "id": "function2"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json[\"crmApiUrl\"] }}",
+        "method": "GET",
+        "responseFormat": "json",
+        "options": {},
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "name": "Fetch Entity Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        100
+      ],
+      "id": "httpRequest1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Determine notification recipients and message based on event type\nconst { eventType, entityType, entityId, rawData } = $json;\nconst entityData = $json[0] || {}; // From HTTP Request node\n\nlet recipients = [];\nlet subject = '';\nlet message = '';\n\nswitch (eventType) {\n  case 'lead_created':\n    // New lead notification - notify assigned agent and sales manager\n    subject = `New Lead: ${entityData.first_name || ''} ${entityData.last_name || ''}`;\n    message = `A new lead has been captured:\\n\\n` +\n              `Name: ${entityData.first_name || ''} ${entityData.last_name || ''}\\n` +\n              `Email: ${entityData.email || 'N/A'}\\n` +\n              `Phone: ${entityData.phone || 'N/A'}\\n` +\n              `Interest: ${entityData.property_interest || 'Not specified'}\\n` +\n              `Source: ${entityData.source || 'Website'}\\n\\n` +\n              `Please follow up within 24 hours.`;\n    \n    // In real implementation, you'd query for assigned agent\n    // For demo, we'll notify a default agent and manager\n    recipients = [\n      { id: 'agent_001', type: 'agent', name: 'Sales Agent', email: 'agent@company.com', phone: '+15551234567', slack: 'UAGENT001' },\n      { id: 'mgr_001', type: 'manager', name: 'Sales Manager', email: 'manager@company.com', phone: '+15559876543', slack: 'UMGR001' }\n    ];\n    break;\n\n  case 'property_updated':\n    // Property update notification - notify interested buyers\n    subject = `Property Update: ${entityData.address || 'Property'} #${entityId}`;\n    message = `A property you're interested in has been updated:\\n\\n` +\n              `Address: ${entityData.address || 'N/A'}\\n` +\n              `Price: $${(entityData.price || 0).toLocaleString()}\\n` +\n              `Beds/Baths: ${entityData.bedrooms || 'N/A'}/${entityData.bathrooms || 'N/A'}\\n` +\n              `Square Feet: ${(entityData.square_feet || 0).toLocaleString()} sq ft\\n` +\n              `Last Updated: ${new Date(entityData.updated_at || Date.now()).toLocaleString()}\\n\\n` +\n              `View details in your portal.`;\n    \n    // In real implementation, you'd query for customers interested in this property\n    // For demo, we'll simulate interested parties\n    recipients = [\n      { id: 'cust_001', type: 'customer', name: 'John Doe', email: 'john@example.com', phone: '+15551111111', slack: 'U1' },\n      { id: 'cust_002', type: 'customer', name: 'Jane Smith', email: 'jane@example.com', phone: '+15552222222', slack: 'U2' }\n    ];\n    break;\n\n  case 'deal_stage_changed':\n    // Deal stage change - notify agent and client\n    const oldStage = req.body.old_stage || 'Unknown';\n    const newStage = req.body.new_stage || 'Unknown';\n    \n    subject = `Deal Stage Changed: ${entityData.title || 'Deal'} #${entityId}`;\n    message = `A deal's stage has been updated:\\n\\n` +\n              `Deal: ${entityData.title || 'N/A'}\\n` +\n              `Property: ${entityData.property_address || 'N/A'}\\n` +\n              `Client: ${entityData.client_name || 'N/A'}\\n` +\n              `Stage Changed: ${oldStage} → ${newStage}\\n` +\n              `Expected Close: ${entityData.expected_close_date || 'Not set'}\\n\\n` +\n              `Please review and take appropriate action.`;\n    \n    recipients = [\n      { id: entityData.agent_id || 'agent_001', type: 'agent', name: 'Assigned Agent', email: 'agent@company.com', phone: '+15551234567', slack: 'UAGENT001' },\n      { id: entityData.client_id || 'cust_003', type: 'customer', name: 'Client', email: 'client@example.com', phone: '+15553333333', slack: 'U3' }\n    ];\n    break;\n\n  default:\n    // Generic notification\n    subject = `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} Event: ${eventType}`;\n    message = `A ${eventType} event occurred for ${entityType} #${entityId} at ${new Date().toLocaleString()}.\\n\\nDetails:${JSON.stringify(entityData, null, 2)}`;\n    \n    // Notify admins for unknown event types\n    recipients = [\n      { id: 'admin_001', type: 'admin', name: 'System Admin', email: 'admin@company.com', phone: '+15550000000', slack: 'UADMIN001' }\n    ];\n}\n\n// Filter out recipients with missing contact info\nconst validRecipients = recipients.filter(r => \n  (r.email && r.email.includes('@')) || \n  (r.phone && /^\\+?[1-9]\\d{1,14}$/.test(r.phone.replace(/[^\\d+]/g, ''))) ||\n  (r.slack && /^U[A-Z0-9]+$/.test(r.slack))\n);\n\nreturn [{ json: {\n  eventType,\n  entityType,\n  entityId,\n  subject,\n  message,\n  recipients: validRecipients,\n  timestamp: new Date().toISOString(),\n  metadata: {\n    ...$json.metadata,\n    processedAt: new Date().toISOString(),\n    originalEvent: rawData\n  }\n} }];"
+      },
+      "name": "Determine Notification Content",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        100
+      ],
+      "id": "function3"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Prepare notifications for each recipient\nconst { subject, message, recipients } = $json;\n\n// We'll split this out to send to each recipient via the multi-channel hub\n// For now, return array of notifications to send\nconst notifications = recipients.map(recipient => ({\n  recipientId: recipient.id,\n  recipientType: recipient.type,\n  subject: subject,\n  message: message,\n  channels: ['email', 'sms', 'slack'], // Send via all three channels\n  priority: 'normal',\n  metadata: {\n    ...$json.metadata,\n    recipientName: recipient.name,\n    recipientEmail: recipient.email,\n    recipientPhone: recipient.phone,\n    recipientSlack: recipient.slack\n  }\n}));\n\nreturn [{ json: { notifications } }];"
+      },
+      "name": "Prepare Individual Notifications",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1500,
+        100
+      ],
+      "id": "function4"
+    },
+    {
+      "parameters": {
+        "functionCode": "**SPLIT OUT BATCH** - This sends each notification individually to the multi-channel hub\nreturn $json[\"notifications\"];"
+      },
+      "name": "Split Notifications Batch",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        1750,
+        100
+      ],
+      "id": "split1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "url": "http://localhost:5678/webhook/send-message", // Points to our multi-channel messaging hub
+        "jsonParameters": true,
+        "options": {},
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "name": "Send Notification via Multi-Channel Hub",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        100
+      ],
+      "id": "httpRequest2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "INSERT INTO notification_logs (event_type, entity_type, entity_id, recipient_id, recipient_type, channels_used, status, message_subject, message_body, metadata, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {
+                "parameters": {
+                  "value": "={{[\\n    $json[\\\"eventType\\\"],\\n    $json[\\\"entityType\\\"],\\n    $json[\\\"entityId\\\"],\\n    $json[\\\"recipientId\\\"],\\n    $json[\\\"recipientType\\\"],\\n    $json.containsKey('channelsUsed') ? JSON.stringify($json[\\\"channelsUsed\\\"]) : '[]',\\n    $json[\\\"status\\\"],\\n    $json[\\\"subject\\\"],\\n    $json[\\\"message\\\"],\\n    '{{JSON.stringify($json[\\\"metadata\\\"])}}'\\n  ]}}"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "name": "Log Notification",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        2250,
+        50
+      ],
+      "id": "postgres1"
+    }
+  ],
+  "connections": {
+    "Webhook: CRM Event Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse CRM Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse CRM Event": {
+      "main": [
+        [
+          {
+            "node": "Prepare CRM API Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare CRM API Request": {
+      "main": [
+        [
+          {
+            "node": "Fetch Entity Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Entity Details": {
+      "main": [
+        [
+          {
+            "node": "Determine Notification Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Determine Notification Content": {
+      "main": [
+        [
+          {
+            "node": "Prepare Individual Notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Individual Notifications": {
+      "main": [
+        [
+          {
+            "node": "Split Notifications Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Notifications Batch": {
+      "main": [
+        [
+          {
+            "node": "Send Notification via Multi-Channel Hub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Notification via Multi-Channel Hub": {
+      "main": [
+        [
+          {
+            "node": "Log Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "crm_event_driven_notification"
+}

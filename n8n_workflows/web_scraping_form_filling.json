@@ -1,0 +1,125 @@
+{
+  "name": "Web Scraping and Form Filling",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/web-scrape-trigger",
+        "responseMode": "onReceived",
+        "responseData": {
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": "{\"status\": \"scraping initiated\"}"
+        }
+      },
+      "name": "Webhook: Web Scrape Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "id": "webhook1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Prepare scraping configuration\nconst body = $json[\"body\"] || {};\n\n// Validate required fields\nif (!body.targetUrl) {\n  throw new Error('targetUrl is required');\n}\n\nreturn [{ json: {\n  targetUrl: body.targetUrl,\n  scrapeType: body.scrapeType || 'property_listing', // property_listing, mortgage_rates, school_ratings, rental_comps, mls_listing, government_records\n  selectors: body.selectors || {},\n  formData: body.formData || {},\n  action: body.action || 'scrape', // scrape, fill_form, submit_form\n  outputFormat: body.outputFormat || 'json', // json, csv, html\n  metadata: body.metadata || {},\n  headers: body.headers || { \"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\" }\n} }];"
+      },
+      "name": "Prepare Scraping Config",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        500,
+        100
+      ],
+      "id": "function1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Perform web scraping or form operations\nconst axios = require('axios');\nconst cheerio = require('cheerio');\nconst { parse } = require('json2csv');\n\nconst { targetUrl, scrapeType, selectors, formData, action, outputFormat, metadata, headers } = $json;\n\ntry {\n  let results = {};\n  let rawHtml = '';\n  \n  // Set default headers\n  const requestHeaders = {\n    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',\n    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',\n    'Accept-Language': 'en-US,en;q=0.5',\n    'Accept-Encoding': 'gzip, deflate',\n    'Connection': 'keep-alive',\n    ...headers\n  };\n  \n  if (action === 'scrape' || action === 'extract') {\n    // Scraping logic\n    const response = await axios.get(targetUrl, { headers: requestHeaders });\n    rawHtml = response.data;\n    const $ = cheerio.load(rawHtml);\n    \n    // Extract data based on selectors\n    Object.keys(selectors).forEach(key => {\n      const element = $(selectors[key]);\n      if (element.length > 0) {\n        // Handle multiple elements\n        if (element.length > 1) {\n          results[key] = element.map((i, el) => $(el).text().trim()).get();\n        } else {\n          results[key] = element.first().text().trim();\n        }\n      } else {\n        results[key] = null;\n      }\n    });\n    \n    // Add scrape-type specific processing\n    switch (scrapeType) {\n      case 'property_listing':\n        // Extract structured property data\n        results.price = results.price || $('[class*=\"price\"], [id*=\"price\"]').first().text().replace(/[^\\d]/g, '') || null;\n        results.beds = results.beds || $('[class*=\"bed\"], [id*=\"bed\"]').first().text().match(/\\d+/)?.[0] || null;\n        results.baths = results.baths || $('[class*=\"bath\"], [id*=\"bath\"]').first().text().match(/\\d+/)?.[0] || null;\n        results.sqft = results.sqft || $('[class*=\"sqft\"], [id*=\"sqft\"], [class*=\"square\"]').first().text().replace(/[^\\d]/g, '') || null;\n        results.address = results.address || $('[class*=\"address\"], [id*=\"address\"]').first().text().trim() || null;\n        break;\n        \n      case 'mortgage_rates':\n        // Extract mortgage rate data\n        results.rate30yr = results.rate30yr || $('[class*=\"30-year\"], [class*=\"30yr\"]').first().text().replace(/[^\\d.]/g, '') || null;\n        results.rate15yr = results.rate15yr || $('[class*=\"15-year\"], [class*=\"15yr\"]').first().text().replace(/[^\\d.]/g, '') || null;\n        break;\n        \n      case 'school_ratings':\n        // Extract school data\n        results.schoolName = results.schoolName || $('[class*=\"school-name\"], [class*=\"institution\"]').first().text().trim() || null;\n        results.rating = results.rating || $('[class*=\"rating\"], [class*=\"score\"]').first().text().replace(/[^\\d.]/g, '') || null;\n        break;\n        \n      case 'rental_comps':\n        // Extract rental comparison data\n        results.rent = results.rent || $('[class*=\"rent\"], [class*=\"price\"]').first().text().replace(/[^\\d]/g, '') || null;\n        results.bedrooms = results.bedrooms || $('[class*=\"bed\"], [class*=\"br\"]').first().text().match(/\\d+/)?.[0] || null;\n        break;\n    }\n    \n    // Format output\n    let outputData = results;\n    if (outputFormat === 'csv' && typeof results === 'object' && !(results instanceof Array)) {\n      try {\n        outputData = parse([results]);\n      } catch (e) {\n        // If conversion fails, keep as JSON\n        outputData = results;\n      }\n    }\n    \n    return [{ json: {\n      status: 'success',\n      action: 'scrape',\n      data: outputData,\n      rawHtmlLength: rawHtml.length,\n      selectorsUsed: Object.keys(selectors),\n      scrapeType,\n      metadata: {\n        ...metadata,\n        scrapedAt: new Date().toISOString(),\n        url: targetUrl,\n        statusCode: 200,\n        contentType: response.headers['content-type'] || 'unknown'\n      }\n    } }];\n    \n  } else if (action === 'fill_form' || action === 'submit_form') {\n    // Form filling logic\n    // In a real implementation, this would use Puppeteer/Playwright via a service\n    // For now, we'll prepare the data for submission\n    \n    const formDataToSend = new URLSearchParams();\n    Object.keys(formData).forEach(key => {\n      formDataToSend.append(key, formData[key]);\n    });\n    \n    // Try to submit the form\n    try {\n      const response = await axios.post(targetUrl, formDataToSend, {\n        headers: {\n          'Content-Type': 'application/x-www-form-urlencoded',\n          ...requestHeaders\n        }\n      });\n      \n      return [{ json: {\n        status: 'success',\n        action: 'submit_form',\n        data: {\n          message: 'Form submitted successfully',\n          responseStatus: response.status,\n          submittedData: formData\n        },\n        metadata: {\n          ...metadata,\n          submittedAt: new Date().toISOString(),\n          url: targetUrl,\n          statusCode: response.status\n        }\n      } }];\n    } catch (submitError) {\n      // If submission fails, still return the prepared data\n      return [{ json: {\n        status: 'form_prepared',\n        action: 'prepare_form',\n        data: {\n          message: 'Form data prepared but submission failed',\n          error: submitError.message,\n          preparedData: formData\n        },\n        metadata: {\n          ...metadata,\n          preparedAt: new Date().toISOString(),\n          url: targetUrl\n        }\n      } }];\n    }\n  }\n} catch (error) {\n  // Handle errors\n  return [{ json: {\n    status: 'error',\n    action: action || 'unknown',\n    error: error.message,\n    metadata: {\n      ...metadata,\n      attemptedAt: new Date().toISOString(),\n      url: targetUrl\n    }\n  } }];\n}"
+      },
+      "name": "Execute Web Action",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        750,
+        100
+      ],
+      "id": "function2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "INSERT INTO web_scraping_logs (url, action_type, scrape_type, status, data_extracted, raw_html_length, selectors_used, metadata, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {
+                "parameters": {
+                  "value": "={{[\\n    $json[\\\"targetUrl\\\"],\\n    $json[\\\"action\\\"],\\n    $json[\\\"scrapeType\\\"],\\n    $json[\\\"status\\\"],\\n    $json.containsKey('data') ? (typeof $json[\\\"data\\\"] === 'string' ? $json[\\\"data\\\"] : JSON.stringify($json[\\\"data\\\"])) : '{}',\\n    $json.containsKey('rawHtmlLength') ? $json[\\\"rawHtmlLength\\\"] : 0,\\n    $json.containsKey('selectorsUsed') ? JSON.stringify($json[\\\"selectorsUsed\\\"]) : '[]',\\n    '{{JSON.stringify($json[\\\"metadata\\\"])}}'\\n  ]}}"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "name": "Log Web Action",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        50
+      ],
+      "id": "postgres1"
+    }
+  ],
+  "connections": {
+    "Webhook: Web Scrape Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare Scraping Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Scraping Config": {
+      "main": [
+        [
+          {
+            "node": "Execute Web Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Web Action": {
+      "main": [
+        [
+          {
+            "node": "Log Web Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "web_scraping_form_filling"
+}

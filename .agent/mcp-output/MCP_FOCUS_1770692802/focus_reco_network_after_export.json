@@ -1,0 +1,3 @@
+[GET] http://127.0.0.1:5000/recommendations/export?customer_id=2&format=pdf => [204] Intercepted by the IDM Advanced Integration
+[GET] http://127.0.0.1:5000/recommendations/export?customer_id=2&format=pdf => [204] Intercepted by the IDM Advanced Integration
+[GET] http://127.0.0.1:5000/recommendations/export?customer_id=2&format=pdf => [204] Intercepted by the IDM Advanced Integration

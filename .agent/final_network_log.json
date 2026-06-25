@@ -1,0 +1,26 @@
+[
+  {
+    "ts": "2026-02-08T17:35:59.369Z",
+    "page": "http://127.0.0.1:5000/settings",
+    "method": "GET",
+    "url": "http://127.0.0.1:5000/admin/automations",
+    "status": 401,
+    "resourceType": "document"
+  },
+  {
+    "ts": "2026-02-08T17:36:00.341Z",
+    "page": "http://127.0.0.1:5000/admin/automations",
+    "method": "GET",
+    "url": "http://127.0.0.1:5000/admin/login",
+    "status": 200,
+    "resourceType": "document"
+  },
+  {
+    "ts": "2026-02-08T17:36:01.309Z",
+    "page": "http://127.0.0.1:5000/admin/login",
+    "method": "GET",
+    "url": "http://127.0.0.1:5000/admin/environment",
+    "status": 401,
+    "resourceType": "document"
+  }
+]

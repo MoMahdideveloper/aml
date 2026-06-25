@@ -1,0 +1,125 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "EstateFlow" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - heading "EstateFlow" [level=2] [ref=e9]
+      - generic [ref=e11]:
+        - generic [ref=e13]: search
+        - textbox "search" [ref=e14]:
+          - /placeholder: Search...
+    - generic [ref=e16]:
+      - button "notifications" [ref=e17] [cursor=pointer]:
+        - generic [ref=e18]: notifications
+      - button "settings" [ref=e19] [cursor=pointer]:
+        - generic [ref=e20]: settings
+  - generic [ref=e22]:
+    - complementary [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - heading "Real Estate CRM" [level=1] [ref=e26]
+          - paragraph [ref=e27]: Workflow Management
+        - navigation "Main navigation" [ref=e28]:
+          - link "grid_view Overview" [ref=e29] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e30]: grid_view
+            - paragraph [ref=e31]: Overview
+          - link "real_estate_agent Properties" [ref=e32] [cursor=pointer]:
+            - /url: /properties
+            - generic [ref=e33]: real_estate_agent
+            - paragraph [ref=e34]: Properties
+          - link "person_pin Agents" [ref=e35] [cursor=pointer]:
+            - /url: /agents
+            - generic [ref=e36]: person_pin
+            - paragraph [ref=e37]: Agents
+          - link "groups Customers" [ref=e38] [cursor=pointer]:
+            - /url: /customers
+            - generic [ref=e39]: groups
+            - paragraph [ref=e40]: Customers
+          - link "monetization_on Deals" [ref=e41] [cursor=pointer]:
+            - /url: /deals
+            - generic [ref=e42]: monetization_on
+            - paragraph [ref=e43]: Deals
+          - link "task_alt Tasks" [ref=e44] [cursor=pointer]:
+            - /url: /tasks
+            - generic [ref=e45]: task_alt
+            - paragraph [ref=e46]: Tasks
+          - link "auto_awesome Recommendations" [ref=e47] [cursor=pointer]:
+            - /url: /recommendations
+            - generic [ref=e48]: auto_awesome
+            - paragraph [ref=e49]: Recommendations
+          - link "bar_chart Reports" [ref=e50] [cursor=pointer]:
+            - /url: /market-analysis
+            - generic [ref=e51]: bar_chart
+            - paragraph [ref=e52]: Reports
+          - link "settings Settings" [ref=e53] [cursor=pointer]:
+            - /url: /settings
+            - generic [ref=e54]: settings
+            - paragraph [ref=e55]: Settings
+          - link "smart_toy Automations" [ref=e56] [cursor=pointer]:
+            - /url: /admin/automations
+            - generic [ref=e57]: smart_toy
+            - paragraph [ref=e58]: Automations
+        - generic [ref=e59]:
+          - generic [ref=e60]:
+            - paragraph [ref=e61]: Storage
+            - paragraph [ref=e64]: 15.2 GB of 20 GB used
+          - link "logout Logout" [ref=e65] [cursor=pointer]:
+            - /url: /admin/logout
+            - generic [ref=e66]: logout
+            - paragraph [ref=e67]: Logout
+    - main [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e71]:
+            - heading "Lead Management" [level=1] [ref=e72]
+            - paragraph [ref=e73]: Customers are loaded from the backend and actions map to CRM routes.
+          - button "person_add Add New Lead" [ref=e74] [cursor=pointer]:
+            - generic [ref=e75]: person_add
+            - text: Add New Lead
+        - generic [ref=e76]:
+          - generic [ref=e77]:
+            - generic [ref=e78]:
+              - heading "Customers" [level=2] [ref=e79]
+              - generic [ref=e80]: 2 records
+            - table [ref=e82]:
+              - rowgroup [ref=e83]:
+                - row "Name Contact Budget Deals Actions" [ref=e84]:
+                  - columnheader "Name" [ref=e85]
+                  - columnheader "Contact" [ref=e86]
+                  - columnheader "Budget" [ref=e87]
+                  - columnheader "Deals" [ref=e88]
+                  - columnheader "Actions" [ref=e89]
+              - rowgroup [ref=e90]:
+                - row "Emma Wilson Active emma.wilson@email.com +1-555-1002 800,000 - 1,500,000 1 active / 1 total View Edit Delete" [ref=e91] [cursor=pointer]:
+                  - cell "Emma Wilson Active" [ref=e92]:
+                    - paragraph [ref=e93]: Emma Wilson
+                    - paragraph [ref=e94]: Active
+                  - cell "emma.wilson@email.com +1-555-1002" [ref=e95]:
+                    - paragraph [ref=e96]: emma.wilson@email.com
+                    - paragraph [ref=e97]: +1-555-1002
+                  - cell "800,000 - 1,500,000" [ref=e98]
+                  - cell "1 active / 1 total" [ref=e99]
+                  - cell "View Edit Delete" [ref=e100]:
+                    - generic [ref=e101]:
+                      - button "View" [ref=e102]
+                      - button "Edit" [ref=e103]
+                      - button "Delete" [ref=e104]
+                - row "John Smith Active john.smith@email.com +1-555-1001 300,000 - 500,000 1 active / 1 total View Edit Delete" [ref=e105] [cursor=pointer]:
+                  - cell "John Smith Active" [ref=e106]:
+                    - paragraph [ref=e107]: John Smith
+                    - paragraph [ref=e108]: Active
+                  - cell "john.smith@email.com +1-555-1001" [ref=e109]:
+                    - paragraph [ref=e110]: john.smith@email.com
+                    - paragraph [ref=e111]: +1-555-1001
+                  - cell "300,000 - 500,000" [ref=e112]
+                  - cell "1 active / 1 total" [ref=e113]
+                  - cell "View Edit Delete" [ref=e114]:
+                    - generic [ref=e115]:
+                      - button "View" [ref=e116]
+                      - button "Edit" [ref=e117]
+                      - button "Delete" [ref=e118]
+          - complementary [ref=e119]:
+            - heading "Selected Customer" [level=2] [ref=e120]
+            - generic [ref=e121]: Select a customer row to load dynamic details.

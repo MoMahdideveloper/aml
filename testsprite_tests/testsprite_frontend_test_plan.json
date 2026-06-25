@@ -1,0 +1,551 @@
+[
+  {
+    "id": "TC001",
+    "title": "Property CRUD Operations",
+    "description": "Verify that create, read, update, and delete operations for properties work correctly with valid inputs, including validation and database persistence.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the property management page."
+      },
+      {
+        "type": "action",
+        "description": "Create a new property with valid attributes including address, price, type, and descriptions."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm the property is saved and displayed in the listing with correct details."
+      },
+      {
+        "type": "action",
+        "description": "Read the property details from both the modal view and dedicated detail page."
+      },
+      {
+        "type": "assertion",
+        "description": "Property details match the initially entered data in all views."
+      },
+      {
+        "type": "action",
+        "description": "Update certain property details (e.g. price, description) using the modal edit interface."
+      },
+      {
+        "type": "assertion",
+        "description": "Changes persist and are accurately reflected in all property views."
+      },
+      {
+        "type": "action",
+        "description": "Delete the property via modal delete confirmation."
+      },
+      {
+        "type": "assertion",
+        "description": "Property is removed from listings and database."
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Property Advanced Filtering and Search",
+    "description": "Test multi-criteria filtering and search of properties including filters on price range, location, property type, and agent.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to property listing page."
+      },
+      {
+        "type": "action",
+        "description": "Apply a price range filter that matches some properties."
+      },
+      {
+        "type": "assertion",
+        "description": "Only properties within the price range are displayed."
+      },
+      {
+        "type": "action",
+        "description": "Apply location and property type filters simultaneously."
+      },
+      {
+        "type": "assertion",
+        "description": "Results match all selected criteria."
+      },
+      {
+        "type": "action",
+        "description": "Search by keywords in property descriptions."
+      },
+      {
+        "type": "assertion",
+        "description": "Properties containing keywords in description or title appear."
+      },
+      {
+        "type": "action",
+        "description": "Test empty or no-match filter scenario."
+      },
+      {
+        "type": "assertion",
+        "description": "Page shows appropriate 'no results' message and handles gracefully."
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Agent Profile Management and Performance Tracking",
+    "description": "Verify management of agent profiles including creation, update, deletion, and display of performance metrics.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to agent management page."
+      },
+      {
+        "type": "action",
+        "description": "Create new agent profile with required information."
+      },
+      {
+        "type": "assertion",
+        "description": "Agent appears in listings with correct details."
+      },
+      {
+        "type": "action",
+        "description": "Update agent specialization and commission data."
+      },
+      {
+        "type": "assertion",
+        "description": "Updated agent info persists and displays correctly."
+      },
+      {
+        "type": "action",
+        "description": "Check agent performance metrics shown on profile."
+      },
+      {
+        "type": "assertion",
+        "description": "Performance data matches backend records and updates with relevant deals."
+      },
+      {
+        "type": "action",
+        "description": "Delete an agent and confirm removal."
+      },
+      {
+        "type": "assertion",
+        "description": "Agent is removed safely without orphan data."
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Customer CRM: Preference and Budget Tracking",
+    "description": "Validate customer management including adding preferences, budget tracking, and managing lead statuses.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Access the customer management interface."
+      },
+      {
+        "type": "action",
+        "description": "Add a new customer with personal and contact details."
+      },
+      {
+        "type": "assertion",
+        "description": "Customer appears in list with correct data."
+      },
+      {
+        "type": "action",
+        "description": "Add or update customer property preferences and budget."
+      },
+      {
+        "type": "assertion",
+        "description": "Preferences and budget values are saved and reflected correctly."
+      },
+      {
+        "type": "action",
+        "description": "Change customer lead status through predefined states."
+      },
+      {
+        "type": "assertion",
+        "description": "Lead status updates persist and trigger appropriate system behaviors."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to create customer with missing required fields."
+      },
+      {
+        "type": "assertion",
+        "description": "Validation errors are shown preventing incomplete entry."
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Deal Pipeline and Commission Calculation",
+    "description": "Check deal management workflows including creating deals, moving through stages, and automatic commission calculation.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open the deal pipeline interface."
+      },
+      {
+        "type": "action",
+        "description": "Create a new deal linked to a customer, property, and agent."
+      },
+      {
+        "type": "assertion",
+        "description": "Deal is displayed in initial pipeline stage with correct data."
+      },
+      {
+        "type": "action",
+        "description": "Update deal status through stages (e.g., negotiation, closed)."
+      },
+      {
+        "type": "assertion",
+        "description": "Deal moves correctly through pipeline stages."
+      },
+      {
+        "type": "action",
+        "description": "Verify automatic commission amount calculation based on deal value and agent rates."
+      },
+      {
+        "type": "assertion",
+        "description": "Commission is correct and shown in deal details."
+      },
+      {
+        "type": "action",
+        "description": "Test deal deletion and system consistency."
+      },
+      {
+        "type": "assertion",
+        "description": "Deal removed without impacting related entities erroneously."
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Task Management: Assignment and Status Tracking",
+    "description": "Validate creation, assignment, prioritization, and status updates of tasks assigned to agents.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to task management page."
+      },
+      {
+        "type": "action",
+        "description": "Create a new task with description, priority, assignee, and due date."
+      },
+      {
+        "type": "assertion",
+        "description": "Task appears with correct details and assigned agent."
+      },
+      {
+        "type": "action",
+        "description": "Update task status to 'in progress' and then 'completed'."
+      },
+      {
+        "type": "assertion",
+        "description": "Status updates reflect on UI and trigger relevant notifications."
+      },
+      {
+        "type": "action",
+        "description": "Delete a task and verify removal."
+      },
+      {
+        "type": "assertion",
+        "description": "Task is no longer listed and data is cleaned."
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "AI-Powered Property Recommendations with Fallback",
+    "description": "Ensure AI-powered recommendations return relevant properties, provide reasoning explanation, and gracefully fallback if Gemini API fails.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as user with defined preferences."
+      },
+      {
+        "type": "action",
+        "description": "Access AI-powered recommendation page to fetch matches."
+      },
+      {
+        "type": "assertion",
+        "description": "Recommendations are relevant to customer preferences and include reasoning explanations."
+      },
+      {
+        "type": "action",
+        "description": "Simulate Gemini API failure."
+      },
+      {
+        "type": "assertion",
+        "description": "System falls back to default recommendation logic and informs user appropriately."
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Dashboard and Analytics Real-time Updates",
+    "description": "Test that dashboard displays up-to-date statistics and recent activity summaries accurately and updates in real time.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login and navigate to the dashboard."
+      },
+      {
+        "type": "action",
+        "description": "Perform property,deal, task creations and updates in other interfaces."
+      },
+      {
+        "type": "assertion",
+        "description": "Dashboard statistics and activity feeds reflect changes within expected real-time delay."
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Modal-Based CRUD Interface Consistency",
+    "description": "Verify CRUD operations on all entities work correctly within modals and interact seamlessly with page data.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open create modal for property, agent, customer, deal, and task entities."
+      },
+      {
+        "type": "action",
+        "description": "Perform valid create, edit, read and delete via modals."
+      },
+      {
+        "type": "assertion",
+        "description": "Changes persist and UI updates without full page reload."
+      },
+      {
+        "type": "action",
+        "description": "Attempt invalid data entry in modals."
+      },
+      {
+        "type": "assertion",
+        "description": "Validation errors appear inline and prevent submission."
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Security Validations: CSRF, XSS, Session",
+    "description": "Ensure all forms enforce CSRF tokens, inputs are sanitized to prevent XSS, and sessions are managed securely.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Submit forms with missing or invalid CSRF tokens."
+      },
+      {
+        "type": "assertion",
+        "description": "Submissions are rejected with proper error messages."
+      },
+      {
+        "type": "action",
+        "description": "Input malicious scripts in form fields."
+      },
+      {
+        "type": "assertion",
+        "description": "Inputs are sanitized; scripts do not execute on output."
+      },
+      {
+        "type": "action",
+        "description": "Verify secure flags on session cookies and session expiration behavior."
+      },
+      {
+        "type": "assertion",
+        "description": "Sessions behave securely avoiding fixation and hijacking."
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Responsive UI Verification on Mobile and Desktop",
+    "description": "Check that the UI layout and features render correctly and are usable on various desktop and mobile screen sizes.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open the application on multiple browser viewport widths including mobile (320px+) and desktop."
+      },
+      {
+        "type": "assertion",
+        "description": "All pages render correctly without layout breakage."
+      },
+      {
+        "type": "action",
+        "description": "Test interactive elements such as modals, dropdowns, and forms on touch and pointer devices."
+      },
+      {
+        "type": "assertion",
+        "description": "All UI interactions function smoothly and consistently."
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Environment Configuration Management Security and Audit",
+    "description": "Validate secure management of dynamic environment variables via admin UI with proper audit trail logging.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as admin user and navigate to environment configuration page."
+      },
+      {
+        "type": "action",
+        "description": "Create, update, and delete environment variables."
+      },
+      {
+        "type": "assertion",
+        "description": "Changes are applied correctly and only visible to authorized users."
+      },
+      {
+        "type": "action",
+        "description": "Review audit logs for environment changes."
+      },
+      {
+        "type": "assertion",
+        "description": "All changes are logged with user and timestamp for traceability."
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Report Generation and Export Functionality",
+    "description": "Test generating reports for properties, deals, and recommendations with export to PDF, Excel, and JSON formats.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to report generation section."
+      },
+      {
+        "type": "action",
+        "description": "Generate reports for properties, deals, and AI recommendations."
+      },
+      {
+        "type": "assertion",
+        "description": "Reports display accurate data matching current system state."
+      },
+      {
+        "type": "action",
+        "description": "Export reports to PDF, Excel, and JSON formats."
+      },
+      {
+        "type": "assertion",
+        "description": "Exports download successfully and files contents are valid and complete."
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "In-app Notification System Delivery and Display",
+    "description": "Validate that system-generated notifications are delivered to users and displayed properly in-app.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Trigger system events that generate notifications (e.g., deal stage change, task assignment)."
+      },
+      {
+        "type": "assertion",
+        "description": "Notifications appear promptly in user notification UI."
+      },
+      {
+        "type": "action",
+        "description": "Open notifications panel and mark notifications as read."
+      },
+      {
+        "type": "assertion",
+        "description": "Notifications status updates persist and count reflects unread accurately."
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Background Job Scheduling and Execution",
+    "description": "Verify that scheduled background jobs run at correct intervals and perform data refreshes and processing tasks.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Configure background job schedules for AI matching refresh and task automation."
+      },
+      {
+        "type": "action",
+        "description": "Monitor job execution and system state before and after jobs run."
+      },
+      {
+        "type": "assertion",
+        "description": "Jobs complete successfully, trigger expected data updates, and error handling logs failures."
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Error Handling and Database Transaction Rollbacks",
+    "description": "Test system robustness by provoking error scenarios ensuring proper rollback and meaningful error responses.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Force an error during property creation (e.g., database constraint violation)."
+      },
+      {
+        "type": "assertion",
+        "description": "System rolls back transaction, no partial data saved, and returns appropriate error to user."
+      },
+      {
+        "type": "action",
+        "description": "Trigger server error during agent update and verify error page or JSON response."
+      },
+      {
+        "type": "assertion",
+        "description": "User sees informative error message; server logs capture error details."
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Property Sharing and Social Media Integration",
+    "description": "Validate property sharing capabilities including URL copying and integration with common social media platforms.",
+    "category": "functional",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open a property detail page."
+      },
+      {
+        "type": "action",
+        "description": "Use property sharing buttons to copy URL and share on social media."
+      },
+      {
+        "type": "assertion",
+        "description": "URL is copied to clipboard successfully and social media share dialogs open with correct link."
+      }
+    ]
+  }
+]

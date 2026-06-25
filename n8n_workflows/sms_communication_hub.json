@@ -1,0 +1,160 @@
+{
+  "name": "SMS Communication Hub",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/inbound-sms",
+        "responseMode": "onReceived",
+        "responseData": {
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "application/xml"
+          },
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response></Response>"
+        }
+      },
+      "name": "Webhook: Inbound SMS",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "id": "webhook1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse incoming SMS from Twilio\nconst body = $json[\"body\"] || {};\n\nconst smsData = {\n  messageSid: body.MessageSid || '',\n  from: body.From || '', // Customer phone number\n  to: body.To || '', // Your Twilio number\n  body: body.Body || '',\n  numMedia: parseInt(body.NumMedia) || 0,\n  accountSid: body.AccountSid || '',\n  receivedAt: new Date().toISOString()\n};\n\nreturn [{ json: smsData }];"
+      },
+      "name": "Parse Inbound SMS",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        500,
+        100
+      ],
+      "id": "function1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "INSERT INTO sms_inbound (message_sid, from_number, to_number, message_body, received_at, processed) VALUES ($1, $2, $3, $4, $5, false)",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {
+                "parameters": {
+                  "value": "={{[$json[\"messageSid\"], $json[\"from\"], $json[\"to\"], $json[\"body\"], $json[\"receivedAt\"]]}}"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "name": "Log Inbound SMS",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        750,
+        100
+      ],
+      "id": "postgres1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "SELECT id, first_name, last_name, phone, email FROM customers WHERE phone = $1",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {
+                "parameters": {
+                  "value": "={{[$json[\"from\"]]}}"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "name": "Find Customer by Phone",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        50
+      ],
+      "id": "postgres2"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Determine if customer exists and handle accordingly\nconst customers = $json;\nconst fromNumber = $json[\"from\"];\nconst messageBody = ($json[\"body\"] || '').toLowerCase().trim();\n\nif (customers.length === 0) {\n  // New lead from SMS\n  return [{ json: {\n    action: 'new_lead_from_sms',\n    phoneNumber: fromNumber,\n    message: messageBody,\n    needsFollowUp: true,\n    suggestedResponse: 'Thanks for your message! A real estate agent will contact you shortly.'\n  } }];\n}\n\nconst customer = customers[0];\n\n// Handle special commands\nif (messageBody.includes('stop') || messageBody.includes('unsubscribe')) {\n  return [{ json: {\n    action: 'opt_out_request',\n    customerId: customer.id,\n    phoneNumber: fromNumber,\n    message: messageBody\n  } }];\n}\n\nif (messageBody.includes('help') || messageBody.includes('info')) {\n  return [{ json: {\n    action: 'info_request',\n    customerId: customer.id,\n    phoneNumber: fromNumber,\n    message: messageBody,\n    suggestedResponse: 'Visit our website or call us for property listings and agent assistance.'\n  } }];\n}\n\n// For general messages, log and optionally trigger AI response\nreturn [{ json: {\n  action: 'customer_sms_received',\n  customerId: customer.id,\n  customerName: `${customer.first_name} ${customer.last_name}`,\n  phoneNumber: fromNumber,\n  message: messageBody,\n  needsResponse: true,\n  originalMessageSid: $json[\"messageSid\"]\n} }];"
+      },
+      "name": "Process Inbound SMS",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        50
+      ],
+      "id": "function2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "UPDATE customers SET opt_out = true WHERE phone = $1",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {
+                "parameters": {
+                  "value": "={{[$json[\"phoneNumber\"]]}}"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "name": "Process Opt-Out",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        0
+      ],
+      "id": "postgres3"
+    },
+    {
+      "params": {
+        "functionCode": "// Send automated response via Twilio\n// This would normally call the Twilio API\n// For demo, we'll just log what would be sent\nconst responses = {\n  'new_lead_from_sms': 'Thanks for your message! A real estate agent will contact you shortly.',\n  'info_request': 'Visit our website or call us for property listings and agent assistance.',\n  'default': 'Thank you for contacting us. We\\'ll get back to you soon.'\n};\n\nlet responseMessage = responses[$json[\"action\"]] || responses['default'];\n\nreturn [{ json: {\n  action: 'send_sms_response',\n  to: $json[\"phoneNumber\"],\n  message: responseMessage,\n  messageSid: 'simulated_' + Date.now(),\n  sentAt: new Date().toISOString()\n} }];"
+      }
+    }
+  ]
+}

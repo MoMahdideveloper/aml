@@ -1,0 +1,258 @@
+{
+  "meta": {
+    "project": "Real Estate CRM - Flask Web Application",
+    "date": "2025-09-04",
+    "prepared_by": "Software Development Manager"
+  },
+  "product_overview": "A comprehensive and modular Real Estate CRM web application built with Flask, designed to efficiently manage properties, agents, customers, deals, and tasks. It leverages AI-powered property recommendations and advanced analytics to enhance user decision-making and streamline real estate workflows.",
+  "core_goals": [
+    "Provide a full lifecycle management system for real estate properties including CRUD operations and advanced filtering.",
+    "Enable management and tracking of real estate agents, customers, deals, and associated tasks.",
+    "Integrate AI technologies for property recommendations and data extraction to improve matching accuracy and operational insights.",
+    "Offer a responsive, secure, and user-friendly interface with modern web technologies and security best practices.",
+    "Ensure robust backend architecture using Flask and SQLAlchemy with PostgreSQL support for scalability and maintainability.",
+    "Provide comprehensive validation, security protections, and continuous integration testing to maintain high quality.",
+    "Support efficient deployment and configuration management with dynamic environment variable control and admin interface."
+  ],
+  "key_features": [
+    "Complete Property Management System with detailed attributes and Iranian real estate market support.",
+    "Agent Management with profiles, performance tracking, and commission automation.",
+    "Customer Relationship Management with preferences, budget tracking, and lead status management.",
+    "Deal Pipeline Management with deal stages, commission calculations, and multiple transaction types.",
+    "Task Management System covering assignment, prioritization, and status tracking for agent activities.",
+    "AI-Powered Property Recommendations leveraging Google Gemini API with fallback and reasoning explanations.",
+    "Advanced Search and Filtering capabilities for multi-criteria property queries.",
+    "Hybrid Property Viewing System combining modal and dedicated page views for enhanced user experience.",
+    "Dashboard and Analytics providing real-time market insights and activity summaries.",
+    "Modal-Based CRUD Interface for seamless data operations across all entities.",
+    "Property Sharing and Social Media Integration for easy property promotion.",
+    "Report Generation with export options to PDF, Excel, and JSON formats.",
+    "Dynamic Environment Configuration Management with admin UI and security.",
+    "In-app Notification System for alerts and messages.",
+    "Background Job Scheduling for automated tasks and data processing.",
+    "Robust Security Measures including CSRF protection, XSS prevention, and secure session management.",
+    "Responsive UI designed with Bootstrap 5 for mobile and desktop usability."
+  ],
+  "user_flow_summary": [
+    "User logs in and accesses the dashboard displaying overall system statistics and recent activities.",
+    "User navigates to property listing to search, filter, and manage properties using hybrid modal and dedicated detail pages.",
+    "User manages agents, customers, deals, and tasks through dedicated interfaces with CRUD operations accessible via modals.",
+    "For customers, users view AI-powered property recommendations tailored by preference analysis or general suggestions.",
+    "Admin users manage environment configuration variables securely through a dedicated interface with audit trails.",
+    "Users receive in-app notifications and alerts triggered by system events or updates.",
+    "Users export reports on properties, deals, and recommendations via the web interface.",
+    "Background scheduled jobs run to refresh AI matching data and system tasks automatically."
+  ],
+  "validation_criteria": [
+    "All entity CRUD operations function correctly with proper validation and data integrity.",
+    "AI property recommendations return relevant and explainable matches, with graceful fallback.",
+    "Page load times meet the target of under 2 seconds for standard operations.",
+    "System reliability achieves 99.9% uptime measured by monitoring and error handling effectiveness.",
+    "Security validations enforce CSRF tokens, secure sessions, and XSS protections.",
+    "Code coverage exceeds 90% with automated testing executed in CI pipelines.",
+    "Database transactions handle rollback correctly in error scenarios without data corruption.",
+    "Responsive design verified across modern desktop and mobile browsers.",
+    "Environment variable management logs and secures sensitive information appropriately.",
+    "Notification and background job systems execute and display messages reliably."
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "Python",
+      "Flask",
+      "SQLAlchemy",
+      "PostgreSQL",
+      "JavaScript",
+      "Bootstrap",
+      "HTML",
+      "CSS",
+      "WTForms",
+      "Jinja2"
+    ],
+    "features": [
+      {
+        "name": "Property Management System",
+        "description": "Complete CRUD operations for real estate properties with advanced filtering, search, and hybrid viewing (modal + dedicated page)",
+        "files": [
+          "views/properties.py",
+          "templates/properties.html",
+          "templates/property_detail.html",
+          "static/js/main.js"
+        ]
+      },
+      {
+        "name": "Customer Relationship Management",
+        "description": "Customer database with preferences, budget tracking, and deal history",
+        "files": [
+          "views/customers.py",
+          "templates/customers.html",
+          "forms.py",
+          "database_service.py"
+        ]
+      },
+      {
+        "name": "Agent Management",
+        "description": "Real estate agent profiles, specializations, and performance tracking",
+        "files": [
+          "views/agents.py",
+          "templates/agents.html",
+          "sqlalchemy_models.py"
+        ]
+      },
+      {
+        "name": "Deal Pipeline Management",
+        "description": "Sales pipeline tracking with deal stages, offers, and status management",
+        "files": [
+          "views/deals.py",
+          "templates/deals.html",
+          "templates/modals/deal_view_modal.html"
+        ]
+      },
+      {
+        "name": "Task Management System",
+        "description": "Task assignment, tracking, and completion for agents with priorities and due dates",
+        "files": [
+          "views/tasks.py",
+          "templates/tasks.html",
+          "templates/modals/task_view_modal.html",
+          "templates/modals/task_edit_modal.html"
+        ]
+      },
+      {
+        "name": "AI-Powered Property Recommendations",
+        "description": "Machine learning recommendations using Gemini API for customer-property matching",
+        "files": [
+          "views/main.py",
+          "gemini_service.py",
+          "templates/recommendations.html"
+        ]
+      },
+      {
+        "name": "Dashboard and Analytics",
+        "description": "Real-time dashboard with statistics, recent activities, and market analysis",
+        "files": [
+          "views/main.py",
+          "templates/dashboard.html",
+          "database_service.py"
+        ]
+      },
+      {
+        "name": "Hybrid Property Viewing System",
+        "description": "Dual viewing approach with quick modal views and dedicated detail pages for enhanced UX",
+        "files": [
+          "static/js/main.js",
+          "templates/property_detail.html",
+          "views/properties.py"
+        ]
+      },
+      {
+        "name": "Advanced Search and Filtering",
+        "description": "Multi-criteria property search with price ranges, location, property type, and agent filters",
+        "files": [
+          "templates/properties.html",
+          "views/properties.py",
+          "sqlalchemy_models.py"
+        ]
+      },
+      {
+        "name": "Error Handling and Logging",
+        "description": "Comprehensive error handling with JSON/HTML response support and database rollback",
+        "files": [
+          "error_handlers.py",
+          "views/properties.py",
+          "views/customers.py",
+          "views/deals.py"
+        ]
+      },
+      {
+        "name": "Modal-Based CRUD Interface",
+        "description": "Dynamic modal loading for create, read, update, delete operations across all entities",
+        "files": [
+          "static/js/main.js",
+          "templates/modals/property_view_modal.html",
+          "templates/modals/property_edit_modal.html"
+        ]
+      },
+      {
+        "name": "Property Sharing and Social Integration",
+        "description": "Property URL sharing, social media integration, and clipboard functionality",
+        "files": [
+          "static/js/main.js",
+          "views/properties.py",
+          "templates/property_detail.html"
+        ]
+      },
+      {
+        "name": "Report Generation and Export",
+        "description": "PDF, Excel, and JSON export capabilities for properties, deals, and recommendations",
+        "files": [
+          "views/main.py",
+          "views/deals.py",
+          "database_service.py"
+        ]
+      },
+      {
+        "name": "Environment Configuration Management",
+        "description": "Dynamic environment variable management with admin interface",
+        "files": [
+          "views/admin_environment.py",
+          "environment_loader.py",
+          "environment_service.py"
+        ]
+      },
+      {
+        "name": "Notification System",
+        "description": "In-app notification system for user alerts and status messages",
+        "files": [
+          "views/notifications.py",
+          "notification_service.py",
+          "static/js/main.js"
+        ]
+      },
+      {
+        "name": "Background Job Scheduling",
+        "description": "Automated background tasks and data matching with APScheduler",
+        "files": [
+          "scheduler_service.py",
+          "background_matcher.py",
+          "event_handlers.py"
+        ]
+      },
+      {
+        "name": "Database Transaction Management",
+        "description": "Safe database operations with rollback support and connection pooling",
+        "files": [
+          "database_transaction_manager.py",
+          "database.py",
+          "database_service.py"
+        ]
+      },
+      {
+        "name": "Form Validation and CSRF Protection",
+        "description": "WTForms-based validation with CSRF protection and error handling",
+        "files": [
+          "forms.py",
+          "error_handlers.py",
+          "app.py"
+        ]
+      },
+      {
+        "name": "Responsive UI with Bootstrap",
+        "description": "Mobile-first responsive design with Bootstrap 5 and custom CSS",
+        "files": [
+          "templates/base.html",
+          "templates/properties.html",
+          "templates/property_detail.html",
+          "static/css/"
+        ]
+      },
+      {
+        "name": "Security Headers and Protection",
+        "description": "Security headers implementation and XSS protection",
+        "files": [
+          "app.py",
+          "error_handlers.py"
+        ]
+      }
+    ]
+  }
+}

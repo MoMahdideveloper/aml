@@ -1,0 +1,108 @@
+{
+  "project": "gptvli",
+  "generated_at": "2026-02-18T21:05:46Z",
+  "stages": [
+    {
+      "id": "P1",
+      "objective": "Critical-path triage",
+      "context_ids": [
+        "CTX-003",
+        "CTX-005",
+        "CTX-006",
+        "CTX-007",
+        "CTX-012"
+      ],
+      "expected_output": "ranked_fix_plan",
+      "question": "Given these failures, what is the minimum dependency-ordered fix sequence to restore all critical CRUD and modal flows without regressions?",
+      "required_format": [
+        "Priority table with top 5 blockers",
+        "Dependency ordering and minimal patch strategy",
+        "Concrete affected files per blocker",
+        "At least one regression test per blocker"
+      ]
+    },
+    {
+      "id": "P2",
+      "objective": "Frontend failure root-cause",
+      "context_ids": [
+        "CTX-005",
+        "CTX-006",
+        "CTX-007",
+        "CTX-012"
+      ],
+      "expected_output": "root_cause_map_and_fix_sequence",
+      "question": "What single root cause could explain CRUD/modal regressions (misrouted modals, symbol collisions, blank quick/full details, export toast failures), and what is the exact code-level remediation sequence?",
+      "required_format": [
+        "Root-cause map with evidence",
+        "Step-by-step remediation sequence",
+        "Patch-order rationale",
+        "Verification checklist"
+      ]
+    },
+    {
+      "id": "P3",
+      "objective": "Security and auth hardening",
+      "context_ids": [
+        "CTX-001",
+        "CTX-002",
+        "CTX-003",
+        "CTX-007",
+        "CTX-012"
+      ],
+      "expected_output": "threat_fix_matrix",
+      "question": "How should auth middleware and CSRF/session settings be revised so UI flows remain usable while API/admin paths stay secure?",
+      "required_format": [
+        "Threat -> fix matrix",
+        "Exact route/middleware implications",
+        "Cookie/session hardening recommendations",
+        "Regression tests for CSRF/auth/session behavior"
+      ]
+    },
+    {
+      "id": "P4",
+      "objective": "AI recommendation reliability",
+      "context_ids": [
+        "CTX-003",
+        "CTX-008",
+        "CTX-009",
+        "CTX-010",
+        "CTX-011",
+        "CTX-012"
+      ],
+      "expected_output": "fallback_decision_tree",
+      "question": "What fallback contract should recommendations follow when Gemini is unavailable to avoid redirects/401 loops and still deliver useful output?",
+      "required_format": [
+        "Decision tree for success/failure paths",
+        "Deterministic fallback ranking behavior",
+        "User-facing error-state UX contract",
+        "Acceptance criteria and failure-mode tests"
+      ]
+    },
+    {
+      "id": "P5",
+      "objective": "Execution synthesis",
+      "context_ids": [
+        "CTX-001",
+        "CTX-002",
+        "CTX-003",
+        "CTX-004",
+        "CTX-005",
+        "CTX-006",
+        "CTX-007",
+        "CTX-008",
+        "CTX-009",
+        "CTX-010",
+        "CTX-011",
+        "CTX-012"
+      ],
+      "expected_output": "three_wave_execution_backlog",
+      "question": "Propose a 3-wave implementation plan with explicit files, tests, and rollback checks for each wave.",
+      "required_format": [
+        "Wave 1/2/3 with dependency order",
+        "File-level tasks and risk tags",
+        "Rollback checks",
+        "Unit/integration/e2e test plan"
+      ]
+    }
+  ]
+}

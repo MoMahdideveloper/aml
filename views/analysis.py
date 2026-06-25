@@ -1,0 +1,436 @@
+from flask import Blueprint, jsonify, request, send_file
+from datetime import datetime, timezone
+import json
+import os
+import uuid
+from utils.execution_tracer import log_execution
+
+bp = Blueprint("analysis", __name__)
+
+# In-memory storage for demonstration
+# In a real application, this would be replaced with database models
+_reports = []
+_suggestions = []
+
+# Helper functions to generate mock data
+@log_execution
+def generate_mock_report(project_name, analysis_type, target_areas=None):
+    """Generate a mock analysis report"""
+    report_id = len(_reports) + 1
+
+    # Mock dimensions
+    dimensions = [
+        {
+            "dimension_type": "code_quality",
+            "score": 78.5,
+            "max_possible": 100.0,
+            "improvement_potential": 21.5,
+            "critical_issues": 2,
+            "details": {
+                "complexity": "Moderate",
+                "duplication": "Low",
+                "style_violations": 15
+            }
+        },
+        {
+            "dimension_type": "architecture",
+            "score": 82.0,
+            "max_possible": 100.0,
+            "improvement_potential": 18.0,
+            "critical_issues": 1,
+            "details": {
+                "coupling": "Low",
+                "cohesion": "High",
+                "layer_violations": 0
+            }
+        },
+        {
+            "dimension_type": "feature_completeness",
+            "score": 65.0,
+            "max_possible": 100.0,
+            "improvement_potential": 35.0,
+            "critical_issues": 3,
+            "details": {
+                "missing_features": ["Advanced search", "Bulk operations", "API versioning"],
+                "coverage": "65%"
+            }
+        },
+        {
+            "dimension_type": "technical_debt",
+            "score": 70.0,
+            "max_possible": 100.0,
+            "improvement_potential": 30.0,
+            "critical_issues": 4,
+            "details": {
+                "tech_debt_ratio": "0.3",
+                "maintenance_backlog": "45 hours"
+            }
+        },
+        {
+            "dimension_type": "user_experience",
+            "score": 88.0,
+            "max_possible": 100.0,
+            "improvement_potential": 12.0,
+            "critical_issues": 0,
+            "details": {
+                "accessibility_score": "88%",
+                "mobile_friendly": True
+            }
+        },
+        {
+            "dimension_type": "testing_coverage",
+            "score": 60.0,
+            "max_possible": 100.0,
+            "improvement_potential": 40.0,
+            "critical_issues": 2,
+            "details": {
+                "unit_test_coverage": "60%",
+                "integration_test_coverage": "45%",
+                "e2e_test_coverage": "30%"
+            }
+        }
+    ]
+
+    # If targeted analysis, filter dimensions
+    if target_areas:
+        dimensions = [d for d in dimensions if d["dimension_type"] in target_areas]
+
+    # Calculate overall score as average of dimension scores
+    total_score = sum(d["score"] for d in dimensions) / len(dimensions) if dimensions else 0
+
+    # Generate mock suggestions based on dimensions
+    suggestion_id_counter = len(_suggestions) + 1
+    suggestions = []
+
+    for dim in dimensions:
+        if dim["critical_issues"] > 0 or dim["improvement_potential"] > 20:
+            # Generate 1-3 suggestions per dimension with issues
+            num_suggestions = min(dim["critical_issues"] + 1, 3)
+            for i in range(num_suggestions):
+                suggestion_id = suggestion_id_counter
+                suggestion_id_counter += 1
+
+                # Determine category based on dimension
+                category_map = {
+                    "code_quality": "critical_fixes",
+                    "architecture": "architecture",
+                    "feature_completeness": "feature_enhancements",
+                    "technical_debt": "technical_debt",
+                    "user_experience": "critical_fixes",
+                    "testing_coverage": "testing_quality"
+                }
+                category = category_map.get(dim["dimension_type"], "technical_debt")
+
+                # Generate suggestion title and description
+                titles = {
+                    "code_quality": [
+                        "Refactor complex functions to reduce cyclomatic complexity",
+                        "Extract duplicate code into reusable functions",
+                        "Implement consistent code formatting with prettier/eslint"
+                    ],
+                    "architecture": [
+                        "Introduce service layer to improve separation of concerns",
+                        "Apply dependency injection pattern for better testability",
+                        "Consider modularizing the monolith into microservices"
+                    ],
+                    "feature_completeness": [
+                        "Implement advanced search with filtering capabilities",
+                        "Add bulk operations for efficient data management",
+                        "Create API versioning strategy for backward compatibility"
+                    ],
+                    "technical_debt": [
+                        "Address high-priority technical debt items in backlog",
+                        "Implement automated code review in CI pipeline",
+                        "Schedule regular refactoring sprints"
+                    ],
+                    "user_experience": [
+                        "Improve accessibility compliance to WCAG 2.1 AA",
+                        "Optimize mobile touch targets and navigation",
+                        "Implement consistent error handling and user feedback"
+                    ],
+                    "testing_coverage": [
+                        "Increase unit test coverage to 80%+",
+                        "Add integration tests for critical user flows",
+                        "Implement end-to-end testing for core functionalities"
+                    ]
+                }
+
+                descs = {
+                    "code_quality": [
+                        "Identify and refactor functions with high cyclomatic complexity (>10) to improve maintainability.",
+                        "Locate duplicate code blocks and extract them into shared utility functions or classes.",
+                        "Establish and enforce code formatting standards using automated tools."
+                    ],
+                    "architecture": [
+                        "Introduce a service layer between controllers and models to encapsulate business logic.",
+                        "Apply dependency injection to reduce coupling and improve testability of components.",
+                        "Evaluate breaking down the application into smaller, independently deployable services."
+                    ],
+                    "feature_completeness": [
+                        "Implement advanced search functionality with multiple filter options and saved searches.",
+                        "Add bulk edit/delete operations to improve efficiency when managing multiple records.",
+                        "Create a versioning strategy for APIs to allow evolution without breaking existing clients."
+                    ],
+                    "technical_debt": [
+                        "Prioritize and address technical debt items with highest impact on development velocity.",
+                        "Integrate automated code quality checks (linting, security scans) into the CI/CD pipeline.",
+                        "Allocate dedicated time in each sprint for refactoring and debt reduction."
+                    ],
+                    "user_experience": [
+                        "Conduct accessibility audit and implement improvements to meet WCAG 2.1 AA standards.",
+                        "Optimize touch targets and navigation patterns for better mobile usability.",
+                        "Implement consistent error boundaries and user feedback mechanisms across the application."
+                    ],
+                    "testing_coverage": [
+                        "Increase unit test coverage by adding tests for uncovered functions and edge cases.",
+                        "Create integration tests that validate critical user flows and API endpoints.",
+                        "Implement end-to-end tests for core functionalities using tools like Cypress or Playwright."
+                    ]
+                }
+
+                title_list = titles.get(dim["dimension_type"], ["Improve code quality and maintainability"])
+                desc_list = descs.get(dim["dimension_type"], ["Address identified issues to improve overall quality."])
+
+                title = title_list[i % len(title_list)]
+                description = desc_list[i % len(desc_list)]
+
+                suggestion = {
+                    "id": suggestion_id,
+                    "title": title,
+                    "description": description,
+                    "category": category,
+                    "priority_score": min(95, 70 + dim["improvement_potential"] * 0.5),
+                    "business_impact": min(5, 1 + dim["improvement_potential"] // 10),
+                    "technical_impact": min(5, 1 + dim["improvement_potential"] // 15),
+                    "risk_level": max(1, 5 - dim["score"] // 20),
+                    "implementation_effort": min(5, 1 + dim["improvement_potential"] // 25),
+                    "estimated_hours": max(2, int(dim["improvement_potential"] * 0.5)),
+                    "affected_files": ["src/main.py", "utils/helpers.py", "models/base.py"][: (dim["critical_issues"] % 3) + 1],
+                    "status": "pending",
+                    "assigned_to": None,
+                    "tags": ["automated-suggestion"],
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+
+                suggestions.append(suggestion)
+                _suggestions.append(suggestion)
+
+    # Create report
+    report = {
+        "id": report_id,
+        "project_name": project_name,
+        "analysis_date": datetime.now(timezone.utc).isoformat(),
+        "version": "1.0.0",
+        "status": "completed",
+        "total_score": round(total_score, 1),
+        "execution_time": 25,  # mock execution time in seconds
+        "suggestion_count": len(suggestions),
+        "codebase_size": 1250 + len(project_name) * 10,  # mock size
+        "dimensions": dimensions,
+        "suggestions": suggestions,
+        "metrics": [
+            {
+                "metric_name": "Lines of Code",
+                "metric_value": 1250 + len(project_name) * 10,
+                "previous_value": 1200 + len(project_name) * 10,
+                "change_percentage": 4.2,
+                "trend": "increasing",
+                "measurement_unit": "lines"
+            },
+            {
+                "metric_name": "File Count",
+                "metric_value": 42,
+                "previous_value": 40,
+                "change_percentage": 5.0,
+                "trend": "increasing",
+                "measurement_unit": "files"
+            }
+        ]
+    }
+
+    _reports.append(report)
+    return report
+
+@bp.route('/trigger', methods=['POST'])
+@log_execution
+def trigger_analysis():
+    """Start a new project analysis"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid request parameters"}), 400
+
+    project_name = data.get('project_name')
+    analysis_type = data.get('analysis_type')
+    target_areas = data.get('target_areas', [])
+
+    if not project_name or not analysis_type:
+        return jsonify({"error": "project_name and analysis_type are required"}), 400
+
+    if analysis_type not in ['full', 'incremental', 'targeted']:
+        return jsonify({"error": "Invalid analysis type specified"}), 400
+
+    if analysis_type == 'targeted' and not target_areas:
+        return jsonify({"error": "target_areas is required for targeted analysis"}), 400
+
+    # In a real implementation, this would start an async task
+    # For demonstration, we'll generate the report immediately
+    report = generate_mock_report(project_name, analysis_type, target_areas if analysis_type == 'targeted' else None)
+
+    return jsonify({
+        "analysis_id": report["id"],
+        "status": "completed",
+        "estimated_duration": report["execution_time"]
+    }), 202
+
+@bp.route('/reports', methods=['GET'])
+@log_execution
+def list_reports():
+    """List all analysis reports"""
+    # Mock pagination
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 20, type=int)
+    status_filter = request.args.get('status')
+
+    reports = _reports
+    if status_filter:
+        reports = [r for r in reports if r['status'] == status_filter]
+
+    # Sort by date descending
+    reports = sorted(reports, key=lambda x: x['analysis_date'], reverse=True)
+
+    # Paginate
+    start = (page - 1) * limit
+    end = start + limit
+    paginated_reports = reports[start:end]
+
+    return jsonify({
+        "reports": paginated_reports,
+        "total": len(reports),
+        "page": page,
+        "pages": (len(reports) + limit - 1) // limit
+    })
+
+@bp.route('/reports/<int:report_id>', methods=['GET'])
+@log_execution
+def get_report(report_id):
+    """Get detailed analysis report"""
+    report = next((r for r in _reports if r['id'] == report_id), None)
+    if not report:
+        return jsonify({"error": "Report not found"}), 404
+    return jsonify(report)
+
+@bp.route('/reports/<int:report_id>/status', methods=['GET'])
+@log_execution
+def get_report_status(report_id):
+    """Get analysis status"""
+    report = next((r for r in _reports if r['id'] == report_id), None)
+    if not report:
+        return jsonify({"error": "Report not found"}), 404
+
+    return jsonify({
+        "status": report["status"],
+        "progress": 100 if report["status"] == "completed" else 0,
+        "current_task": "Analysis complete" if report["status"] == "completed" else "Queued"
+    })
+
+@bp.route('/suggestions', methods=['GET'])
+@log_execution
+def list_suggestions():
+    """List suggestions with filtering"""
+    analysis_id = request.args.get('analysis_id', type=int)
+    category = request.args.get('category')
+    status = request.args.get('status')
+    min_priority = request.args.get('min_priority', type=float)
+    sort_by = request.args.get('sort_by', 'priority_score')
+    sort_order = request.args.get('sort_order', 'desc')
+
+    suggestions = _suggestions
+
+    # Filter by analysis_id
+    if analysis_id:
+        # Get suggestions from the specific report
+        report = next((r for r in _reports if r['id'] == analysis_id), None)
+        if report:
+            suggestion_ids = [s['id'] for s in report['suggestions']]
+            suggestions = [s for s in suggestions if s['id'] in suggestion_ids]
+        else:
+            suggestions = []
+
+    # Filter by category
+    if category:
+        suggestions = [s for s in suggestions if s['category'] == category]
+
+    # Filter by status
+    if status:
+        suggestions = [s for s in suggestions if s['status'] == status]
+
+    # Filter by min_priority
+    if min_priority is not None:
+        suggestions = [s for s in suggestions if s['priority_score'] >= min_priority]
+
+    # Sort
+    reverse = (sort_order == 'desc')
+    suggestions = sorted(suggestions, key=lambda x: x.get(sort_by, 0), reverse=reverse)
+
+    return jsonify({
+        "suggestions": suggestions
+    })
+
+@bp.route('/suggestions/<int:suggestion_id>', methods=['PUT'])
+@log_execution
+def update_suggestion(suggestion_id):
+    """Update suggestion status"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid request parameters"}), 400
+
+    suggestion = next((s for s in _suggestions if s['id'] == suggestion_id), None)
+    if not suggestion:
+        return jsonify({"error": "Suggestion not found"}), 404
+
+    # Update fields
+    if 'status' in data:
+        suggestion['status'] = data['status']
+    if 'assigned_to' in data:
+        suggestion['assigned_to'] = data['assigned_to']
+    if 'notes' in data:
+        suggestion['notes'] = data['notes']
+
+    suggestion['updated_at'] = datetime.now(timezone.utc).isoformat()
+
+    return jsonify(suggestion)
+
+@bp.route('/export/<int:report_id>', methods=['GET'])
+@log_execution
+def export_report(report_id):
+    """Export analysis report"""
+    report = next((r for r in _reports if r['id'] == report_id), None)
+    if not report:
+        return jsonify({"error": "Report not found"}), 404
+
+    format = request.args.get('format', 'pdf').lower()
+    include_suggestions = request.args.get('include_suggestions', 'true').lower() == 'true'
+
+    # For demonstration, we'll just return JSON regardless of format
+    # In a real implementation, we would generate PDF/Excel/etc.
+    export_data = report.copy()
+    if not include_suggestions:
+        export_data['suggestions'] = []
+
+    # Convert to JSON string
+    json_str = json.dumps(export_data, indent=2, default=str)
+
+    # Create a temporary file
+    import tempfile
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.json')
+    temp_file.write(json_str.encode('utf-8'))
+    temp_file.close()
+
+    filename = f"analysis_report_{report_id}.json"
+
+    return send_file(
+        temp_file.name,
+        as_attachment=True,
+        download_name=filename,
+        mimetype='application/json'
+    )

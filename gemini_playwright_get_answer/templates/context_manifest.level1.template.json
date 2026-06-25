@@ -1,0 +1,23 @@
+{
+  "project": "your_project_name",
+  "generated_at": "YYYY-MM-DDTHH:MM:SSZ",
+  "focus": "critical_path",
+  "chunks": [
+    {
+      "id": "CTX-001",
+      "file": "path/to/file.ext",
+      "start_line": 1,
+      "end_line": 120,
+      "reason": "Why this excerpt is relevant for critical-path triage.",
+      "excerpt": "Paste a curated excerpt here."
+    }
+  ],
+  "known_failures": [
+    {
+      "source": "tests_or_report_source.json",
+      "test_id": "TC001",
+      "severity": "High",
+      "summary": "Short failure description."
+    }
+  ]
+}

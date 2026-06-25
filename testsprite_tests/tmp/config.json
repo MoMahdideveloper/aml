@@ -1,0 +1,16 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:5000",
+  "executionArgs": {
+    "projectName": "gptvli",
+    "projectPath": "C:\\Users\\Lifecycle\\Desktop\\New folder (8)\\dekstop projects\\gptvli",
+    "testIds": [],
+    "additionalInstruction": "Focus on testing the hybrid property view system with both Quick View modal and Full Details page functionality. Test button interactions, modal behavior, property detail page navigation, and responsive design. Verify that all new features like sharing, favorites, and scheduling work correctly.",
+    "envs": {
+      "API_KEY": "sk-user-VyFisPB3neAO_cTbfJavegCox3SW6PZMuVTo1Tk10RybaMGz1lS3XGubb6X0GiS8HKru97nTvHBZ0aYPkBaemTVP0XMZZeaH0H46bI6A4iYaZt6bUhdB-AizdeDbB9FMDrc"
+    }
+  },
+  "proxy": "http://5897badc-37de-474c-b4c2-d87f8ff514d6:cB8WvJCKDku0Of3IksmoJ4doY7Tjdi6c@tun.testsprite.com:8080"
+}

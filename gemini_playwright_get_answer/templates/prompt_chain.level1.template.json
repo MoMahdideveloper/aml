@@ -1,0 +1,21 @@
+{
+  "stages": [
+    {
+      "id": "P1",
+      "objective": "Critical-path triage",
+      "context_ids": [
+        "CTX-001",
+        "CTX-002",
+        "CTX-003"
+      ],
+      "expected_output": "ranked_fix_plan",
+      "question": "Given these failures, what is the minimum dependency-ordered fix sequence to restore all critical flows without regressions?",
+      "required_format": [
+        "Priority table with top blockers",
+        "Dependency ordering and minimal patch strategy",
+        "Concrete affected files per blocker",
+        "At least one regression test per blocker"
+      ]
+    }
+  ]
+}

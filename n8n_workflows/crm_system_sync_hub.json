@@ -1,0 +1,125 @@
+{
+  "name": "CRM-System Sync Hub",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/crm-sync",
+        "responseMode": "onReceived",
+        "responseData": {
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": "{\"status\": \"sync initiated\"}"
+        }
+      },
+      "name": "Webhook: CRM Sync Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "id": "webhook1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Prepare synchronization configuration\nconst body = $json[\"body\"] || {};\n\nreturn [{ json: {\n  syncDirection: body.syncDirection || 'bidirectional', // bidirectional, export, import\n  entityType: body.entityType || 'property', // property, customer, deal, agent\n  syncFilters: body.syncFilters || {},\n  fieldMappings: body.fieldMappings || {},\n  externalSystem: body.externalSystem || 'mls', // mls, accounting, marketing, ERP, etc.\n  syncMode: body.syncMode || 'incremental', // full, incremental\n  lastSyncToken: body.lastSyncToken || null,\n  metadata: body.metadata || {}\n} }];"
+      },
+      "name": "Prepare Sync Config",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        500,
+        100
+      ],
+      "id": "function1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Perform data synchronization with external system\nconst { syncDirection, entityType, syncFilters, fieldMappings, externalSystem, syncMode, lastSyncToken, metadata } = $json;\n\n// This would contain actual API calls to external systems\n// For demonstration, we'll simulate the sync process\n\nconst results = {\n  recordsProcessed: 0,\n  recordsCreated: 0,\n  recordsUpdated: 0,\n  recordsFailed: 0,\n  recordsSkipped: 0,\n  errors: [],\n  warnings: []\n};\n\n// Simulate processing based on entity type\nlet recordCount = 0;\n\nswitch (entityType) {\n  case 'property':\n    recordCount = Math.floor(Math.random() * 15) + 5; // 5-20 properties\n    break;\n  case 'customer':\n    recordCount = Math.floor(Math.random() * 10) + 3; // 3-13 customers\n    break;\n  case 'deal':\n    recordCount = Math.floor(Math.random() * 8) + 2; // 2-10 deals\n    break;\n  case 'agent':\n    recordCount = Math.floor(Math.random() * 5) + 1; // 1-6 agents\n    break;\n  default:\n    recordCount = Math.floor(Math.random() * 10) + 2;\n}\n\nresults.recordsProcessed = recordCount;\n\n// Simulate distribution based on sync direction and mode\nif (syncDirection === 'export' || syncDirection === 'bidirectional') {\n  // Exporting FROM CRM TO external system\n  results.recordsCreated = Math.floor(recordCount * 0.2);\n  results.recordsUpdated = Math.floor(recordCount * 0.6);\n  results.recordsFailed = Math.floor(recordCount * 0.1);\n  results.recordsSkipped = recordCount - (results.recordsCreated + results.recordsUpdated + results.recordsFailed);\n}\n\nif (syncDirection === 'import' || syncDirection === 'bidirectional') {\n  // Importing FROM external system TO CRM\n  results.recordsCreated = Math.floor(recordCount * 0.3);\n  results.recordsUpdated = Math.floor(recordCount * 0.5);\n  results.recordsFailed = Math.floor(recordCount * 0.1);\n  results.recordsSkipped = recordCount - (results.recordsCreated + results.recordsUpdated + results.recordsFailed);\n}\n\n// Generate some sample errors/warnings for realism\nif (results.recordsFailed > 0) {\n  for (let i = 0; i < Math.min(results.recordsFailed, 3); i++) {\n    results.errors.push({\n      entityId: `${entityType}_${Date.now()}_${i}`,\n      error: `Validation failed for ${entityType} field: ${['price', 'email', 'phone'][i] || 'unknown'}`,\n      timestamp: new Date().toISOString(),\n      severity: 'error'\n    });\n  }\n}\n\nif (Math.random() > 0.7) { // 30% chance of warning\n  results.warnings.push({\n    type: 'data_quality',\n    message: `Some ${entityType} records had missing optional fields`,\n    timestamp: new Date().toISOString(),\n    severity: 'warning'\n  });\n}\n\n// Determine overall status\nconst status = results.recordsFailed === 0 ? 'completed' : 'completed_with_errors';\n\nreturn [{ json: {\n  status,\n  syncDirection,\n  entityType,\n  externalSystem,\n  syncMode,\n  lastSyncTokenUsed: lastSyncToken,\n  results,\n  metadata: {\n    ...metadata,\n    syncedAt: new Date().toISOString(),\n    syncFiltersApplied: Object.keys(syncFilters).length > 0 ? syncFilters : {},\n    fieldMappingsApplied: Object.keys(fieldMappings).length > 0 ? fieldMappings : {},\n    encoding: 'UTF-8'\n  }\n} }];"
+      },
+      "name": "Execute CRM Sync",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        750,
+        100
+      ],
+      "id": "function2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "INSERT INTO crm_sync_logs (sync_direction, entity_type, external_system, sync_mode, last_sync_token, records_processed, records_created, records_updated, records_failed, records_skipped, errors, warnings, status, metadata, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW())",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {
+                "parameters": {
+                  "value": "={{[\\n    $json[\\\"syncDirection\\\"],\\n    $json[\\\"entityType\\\"],\\n    $json[\\\"externalSystem\\\"],\\n    $json[\\\"syncMode\\\"],\\n    $json[\\\"lastSyncTokenUsed\\\"] || null,\\n    $json[\\\"results\\\"].recordsProcessed || 0,\\n    $json[\\\"results\\\"].recordsCreated || 0,\\n    $json[\\\"results\\\"].recordsUpdated || 0,\\n    $json[\\\"results\\\"].recordsFailed || 0,\\n    $json[\\\"results\\\"].recordsSkipped || 0,\\n    $json.containsKey('results') && $json[\\\"results\\\"].errors ? JSON.stringify($json[\\\"results\\\"].errors) : '[]',\\n    $json.containsKey('results') && $json[\\\"results\\\"].warnings ? JSON.stringify($json[\\\"results\\\"].warnings) : '[]',\\n    $json[\\\"status\\\"],\\n    '{{JSON.stringify($json[\\\"metadata\\\"])}}'\\n  ]}}"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "name": "Log Sync Activity",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        50
+      ],
+      "id": "postgres1"
+    }
+  ],
+  "connections": {
+    "Webhook: CRM Sync Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare Sync Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Sync Config": {
+      "main": [
+        [
+          {
+            "node": "Execute CRM Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute CRM Sync": {
+      "main": [
+        [
+          {
+            "node": "Log Sync Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "crm_system_sync_hub"
+}

@@ -1,0 +1,177 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "EstateFlow" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - heading "EstateFlow" [level=2] [ref=e9]
+      - generic [ref=e11]:
+        - generic [ref=e13]: search
+        - textbox "search" [ref=e14]:
+          - /placeholder: Search...
+    - generic [ref=e16]:
+      - button "notifications" [ref=e17] [cursor=pointer]:
+        - generic [ref=e18]: notifications
+      - button "settings" [ref=e19] [cursor=pointer]:
+        - generic [ref=e20]: settings
+  - generic [ref=e22]:
+    - complementary [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - heading "Real Estate CRM" [level=1] [ref=e26]
+          - paragraph [ref=e27]: Workflow Management
+        - navigation "Main navigation" [ref=e28]:
+          - link "grid_view Overview" [ref=e29] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e30]: grid_view
+            - paragraph [ref=e31]: Overview
+          - link "real_estate_agent Properties" [ref=e32] [cursor=pointer]:
+            - /url: /properties
+            - generic [ref=e33]: real_estate_agent
+            - paragraph [ref=e34]: Properties
+          - link "person_pin Agents" [ref=e35] [cursor=pointer]:
+            - /url: /agents
+            - generic [ref=e36]: person_pin
+            - paragraph [ref=e37]: Agents
+          - link "groups Customers" [ref=e38] [cursor=pointer]:
+            - /url: /customers
+            - generic [ref=e39]: groups
+            - paragraph [ref=e40]: Customers
+          - link "monetization_on Deals" [ref=e41] [cursor=pointer]:
+            - /url: /deals
+            - generic [ref=e42]: monetization_on
+            - paragraph [ref=e43]: Deals
+          - link "task_alt Tasks" [ref=e44] [cursor=pointer]:
+            - /url: /tasks
+            - generic [ref=e45]: task_alt
+            - paragraph [ref=e46]: Tasks
+          - link "auto_awesome Recommendations" [ref=e47] [cursor=pointer]:
+            - /url: /recommendations
+            - generic [ref=e48]: auto_awesome
+            - paragraph [ref=e49]: Recommendations
+          - link "bar_chart Reports" [ref=e50] [cursor=pointer]:
+            - /url: /market-analysis
+            - generic [ref=e51]: bar_chart
+            - paragraph [ref=e52]: Reports
+          - link "settings Settings" [ref=e53] [cursor=pointer]:
+            - /url: /settings
+            - generic [ref=e54]: settings
+            - paragraph [ref=e55]: Settings
+          - link "smart_toy Automations" [ref=e56] [cursor=pointer]:
+            - /url: /admin/automations
+            - generic [ref=e57]: smart_toy
+            - paragraph [ref=e58]: Automations
+        - generic [ref=e59]:
+          - generic [ref=e60]:
+            - paragraph [ref=e61]: Storage
+            - paragraph [ref=e64]: 15.2 GB of 20 GB used
+          - link "logout Logout" [ref=e65] [cursor=pointer]:
+            - /url: /admin/logout
+            - generic [ref=e66]: logout
+            - paragraph [ref=e67]: Logout
+    - main [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - link "Properties" [ref=e71] [cursor=pointer]:
+            - /url: /properties
+          - generic [ref=e72]: /
+          - generic [ref=e73]: MCP_E2E_1770597248 Property A
+        - generic [ref=e74]:
+          - generic [ref=e75]:
+            - generic [ref=e79]:
+              - heading "MCP_E2E_1770597248 Property A" [level=1] [ref=e80]
+              - paragraph [ref=e81]: MCP_E2E_1770597248 100 Test Ave
+              - paragraph [ref=e82]:
+                - strong [ref=e83]: "Status:"
+                - text: Active
+              - paragraph [ref=e84]:
+                - strong [ref=e85]: "Type:"
+                - text: House
+              - paragraph [ref=e86]:
+                - strong [ref=e87]: "Agent:"
+                - text: Unassigned
+              - paragraph [ref=e88]: $555,000
+              - link "compare_arrows Compare" [ref=e89] [cursor=pointer]:
+                - /url: /properties/compare?ids=4
+                - generic [ref=e90]: compare_arrows
+                - text: Compare
+            - generic [ref=e91]:
+              - heading "Structured Property Details" [level=2] [ref=e92]
+              - generic [ref=e93]:
+                - generic [ref=e94]:
+                  - text: Title
+                  - textbox [ref=e95]: MCP_E2E_1770597248 Property A
+                - generic [ref=e96]:
+                  - text: Address
+                  - textbox [ref=e97]: MCP_E2E_1770597248 100 Test Ave
+                - generic [ref=e98]:
+                  - text: Property Type
+                  - textbox [ref=e99]: house
+                - generic [ref=e100]:
+                  - text: Neighborhood
+                  - textbox [ref=e101]: MCP_E2E_1770597248 Neighborhood
+                - generic [ref=e102]:
+                  - text: Bedrooms
+                  - spinbutton [ref=e103]: "3"
+                - generic [ref=e104]:
+                  - text: Bathrooms
+                  - spinbutton [ref=e105]: "2"
+                - generic [ref=e106]:
+                  - text: Square Feet
+                  - spinbutton [ref=e107]: "0"
+                - generic [ref=e108]:
+                  - text: Year Built
+                  - spinbutton [ref=e109]
+                - generic [ref=e110]:
+                  - text: Parking Spaces
+                  - spinbutton [ref=e111]: "0"
+                - generic [ref=e112]:
+                  - text: Floors
+                  - spinbutton [ref=e113]: "2"
+                - generic [ref=e114]:
+                  - text: Units
+                  - spinbutton [ref=e115]: "1"
+                - generic [ref=e116]:
+                  - text: Condition
+                  - textbox [ref=e117]: excellent
+                - generic [ref=e118]:
+                  - text: Category
+                  - textbox [ref=e119]: residential
+                - generic [ref=e120]:
+                  - text: Sale Price
+                  - spinbutton [ref=e121]: "555000.0"
+                - generic [ref=e122]:
+                  - text: Features
+                  - textbox [ref=e123]
+                - generic [ref=e124]:
+                  - text: Description
+                  - textbox [ref=e125]: MCP_E2E_1770597248 Description
+                - button "save Save Changes" [ref=e127] [cursor=pointer]:
+                  - generic [ref=e128]: save
+                  - text: Save Changes
+            - generic [ref=e129]:
+              - heading "Related Properties" [level=2] [ref=e130]
+              - generic [ref=e131]:
+                - link "Modern Downtown Condo 123 Main St, Downtown" [ref=e132] [cursor=pointer]:
+                  - /url: /properties/1/detail
+                  - paragraph [ref=e133]: Modern Downtown Condo
+                  - paragraph [ref=e134]: 123 Main St, Downtown
+                - link "Suburban Family Home 456 Oak Avenue, Suburbia" [ref=e135] [cursor=pointer]:
+                  - /url: /properties/2/detail
+                  - paragraph [ref=e136]: Suburban Family Home
+                  - paragraph [ref=e137]: 456 Oak Avenue, Suburbia
+                - link "Urban Loft - Iranian Rental 321 Industrial Blvd, Arts District" [ref=e138] [cursor=pointer]:
+                  - /url: /properties/3/detail
+                  - paragraph [ref=e139]: Urban Loft - Iranian Rental
+                  - paragraph [ref=e140]: 321 Industrial Blvd, Arts District
+          - complementary [ref=e141]:
+            - generic [ref=e142]:
+              - generic [ref=e143]:
+                - generic [ref=e144]: auto_awesome
+                - heading "AI Data Extraction" [level=2] [ref=e145]
+              - generic [ref=e146]:
+                - paragraph [ref=e147]: Paste listing text to extract fields and apply them directly to the form.
+                - textbox "Paste property notes, ad text, or chat transcript..." [ref=e148]: "Title: MCP_E2E_1770597248 Parsed Listing Address: 999 Sample St Price: 600000 Property Type: House Bedrooms: 4 Bathrooms: 3 Square Feet: 1500 Neighborhood: Sampleville Description: Parsed via AI panel"
+                - button "psychology Scan with AI" [ref=e152] [cursor=pointer]:
+                  - generic [ref=e153]: psychology
+                  - text: Scan with AI

@@ -1,0 +1,149 @@
+{
+  "name": "Comprehensive Context Gathering",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/context-gather",
+        "responseMode": "onReceived",
+        "responseData": {
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": "{\"status\": \"context gathering started\"}"
+        }
+      },
+      "name": "Webhook: Context Gathering Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "id": "webhook1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Prepare context gathering request\nconst body = $json[\"body\"] || {};\n\nreturn [{ json: {\n  entityType: body.entityType || 'customer', // customer, property, deal, agent\n  entityId: body.entityId || '',\n  contextTypes: body.contextTypes || ['basic', 'activities', 'communications', 'transactions', 'relationships'],\n  depth: body.depth || 1, // 1=direct, 2=related entities, etc.\n  metadata: body.metadata || {}\n} }];"
+      },
+      "name": "Prepare Context Request",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        500,
+        100
+      ],
+      "id": "function1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Gather context from multiple CRM endpoints\nconst { entityType, entityId, contextTypes, depth, metadata } = $json;\nconst baseUrl = 'http://host.docker.internal:5000/api';\nconst results = {};\n\n// Build context object based on requested types\nconst context = {};\n\nif (contextTypes.includes('basic')) {\n  context.basic = {\n    entityType,\n    entityId,\n    fetchedAt: new Date().toISOString(),\n    description: `Basic information for ${entityType} ${entityId}`\n  };\n}\n\nif (contextTypes.includes('activities')) {\n  context.activities = {\n    recentTasks: `Recent tasks for ${entityType} ${entityId}`,\n    recentEvents: `Recent events/appointments for ${entityType} ${entityId}`,\n    activityCount: Math.floor(Math.random() * 10) // Placeholder\n  };\n}\n\nif (contextTypes.includes('communications')) {\n  context.communications = {\n    recentMessages: `Recent messages for ${entityType} ${entityId}`,\n    emailHistory: `Email history for ${entityType} ${entityId}`,\n    callLogs: `Call logs for ${entityType} ${entityId}`,\n    communicationCount: Math.floor(Math.random() * 15) // Placeholder\n  };\n}\n\nif (contextTypes.includes('transactions')) {\n  context.transactions = {\n    financialTransactions: `Financial transactions for ${entityType} ${entityId}`,\n    paymentHistory: `Payment history for ${entityType} ${entityId}`,\n    transactionTotal: Math.floor(Math.random() * 100000) // Placeholder\n  };\n}\n\nif (contextTypes.includes('relationships')) {\n  context.relationships = {\n    relatedEntities: `Related entities for ${entityType} ${entityId}`,\n    associatedCustomers: `Associated customers for ${entityType} ${entityId}`,\n    linkedProperties: `Linked properties for ${entityType} ${entityId}`,\n    connectionCount: Math.floor(Math.random() * 5) // Placeholder\n  };\n}\n\n// Add depth-based expansions (simplified)\nif (depth > 1) {\n  context.extended = {\n    depthLevel: depth,\n    relatedData: `Additional related data fetched at depth ${depth}`\n  };\n}\n\nreturn [{ json: {\n  entityType,\n  entityId,\n  context,\n  metadata: {\n    ...metadata,\n    gatheredAt: new Date().toISOString(),\n    contextTypesRequested: contextTypes,\n    depthLevel: depth\n  }\n} }];"
+      },
+      "name": "Gather Context from CRM",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        750,
+        100
+      ],
+      "id": "function2"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format and enrich the gathered context\nconst { entityType, entityId, context, metadata } = $json;\n\n// Create a summary\nconst contextSummary = {\n  entity: {\n    type: entityType,\n    id: entityId\n  },\n  context,\n  summary: `Comprehensive context gathered for ${entityType} ${entityId} at ${new Date().toISOString()} including ${Object.keys(context).join(', ')}`,\n  dataCompleteness: Object.keys(context).length // Simple measure of how much data we gathered\n};\n\nreturn [{ json: {\n  status: 'success',\n  contextData: contextSummary,\n  metadata: {\n    ...metadata,\n    completedAt: new Date().toISOString(),\n    contextTypesProcessed: Object.keys(context)\n  }\n} }];"
+      },
+      "name": "Format Context Output",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        100
+      ],
+      "id": "function3"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "INSERT INTO context_gathering_logs (entity_type, entity_id, context_types, depth, status, context_summary, metadata, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {
+                "parameters": {
+                  "value": "={{[\\n    $json[\\\"contextData\\\"]\\.entity\\.type || '',\\n    $json[\\\"contextData\\\"]\\.entity\\.id || '',\\n    $json.containsKey('metadata') && $json[\\\"metadata\\\"]\\.contextTypesRequested ? JSON.stringify($json[\\\"metadata\\\"]\\.contextTypesRequested) : '[]',\\n    $json[\\\"metadata\\\"]\\.depthLevel || 1,\\n    $json[\\\"status\\\"],\\n    $json.containsKey('contextData') && $json[\\\"contextData\\\"]\\.summary ? $json[\\\"contextData\\\"]\\.summary : '{}',\\n    '{{JSON.stringify($json[\\\"metadata\\\"])}}'\\n  ]}}"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "name": "Log Context Activity",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        50
+      ],
+      "id": "postgres1"
+    }
+  ],
+  "connections": {
+    "Webhook: Context Gathering Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare Context Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Context Request": {
+      "main": [
+        [
+          {
+            "node": "Gather Context from CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gather Context from CRM": {
+      "main": [
+        [
+          {
+            "node": "Format Context Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Context Output": {
+      "main": [
+        [
+          {
+            "node": "Log Context Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "context_gathering_workflow"
+}

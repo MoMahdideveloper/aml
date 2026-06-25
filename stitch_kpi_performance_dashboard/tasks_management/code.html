@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tasks - Luxe Estate</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Config & Script -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#0c1d2d",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#111d27",
+                        "surface-white": "#FFFFFF",
+                        "tertiary": "#23241c",
+                        "surface-container-high": "#dee9f8",
+                        "surface-tint": "#506072",
+                        "secondary": "#5d5e5f",
+                        "on-error": "#ffffff",
+                        "on-surface-variant": "#44474c",
+                        "on-tertiary-fixed-variant": "#47473e",
+                        "primary-fixed": "#d3e4fa",
+                        "surface-variant": "#d8e4f3",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "error-red": "#BA1A1A",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#464747",
+                        "secondary-fixed-dim": "#c6c6c6",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed": "#e3e2e2",
+                        "on-tertiary-fixed": "#1c1c14",
+                        "tertiary-fixed-dim": "#c8c7bb",
+                        "on-secondary-container": "#626363",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#e3effe",
+                        "primary-container": "#2a3a4b",
+                        "secondary-container": "#e0dfdf",
+                        "background": "#f7f9ff",
+                        "surface": "#f7f9ff",
+                        "surface-container-highest": "#d8e4f3",
+                        "primary-fixed-dim": "#b7c8dd",
+                        "outline-variant": "#c4c6cc",
+                        "on-primary-fixed-variant": "#38485a",
+                        "inverse-surface": "#26313d",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#e5e3d6",
+                        "on-background": "#111d27",
+                        "primary": "#142435",
+                        "on-tertiary-container": "#a3a297",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#d0dbea",
+                        "inverse-primary": "#b7c8dd",
+                        "surface-bright": "#f7f9ff",
+                        "on-primary": "#ffffff",
+                        "outline": "#74777d",
+                        "inverse-on-surface": "#e8f2ff",
+                        "surface-container-low": "#edf4ff",
+                        "on-primary-container": "#93a4b8",
+                        "tertiary-container": "#393930"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "max-width": "1280px",
+                        "base": "8px",
+                        "margin-desktop": "64px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["IBM Plex Sans"],
+                        "body-md": ["IBM Plex Sans"],
+                        "headline-lg-mobile": ["IBM Plex Sans"],
+                        "label-md": ["IBM Plex Sans"],
+                        "display-lg": ["IBM Plex Sans"],
+                        "headline-md": ["IBM Plex Sans"],
+                        "label-sm": ["IBM Plex Sans"],
+                        "headline-lg": ["IBM Plex Sans"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom scrollbar for premium feel */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c4c6cc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #74777d; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TopNavBar JSON Component -->
+<header class="fixed top-0 w-full z-50 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 max-w-max-width mx-auto">
+<div class="font-headline-md text-headline-md font-bold text-primary dark:text-on-primary-container">
+                Luxe Estate
+            </div>
+<nav class="hidden md:flex gap-6 items-center">
+<!-- None are active as "Tasks" is a specific operational page not in top-level nav array -->
+<a class="font-body-md text-body-md text-secondary dark:text-on-secondary-container hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200" href="#">Dashboard</a>
+<a class="font-body-md text-body-md text-secondary dark:text-on-secondary-container hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200" href="#">Inventory</a>
+<a class="font-body-md text-body-md text-secondary dark:text-on-secondary-container hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200" href="#">Agents</a>
+<a class="font-body-md text-body-md text-secondary dark:text-on-secondary-container hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200" href="#">Clients</a>
+<a class="font-body-md text-body-md text-secondary dark:text-on-secondary-container hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200" href="#">Deals</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="hidden md:block bg-primary text-on-primary font-label-md text-label-md px-4 py-2 rounded-lg hover:opacity-90 transition-opacity">
+                    List Your Property
+                </button>
+<button class="material-symbols-outlined text-primary hover:text-primary-fixed transition-colors">notifications</button>
+<button class="material-symbols-outlined text-primary hover:text-primary-fixed transition-colors">settings</button>
+<img alt="User profile" class="w-8 h-8 rounded-full border border-outline-variant" data-alt="A sophisticated, high-resolution headshot of a luxury real estate executive. The individual is dressed in modern corporate attire against a minimalist, light-filled office background. The lighting is soft and natural, emphasizing a professional, trustworthy, and premium aesthetic consistent with high-end property management." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3ix8wbO33s4MGH0Rg7xBtYu9VtQtqs3J5PQ8Mlr3f3feyNU0XQxJ-5ZHlxEwrsdeVUrgaTV46YToS1Z9HnFoFlHATyv2-L2m_XgFE9MntWhsLmg-IoW4M3CO88F0lPr4mL7lr4KlVeT40tB6SyyjqskgEEtNtc-0dJDKK_WFsJpmWn1qsHLsN0Gg12RYhvw0_4JinT9qHtbbQYwtV561fD7VJ9f3KUVMmQXTwRIEu0ik49v4ODAY"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-[104px] pb-16 flex flex-col gap-8">
+<!-- Header Section -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h1 class="font-display-lg text-display-lg text-primary">Tasks</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">Manage follow-ups, appointments, and action items</p>
+</div>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-inverse-surface transition-colors shadow-sm w-full md:w-auto justify-center" onclick="document.getElementById('taskModal').classList.remove('hidden')">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+                Add New Task
+            </button>
+</section>
+<!-- Controls Toolbar -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+<!-- View Toggles -->
+<div class="flex bg-surface-container p-1 rounded-lg">
+<button class="px-4 py-2 rounded-lg bg-surface-container-lowest shadow-sm border border-outline-variant font-label-md text-label-md text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">format_list_bulleted</span>
+                    List
+                </button>
+<button class="px-4 py-2 rounded-lg font-label-md text-label-md text-secondary hover:text-primary transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">calendar_month</span>
+                    Calendar
+                </button>
+<button class="px-4 py-2 rounded-lg font-label-md text-label-md text-secondary hover:text-primary transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">view_kanban</span>
+                    Board
+                </button>
+</div>
+<!-- Filters & Search -->
+<div class="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+<div class="relative flex-1 xl:w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface rounded-lg border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface transition-colors" placeholder="Search tasks..." type="text"/>
+</div>
+<select class="py-2 pl-3 pr-8 bg-surface border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface appearance-none outline-none focus:border-primary cursor-pointer">
+<option>All Dates</option>
+<option>Today</option>
+<option>This Week</option>
+</select>
+<select class="py-2 pl-3 pr-8 bg-surface border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface appearance-none outline-none focus:border-primary cursor-pointer">
+<option>All Priorities</option>
+<option>Urgent</option>
+<option>High</option>
+<option>Medium</option>
+<option>Low</option>
+</select>
+</div>
+</section>
+<!-- Task List Display Area -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-[0_8px_30px_rgba(27,38,49,0.02)]">
+<!-- List Header -->
+<div class="hidden lg:grid grid-cols-[40px_minmax(250px,1fr)_180px_140px_100px_120px_100px_40px] gap-4 p-4 border-b border-outline-variant bg-surface-container-low font-label-sm text-label-sm text-secondary uppercase tracking-wider">
+<div class="flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">done_all</span>
+</div>
+<div>Task Name</div>
+<div>Related To</div>
+<div>Due Date</div>
+<div>Priority</div>
+<div>Status</div>
+<div>Assignee</div>
+<div class="text-right">Actions</div>
+</div>
+<!-- Task Rows -->
+<div class="flex flex-col">
+<!-- Task 1: Overdue / Urgent -->
+<div class="group flex flex-col lg:grid lg:grid-cols-[40px_minmax(250px,1fr)_180px_140px_100px_120px_100px_40px] gap-3 lg:gap-4 p-4 border-b border-outline-variant hover:bg-surface-container-low transition-colors items-start lg:items-center relative">
+<div class="absolute lg:relative top-4 lg:top-auto left-4 lg:left-auto flex items-center justify-center">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary cursor-pointer bg-surface transition-all" type="checkbox"/>
+</div>
+<div class="pl-8 lg:pl-0">
+<p class="font-body-md text-body-md text-on-surface font-medium group-hover:text-primary transition-colors cursor-pointer">Finalize contract for Vista Horizon</p>
+</div>
+<div class="pl-8 lg:pl-0 flex items-center">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 bg-surface-container rounded-md font-label-sm text-label-sm text-on-surface-variant border border-outline-variant/50">
+<span class="material-symbols-outlined text-[14px]">person</span>
+                            Julian Vance
+                        </span>
+</div>
+<div class="pl-8 lg:pl-0 font-body-md text-body-md text-error flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+                        Today, 10:00 AM
+                    </div>
+<div class="pl-8 lg:pl-0">
+<span class="inline-block px-2 py-1 bg-error-container text-error rounded-md font-label-sm text-label-sm border border-error/20">Urgent</span>
+</div>
+<div class="pl-8 lg:pl-0">
+<span class="inline-block px-2 py-1 bg-surface-container-highest text-on-surface rounded-md font-label-sm text-label-sm border border-outline-variant">In Progress</span>
+</div>
+<div class="pl-8 lg:pl-0 flex items-center gap-2">
+<img alt="Assignee" class="w-7 h-7 rounded-full border border-outline-variant" data-alt="A clear, professional portrait of a male real estate agent. He has a warm, confident expression. The image is bright, crisp, and set against a neutral cream background, fitting a minimalist corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAE33NINX-dIoo4IVRv9bwLCjYqsBLOhdi_xocdlq6IpiTqcyI6s-InG5K7nuNLLDwPf7twq_Xmf_wttODkD-cQpf5_AR6RDvL1w6UuLr6ZVe3VYNBKcT0iZXCOQD3Xm1xXtqSmVscM0MfFaD_CYH_Y77b871xdnU-8zeqZeHPqGnnfljt5Cew18-sDHA--Rld5qIISJZTm38Ej71KW1RQRo-_FEew0yFZtln4Exb7LVo2yapoIwNM"/>
+<span class="hidden lg:inline-block font-body-md text-label-sm text-on-surface-variant truncate">Alex S.</span>
+</div>
+<div class="absolute lg:relative top-4 lg:top-auto right-4 lg:right-auto text-right">
+<button class="text-secondary hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<!-- Task 2: High / Property -->
+<div class="group flex flex-col lg:grid lg:grid-cols-[40px_minmax(250px,1fr)_180px_140px_100px_120px_100px_40px] gap-3 lg:gap-4 p-4 border-b border-outline-variant hover:bg-surface-container-low transition-colors items-start lg:items-center relative">
+<div class="absolute lg:relative top-4 lg:top-auto left-4 lg:left-auto flex items-center justify-center">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary cursor-pointer bg-surface transition-all" type="checkbox"/>
+</div>
+<div class="pl-8 lg:pl-0">
+<p class="font-body-md text-body-md text-on-surface font-medium group-hover:text-primary transition-colors cursor-pointer">Schedule Showing for Modern Minimalist Villa</p>
+</div>
+<div class="pl-8 lg:pl-0 flex items-center">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 bg-surface-container rounded-md font-label-sm text-label-sm text-on-surface-variant border border-outline-variant/50">
+<span class="material-symbols-outlined text-[14px]">home</span>
+                            Modern Villa
+                        </span>
+</div>
+<div class="pl-8 lg:pl-0 font-body-md text-body-md text-on-surface-variant">
+                        Tomorrow, 2:00 PM
+                    </div>
+<div class="pl-8 lg:pl-0">
+<span class="inline-block px-2 py-1 bg-primary text-on-primary rounded-md font-label-sm text-label-sm">High</span>
+</div>
+<div class="pl-8 lg:pl-0">
+<span class="inline-block px-2 py-1 bg-surface rounded-md font-label-sm text-label-sm text-secondary border border-outline-variant">To Do</span>
+</div>
+<div class="pl-8 lg:pl-0 flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-label-sm text-label-sm border border-outline-variant">
+                            EM
+                        </div>
+<span class="hidden lg:inline-block font-body-md text-label-sm text-on-surface-variant truncate">Elena M.</span>
+</div>
+<div class="absolute lg:relative top-4 lg:top-auto right-4 lg:right-auto text-right">
+<button class="text-secondary hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<!-- Task 3: Medium / Deal -->
+<div class="group flex flex-col lg:grid lg:grid-cols-[40px_minmax(250px,1fr)_180px_140px_100px_120px_100px_40px] gap-3 lg:gap-4 p-4 hover:bg-surface-container-low transition-colors items-start lg:items-center relative">
+<div class="absolute lg:relative top-4 lg:top-auto left-4 lg:left-auto flex items-center justify-center">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary cursor-pointer bg-surface transition-all" type="checkbox"/>
+</div>
+<div class="pl-8 lg:pl-0">
+<p class="font-body-md text-body-md text-on-surface font-medium group-hover:text-primary transition-colors cursor-pointer">Prepare marketing materials for Q3</p>
+</div>
+<div class="pl-8 lg:pl-0 flex items-center">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 bg-surface-container rounded-md font-label-sm text-label-sm text-on-surface-variant border border-outline-variant/50">
+<span class="material-symbols-outlined text-[14px]">campaign</span>
+                            Marketing
+                        </span>
+</div>
+<div class="pl-8 lg:pl-0 font-body-md text-body-md text-on-surface-variant">
+                        Oct 15, 2024
+                    </div>
+<div class="pl-8 lg:pl-0">
+<span class="inline-block px-2 py-1 bg-surface-container-highest text-on-surface rounded-md font-label-sm text-label-sm border border-outline-variant">Medium</span>
+</div>
+<div class="pl-8 lg:pl-0">
+<span class="inline-block px-2 py-1 bg-surface-container-highest text-on-surface rounded-md font-label-sm text-label-sm border border-outline-variant">In Progress</span>
+</div>
+<div class="pl-8 lg:pl-0 flex items-center gap-2">
+<img alt="Assignee" class="w-7 h-7 rounded-full border border-outline-variant" data-alt="A small circular avatar of a professional woman. The image has high contrast, a minimalist cream background, and conveys a sense of high-end corporate reliability, matching a luxury real estate context." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBM2PWgCKKGhNOLXxUp4yOMAnpXKmobO2p2PpY9hvhZN8Arpy3O05iwlHmj9gLCcJU0CaDW2M0LUzLTIqwx-DHeD99ti6JkaRhIq7gzAYwtRx-mwbXIRDCYJ3EOJBGszzRJzb79DroKqQm57D7PsMhjOFXIBXdqlq1W01voImjccFEIX2hn9oPu09Vk6-E7bd2WFZl_c40F2KoKXCR_WFdjqP6__29vLaRg7VPQRCm8KovmZdBfpU"/>
+<span class="hidden lg:inline-block font-body-md text-label-sm text-on-surface-variant truncate">You</span>
+</div>
+<div class="absolute lg:relative top-4 lg:top-auto right-4 lg:right-auto text-right">
+<button class="text-secondary hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer JSON Component -->
+<footer class="w-full mt-auto bg-surface dark:bg-surface border-t border-outline-variant dark:border-outline">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop py-8 max-w-max-width mx-auto gap-4">
+<div class="font-headline-sm text-headline-sm font-bold text-primary">
+                Luxe Estate
+            </div>
+<div class="flex flex-wrap gap-4 justify-center">
+<a class="font-label-sm text-label-sm text-secondary dark:text-on-secondary-container hover:text-primary dark:hover:text-on-primary-container hover:underline transition-all duration-200" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm text-secondary dark:text-on-secondary-container hover:text-primary dark:hover:text-on-primary-container hover:underline transition-all duration-200" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-secondary dark:text-on-secondary-container hover:text-primary dark:hover:text-on-primary-container hover:underline transition-all duration-200" href="#">Legal Notices</a>
+<a class="font-label-sm text-label-sm text-secondary dark:text-on-secondary-container hover:text-primary dark:hover:text-on-primary-container hover:underline transition-all duration-200" href="#">Contact Support</a>
+</div>
+<div class="font-label-sm text-label-sm text-primary dark:text-on-primary-container">
+                © 2024 Luxe Estate Management. All rights reserved.
+            </div>
+</div>
+</footer>
+<!-- Add Task Modal (Hidden by default) -->
+<div class="hidden fixed inset-0 z-[60] bg-on-surface/40 backdrop-blur-sm flex items-center justify-center px-margin-mobile" id="taskModal">
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant w-full max-w-lg shadow-[0_8px_30px_rgba(27,38,49,0.06)] flex flex-col max-h-[921px]">
+<div class="flex justify-between items-center p-6 border-b border-outline-variant">
+<h2 class="font-headline-md text-headline-md text-primary">Create New Task</h2>
+<button class="text-secondary hover:text-primary transition-colors" onclick="document.getElementById('taskModal').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-6 overflow-y-auto flex flex-col gap-6">
+<!-- Form Group -->
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface">Task Title</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" placeholder="e.g. Schedule photography" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface">Due Date</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors text-secondary" type="date"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface">Priority</label>
+<select class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
+<option>Low</option>
+<option>Medium</option>
+<option>High</option>
+<option>Urgent</option>
+</select>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface">Related Entity</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[18px]">search</span>
+<input class="w-full bg-surface border border-outline-variant rounded-lg pl-10 pr-4 py-2 font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" placeholder="Search properties or clients..." type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface">Description (Optional)</label>
+<textarea class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-none" placeholder="Add additional details..." rows="3"></textarea>
+</div>
+</div>
+<div class="p-6 border-t border-outline-variant bg-surface-container-low rounded-b-xl flex justify-end gap-3">
+<button class="px-6 py-2 border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container transition-colors" onclick="document.getElementById('taskModal').classList.add('hidden')">Cancel</button>
+<button class="px-6 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-inverse-surface transition-colors shadow-sm">Save Task</button>
+</div>
+</div>
+</div>
+</body></html>

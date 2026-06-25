@@ -1,0 +1,146 @@
+{
+  "project": "gptvli",
+  "generated_at": "2026-02-18T23:35:00Z",
+  "focus": "proptech_brain_unified_architecture",
+  "mode": "semi_automated",
+  "chunks": [
+    {
+      "id": "PB-CTX-001",
+      "file": "app.py",
+      "start_line": 69,
+      "end_line": 217,
+      "reason": "Default-deny auth middleware, API-vs-browser behavior, CSRF configuration, and cookie hardening.",
+      "excerpt": "Auth middleware returns 401/403 JSON for API requests and redirects only for browser routes; CSRF enabled by default; vector and automation blueprints are currently CSRF-exempt."
+    },
+    {
+      "id": "PB-CTX-002",
+      "file": "sqlalchemy_models.py",
+      "start_line": 16,
+      "end_line": 216,
+      "reason": "Property model already contains rich structured fields (floor/elevator/condition/features) required for smart-context benefits.",
+      "excerpt": "Property includes floor_number, has_elevator, property_condition, property_features, custom_fields, listing_type, rahn/ejare and metadata fields useful for contextual translation."
+    },
+    {
+      "id": "PB-CTX-003",
+      "file": "sqlalchemy_models.py",
+      "start_line": 598,
+      "end_line": 860,
+      "reason": "Existing match/favorite/embedding/job models relevant to scoring and pipeline orchestration.",
+      "excerpt": "PropertyMatch, PropertyFavorite, PropertyEmbedding, MatchingJobRun, and RematchQueue already exist and can be extended for customer/property priority scoring."
+    },
+    {
+      "id": "PB-CTX-004",
+      "file": "services/llm/providers/gemini_provider.py",
+      "start_line": 16,
+      "end_line": 206,
+      "reason": "Provider already supports retries, timeout controls, strict JSON extraction, and image parsing entrypoint.",
+      "excerpt": "GeminiProvider has request timeout and retry controls, _extract_json_object parsing, extract_property_from_image, and generate_recommendation_reasoning methods."
+    },
+    {
+      "id": "PB-CTX-005",
+      "file": "services/gemini_service.py",
+      "start_line": 150,
+      "end_line": 399,
+      "reason": "Current recommendation/extraction service where smart-context and copilot logic can be added with deterministic fallback.",
+      "excerpt": "GeminiService already tracks recommendation meta fallback, has extract_property_from_text/customer, and has deterministic fallback recommendation generation."
+    },
+    {
+      "id": "PB-CTX-006",
+      "file": "services/vector_service.py",
+      "start_line": 255,
+      "end_line": 506,
+      "reason": "Current semantic-hybrid scoring with deterministic fallback metadata and tie-break sorting.",
+      "excerpt": "search_properties_with_meta returns mode/is_fallback/reason and computes hybrid_score from semantic + budget + requirements with deterministic sort order."
+    },
+    {
+      "id": "PB-CTX-007",
+      "file": "services/search_service.py",
+      "start_line": 1,
+      "end_line": 210,
+      "reason": "Top-level hybrid search orchestration and keyword-only degradation policy.",
+      "excerpt": "SearchService applies hybrid weights (semantic 0.70, keyword 0.30) and degrades to keyword-only with explicit fallback metadata."
+    },
+    {
+      "id": "PB-CTX-008",
+      "file": "background_matcher.py",
+      "start_line": 181,
+      "end_line": 520,
+      "reason": "Background match scoring, notification generation, and matching cycle lifecycle.",
+      "excerpt": "BackgroundMatcher already computes basic fallback match score, saves matches, creates notifications, and logs cycle runs."
+    },
+    {
+      "id": "PB-CTX-009",
+      "file": "celery_app.py",
+      "start_line": 1,
+      "end_line": 80,
+      "reason": "Existing Celery beat schedule and task registration pattern for nightly/weekly scoring jobs.",
+      "excerpt": "Celery beat already schedules matching/cleanup/digest jobs; new scoring and training jobs should plug into this schedule model."
+    },
+    {
+      "id": "PB-CTX-010",
+      "file": "services/celery_tasks.py",
+      "start_line": 1,
+      "end_line": 110,
+      "reason": "Task wrappers where new scoring and trend jobs can be added safely outside request cycle.",
+      "excerpt": "Current Celery tasks delegate to scheduler jobs and sync embeddings; this is the place to add scoring_engine and trend tasks."
+    },
+    {
+      "id": "PB-CTX-011",
+      "file": "views/main.py",
+      "start_line": 307,
+      "end_line": 620,
+      "reason": "Recommendations, AI parse APIs, export, and viewing schedule routes where matchmaker/copilot endpoints will integrate.",
+      "excerpt": "Recommendations already expose fallback metadata and JSON/HTML split behavior; API parse endpoints and schedule-viewing flows exist."
+    },
+    {
+      "id": "PB-CTX-012",
+      "file": "views/properties.py",
+      "start_line": 565,
+      "end_line": 780,
+      "reason": "Property detail/edit/view routes with robust serialization surface for smart-context rendering.",
+      "excerpt": "Property detail response already provides rich derived fields and supports JSON fallback under test/degraded conditions."
+    },
+    {
+      "id": "PB-CTX-013",
+      "file": "static/js/main.js",
+      "start_line": 1,
+      "end_line": 840,
+      "reason": "Frontend initialization, API request wrapper, CSRF/XHR behavior, and modal lifecycle integration points.",
+      "excerpt": "Main JS has central API.request with CSRF and deterministic JSON parsing; good insertion points for badges and copilot trigger UX."
+    },
+    {
+      "id": "PB-CTX-014",
+      "file": "static/js/crud-utils.js",
+      "start_line": 1,
+      "end_line": 1150,
+      "reason": "Modal utilities and request wrapper enforcing CSRF headers and error contracts.",
+      "excerpt": "CRUDUtils already handles modal lifecycle, CSRF header propagation in makeRequest, and resilient parsing/feedback for AJAX failures."
+    },
+    {
+      "id": "PB-CTX-015",
+      "file": "templates/recommendations.html",
+      "start_line": 130,
+      "end_line": 360,
+      "reason": "Current recommendation card UI where score badges and copilot CTA can be added.",
+      "excerpt": "Template already renders match score and actions; can be extended to Hot Lead / Rare Find badges and Generate Copilot Pitch button."
+    }
+  ],
+  "goals_to_merge": [
+    "Cost-saving batch analysis",
+    "Multimodal audio/image ingestion",
+    "Conversational planner",
+    "Smart context translation (silver lining)",
+    "Dual-sided scoring (customer/property)",
+    "Matchmaker and auto pitch generation",
+    "Weekly trend/training playbook"
+  ],
+  "hard_constraints": [
+    "No blanket CSRF exemptions on new core endpoints",
+    "API/XHR unauthorized must be JSON 401/403",
+    "Browser route auth redirects can remain 302",
+    "Gemini/vector failures must degrade deterministically (no 500 for handled paths)",
+    "Prefer async/background processing for heavy AI and batch scoring",
+    "Keep existing public contracts backward compatible unless explicitly versioned"
+  ]
+}
+

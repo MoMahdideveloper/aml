@@ -1,0 +1,262 @@
+<!-- Toast Notifications Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000;" id="toast-container">
+    <!-- Toasts will be dynamically inserted here -->
+</div>
+
+<!-- Toast Template (hidden, used for cloning) -->
+<div id="toast-template" class="d-none">
+    <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="toast-icon me-2"></i>
+            <strong class="me-auto toast-title"></strong>
+            <small class="text-muted toast-time">now</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body"></div>
+    </div>
+</div>
+
+<!-- Loading Spinner Template -->
+<div id="loading-spinner-template" class="d-none">
+    <div class="d-flex justify-content-center align-items-center p-3">
+        <div class="spinner-border text-primary me-2" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <span>Loading...</span>
+    </div>
+</div>
+
+<!-- Error Alert Template -->
+<div id="error-alert-template" class="d-none">
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <span class="error-message"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+</div>
+
+<!-- Success Alert Template -->
+<div id="success-alert-template" class="d-none">
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>
+        <span class="success-message"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+</div>
+
+<!-- Form Validation Feedback Template -->
+<div id="validation-feedback-template" class="d-none">
+    <div class="invalid-feedback"></div>
+</div>
+
+<script>
+/**
+ * Enhanced Toast Notification System
+ * Integrates with Flask flash messages and provides client-side notifications
+ */
+class ToastNotificationSystem {
+    constructor() {
+        this.container = document.getElementById('toast-container');
+        this.template = document.getElementById('toast-template');
+        this.defaultDuration = 5000;
+        this.maxToasts = 5;
+        
+        this.init();
+    }
+    
+    init() {
+        // Create container if it doesn't exist
+        if (!this.container) {
+            this.container = document.createElement('div');
+            this.container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            this.container.style.zIndex = '2000';
+            this.container.id = 'toast-container';
+            document.body.appendChild(this.container);
+        }
+        
+        // Process any existing flash messages
+        this.processFlashMessages();
+        
+        // Set up global error handling
+        this.setupGlobalErrorHandling();
+    }
+    
+    /**
+     * Show toast notification
+     * @param {string} message - Toast message
+     * @param {string} type - Toast type (success, error, warning, info)
+     * @param {Object} options - Additional options
+     */
+    show(message, type = 'info', options = {}) {
+        const toastId = `toast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const duration = options.duration || this.defaultDuration;
+        
+        const iconMap = {
+            success: 'fas fa-check-circle text-success',
+            error: 'fas fa-exclamation-triangle text-danger',
+            warning: 'fas fa-exclamation-triangle text-warning',
+            info: 'fas fa-info-circle text-info'
+        };
+        
+        const titleMap = {
+            success: 'Success',
+            error: 'Error',
+            warning: 'Warning',
+            info: 'Information'
+        };
+        
+        // Create toast element
+        const toastHtml = `
+            <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <i class="${iconMap[type] || iconMap.info} me-2"></i>
+                    <strong class="me-auto">${options.title || titleMap[type] || titleMap.info}</strong>
+                    <small class="text-muted">${options.showTime !== false ? 'now' : ''}</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
+            </div>
+        `;
+        
+        // Limit number of toasts
+        this.limitToasts();
+        
+        // Add to container
+        this.container.insertAdjacentHTML('beforeend', toastHtml);
+        const toastElement = document.getElementById(toastId);
+        
+        // Initialize Bootstrap toast
+        const toast = new bootstrap.Toast(toastElement, {
+            autohide: options.autohide !== false,
+            delay: duration
+        });
+        
+        // Show toast
+        toast.show();
+        
+        // Remove element after hiding
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            toastElement.remove();
+        });
+        
+        return toast;
+    }
+    
+    /**
+     * Show success toast
+     */
+    success(message, options = {}) {
+        return this.show(message, 'success', options);
+    }
+    
+    /**
+     * Show error toast
+     */
+    error(message, options = {}) {
+        return this.show(message, 'error', { duration: 8000, ...options });
+    }
+    
+    /**
+     * Show warning toast
+     */
+    warning(message, options = {}) {
+        return this.show(message, 'warning', options);
+    }
+    
+    /**
+     * Show info toast
+     */
+    info(message, options = {}) {
+        return this.show(message, 'info', options);
+    }
+    
+    /**
+     * Process Flask flash messages and convert to toasts
+     */
+    processFlashMessages() {
+        const flashMessages = document.querySelectorAll('.alert[data-flash-message]');
+        flashMessages.forEach(alert => {
+            const message = alert.textContent.trim();
+            const type = alert.classList.contains('alert-success') ? 'success' :
+                        alert.classList.contains('alert-danger') ? 'error' :
+                        alert.classList.contains('alert-warning') ? 'warning' : 'info';
+            
+            // Show as toast
+            this.show(message, type);
+            
+            // Remove original alert
+            alert.remove();
+        });
+    }
+    
+    /**
+     * Limit number of visible toasts
+     */
+    limitToasts() {
+        const toasts = this.container.querySelectorAll('.toast');
+        if (toasts.length >= this.maxToasts) {
+            // Remove oldest toast
+            const oldestToast = toasts[0];
+            const bsToast = bootstrap.Toast.getInstance(oldestToast);
+            if (bsToast) {
+                bsToast.hide();
+            } else {
+                oldestToast.remove();
+            }
+        }
+    }
+    
+    /**
+     * Set up global error handling for AJAX requests
+     */
+    setupGlobalErrorHandling() {
+        // Handle fetch errors globally
+        const originalFetch = window.fetch;
+        window.fetch = async (...args) => {
+            try {
+                const response = await originalFetch(...args);
+                
+                // Handle HTTP errors
+                if (!response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    
+                    if (contentType && contentType.includes('application/json')) {
+                        try {
+                            const errorData = await response.clone().json();
+                            errorMessage = errorData.error || errorData.message || errorMessage;
+                        } catch (e) {
+                            // Ignore JSON parsing errors
+                        }
+                    }
+                    
+                    // Don't show toast for certain status codes that are handled elsewhere
+                    if (![401, 403, 404].includes(response.status)) {
+                        this.error(errorMessage);
+                    }
+                }
+                
+                return response;
+            } catch (error) {
+                // Handle network errors
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    this.error('Network error. Please check your connection.');
+                }
+                throw error;
+            }
+        };
+    }
+}
+
+// Initialize global toast system
+window.toastSystem = new ToastNotificationSystem();
+
+// Backward compatibility with existing crudUtils
+if (window.crudUtils) {
+    window.crudUtils.showToast = (message, type, options) => {
+        return window.toastSystem.show(message, type, options);
+    };
+}
+</script>

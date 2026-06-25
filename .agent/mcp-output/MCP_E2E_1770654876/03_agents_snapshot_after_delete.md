@@ -1,0 +1,174 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "EstateFlow" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - heading "EstateFlow" [level=2] [ref=e9]
+      - generic [ref=e11]:
+        - generic [ref=e13]: search
+        - textbox "search" [ref=e14]:
+          - /placeholder: Search...
+    - generic [ref=e16]:
+      - button "notifications" [ref=e17] [cursor=pointer]:
+        - generic [ref=e18]: notifications
+      - button "settings" [ref=e19] [cursor=pointer]:
+        - generic [ref=e20]: settings
+  - generic [ref=e22]:
+    - complementary [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - heading "Real Estate CRM" [level=1] [ref=e26]
+          - paragraph [ref=e27]: Workflow Management
+        - navigation "Main navigation" [ref=e28]:
+          - link "grid_view Overview" [ref=e29] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e30]: grid_view
+            - paragraph [ref=e31]: Overview
+          - link "real_estate_agent Properties" [ref=e32] [cursor=pointer]:
+            - /url: /properties
+            - generic [ref=e33]: real_estate_agent
+            - paragraph [ref=e34]: Properties
+          - link "person_pin Agents" [ref=e35] [cursor=pointer]:
+            - /url: /agents
+            - generic [ref=e36]: person_pin
+            - paragraph [ref=e37]: Agents
+          - link "groups Customers" [ref=e38] [cursor=pointer]:
+            - /url: /customers
+            - generic [ref=e39]: groups
+            - paragraph [ref=e40]: Customers
+          - link "monetization_on Deals" [ref=e41] [cursor=pointer]:
+            - /url: /deals
+            - generic [ref=e42]: monetization_on
+            - paragraph [ref=e43]: Deals
+          - link "task_alt Tasks" [ref=e44] [cursor=pointer]:
+            - /url: /tasks
+            - generic [ref=e45]: task_alt
+            - paragraph [ref=e46]: Tasks
+          - link "auto_awesome Recommendations" [ref=e47] [cursor=pointer]:
+            - /url: /recommendations
+            - generic [ref=e48]: auto_awesome
+            - paragraph [ref=e49]: Recommendations
+          - link "bar_chart Reports" [ref=e50] [cursor=pointer]:
+            - /url: /market-analysis
+            - generic [ref=e51]: bar_chart
+            - paragraph [ref=e52]: Reports
+          - link "settings Settings" [ref=e53] [cursor=pointer]:
+            - /url: /settings
+            - generic [ref=e54]: settings
+            - paragraph [ref=e55]: Settings
+          - link "smart_toy Automations" [ref=e56] [cursor=pointer]:
+            - /url: /admin/automations
+            - generic [ref=e57]: smart_toy
+            - paragraph [ref=e58]: Automations
+        - generic [ref=e59]:
+          - generic [ref=e60]:
+            - paragraph [ref=e61]: Storage
+            - paragraph [ref=e64]: 15.2 GB of 20 GB used
+          - link "logout Logout" [ref=e65] [cursor=pointer]:
+            - /url: /admin/logout
+            - generic [ref=e66]: logout
+            - paragraph [ref=e67]: Logout
+    - main [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e71]:
+            - heading "Agent Management" [level=1] [ref=e72]
+            - paragraph [ref=e73]: Manage your real estate team and performance
+          - button "person_add Add New Agent" [ref=e74] [cursor=pointer]:
+            - generic [ref=e75]: person_add
+            - generic [ref=e76]: Add New Agent
+        - generic [ref=e77]:
+          - generic [ref=e78]:
+            - generic [ref=e79]:
+              - generic [ref=e80]: LR
+              - heading "Lisa Rodriguez" [level=3] [ref=e81]
+              - paragraph [ref=e82]: First-Time Buyers
+            - generic [ref=e83]:
+              - generic [ref=e84]:
+                - generic [ref=e85]: mail
+                - generic [ref=e86]: lisa.rodriguez@realestate.com
+              - generic [ref=e87]:
+                - generic [ref=e88]: call
+                - generic [ref=e89]: +1-555-0103
+            - generic [ref=e90]:
+              - generic [ref=e91]:
+                - paragraph [ref=e92]: "0"
+                - paragraph [ref=e93]: Listings
+              - generic [ref=e94]:
+                - paragraph [ref=e95]: "0"
+                - paragraph [ref=e96]: Deals
+              - generic [ref=e97]:
+                - paragraph [ref=e98]: "0"
+                - paragraph [ref=e99]: Tasks
+            - generic [ref=e100]:
+              - link "dashboard Dashboard" [ref=e101] [cursor=pointer]:
+                - /url: /agents/3/dashboard
+                - generic [ref=e102]: dashboard
+                - text: Dashboard
+              - button "edit" [ref=e103] [cursor=pointer]:
+                - generic [ref=e104]: edit
+              - button "delete" [ref=e105] [cursor=pointer]:
+                - generic [ref=e106]: delete
+          - generic [ref=e107]:
+            - generic [ref=e108]:
+              - generic [ref=e109]: MC
+              - heading "Mike Chen" [level=3] [ref=e110]
+              - paragraph [ref=e111]: Commercial Properties
+            - generic [ref=e112]:
+              - generic [ref=e113]:
+                - generic [ref=e114]: mail
+                - generic [ref=e115]: mike.chen@realestate.com
+              - generic [ref=e116]:
+                - generic [ref=e117]: call
+                - generic [ref=e118]: +1-555-0102
+            - generic [ref=e119]:
+              - generic [ref=e120]:
+                - paragraph [ref=e121]: "1"
+                - paragraph [ref=e122]: Listings
+              - generic [ref=e123]:
+                - paragraph [ref=e124]: "0"
+                - paragraph [ref=e125]: Deals
+              - generic [ref=e126]:
+                - paragraph [ref=e127]: "0"
+                - paragraph [ref=e128]: Tasks
+            - generic [ref=e129]:
+              - link "dashboard Dashboard" [ref=e130] [cursor=pointer]:
+                - /url: /agents/2/dashboard
+                - generic [ref=e131]: dashboard
+                - text: Dashboard
+              - button "edit" [ref=e132] [cursor=pointer]:
+                - generic [ref=e133]: edit
+              - button "delete" [ref=e134] [cursor=pointer]:
+                - generic [ref=e135]: delete
+          - generic [ref=e136]:
+            - generic [ref=e137]:
+              - generic [ref=e138]: SJ
+              - heading "Sarah Johnson" [level=3] [ref=e139]
+              - paragraph [ref=e140]: Luxury Homes
+            - generic [ref=e141]:
+              - generic [ref=e142]:
+                - generic [ref=e143]: mail
+                - generic [ref=e144]: sarah.johnson@realestate.com
+              - generic [ref=e145]:
+                - generic [ref=e146]: call
+                - generic [ref=e147]: +1-555-0101
+            - generic [ref=e148]:
+              - generic [ref=e149]:
+                - paragraph [ref=e150]: "2"
+                - paragraph [ref=e151]: Listings
+              - generic [ref=e152]:
+                - paragraph [ref=e153]: "2"
+                - paragraph [ref=e154]: Deals
+              - generic [ref=e155]:
+                - paragraph [ref=e156]: "2"
+                - paragraph [ref=e157]: Tasks
+            - generic [ref=e158]:
+              - link "dashboard Dashboard" [ref=e159] [cursor=pointer]:
+                - /url: /agents/1/dashboard
+                - generic [ref=e160]: dashboard
+                - text: Dashboard
+              - button "edit" [ref=e161] [cursor=pointer]:
+                - generic [ref=e162]: edit
+              - button "delete" [ref=e163] [cursor=pointer]:
+                - generic [ref=e164]: delete

@@ -1,0 +1,256 @@
+<!-- Global AI Copilot Component -->
+<style>
+    /* Scoped CSS to work within both Bootstrap and Tailwind environments safely */
+    #copilot-container {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 9999;
+        font-family: Arial, sans-serif;
+    }
+
+    #copilot-fab {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: #137fec;
+        color: white;
+        border: none;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: transform 0.2s;
+    }
+
+    #copilot-fab:hover {
+        transform: scale(1.05);
+    }
+
+    #copilot-panel {
+        position: absolute;
+        bottom: 80px;
+        right: 0;
+        width: 350px;
+        height: 500px;
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    #copilot-panel.open {
+        display: flex;
+    }
+
+    .copilot-header {
+        background-color: #137fec;
+        color: white;
+        padding: 16px;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .copilot-body {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 16px;
+        background-color: #f8fafc;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .copilot-msg {
+        max-width: 85%;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .copilot-ai {
+        background-color: white;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+        align-self: flex-start;
+    }
+
+    .copilot-user {
+        background-color: #137fec;
+        color: white;
+        align-self: flex-end;
+    }
+
+    .copilot-footer {
+        padding: 12px;
+        background-color: white;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .copilot-form {
+        display: flex;
+        gap: 8px;
+    }
+
+    .copilot-input {
+        flex-grow: 1;
+        padding: 10px 14px;
+        border: 1px solid #e2e8f0;
+        border-radius: 9999px;
+        font-size: 14px;
+        outline: none;
+    }
+
+    .copilot-input:focus {
+        border-color: #137fec;
+    }
+
+    .copilot-send {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #137fec;
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .copilot-sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+</style>
+
+<div id="copilot-container">
+    <div id="copilot-panel">
+        <div class="copilot-header">
+            <span>AI Copilot</span>
+            <button id="copilot-close" aria-label="Close AI Copilot"
+                style="background:none;border:none;color:white;cursor:pointer;font-size:18px;">&times;</button>
+        </div>
+        <div class="copilot-body" id="copilot-chatbox">
+            <div class="copilot-msg copilot-ai">Hello! I'm your Real Estate Agentic Copilot. Try asking me "find 2 bed
+                properties over 120 meters".</div>
+        </div>
+        <div class="copilot-footer">
+            <form class="copilot-form" id="copilot-form-internal">
+                <input type="hidden" id="copilot-csrf-internal" value="{{ csrf_token() if csrf_token else '' }}">
+                <label for="copilot-input-internal" class="copilot-sr-only">Message for AI Copilot</label>
+                <input type="text" class="copilot-input" id="copilot-input-internal" placeholder="Ask anything..."
+                    autocomplete="off">
+                <button type="submit" class="copilot-send" id="copilot-send-btn" aria-label="Send message">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path
+                            d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z" />
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+    <button id="copilot-fab" aria-label="Toggle AI Copilot">
+        <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+            <path
+                d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4.414A2 2 0 0 0 3 11.586l-2 2V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z" />
+            <path
+                d="M5 6a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
+        </svg>
+    </button>
+</div>
+
+<script>
+    (function () {
+        const fab = document.getElementById('copilot-fab');
+        const panel = document.getElementById('copilot-panel');
+        const closeBtn = document.getElementById('copilot-close');
+        const form = document.getElementById('copilot-form-internal');
+        const input = document.getElementById('copilot-input-internal');
+        const chatbox = document.getElementById('copilot-chatbox');
+        const csrfEl = document.getElementById('copilot-csrf-internal');
+
+        let chatHistory = [];
+
+        if (fab) fab.addEventListener('click', () => panel.classList.toggle('open'));
+        if (closeBtn) closeBtn.addEventListener('click', () => panel.classList.remove('open'));
+
+        function addMessage(text, isUser) {
+            if (!text) return null;
+            const msg = document.createElement('div');
+            msg.className = `copilot-msg ${isUser ? 'copilot-user' : 'copilot-ai'}`;
+            let html = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+            msg.innerHTML = html;
+            chatbox.appendChild(msg);
+            chatbox.scrollTop = chatbox.scrollHeight;
+            return msg;
+        }
+
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const message = input.value.trim();
+                if (!message) return;
+
+                addMessage(message, true);
+                input.value = '';
+
+                const loadingMsg = addMessage('...', false);
+                let token = '';
+                if (csrfEl && csrfEl.value) {
+                    token = csrfEl.value;
+                } else {
+                    const metaCsrf = document.querySelector('meta[name="csrf-token"]');
+                    if (metaCsrf) token = metaCsrf.content;
+                    else {
+                        const inputCsrf = document.querySelector('input[name="csrf_token"]');
+                        if (inputCsrf) token = inputCsrf.value;
+                    }
+                }
+
+                try {
+                    const res = await fetch('/api/v1/chat/copilot', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': token
+                        },
+                        body: JSON.stringify({ message: message, history: chatHistory })
+                    });
+
+                    let data = {};
+                    try { data = await res.json(); } catch (err) { }
+
+                    loadingMsg.remove();
+
+                    if (!res.ok) {
+                        addMessage(data.message || data.error || data.reply || "Something went wrong.", false);
+                    } else {
+                        chatHistory.push({ role: "user", parts: [message] });
+                        chatHistory.push({ role: "model", parts: [data.reply] });
+                        addMessage(data.reply, false);
+                    }
+                } catch (err) {
+                    loadingMsg.remove();
+                    console.error("Copilot Error:", err);
+                    addMessage("Network or server error connecting to Copilot.", false);
+                }
+            });
+        }
+    })();
+</script>

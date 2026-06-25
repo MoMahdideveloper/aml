@@ -1,0 +1,43 @@
+{
+  "project": "gptvli",
+  "generated_at": "2026-02-18T23:35:00Z",
+  "stages": [
+    {
+      "id": "PB1",
+      "objective": "Architecture delta mapping",
+      "context_ids": ["PB-CTX-001", "PB-CTX-002", "PB-CTX-003", "PB-CTX-004", "PB-CTX-005", "PB-CTX-006", "PB-CTX-007", "PB-CTX-008", "PB-CTX-009", "PB-CTX-010", "PB-CTX-011", "PB-CTX-012", "PB-CTX-013", "PB-CTX-014", "PB-CTX-015"],
+      "expected_output": "dependency_ordered_architecture_diff"
+    },
+    {
+      "id": "PB2",
+      "objective": "Smart Context Engine design",
+      "context_ids": ["PB-CTX-002", "PB-CTX-004", "PB-CTX-005", "PB-CTX-009", "PB-CTX-010", "PB-CTX-011", "PB-CTX-012"],
+      "expected_output": "multimodal_benefit_engine_spec"
+    },
+    {
+      "id": "PB3",
+      "objective": "Dual scoring engine design",
+      "context_ids": ["PB-CTX-002", "PB-CTX-003", "PB-CTX-006", "PB-CTX-007", "PB-CTX-008", "PB-CTX-009", "PB-CTX-010"],
+      "expected_output": "customer_property_scoring_spec"
+    },
+    {
+      "id": "PB4",
+      "objective": "Matchmaker + Copilot API and UI",
+      "context_ids": ["PB-CTX-001", "PB-CTX-005", "PB-CTX-006", "PB-CTX-007", "PB-CTX-011", "PB-CTX-013", "PB-CTX-014", "PB-CTX-015"],
+      "expected_output": "secure_matchmaker_endpoint_and_frontend_plan"
+    },
+    {
+      "id": "PB5",
+      "objective": "Weekly trends and training pipeline",
+      "context_ids": ["PB-CTX-003", "PB-CTX-004", "PB-CTX-006", "PB-CTX-008", "PB-CTX-009", "PB-CTX-010"],
+      "expected_output": "trend_playbook_pipeline"
+    },
+    {
+      "id": "PB6",
+      "objective": "Execution synthesis and backlog",
+      "context_ids": ["PB-CTX-001", "PB-CTX-002", "PB-CTX-003", "PB-CTX-004", "PB-CTX-005", "PB-CTX-006", "PB-CTX-007", "PB-CTX-008", "PB-CTX-009", "PB-CTX-010", "PB-CTX-011", "PB-CTX-012", "PB-CTX-013", "PB-CTX-014", "PB-CTX-015"],
+      "expected_output": "three_wave_implementation_backlog_with_tests"
+    }
+  ]
+}
+

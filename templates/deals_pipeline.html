@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Deals Pipeline - Luxe Estate</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#0c1d2d",
+                        "secondary-fixed-dim": "#c6c6c6",
+                        "outline": "#74777d",
+                        "inverse-primary": "#b7c8dd",
+                        "tertiary-fixed": "#e5e3d6",
+                        "secondary-fixed": "#e3e2e2",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-container": "#626363",
+                        "on-secondary-fixed-variant": "#464747",
+                        "on-background": "#111d27",
+                        "surface-container-highest": "#d8e4f3",
+                        "surface-container-high": "#dee9f8",
+                        "on-primary-container": "#93a4b8",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#111d27",
+                        "tertiary": "#23241c",
+                        "on-surface-variant": "#44474c",
+                        "background": "#f7f9ff",
+                        "surface": "#f7f9ff",
+                        "on-primary-fixed-variant": "#38485a",
+                        "surface-tint": "#506072",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "inverse-on-surface": "#e8f2ff",
+                        "tertiary-fixed-dim": "#c8c7bb",
+                        "on-tertiary-fixed-variant": "#47473e",
+                        "on-tertiary-container": "#a3a297",
+                        "primary-fixed-dim": "#b7c8dd",
+                        "tertiary-container": "#393930",
+                        "primary-container": "#2a3a4b",
+                        "on-tertiary-fixed": "#1c1c14",
+                        "surface-dim": "#d0dbea",
+                        "inverse-surface": "#26313d",
+                        "error-red": "#BA1A1A",
+                        "surface-container-low": "#edf4ff",
+                        "surface-container": "#e3effe",
+                        "primary": "#142435",
+                        "outline-variant": "#c4c6cc",
+                        "surface-white": "#FFFFFF",
+                        "error": "#ba1a1a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#d8e4f3",
+                        "secondary-container": "#e0dfdf",
+                        "error-container": "#ffdad6",
+                        "secondary": "#5d5e5f",
+                        "primary-fixed": "#d3e4fa",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "surface-bright": "#f7f9ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "max-width": "1280px",
+                        "gutter": "24px",
+                        "base": "8px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "64px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["IBM Plex Sans"],
+                        "headline-md": ["IBM Plex Sans"],
+                        "body-md": ["IBM Plex Sans"],
+                        "display-lg": ["IBM Plex Sans"],
+                        "body-lg": ["IBM Plex Sans"],
+                        "label-md": ["IBM Plex Sans"],
+                        "headline-lg-mobile": ["IBM Plex Sans"],
+                        "headline-lg": ["IBM Plex Sans"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for kanban board */
+        .kanban-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+        .kanban-scroll::-webkit-scrollbar-track {
+            background: #f7f9ff;
+        }
+        .kanban-scroll::-webkit-scrollbar-thumb {
+            background-color: #c4c6cc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<nav class="bg-background dark:bg-background w-full top-0 sticky border-b border-outline-variant z-50">
+<div class="flex justify-between items-center h-16 px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto">
+<!-- Brand -->
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-2xl" data-weight="fill" style="font-variation-settings: 'FILL' 1;">architecture</span>
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">Luxe Estate</span>
+</div>
+<!-- Search (Web) -->
+<div class="hidden md:flex items-center bg-surface-white border border-outline-variant rounded-full px-4 py-1.5 w-64 focus-within:border-primary transition-colors">
+<span class="material-symbols-outlined text-outline text-sm mr-2">search</span>
+<input class="bg-transparent border-none outline-none text-label-md font-label-md w-full focus:ring-0 text-on-surface" placeholder="Search..." type="text"/>
+</div>
+<!-- Navigation Links (Web) -->
+<ul class="hidden md:flex items-center gap-8 font-label-md text-label-md">
+<li class="cursor-pointer active:opacity-80 text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed transition-colors">Dashboard</li>
+<li class="cursor-pointer active:opacity-80 text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed transition-colors">Inventory</li>
+<li class="cursor-pointer active:opacity-80 text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed transition-colors">Agents</li>
+<li class="cursor-pointer active:opacity-80 text-primary dark:text-primary-fixed font-bold border-b-2 border-primary py-5">Deals</li>
+</ul>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-4">
+<button class="hidden md:block bg-primary text-on-primary font-label-md text-label-md px-6 py-2 rounded shadow-sm hover:bg-primary/90 transition-colors">
+                    List Your Property
+                </button>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined cursor-pointer text-outline hover:text-primary transition-colors">notifications</span>
+<span class="material-symbols-outlined cursor-pointer text-outline hover:text-primary transition-colors hidden md:block">settings</span>
+<img alt="User Profile Avatar" class="w-8 h-8 rounded-full object-cover border border-outline-variant cursor-pointer" data-alt="A professional headshot of a corporate real estate executive in a sharp navy suit. The lighting is crisp and even, highlighting a trustworthy expression against a soft, bright white background. The overall tone aligns perfectly with a high-end, premium corporate aesthetic, emphasizing clarity and modern sophistication." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiGIXuq5idOBV2hEOBRn2WAz4XgJ7fC2ZDZSvBTZOrB-oZY0WaGKYhkCjPilf9O4VF3_hcpoZqw-ZHWvkdS-5an1QbujC8EYQ85RW-Y9WnGMdGYdLSghRZnzSc3sPJek1jnieUDfp3hqNklXHotllm-YAsfmRt4Gh0cePjwyoZuEBhVH6ZAQAc7MtuU6TtnwgWWadek1gNEo_cDBQH-uhsZowjah5toJ5taQD-JB5q8gaVOsHPUI4"/>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="flex-1 flex overflow-hidden">
+<!-- Sidebar Filter (Left) -->
+<aside class="w-64 bg-surface-white border-r border-outline-variant flex-shrink-0 hidden lg:flex flex-col h-full p-6 overflow-y-auto">
+<h2 class="font-headline-md text-body-lg font-semibold text-primary mb-6">Filters</h2>
+<div class="space-y-6">
+<!-- Date Range -->
+<div>
+<label class="block font-label-sm text-label-sm text-secondary mb-2 uppercase tracking-wider">Date Range</label>
+<div class="space-y-2">
+<label class="flex items-center gap-2 cursor-pointer group">
+<input checked="" class="form-radio text-primary border-outline-variant focus:ring-primary" name="date" type="radio"/>
+<span class="font-body-md text-label-md text-on-surface group-hover:text-primary transition-colors">This Quarter</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="form-radio text-primary border-outline-variant focus:ring-primary" name="date" type="radio"/>
+<span class="font-body-md text-label-md text-on-surface group-hover:text-primary transition-colors">Last Quarter</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="form-radio text-primary border-outline-variant focus:ring-primary" name="date" type="radio"/>
+<span class="font-body-md text-label-md text-on-surface group-hover:text-primary transition-colors">This Year</span>
+</label>
+</div>
+</div>
+<div class="h-px bg-outline-variant w-full"></div>
+<!-- Agent -->
+<div>
+<label class="block font-label-sm text-label-sm text-secondary mb-2 uppercase tracking-wider">Agent</label>
+<div class="space-y-2">
+<label class="flex items-center gap-2 cursor-pointer group">
+<input checked="" class="form-checkbox text-primary border-outline-variant rounded-sm focus:ring-primary" type="checkbox"/>
+<span class="font-body-md text-label-md text-on-surface group-hover:text-primary transition-colors">Sarah Jenkins</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="form-checkbox text-primary border-outline-variant rounded-sm focus:ring-primary" type="checkbox"/>
+<span class="font-body-md text-label-md text-on-surface group-hover:text-primary transition-colors">Michael Chang</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="form-checkbox text-primary border-outline-variant rounded-sm focus:ring-primary" type="checkbox"/>
+<span class="font-body-md text-label-md text-on-surface group-hover:text-primary transition-colors">Elena Rodriguez</span>
+</label>
+</div>
+</div>
+<div class="h-px bg-outline-variant w-full"></div>
+<!-- Deal Type -->
+<div>
+<label class="block font-label-sm text-label-sm text-secondary mb-2 uppercase tracking-wider">Deal Type</label>
+<div class="flex gap-2">
+<button class="flex-1 bg-primary text-on-primary font-label-md text-label-sm py-1.5 rounded border border-primary text-center">Sale</button>
+<button class="flex-1 bg-surface-white text-on-surface font-label-md text-label-sm py-1.5 rounded border border-outline-variant hover:border-primary text-center transition-colors">Rent</button>
+</div>
+</div>
+<div class="h-px bg-outline-variant w-full"></div>
+<!-- Value Range -->
+<div>
+<label class="block font-label-sm text-label-sm text-secondary mb-2 uppercase tracking-wider">Value Range</label>
+<div class="flex items-center gap-2">
+<input class="w-full bg-surface-white border border-outline-variant rounded px-3 py-2 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" placeholder="$Min" type="text"/>
+<span class="text-secondary">-</span>
+<input class="w-full bg-surface-white border border-outline-variant rounded px-3 py-2 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" placeholder="$Max" type="text"/>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-6">
+<button class="w-full bg-surface-white text-primary border border-outline-variant font-label-md text-label-md py-2 rounded hover:border-primary hover:bg-surface-container-lowest transition-all">
+                    Reset Filters
+                </button>
+</div>
+</aside>
+<!-- Pipeline Board Area -->
+<div class="flex-1 flex flex-col h-full overflow-hidden bg-background">
+<!-- Header Section -->
+<header class="p-6 md:px-gutter flex flex-col md:flex-row md:items-center justify-between gap-4 flex-shrink-0">
+<div>
+<h1 class="font-headline-lg text-headline-lg font-bold text-primary mb-1">Deals Pipeline</h1>
+<p class="font-body-md text-label-md text-secondary">Track and manage transactions from prospecting to closing.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="lg:hidden flex items-center justify-center p-2 border border-outline-variant rounded bg-surface-white text-primary">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-6 py-2 rounded shadow-sm hover:bg-primary/90 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                        Add New Deal
+                    </button>
+</div>
+</header>
+<!-- Kanban Board Scroll Container -->
+<div class="flex-1 overflow-x-auto overflow-y-hidden kanban-scroll p-6 pt-0 flex gap-6 pb-8">
+<!-- Column: Prospecting -->
+<div class="w-80 flex-shrink-0 flex flex-col h-full">
+<div class="flex justify-between items-center mb-4 pb-2 border-b border-outline-variant">
+<h3 class="font-headline-md text-body-md font-semibold text-primary uppercase tracking-wide">Prospecting</h3>
+<div class="text-right">
+<span class="block font-label-sm text-label-sm text-secondary">{{ pipeline_stats.prospecting.count }} Deals</span>
+<span class="block font-label-sm text-label-sm font-semibold text-primary">${pipeline_stats.prospecting.value/1000000|round(1)}M</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto pr-2 space-y-4 pb-4">
+<!-- Card 1 -->
+<div class="bg-surface-white rounded-lg border border-outline-variant p-4 shadow-[0_4px_12px_rgba(27,38,49,0.04)] hover:shadow-[0_8px_24px_rgba(27,38,49,0.08)] transition-all group cursor-grab">
+<div class="flex gap-3 mb-3">
+<img alt="Property Thumbnail" class="w-16 h-16 rounded object-cover flex-shrink-0" data-alt="A modern luxury mansion exterior featuring clean geometric lines, expansive glass windows, and a pristine swimming pool. The lighting is golden hour, casting long soft shadows and emphasizing the premium, upscale nature of the property. The overall mood is sophisticated and aspirational." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUomcnCk4_pQleX3yjRRkHUifyqtBjo_gZ4Yh6ceatq3qRAgvjthdM_ih6cBvr6N3flyyTJQmBBhnL3bffIDdrgaCAldXN7Qk8-VnHCjqRo4NScwFt8gubDM7P8ycTPne6CTCXwCdWD7zyFIgwLcNuQQFkJStIVBH49VdVitnjOTssToO676IZh3EKlL8jEsoRSKspF2wIrCw8x-4hZgSsuYSFz6SVW3IKjmOxivoevJRwtKE_9E0"/>
+<div class="flex-1 min-w-0">
+<h4 class="font-headline-md text-label-md font-semibold text-on-surface truncate">Modern Estate Villa</h4>
+<p class="font-body-md text-label-sm text-secondary truncate">Client: J. Peterson</p>
+<p class="font-body-md text-label-sm text-secondary truncate">Agent: S. Jenkins</p>
+</div>
+</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-outline-variant border-dashed">
+<span class="font-label-md text-label-md font-bold text-primary">$2,400,000</span>
+<div class="flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded text-primary text-[10px] font-semibold border border-primary-fixed-dim">
+<span class="w-1.5 h-1.5 rounded-full bg-error-red"></span>
+                                    10%
+                                </div>
+</div>
+<!-- Card Actions Overlay (Visible on hover) -->
+<div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-surface-white/90 rounded p-1 backdrop-blur-sm shadow-sm border border-outline-variant">
+<button class="p-1 hover:text-primary text-secondary transition-colors" title="Move"><span class="material-symbols-outlined text-[16px]">drag_indicator</span></button>
+<button class="p-1 hover:text-primary text-secondary transition-colors" title="Details"><span class="material-symbols-outlined text-[16px]">open_in_new</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Column: Contact Made -->
+<div class="w-80 flex-shrink-0 flex flex-col h-full">
+<div class="flex justify-between items-center mb-4 pb-2 border-b border-outline-variant">
+<h3 class="font-headline-md text-body-md font-semibold text-primary uppercase tracking-wide">Contact Made</h3>
+<div class="text-right">
+<span class="block font-label-sm text-label-sm text-secondary">{{ pipeline_stats.contact_made.count }} Deals</span>
+<span class="block font-label-sm text-label-sm font-semibold text-primary">${pipeline_stats.contact_made.value/1000000|round(1)}M</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto pr-2 space-y-4 pb-4">
+<!-- Card -->
+<div class="bg-surface-white rounded-lg border border-outline-variant p-4 shadow-[0_4px_12px_rgba(27,38,49,0.04)] hover:shadow-[0_8px_24px_rgba(27,38,49,0.08)] transition-all group cursor-grab relative">
+<div class="flex gap-3 mb-3">
+<div class="w-16 h-16 rounded bg-surface-container-high flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-outline">image</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="font-headline-md text-label-md font-semibold text-on-surface truncate">Downtown Loft</h4>
+<p class="font-body-md text-label-sm text-secondary truncate">Client: M. Rivera</p>
+<p class="font-body-md text-label-sm text-secondary truncate">Agent: M. Chang</p>
+</div>
+</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-outline-variant border-dashed">
+<span class="font-label-md text-label-md font-bold text-primary">$850,000</span>
+<div class="flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded text-primary text-[10px] font-semibold border border-primary-fixed-dim">
+<span class="w-1.5 h-1.5 rounded-full bg-[#f59e0b]"></span>
+                                    25%
+                                </div>
+</div>
+</div>
+</div>
+</div>
+<!-- Column: Property Shown -->
+<div class="w-80 flex-shrink-0 flex flex-col h-full">
+<div class="flex justify-between items-center mb-4 pb-2 border-b border-outline-variant">
+<h3 class="font-headline-md text-body-md font-semibold text-primary uppercase tracking-wide">Property Shown</h3>
+<div class="text-right">
+<span class="block font-label-sm text-label-sm text-secondary">{{ pipeline_stats.property_shown.count }} Deals</span>
+<span class="block font-label-sm text-label-sm font-semibold text-primary">${pipeline_stats.property_shown.value/1000000|round(1)}M</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto pr-2 space-y-4 pb-4">
+<!-- Card -->
+<div class="bg-surface-white rounded-lg border border-outline-variant p-4 shadow-[0_4px_12px_rgba(27,38,49,0.04)] hover:shadow-[0_8px_24px_rgba(27,38,49,0.08)] transition-all group cursor-grab relative">
+<div class="flex gap-3 mb-3">
+<img alt="Property Thumbnail" class="w-16 h-16 rounded object-cover flex-shrink-0" data-alt="A sleek, minimalist luxury penthouse interior showcasing floor-to-ceiling windows with a panoramic city skyline view. The space is bright and airy, flooded with natural daylight. Neutral tones, high-end contemporary furniture, and subtle blue accents define the sophisticated corporate-residential aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOVg8vwmQs9i7WFAw4ZGzRHqM8Tkqsk3IoLzTAPO7gpRgCsuWFZnkastUJ6n7AQBXTzTjPHplTaBC0dPw8lIgq6pzLNq1eKznFUZB3xcRFCIThhulzw3FMU7fTbL0XvL_skuvcneSjgGsScvIto9mThHH8td0Ay_VBpLlUWnj8aWZrnWDLCGksfeyXFZZek8N7BN1qbmoAJVan4B3ELiQUJ7ji-GEqmXMQXJMYqjpgslgKgcZnge4"/>
+<div class="flex-1 min-w-0">
+<h4 class="font-headline-md text-label-md font-semibold text-on-surface truncate">Park Ave Penthouse</h4>
+<p class="font-body-md text-label-sm text-secondary truncate">Client: The Vanguard Group</p>
+<p class="font-body-md text-label-sm text-secondary truncate">Agent: S. Jenkins</p>
+</div>
+</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-outline-variant border-dashed">
+<span class="font-label-md text-label-md font-bold text-primary">$8,500,000</span>
+<div class="flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded text-primary text-[10px] font-semibold border border-primary-fixed-dim">
+<span class="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span>
+                                    50%
+                                </div>
+</div>
+<div class="mt-2 flex items-center gap-1 text-label-sm text-secondary">
+<span class="material-symbols-outlined text-[14px]">event</span>
+<span class="text-[11px]">Exp. Close: Nov 15</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Column: Offer Submitted -->
+<div class="w-80 flex-shrink-0 flex flex-col h-full bg-surface-container-lowest/50 rounded-lg border border-outline-variant/30 p-2">
+<div class="flex justify-between items-center mb-4 pb-2 border-b border-outline-variant">
+<h3 class="font-headline-md text-body-md font-semibold text-primary uppercase tracking-wide">Offer Submitted</h3>
+<div class="text-right">
+<span class="block font-label-sm text-label-sm text-secondary">{{ pipeline_stats.offer_submitted.count }} Deals</span>
+<span class="block font-label-sm text-label-sm font-semibold text-primary">${pipeline_stats.offer_submitted.value/1000000|round(1)}M</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col items-center justify-center text-center p-4 border-2 border-dashed border-outline-variant/50 rounded-lg mx-2 mb-2">
+<span class="material-symbols-outlined text-outline text-3xl mb-2">inbox</span>
+<p class="font-body-md text-label-md text-secondary">No deals in this stage</p>
+</div>
+</div>
+<!-- Column: Negotiation -->
+<div class="w-80 flex-shrink-0 flex flex-col h-full">
+<div class="flex justify-between items-center mb-4 pb-2 border-b border-outline-variant">
+<h3 class="font-headline-md text-body-md font-semibold text-primary uppercase tracking-wide">Negotiation</h3>
+<div class="text-right">
+<span class="block font-label-sm text-label-sm text-secondary">{{ pipeline_stats.negotiation.count }} Deals</span>
+<span class="block font-label-sm text-label-sm font-semibold text-primary">${pipeline_stats.negotiation.value/1000000|round(1)}M</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto pr-2 space-y-4 pb-4">
+<!-- Card -->
+<div class="bg-surface-white rounded-lg border border-primary p-4 shadow-[0_4px_12px_rgba(27,38,49,0.08)] transition-all group cursor-grab relative">
+<div class="absolute top-0 right-0 bg-primary text-on-primary text-[10px] font-bold px-2 py-0.5 rounded-bl-lg rounded-tr-lg">HOT</div>
+<div class="flex gap-3 mb-3">
+<img alt="Property Thumbnail" class="w-16 h-16 rounded object-cover flex-shrink-0 mt-1" data-alt="A stunning modern architectural home perched on a hillside at dusk. The warm interior lighting glows through expansive glass facades against the twilight sky. The setting conveys exclusivity, high-value real estate, and sophisticated modern living." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjCjM63wGerFdqcl7ILM6pCDAarGeKYIegc_fsk3iZbTye5Fb5gf6ZMtlj3dnslKkx5oYQwoLF3bxvcg921oxh_eWapNMRl4jLqbTk_tUyl3fMaHNBUpKFZ8iZEaCugBpWGnGoJSGgH9eXyK4FQzayZsz_aHy_-AS76jOuZQt8u2CCLuYOA2OUi_1lkRAjhsvRIrPwW1r_1Z3J4tEk30V5tuTP5vQtRBOW9FDBm3fICrEa3IfJmzk"/>
+<div class="flex-1 min-w-0">
+<h4 class="font-headline-md text-label-md font-semibold text-on-surface truncate">Coastal Retreat</h4>
+<p class="font-body-md text-label-sm text-secondary truncate">Client: L. Vance</p>
+<p class="font-body-md text-label-sm text-secondary truncate">Agent: E. Rodriguez</p>
+</div>
+</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-outline-variant border-dashed">
+<span class="font-label-md text-label-md font-bold text-primary">$4,100,000</span>
+<div class="flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded text-primary text-[10px] font-semibold border border-primary-fixed-dim">
+<span class="w-1.5 h-1.5 rounded-full bg-[#3b82f6]"></span>
+                                    75%
+                                </div>
+</div>
+<div class="mt-2 flex items-center gap-1 text-label-sm text-secondary">
+<span class="material-symbols-outlined text-[14px]">event</span>
+<span class="text-[11px]">Exp. Close: Oct 28</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-background dark:bg-background w-full py-8 border-t border-outline-variant mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto gap-4">
+<div class="font-label-md text-label-md font-semibold text-primary">Luxe Estate</div>
+<ul class="flex flex-wrap justify-center gap-4 md:gap-8 font-label-sm text-label-sm text-secondary dark:text-secondary-fixed-dim">
+<li class="cursor-pointer hover:text-primary dark:hover:text-primary-fixed transition-colors">Privacy Policy</li>
+<li class="cursor-pointer hover:text-primary dark:hover:text-primary-fixed transition-colors">Terms of Service</li>
+<li class="cursor-pointer hover:text-primary dark:hover:text-primary-fixed transition-colors">Cookie Policy</li>
+<li class="cursor-pointer hover:text-primary dark:hover:text-primary-fixed transition-colors">Regulatory Disclosure</li>
+</ul>
+<div class="font-label-sm text-label-sm text-secondary dark:text-secondary-fixed-dim">
+                © 2024 Luxe Estate Management. All rights reserved.
+            </div>
+</div>
+</footer>
+</body></html>

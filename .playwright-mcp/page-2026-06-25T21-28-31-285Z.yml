@@ -1,0 +1,66 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link:
+        - /url: /
+      - generic [ref=e4]:
+        - generic [ref=e5]: search
+        - textbox "Search..." [ref=e6]
+    - navigation [ref=e7]:
+      - link "Dashboard" [ref=e8] [cursor=pointer]:
+        - /url: /dashboard
+      - link "Properties" [ref=e9] [cursor=pointer]:
+        - /url: /properties
+      - link "Analytics" [ref=e10] [cursor=pointer]:
+        - /url: /analytics
+      - link "Clients" [ref=e11] [cursor=pointer]:
+        - /url: /clients
+    - generic [ref=e12]:
+      - button [ref=e13]
+      - button "notifications" [ref=e14]:
+        - generic [ref=e15]: notifications
+      - button "settings" [ref=e16]:
+        - generic [ref=e17]: settings
+      - generic [ref=e18]:
+        - img "User profile"
+  - main [ref=e19]:
+    - generic:
+      - heading [level=1]
+      - paragraph
+    - generic [ref=e20]:
+      - generic:
+        - heading [level=2]
+      - generic [ref=e21]:
+        - heading [level=2]
+        - generic [ref=e22]:
+          - generic [ref=e23]:
+            - button "chevron_left" [ref=e24]:
+              - generic [ref=e25]: chevron_left
+            - button "chevron_right" [ref=e26]:
+              - generic [ref=e27]: chevron_right
+          - generic [ref=e28]:
+            - generic [ref=e29]: Su
+            - generic [ref=e30]: Mo
+            - generic [ref=e31]: Tu
+            - generic [ref=e32]: We
+            - generic [ref=e33]: Th
+            - generic [ref=e34]: Fr
+            - generic [ref=e35]: Sa
+        - generic:
+          - heading [level=3]
+          - list
+    - generic [ref=e37]:
+      - generic [ref=e38]:
+        - heading [level=2]
+        - paragraph [ref=e39]: "\"\""
+        - paragraph
+      - button "download" [ref=e40]:
+        - generic [ref=e41]: download
+  - contentinfo [ref=e42]:
+    - navigation [ref=e43]:
+      - link "Privacy Policy" [ref=e44] [cursor=pointer]:
+        - /url: /privacy
+      - link "Terms of Service" [ref=e45] [cursor=pointer]:
+        - /url: /terms
+      - link "Contact Support" [ref=e46] [cursor=pointer]:
+        - /url: /support

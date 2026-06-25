@@ -1,0 +1,3 @@
+[GET] http://127.0.0.1:5000/agents/4/edit => [200] OK
+[POST] http://127.0.0.1:5000/agents/4 => [200] OK
+[DELETE] http://127.0.0.1:5000/agents/4 => [200] OK

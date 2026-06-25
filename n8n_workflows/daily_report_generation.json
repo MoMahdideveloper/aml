@@ -1,0 +1,98 @@
+{
+  "name": "Daily CRM Report Generation",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": [
+          {
+            "mode": "everyDay",
+            "hour": 6,
+            "minute": 30
+          }
+        ]
+      },
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "id": "cron1"
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:5000/api/analysis/trigger",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={\n  \"project_name\": \"Daily CRM Report\",\n  \"analysis_type\": \"full\"\n}",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "name": "Trigger Full Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        500,
+        100
+      ],
+      "id": "httpRequest1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Wait for analysis to complete by polling\n// In a production workflow, you might use a more sophisticated polling or webhook callback\nreturn [{ json: {\n  waitFor: 'analysis_completion',\n  checkInterval: 30, // seconds\n  maxAttempts: 20\n} }];"
+      },
+      "name": "Prepare Polling",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        750,
+        50
+      ],
+      "id": "function1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "SELECT * FROM analysis_reports WHERE status = 'completed' ORDER BY completed_at DESC LIMIT 1",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {}
+            }
+          ]
+        }
+      },
+      "name": "Get Latest Report",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        100
+      ],
+      "id": "postgres1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract and format report data\nconst report = $json[0] || {};\n\nreturn [{ json: {\n  reportId: report.id || 'N/A',\n  title: report.title || 'Daily CRM Analysis Report',\n  generatedAt: report.completed_at || new Date().toISOString(),\n  overallScore: report.overall_score || 0,\n  totalProperties: report.total_properties || 0,\n  totalCustomers: report.total_customers || 0,\n  totalDeals: report.total_deals || 0,\n  keyInsights: report.key_insights || [],\n  recommendations: report.recommendations || [],\n  metrics: {\n    leadsToday: report.metrics?.leads_today || 0,\n    appointmentsToday: report.metrics?.appointments_today || 0,\n    dealsClosedToday: report.metrics?.deals_closed_today || 0,\n    revenueToday: report.metrics?.revenue_today || 0\n  },\n  htmlReport: generateHtmlReport(report)\n} }];\n\nfunction generateHtmlReport(report) {\n  return `<!DOCTYPE html>\n<html>\n<head>\n  <title>${report.title || 'CRM Report'}</title>\n  <style>\n    body { font-family: Arial, sans-serif; margin: 20px; }\n    .header { background-color: #f4f4f4; padding: 20px; text-align: center; }\n    .metrics { display: flex; justify-content: space-around; margin: 20px 0; }\n    .metric { text-align: center; padding: 15px; background-color: #e9f7ef; border-radius: 8px; }\n    .metric-value { font-size: 2em; font-weight: bold; color: #2e7d32; }\n    .metric-label { color: #555; font-size: 0.9em; }\n    .section { margin: 20px 0; padding: 15px; border-left: 4px solid #2e7d32; }\n    .recommendation { background-color: #f8f9fa; margin: 10px 0; padding: 15px; border-left: 3px solid #ff9800; }\n    .footer { text-align: center; margin-top: 30px; color: #666; font-size: 0.9em; }\n  </style>\n</head>\n<body>\n  <div class=\"header\">\n    <h1>${report.title || 'Daily CRM Report'}</h1>\n    <p>Generated on ${new Date(report.created_at || Date.now()).toLocaleString()}</p>\n  </div>\n\n  <div class=\"metrics\">\n    <div class=\"metric\">\n      <div class=\"metric-value\">${report.properties_total || 0}</div>\n      <div class=\"metric-label\">Total Properties</div>\n    </div>\n    <div class=\"metric\">\n      <div class=\"metric-value\">${report.customers_total || 0}</div>\n      <div class=\"metric-label\">Total Customers</div>\n    </div>\n    <div class=\"metric\">\n      <div class=\"metric-value\">${report.deals_total || 0}</div>\n      <div class=\"metric-label\">Total Deals</div>\n    </div>\n    <div class=\"metric\">\n      <div class=\"metric-value\">${Math.round((report.overall_score || 0) * 10)}</div>\n      <div class=\"metric-label\">Health Score (/10)</div>\n    </div>\n  </div>\n\n  <div class=\"section\">\n    <h2>Key Insights</h2>\n    ${(report.key_insights || []).map(i => `<p>• ${i}</p>`).join('')}\n  </div>\n\n  <div class=\"section\">\n    <h2>Recommendations</h2>\n    ${(report.recommendations || []).map(r => `<div class=\"recommendation\"><strong>${r.title || 'Recommendation'}:</strong> ${r.description || ''}</div>`).join('')}\n  </div>\n\n  <div class=\"footer\">\n    <p>This report was generated automatically by your CRM system.</p>\n    <p>© ${new Date().getFullYear()} Your Real Estate Company. All rights reserved.</p>\n  </div>\n</body>\n</html>`;
+}"
+      }
+    }
+  ]
+}

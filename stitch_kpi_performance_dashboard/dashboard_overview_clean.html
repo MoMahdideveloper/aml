@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>{{pageTitle}}</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link href="/css/dashboard.css" rel="stylesheet"/>
+</head>
+<body class="bg-background font-body-md text-on-background antialiased min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-surface fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-4 max-w-max-width mx-auto border-b border-outline-variant">
+        <div class="flex items-center gap-4">
+            <a class="font-headline-md text-headline-md font-bold text-primary" href="/">
+                {{brandName}}
+            </a>
+            <div class="hidden md:flex items-center bg-surface-container-low rounded-full px-4 py-2 border border-outline-variant">
+                <span class="material-symbols-outlined text-outline mr-2">search</span>
+                <input class="bg-transparent border-none focus:ring-0 text-body-md font-body-md outline-none w-48" placeholder="Search..." type="text"/>
+            </div>
+        </div>
+        <nav class="hidden md:flex items-center gap-4">
+            <a class="text-primary font-bold border-b-2 border-primary pb-1 hover:text-primary-dim transition-colors" href="/dashboard">
+                Dashboard
+            </a>
+            <a class="text-on-surface-variant pb-1 hover:text-primary transition-colors" href="/properties">
+                Properties
+            </a>
+            <a class="text-on-surface-variant pb-1 hover:text-primary transition-colors" href="/analytics">
+                Analytics
+            </a>
+            <a class="text-on-surface-variant pb-1 hover:text-primary transition-colors" href="/clients">
+                Clients
+            </a>
+        </nav>
+        <div class="flex items-center gap-3">
+            <button class="hidden md:block bg-primary text-on-primary font-label-md text-label-md px-4 py-2 rounded hover:bg-primary-container hover:text-on-primary-container transition-colors">
+                {{ctaButtonText}}
+            </button>
+            <button class="text-on-surface-variant hover:text-primary transition-colors p-2">
+                <span class="material-symbols-outlined">notifications</span>
+            </button>
+            <button class="text-on-surface-variant hover:text-primary transition-colors p-2">
+                <span class="material-symbols-outlined">settings</span>
+            </button>
+            <div class="relative w-10 h-10">
+                <img alt="User profile" class="w-full h-full rounded-full object-cover border-2 border-outline-variant"
+                     src="{{userAvatarUrl}}"
+                     onerror="this.src='/images/default-avatar.png'"/>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow w-full max-w-max-width mx-auto px-4 md:px-6 py-12">
+        <!-- Page Heading -->
+        <div class="mb-8">
+            <h1 class="font-headline-lg text-headline-lg md:font-display-lg md:text-display-lg text-primary mb-2">
+                {{pageHeading}}
+            </h1>
+            <p class="font-body-lg text-body-lg text-on-surface-variant">
+                {{pageSubheading}}
+            </p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {{#each statsCards}}
+            <div class="bg-surface-white rounded-xl p-6 border border-outline-variant hover:shadow-lg transition-shadow">
+                <div class="flex justify-between items-start mb-3">
+                    <span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">{{label}}</span>
+                    <span class="material-symbols-outlined text-primary">{{icon}}</span>
+                </div>
+                <div class="font-headline-lg text-headline-lg text-primary mb-2">{{value}}</div>
+                <div class="font-label-sm text-label-sm {{trendClass}} flex items-center">
+                    <span class="material-symbols-outlined text-[16px] mr-1">{{trendIcon}}</span>
+                    {{trendValue}}
+                </div>
+            </div>
+            {{/each}}
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Left Column: Recent Activity -->
+            <div class="lg:col-span-2 bg-surface-white rounded-xl p-6 border border-outline-variant">
+                <h2 class="font-headline-md text-headline-md text-primary mb-6 border-b border-outline-variant pb-2">
+                    {{recentActivityTitle}}
+                </h2>
+                <div class="space-y-5 relative">
+                    {{#each recentActivities}}
+                    <div class="relative flex items-center justify-between">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-surface-container-low text-primary shrink-0">
+                            <span class="material-symbols-outiled">{{icon}}</span>
+                        </div>
+                        <div class="w-[calc(100%-4rem)] p-4 rounded border border-outline-variant bg-background shadow-sm">
+                            <div class="flex items-center justify-between space-x-2 mb-1">
+                                <div class="font-label-md text-label-md text-primary">{{title}}</div>
+                                <time class="font-label-sm text-label-sm text-on-surface-variant">{{timeAgo}}</time>
+                            </div>
+                            <div class="font-body-md text-body-md text-on-surface">{{description}}</div>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+            </div>
+
+            <!-- Right Column: Calendar & Schedule -->
+            <div class="bg-surface-white rounded-xl p-6 border border-outline-variant flex flex-col">
+                <h2 class="font-headline-md text-headline-md text-primary mb-6 border-b border-outline-variant pb-2">
+                    {{scheduleTitle}}
+                </h2>
+                <!-- Calendar -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <button class="text-on-surface-variant hover:text-primary p-2">
+                            <span class="material-symbols-outlined">chevron_left</span>
+                        </button>
+                        <span class="font-label-md text-label-md text-primary uppercase tracking-wide">{{currentMonth}}</span>
+                        <button class="text-on-surface-variant hover:text-primary p-2">
+                            <span class="material-symbols-outlined">chevron_right</span>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center font-label-sm text-label-sm text-on-surface-variant mb-2">
+                        <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center font-body-md text-body-md">
+                        {{#each calendarDays}}
+                        <div class="p-1 {{dayClass}} hover:bg-surface-container rounded cursor-pointer relative">
+                            {{dayNumber}}
+                            {{#if hasEvent}}
+                            <span class="absolute bottom-0 left-1/2 w-1 h-1 bg-primary rounded-full -translate-x-1/2"></span>
+                            {{/if}}
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+
+                <!-- Today's Schedule -->
+                <div class="flex-grow border-t border-outline-variant pt-4">
+                    <h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide mb-3">
+                        {{todayScheduleTitle}}
+                    </h3>
+                    <ul class="space-y-3">
+                        {{#each todaySchedule}}
+                        <li class="flex items-start gap-3 p-3 rounded bg-surface-container-low border border-outline-variant">
+                            <span class="material-symbols-outlined text-primary mt-0.5">{{icon}}</span>
+                            <div>
+                                <div class="font-label-md text-label-md text-primary">{{title}}</div>
+                                <div class="font-label-sm text-label-sm text-on-surface-variant">{{time}}</div>
+                            </div>
+                        </li>
+                        {{/each}}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="bg-primary rounded-xl p-8 md:p-12 text-on-primary relative overflow-hidden">
+            <div class="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="max-w-2xl">
+                    <h2 class="font-display-lg text-headline-lg-mobile md:text-display-lg font-bold mb-4">
+                        {{analyticsTitle}}
+                    </h2>
+                    <p class="font-body-lg text-body-lg text-primary-fixed mb-6 border-l-4 border-primary-fixed pl-4 py-1">
+                        "{{analyticsQuote}}"
+                    </p>
+                    <p class="font-body-md text-body-md text-on-primary-container">
+                        {{analyticsDescription}}
+                    </p>
+                </div>
+                <button class="shrink-0 bg-surface-white text-primary border border-outline-variant hover:bg-surface-container-low font-label-md text-label-md px-5 py-3 rounded transition-all">
+                    <span class="material-symbols-outlined">download</span>
+                    {{analyticsButtonText}}
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface w-full py-4 px-6 flex flex-col md:flex-row justify-between items-center border-t border-outline-variant mt-auto">
+        <div class="font-headline-md text-headline-md font-bold text-primary mb-2 md:mb-0">
+            {{brandName}}
+        </div>
+        <nav class="flex flex-wrap justify-center gap-4 mb-2 md:mb-0">
+            <a class="font-label-sm text-label-sm text-on-surface-variant hover:underline transition-all" href="/privacy">
+                Privacy Policy
+            </a>
+            <a class="font-label-sm text-label-sm text-on-surface-variant hover:underline transition-all" href="/terms">
+                Terms of Service
+            </a>
+            <a class="font-label-sm text-label-sm text-on-surface-variant hover:underline transition-all" href="/support">
+                Contact Support
+            </a>
+        </nav>
+        <div class="font-label-sm text-label-sm text-secondary">
+            {{footerText}}
+        </div>
+    </footer>
+</body>
+</html>

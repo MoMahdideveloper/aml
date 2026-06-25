@@ -1,0 +1,189 @@
+[
+  {
+    "type": "warning",
+    "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+    "location": {
+      "url": "https://cdn.tailwindcss.com/?plugins=forms,container-queries",
+      "lineNumber": 63,
+      "columnNumber": 13404
+    },
+    "ts": "2026-02-08T17:35:48.247Z",
+    "page": "http://127.0.0.1:5000/"
+  },
+  {
+    "type": "warning",
+    "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+    "location": {
+      "url": "https://cdn.tailwindcss.com/?plugins=forms,container-queries",
+      "lineNumber": 63,
+      "columnNumber": 13404
+    },
+    "ts": "2026-02-08T17:35:49.347Z",
+    "page": "http://127.0.0.1:5000/properties"
+  },
+  {
+    "type": "warning",
+    "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+    "location": {
+      "url": "https://cdn.tailwindcss.com/?plugins=forms,container-queries",
+      "lineNumber": 63,
+      "columnNumber": 13404
+    },
+    "ts": "2026-02-08T17:35:50.643Z",
+    "page": "http://127.0.0.1:5000/agents"
+  },
+  {
+    "type": "warning",
+    "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+    "location": {
+      "url": "https://cdn.tailwindcss.com/?plugins=forms,container-queries",
+      "lineNumber": 63,
+      "columnNumber": 13404
+    },
+    "ts": "2026-02-08T17:35:52.386Z",
+    "page": "http://127.0.0.1:5000/customers"
+  },
+  {
+    "type": "warning",
+    "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+    "location": {
+      "url": "https://cdn.tailwindcss.com/?plugins=forms,container-queries",
+      "lineNumber": 63,
+      "columnNumber": 13404
+    },
+    "ts": "2026-02-08T17:35:53.384Z",
+    "page": "http://127.0.0.1:5000/deals"
+  },
+  {
+    "type": "warning",
+    "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+    "location": {
+      "url": "https://cdn.tailwindcss.com/?plugins=forms,container-queries",
+      "lineNumber": 63,
+      "columnNumber": 13404
+    },
+    "ts": "2026-02-08T17:35:54.383Z",
+    "page": "http://127.0.0.1:5000/tasks"
+  },
+  {
+    "type": "warning",
+    "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+    "location": {
+      "url": "https://cdn.tailwindcss.com/?plugins=forms,container-queries",
+      "lineNumber": 63,
+      "columnNumber": 13404
+    },
+    "ts": "2026-02-08T17:35:55.396Z",
+    "page": "http://127.0.0.1:5000/recommendations"
+  },
+  {
+    "type": "warning",
+    "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+    "location": {
+      "url": "https://cdn.tailwindcss.com/?plugins=forms,container-queries",
+      "lineNumber": 63,
+      "columnNumber": 13404
+    },
+    "ts": "2026-02-08T17:35:56.398Z",
+    "page": "http://127.0.0.1:5000/recommendations/3"
+  },
+  {
+    "type": "warning",
+    "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+    "location": {
+      "url": "https://cdn.tailwindcss.com/?plugins=forms,container-queries",
+      "lineNumber": 63,
+      "columnNumber": 13404
+    },
+    "ts": "2026-02-08T17:35:57.403Z",
+    "page": "http://127.0.0.1:5000/market-analysis"
+  },
+  {
+    "type": "warning",
+    "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+    "location": {
+      "url": "https://cdn.tailwindcss.com/?plugins=forms,container-queries",
+      "lineNumber": 63,
+      "columnNumber": 13404
+    },
+    "ts": "2026-02-08T17:35:58.390Z",
+    "page": "http://127.0.0.1:5000/settings"
+  },
+  {
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (UNAUTHORIZED)",
+    "location": {
+      "url": "http://127.0.0.1:5000/admin/automations",
+      "lineNumber": 0,
+      "columnNumber": 0
+    },
+    "ts": "2026-02-08T17:35:59.373Z",
+    "page": "http://127.0.0.1:5000/admin/automations"
+  },
+  {
+    "type": "warning",
+    "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+    "location": {
+      "url": "https://cdn.tailwindcss.com/?plugins=forms,container-queries",
+      "lineNumber": 63,
+      "columnNumber": 13404
+    },
+    "ts": "2026-02-08T17:35:59.380Z",
+    "page": "http://127.0.0.1:5000/admin/automations"
+  },
+  {
+    "type": "warning",
+    "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+    "location": {
+      "url": "https://cdn.tailwindcss.com/?plugins=forms,container-queries",
+      "lineNumber": 63,
+      "columnNumber": 13404
+    },
+    "ts": "2026-02-08T17:36:00.348Z",
+    "page": "http://127.0.0.1:5000/admin/login"
+  },
+  {
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (UNAUTHORIZED)",
+    "location": {
+      "url": "http://127.0.0.1:5000/admin/environment",
+      "lineNumber": 0,
+      "columnNumber": 0
+    },
+    "ts": "2026-02-08T17:36:01.311Z",
+    "page": "http://127.0.0.1:5000/admin/environment"
+  },
+  {
+    "type": "warning",
+    "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+    "location": {
+      "url": "https://cdn.tailwindcss.com/?plugins=forms,container-queries",
+      "lineNumber": 63,
+      "columnNumber": 13404
+    },
+    "ts": "2026-02-08T17:36:01.316Z",
+    "page": "http://127.0.0.1:5000/admin/environment"
+  },
+  {
+    "type": "warning",
+    "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+    "location": {
+      "url": "https://cdn.tailwindcss.com/?plugins=forms,container-queries",
+      "lineNumber": 63,
+      "columnNumber": 13404
+    },
+    "ts": "2026-02-08T17:36:02.292Z",
+    "page": "http://127.0.0.1:5000/properties/4/detail"
+  },
+  {
+    "type": "warning",
+    "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+    "location": {
+      "url": "https://cdn.tailwindcss.com/?plugins=forms,container-queries",
+      "lineNumber": 63,
+      "columnNumber": 13404
+    },
+    "ts": "2026-02-08T17:36:03.292Z",
+    "page": "http://127.0.0.1:5000/properties/compare?ids=4,5"
+  }
+]

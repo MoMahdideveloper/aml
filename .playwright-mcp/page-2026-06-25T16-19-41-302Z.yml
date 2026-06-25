@@ -1,0 +1,21 @@
+- generic [ref=e2]:
+  - heading "Register" [level=2] [ref=e3]
+  - generic [ref=e4]: Username already taken
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e7]: Username
+      - textbox [ref=e8]
+    - generic [ref=e9]:
+      - generic [ref=e10]: Email
+      - textbox [ref=e11]
+    - generic [ref=e12]:
+      - generic [ref=e13]: Password
+      - textbox [ref=e14]
+    - generic [ref=e15]:
+      - generic [ref=e16]: Confirm Password
+      - textbox [ref=e17]
+    - button "Register" [ref=e18] [cursor=pointer]
+    - paragraph [ref=e19]:
+      - text: Already have an account?
+      - link "Login" [ref=e20] [cursor=pointer]:
+        - /url: /auth/login

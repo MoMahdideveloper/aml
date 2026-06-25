@@ -1,0 +1,256 @@
+{
+  "name": "New Customer Lead Processing",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/new-customer-lead",
+        "responseMode": "onReceived",
+        "responseData": {
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": "{\"status\": \"received\"}"
+        }
+      },
+      "name": "Webhook: New Customer Lead",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "id": "webhook1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract and validate lead data\nconst body = Object.assign({}, $json[\"body\"] || {});\nconst requiredFields = ['name', 'email', 'phone'];\nconst missing = requiredFields.filter(field => !body[field]);\n\nif (missing.length > 0) {\n  throw new Error(`Missing required fields: ${missing.join(', ')}`);\n}\n\n// Normalize data\nconst leadData = {\n  firstName: body.name.split(' ')[0] || '',\n  lastName: body.name.split(' ').slice(1).join(' ') || '',\n  email: body.email.toLowerCase().trim(),\n  phone: body.phone.replace(/[^0-9+]/g, ''), // Keep only digits and +\n  source: body.source || 'website_form',\n  interests: Array.isArray(body.interests) ? body.interests : [body.interests].filter(Boolean),\n  message: body.message || '',\n  createdAt: new Date().toISOString()\n};\n\nreturn [{ json: leadData }];"
+      },
+      "name": "Validate & Format Lead",
+      "type": "n8n8n.nodes.function",
+      "typeVersion": 1,
+      "position":nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        500,
+        0
+      ],
+      "id": "function 100
+      ],
+      "id": "function1"
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:5000/api/customers",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{ JSON.stringify({\n  firstName: $json[\"firstName\"],\n  lastName: $json[\"lastName\"],\n  email: $json[\"email\"],\n  phone: $json[\"phone\"],\n  source: $json[\"source\"],\n  notes: $json[\"message\"],\n  tags: $json[\"interests\"].join(', ')\n}) }}",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "name": "Create Customer Record",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        750,
+        100
+      ],
+      "id": "httpRequest1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract customer ID from response\nconst customerId = $json[\"id\"] || $json[\"customer_id\"];\nif (!customerId) {\n  throw new Error('Customer ID not found in response');\n}\n\nreturn [{\n  json: {\n    customerId: customerId,\n    leadData: $json\n  }\n}];"
+      },
+      "name": "Extract Customer ID",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        100
+      ],
+      "id": "function2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "INSERT INTO customer_interests (customer_id, interest, created_at) VALUES ($1, $2, NOW())",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {}
+            }
+          ]
+        }
+      },
+      "name": "Store Interests",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        50
+      ],
+      "id": "postgres1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process each interest\nconst interests = $json[\"leadData\"][\"interests\"] || [];\nreturn interests.map(interest => ({\n  json: {\n    customerId: $json[\"customerId\"],\n    interest: interest\n  }\n}));"
+      },
+      "name": "Split Interests",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        50
+      ],
+      "id": "split1"
+    },
+    {
+      "parameters": {
+        "assign": {
+          "values": [
+            {
+              "name": "customer_id",
+              "value": "={{$json[\"customerId\"]}}"
+            },
+            {
+              "name": "interest",
+              "value": "={{$json[\"interest\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "Set Query Params",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        50
+      ],
+      "id": "set1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Send welcome email/SMS\n// This would integrate with email/SMS services\n// For now, we'll just log the action\nreturn [{ json: {\n  action: 'welcome_message_sent',\n  customerId: $json[\"customerId\"],\n  timestamp: new Date().toISOString(),\n  message: `Welcome ${$json[\"leadData\"][\"firstName\"]}! We'll be in touch shortly.`\n} }];"
+      },
+      "name": "Send Welcome Message",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        300
+      ],
+      "id": "function3"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Assign to agent based on workload or specialty\n// Simple placeholder - in production integrate with actual agent assignment logic\nreturn [{ json: {\n  action: 'agent_assignment_pending',\n  customerId: $json[\"customerId\"],\n  note: 'Assign to available agent based on workload and specialty'\n} }];"
+      },
+      "name": "Prepare Agent Assignment",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        500
+      ],
+      "id": "function4"
+    }
+  ],
+  "connections": {
+    "Webhook: New Customer Lead": {
+      "main": [
+        [
+          {
+            "node": "Validate & Format Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Format Lead": {
+      "main": [
+        [
+          {
+            "node": "Create Customer Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Customer Record": {
+      "main": [
+        [
+          {
+            "node": "Extract Customer ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Customer ID": {
+      "main": [
+        [
+          {
+            "node": "Split Interests",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Welcome Message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Agent Assignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Interests": {
+      "main": [
+        [
+          {
+            "node": "Set Query Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Query Params": {
+      "main": [
+        [
+          {
+            "node": "Store Interests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "new_customer_lead_processing"
+}

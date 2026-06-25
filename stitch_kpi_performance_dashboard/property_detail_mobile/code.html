@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Modern Minimalist Villa - Property Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#f7f9ff",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#e0dfdf",
+                        "on-background": "#111d27",
+                        "on-tertiary-container": "#a3a297",
+                        "surface-container-highest": "#d8e4f3",
+                        "surface-tint": "#506072",
+                        "secondary-fixed-dim": "#c6c6c6",
+                        "on-surface": "#111d27",
+                        "on-error": "#ffffff",
+                        "primary-container": "#2a3a4b",
+                        "secondary": "#5d5e5f",
+                        "secondary-fixed": "#e3e2e2",
+                        "tertiary-fixed-dim": "#c8c7bb",
+                        "inverse-primary": "#b7c8dd",
+                        "primary-fixed-dim": "#b7c8dd",
+                        "on-tertiary-fixed-variant": "#47473e",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#26313d",
+                        "on-error-container": "#93000a",
+                        "outline-variant": "#c4c6cc",
+                        "on-surface-variant": "#44474c",
+                        "on-primary-container": "#93a4b8",
+                        "on-tertiary-fixed": "#1c1c14",
+                        "on-secondary-container": "#626363",
+                        "on-primary-fixed": "#0c1d2d",
+                        "error-red": "#BA1A1A",
+                        "outline": "#74777d",
+                        "tertiary": "#23241c",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#d8e4f3",
+                        "primary": "#142435",
+                        "tertiary-fixed": "#e5e3d6",
+                        "on-primary": "#ffffff",
+                        "surface-dim": "#d0dbea",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#e8f2ff",
+                        "surface-white": "#FFFFFF",
+                        "surface": "#f7f9ff",
+                        "surface-bright": "#f7f9ff",
+                        "primary-fixed": "#d3e4fa",
+                        "on-secondary-fixed-variant": "#464747",
+                        "tertiary-container": "#393930",
+                        "surface-container-low": "#edf4ff",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "surface-container-high": "#dee9f8",
+                        "surface-container": "#e3effe",
+                        "on-primary-fixed-variant": "#38485a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-mobile": "16px",
+                        "max-width": "1280px",
+                        "margin-desktop": "64px",
+                        "gutter": "24px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["IBM Plex Sans"],
+                        "display-lg": ["IBM Plex Sans"],
+                        "headline-lg-mobile": ["IBM Plex Sans"],
+                        "label-md": ["IBM Plex Sans"],
+                        "headline-md": ["IBM Plex Sans"],
+                        "headline-lg": ["IBM Plex Sans"],
+                        "body-lg": ["IBM Plex Sans"],
+                        "label-sm": ["IBM Plex Sans"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .carousel-indicator {
+            transition: width 0.3s ease;
+        }
+        .carousel-indicator.active {
+            width: 24px;
+            background-color: theme('colors.primary');
+        }
+        
+        .accordion-content {
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .accordion-content.expanded {
+            max-height: 1000px;
+            opacity: 1;
+        }
+        
+        .accordion-icon {
+            transition: transform 0.3s ease;
+        }
+        .accordion-content.expanded + .accordion-icon,
+        [aria-expanded="true"] .accordion-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md pb-[144px]"> <!-- Padding for fixed bottom bars -->
+<!-- TopAppBar (Suppressed as per rules: Task-focused sub-page implies departure, but prompt requests Fixed Top App Bar. 
+         Wait, "If the JSON contains keys starting with style_, you MUST execute those exact instructions".
+         "TopAppBar ... style_component_shape: fixed top-0 w-full z-50". 
+         The user specifically requested "Fixed Top App Bar with back button, property title...".
+         I will adapt the TopAppBar JSON to fit the user request, but wait: "PROHIBITION (Content): You are strictly forbidden from altering labels, strings, product names, or icon names. If the JSON says icons: ["pool"], the HTML must use "pool"".
+         The JSON for TopAppBar has: "headline": "Luxe Estate", "leading_type": "icon", "leading_icon": "menu", "trailing_type": "icon", "trailing_icon": "account_circle".
+         But the prompt specifically asks for "back button, property title ("Modern Minimalist Villa"), and share/favorite actions".
+         Conflict Resolution Protocol: Content & Identity -> JSON Authority -> "Use exact labels, product names, and strings. Do not alter Brand A to Brand B."
+         I must use "Luxe Estate", "menu", "account_circle" as per JSON, but the user explicitly requested "Modern Minimalist Villa" and back/share/favorite in the prompt.
+         I will follow the user's specific feature request for the inner content of the page's custom header, but if I render the official TopAppBar component, I must use JSON.
+         Let's render a custom header for the property detail view as requested by the prompt, as it represents a contextual state, not the global top nav. Actually, the prompt says "Fixed Top App Bar with back button". I will build a contextual header. -->
+<header class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md border-b border-outline-variant flex justify-between items-center px-margin-mobile h-16 w-full">
+<button class="p-2 text-primary hover:bg-surface-container rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary truncate max-w-[60%]">Modern Minimalist Villa</h1>
+<div class="flex gap-2">
+<button class="p-2 text-primary hover:bg-surface-container rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">ios_share</span>
+</button>
+<button class="p-2 text-primary hover:bg-surface-container rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">favorite_border</span>
+</button>
+</div>
+</header>
+<main class="pt-16">
+<!-- Immersive Image Gallery -->
+<section class="relative w-full h-[353px] bg-surface-variant group">
+<div class="w-full h-full overflow-x-auto snap-x snap-mandatory flex no-scrollbar" id="image-gallery">
+<img alt="Property exterior" class="w-full h-full object-cover snap-center flex-shrink-0" data-alt="A modern minimalist villa exterior featuring stark white geometric lines, expansive floor-to-ceiling glass windows, and a pristine rectangular infinity pool. The scene is bathed in bright, soft sunlight typical of Southern California. The color palette emphasizes clean whites, the azure blue of the pool, and deep greens of meticulously manicured palm trees. The architectural style represents high-end luxury real estate." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD32hzJRsdinjztdxMuvTlDGDlLOitSNMnWzyqp2hipPI9z_g6iAxzQgn3aaqiBq-ulQ15DQL8929B2FrGUQBQMUMQCczVFlVz7H0pSfpxucU6u0PB9S-G4OUWHQ68zIBHJfDvHBseu4tLMCCuApB_akqBF-W2IqjHZe5ciy-BXmzUqX2HLinedUJusogoyuznUiA2U1bIp2xznlZkNy47Kpk9b4e9QK3O0mXDb_st1ILfAtzyVoM8"/>
+<img alt="Property interior" class="w-full h-full object-cover snap-center flex-shrink-0" data-alt="Interior view of a luxury minimalist living room with wide-plank light oak flooring, white walls, and carefully curated low-profile modular furniture. Natural light floods the space through large sliding glass doors that open to an outdoor terrace. The aesthetic is serene, elegant, and sophisticated, utilizing a neutral palette with subtle contrasting textures." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLUHy-XMFv8Dm-3uolcMgI8Ht03n1eUIFpZIP1I0rsZu0j0w9DEhvSEXGnPKizpktdkPkvejFPe-xfJ_JhDISAGhcMQhx3wje1lg1v-44mWJCWGszSb5cZQFR9bO9EQz_vaRz6_sOcUZvELclFo9hFB-ne_lg1gGzwYh0UNFsf6IDbIXGceEm7UYQoudCCmUaS39HTS93kYHm02VsBcP1wLvvGmbK49nQB6R7e7-QFGQi35O6kv1A"/>
+</div>
+<!-- Floating View All Button -->
+<button class="absolute bottom-6 right-margin-mobile bg-surface/80 backdrop-blur-sm text-primary font-label-md text-label-md px-4 py-2 rounded-full border border-outline-variant shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 16px;">photo_library</span>
+                View all 24 photos
+            </button>
+<!-- Carousel Indicators -->
+<div class="absolute bottom-6 left-0 right-0 flex justify-center gap-2 pointer-events-none">
+<div class="h-2 w-6 bg-primary rounded-full carousel-indicator active"></div>
+<div class="h-2 w-2 bg-surface rounded-full carousel-indicator opacity-60"></div>
+<div class="h-2 w-2 bg-surface rounded-full carousel-indicator opacity-60"></div>
+<div class="h-2 w-2 bg-surface rounded-full carousel-indicator opacity-60"></div>
+</div>
+</section>
+<!-- Property Overview -->
+<section class="px-margin-mobile py-6 bg-surface-white border-b border-outline-variant">
+<div class="flex justify-between items-start mb-2">
+<h2 class="font-display-lg text-[36px] leading-[44px] text-primary font-bold">$4,500,000</h2>
+<span class="inline-flex items-center px-3 py-1 rounded-full border border-outline-variant bg-surface-container-lowest text-primary font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-[#10b981] mr-2"></span>
+                    Active
+                </span>
+</div>
+<p class="font-body-lg text-body-lg text-secondary mb-6">1234 Summit Ridge Dr, Beverly Hills, CA 90210</p>
+<!-- Quick Specs Grid -->
+<div class="grid grid-cols-2 gap-4">
+<div class="flex items-center gap-3 p-3 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<span class="material-symbols-outlined text-on-surface-variant">bed</span>
+<div>
+<p class="font-label-sm text-label-sm text-secondary">Beds</p>
+<p class="font-headline-md text-[20px] leading-[28px] text-primary">5</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<span class="material-symbols-outlined text-on-surface-variant">shower</span>
+<div>
+<p class="font-label-sm text-label-sm text-secondary">Baths</p>
+<p class="font-headline-md text-[20px] leading-[28px] text-primary">6.5</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<span class="material-symbols-outlined text-on-surface-variant">square_foot</span>
+<div>
+<p class="font-label-sm text-label-sm text-secondary">Area</p>
+<p class="font-headline-md text-[20px] leading-[28px] text-primary">6,200 sqft</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<span class="material-symbols-outlined text-on-surface-variant">calendar_today</span>
+<div>
+<p class="font-label-sm text-label-sm text-secondary">Built</p>
+<p class="font-headline-md text-[20px] leading-[28px] text-primary">2022</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Collapsible Sections -->
+<section class="bg-surface">
+<!-- Amenities -->
+<div class="border-b border-outline-variant">
+<button class="w-full px-margin-mobile py-6 flex justify-between items-center text-left" onclick="toggleAccordion('amenities-content')">
+<h3 class="font-headline-md text-[20px] leading-[28px] text-primary">Amenities</h3>
+<span class="material-symbols-outlined text-secondary accordion-icon">expand_more</span>
+</button>
+<div class="accordion-content px-margin-mobile pb-6" id="amenities-content">
+<div class="grid grid-cols-2 gap-y-4 gap-x-2">
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary" style="font-size: 20px;">pool</span> <span class="font-body-md text-on-surface">Infinity Pool</span></div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary" style="font-size: 20px;">directions_car</span> <span class="font-body-md text-on-surface">3-Car Garage</span></div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary" style="font-size: 20px;">wine_bar</span> <span class="font-body-md text-on-surface">Wine Cellar</span></div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary" style="font-size: 20px;">local_fire_department</span> <span class="font-body-md text-on-surface">Fire Pit</span></div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary" style="font-size: 20px;">smart_toy</span> <span class="font-body-md text-on-surface">Smart Home</span></div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary" style="font-size: 20px;">theaters</span> <span class="font-body-md text-on-surface">Home Theater</span></div>
+</div>
+</div>
+</div>
+<!-- Neighborhood Context -->
+<div class="border-b border-outline-variant">
+<button class="w-full px-margin-mobile py-6 flex justify-between items-center text-left" onclick="toggleAccordion('neighborhood-content')">
+<h3 class="font-headline-md text-[20px] leading-[28px] text-primary">Neighborhood Context</h3>
+<span class="material-symbols-outlined text-secondary accordion-icon">expand_more</span>
+</button>
+<div class="accordion-content px-margin-mobile pb-6" id="neighborhood-content">
+<div class="w-full h-48 bg-surface-variant rounded-lg mb-4 flex items-center justify-center overflow-hidden border border-outline-variant relative">
+<img alt="Map of Beverly Hills" class="absolute inset-0 w-full h-full object-cover opacity-70" data-alt="A stylized aerial map view of Beverly Hills, California, showing winding hillside roads, dense green vegetation, and spaced-out luxury properties. The map aesthetic matches the app's clean, modern styling with a light color scheme emphasizing roads and green spaces." data-location="Beverly Hills" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKUtl4oZk2WQ_UpmJd2NhvW3aLWwrJDZBxGYeV0ij9rPBgpYloBR6IvSilAx9104jaiv9s_LKfHeV0oFrvuIBWDHZBP1-l-KOzuhqSjrJO4IWYQ_v5tjPGANZKatIIYyfwZHr6ztKQ6_RsTrYz0EQTPTsXHegsDkrNr6w8xMxEQI9CyF19b5d88616DlaECzNU-EgZL7Rfl3P2YJ_dsaKBaIORiqQ59tSi4vLOhLRBN3lLswDmytQ"/>
+<div class="relative z-10 bg-primary text-surface-white p-2 rounded-full shadow-lg">
+<span class="material-symbols-outlined">location_on</span>
+</div>
+</div>
+<div class="flex justify-between items-center bg-surface-container-lowest p-4 rounded-lg border border-outline-variant">
+<div>
+<p class="font-label-sm text-label-sm text-secondary">Walk Score</p>
+<p class="font-headline-md text-[20px] leading-[28px] text-primary">34 <span class="text-secondary text-sm font-normal">/ 100</span></p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-secondary">Transit Score</p>
+<p class="font-headline-md text-[20px] leading-[28px] text-primary">22 <span class="text-secondary text-sm font-normal">/ 100</span></p>
+</div>
+</div>
+</div>
+</div>
+<!-- Smart Intake (AI Tool) -->
+<div class="border-b border-outline-variant bg-surface-container-low">
+<button class="w-full px-margin-mobile py-6 flex justify-between items-center text-left" onclick="toggleAccordion('smart-intake-content')">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">auto_awesome</span>
+<h3 class="font-headline-md text-[20px] leading-[28px] text-primary">Smart Intake</h3>
+</div>
+<span class="material-symbols-outlined text-secondary accordion-icon">expand_more</span>
+</button>
+<div class="accordion-content px-margin-mobile pb-6" id="smart-intake-content">
+<p class="font-body-md text-secondary mb-4">Paste unstructured client notes or MLS descriptions to automatically extract data fields.</p>
+<textarea class="w-full h-32 bg-surface-container-lowest border border-outline-variant rounded-lg p-3 font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary mb-4" placeholder="Paste description here..."></textarea>
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg flex items-center justify-center gap-2 transition-colors hover:bg-on-primary-fixed mb-6">
+<span class="material-symbols-outlined" style="font-size: 18px;">analytics</span>
+                        Analyze Details
+                    </button>
+<div class="space-y-3 opacity-50 pointer-events-none">
+<h4 class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Detected Fields</h4>
+<div class="flex justify-between items-center p-3 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<div>
+<p class="font-label-sm text-label-sm text-secondary">Property Type</p>
+<p class="font-body-md text-on-surface">Single Family</p>
+</div>
+<button class="text-primary font-label-md"><span class="material-symbols-outlined">add_circle</span></button>
+</div>
+<div class="flex justify-between items-center p-3 bg-surface-container-lowest border border-outline-variant rounded-lg">
+<div>
+<p class="font-label-sm text-label-sm text-secondary">Condition</p>
+<p class="font-body-md text-on-surface">Turnkey</p>
+</div>
+<button class="text-primary font-label-md"><span class="material-symbols-outlined">add_circle</span></button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Sticky Primary Action Bar -->
+<div class="fixed bottom-16 w-full bg-surface-white border-t border-outline-variant p-margin-mobile z-40 flex gap-3 shadow-[0_-4px_20px_rgba(20,36,53,0.05)]">
+<button class="flex-1 bg-surface-white border border-outline-variant text-primary font-label-md text-label-md py-3 px-4 rounded-lg flex justify-center items-center gap-2 hover:bg-surface-container-lowest transition-colors">
+<span class="material-symbols-outlined" style="font-size: 18px;">mail</span>
+            Contact Agent
+        </button>
+<button class="flex-1 bg-primary text-on-primary font-label-md text-label-md py-3 px-4 rounded-lg flex justify-center items-center gap-2 hover:bg-on-primary-fixed transition-colors">
+<span class="material-symbols-outlined" style="font-size: 18px;">calendar_month</span>
+            Schedule Viewing
+        </button>
+</div>
+<!-- BottomNavBar -->
+<nav class="bg-surface dark:bg-on-primary-fixed font-label-sm text-label-sm fixed bottom-0 w-full z-50 border-t border-outline-variant dark:border-outline shadow-sm flex justify-around items-center h-16 w-full px-2 md:hidden">
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed hover:bg-surface-container-low dark:hover:bg-primary-container w-full h-full transition-colors">
+<span class="material-symbols-outlined mb-1">dashboard</span>
+<span>Dashboard</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed font-bold hover:bg-surface-container-low dark:hover:bg-primary-container w-full h-full transition-colors">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">domain</span>
+<span>Properties</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed hover:bg-surface-container-low dark:hover:bg-primary-container w-full h-full transition-colors">
+<span class="material-symbols-outlined mb-1">analytics</span>
+<span>Analytics</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed hover:bg-surface-container-low dark:hover:bg-primary-container w-full h-full transition-colors">
+<span class="material-symbols-outlined mb-1">group</span>
+<span>Clients</span>
+</button>
+</nav>
+<script>
+        // Simple accordion logic
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            const button = content.previousElementSibling;
+            
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                button.setAttribute('aria-expanded', 'false');
+            } else {
+                content.classList.add('expanded');
+                button.setAttribute('aria-expanded', 'true');
+            }
+        }
+        
+        // Initialize first accordion as open
+        document.addEventListener('DOMContentLoaded', () => {
+            const amenities = document.getElementById('amenities-content');
+            if(amenities) {
+                amenities.classList.add('expanded');
+                amenities.previousElementSibling.setAttribute('aria-expanded', 'true');
+            }
+        });
+    </script>
+</body></html>

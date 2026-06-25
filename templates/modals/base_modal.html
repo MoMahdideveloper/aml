@@ -1,0 +1,263 @@
+{# Base Modal Template #}
+{# Usage: {% include 'modals/base_modal.html' with context %} #}
+{# Required variables: modal_id, title #}
+{# Optional variables: modal_size, content, footer, form_id, form_action, form_method #}
+
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" 
+     aria-labelledby="{{ modal_id }}Label" 
+     aria-hidden="true" 
+     aria-describedby="{{ modal_id }}Description"
+     role="dialog">
+    <div class="modal-dialog {{ modal_size|default('modal-lg') }} modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" role="document">
+            <div class="modal-header">
+                <h5 class="modal-title" id="{{ modal_id }}Label">
+                    {% if title_icon %}
+                        <i class="{{ title_icon }} me-2" aria-hidden="true"></i>
+                    {% endif %}
+                    {{ title }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" 
+                        aria-label="Close {{ title }}" 
+                        title="Close dialog"></button>
+            </div>
+            
+            <!-- Screen reader description -->
+            <div id="{{ modal_id }}Description" class="visually-hidden">
+                {{ modal_description|default('Dialog for ' + title) }}
+            </div>
+            
+            {% if form_id %}
+            <form id="{{ form_id }}" method="{{ form_method|default('POST') }}" 
+                  {% if form_action %}action="{{ form_action }}"{% endif %}
+                  {% if form_enctype %}enctype="{{ form_enctype }}"{% endif %}>
+            {% endif %}
+            
+            <div class="modal-body">
+                {% if loading_content %}
+                    <div class="text-center py-4" id="{{ modal_id }}_loading" 
+                         role="status" aria-live="polite" aria-label="Loading content">
+                        <div class="spinner-border text-primary" role="status" aria-hidden="true">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div class="mt-2 text-muted" id="{{ modal_id }}_loading_text">
+                            {{ loading_text|default('Loading...') }}
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <div id="{{ modal_id }}_content" 
+                     {% if loading_content %}style="display: none;"{% endif %}
+                     role="main" 
+                     aria-live="polite">
+                    {{ content|safe if content else '' }}
+                </div>
+                
+                <!-- Error container -->
+                <div id="{{ modal_id }}_error" 
+                     class="alert alert-danger d-none" 
+                     role="alert" 
+                     aria-live="assertive" 
+                     aria-atomic="true">
+                    <i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>
+                    <span id="{{ modal_id }}_error_message"></span>
+                </div>
+            </div>
+            
+            {% if footer or form_id %}
+            <div class="modal-footer">
+                {% if footer %}
+                    {{ footer|safe }}
+                {% elif form_id %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                            aria-label="Cancel and close dialog">
+                        <i class="fas fa-times me-1" aria-hidden="true"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="{{ form_id }}_submit"
+                            aria-describedby="{{ form_id }}_submit_help">
+                        <span class="spinner-border spinner-border-sm d-none me-2" 
+                              role="status" aria-hidden="true">
+                            <span class="visually-hidden">Processing...</span>
+                        </span>
+                        <i class="{{ submit_icon|default('fas fa-save') }} me-1" aria-hidden="true"></i>
+                        {{ submit_text|default('Save Changes') }}
+                    </button>
+                    <div id="{{ form_id }}_submit_help" class="visually-hidden">
+                        Press Enter or click to submit the form
+                    </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            {% if form_id %}
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Toast notification template for this modal -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000;">
+    <div id="{{ modal_id }}_toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i id="{{ modal_id }}_toast_icon" class="fas fa-info-circle text-primary me-2" aria-hidden="true"></i>
+            <strong class="me-auto" id="{{ modal_id }}_toast_title">Notification</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" 
+                    aria-label="Close notification" 
+                    title="Close notification"></button>
+        </div>
+        <div class="toast-body" id="{{ modal_id }}_toast_body">
+            <!-- Toast message will be inserted here -->
+        </div>
+    </div>
+</div>
+
+<script>
+// Enhanced accessibility and keyboard navigation for {{ modal_id }}
+(function() {
+    const modal = document.getElementById('{{ modal_id }}');
+    if (!modal) return;
+    
+    let focusableElements = [];
+    let firstFocusableElement = null;
+    let lastFocusableElement = null;
+    
+    // Update focusable elements when modal content changes
+    function updateFocusableElements() {
+        focusableElements = modal.querySelectorAll(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        firstFocusableElement = focusableElements[0];
+        lastFocusableElement = focusableElements[focusableElements.length - 1];
+    }
+    
+    // Handle modal show event
+    modal.addEventListener('shown.bs.modal', function() {
+        updateFocusableElements();
+        
+        // Focus first input or button
+        const firstInput = modal.querySelector('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])');
+        const firstButton = modal.querySelector('button:not([disabled])');
+        const elementToFocus = firstInput || firstButton || firstFocusableElement;
+        
+        if (elementToFocus) {
+            elementToFocus.focus();
+        }
+        
+        // Announce modal opening to screen readers
+        const announcement = document.createElement('div');
+        announcement.setAttribute('aria-live', 'polite');
+        announcement.setAttribute('aria-atomic', 'true');
+        announcement.className = 'visually-hidden';
+        announcement.textContent = '{{ title }} dialog opened';
+        document.body.appendChild(announcement);
+        
+        setTimeout(() => {
+            document.body.removeChild(announcement);
+        }, 1000);
+    });
+    
+    // Handle keyboard navigation
+    modal.addEventListener('keydown', function(e) {
+        // Escape key
+        if (e.key === 'Escape') {
+            const closeBtn = modal.querySelector('[data-bs-dismiss="modal"]');
+            if (closeBtn) {
+                closeBtn.click();
+            }
+            return;
+        }
+        
+        // Tab key - trap focus within modal
+        if (e.key === 'Tab') {
+            if (focusableElements.length === 0) return;
+            
+            if (e.shiftKey) {
+                // Shift + Tab
+                if (document.activeElement === firstFocusableElement) {
+                    e.preventDefault();
+                    lastFocusableElement.focus();
+                }
+            } else {
+                // Tab
+                if (document.activeElement === lastFocusableElement) {
+                    e.preventDefault();
+                    firstFocusableElement.focus();
+                }
+            }
+        }
+        
+        // Enter key on buttons
+        if (e.key === 'Enter' && e.target.tagName === 'BUTTON') {
+            e.target.click();
+        }
+    });
+    
+    // Handle form submission with accessibility announcements
+    const form = modal.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            // Announce form submission
+            const announcement = document.createElement('div');
+            announcement.setAttribute('aria-live', 'assertive');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.className = 'visually-hidden';
+            announcement.textContent = 'Form is being submitted, please wait';
+            document.body.appendChild(announcement);
+            
+            setTimeout(() => {
+                if (document.body.contains(announcement)) {
+                    document.body.removeChild(announcement);
+                }
+            }, 3000);
+        });
+        
+        // Enhanced form validation announcements
+        const inputs = form.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('invalid', function(e) {
+                // Announce validation error
+                const fieldName = this.labels?.[0]?.textContent || this.name || 'Field';
+                const announcement = document.createElement('div');
+                announcement.setAttribute('aria-live', 'assertive');
+                announcement.setAttribute('aria-atomic', 'true');
+                announcement.className = 'visually-hidden';
+                announcement.textContent = `${fieldName} has an error: ${this.validationMessage}`;
+                document.body.appendChild(announcement);
+                
+                setTimeout(() => {
+                    if (document.body.contains(announcement)) {
+                        document.body.removeChild(announcement);
+                    }
+                }, 3000);
+            });
+        });
+    }
+    
+    // Handle modal hide event
+    modal.addEventListener('hidden.bs.modal', function() {
+        // Return focus to trigger element if available
+        const triggerElement = document.querySelector(`[data-bs-target="#{{ modal_id }}"]`);
+        if (triggerElement) {
+            triggerElement.focus();
+        }
+    });
+    
+    // Observe content changes to update focusable elements
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList' || mutation.type === 'attributes') {
+                updateFocusableElements();
+            }
+        });
+    });
+    
+    observer.observe(modal, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['disabled', 'tabindex']
+    });
+})();
+</script>

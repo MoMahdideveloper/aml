@@ -1,0 +1,816 @@
+<!-- Property Edit Modal -->
+<div class="modal fade" id="propertyEditModal" tabindex="-1" aria-labelledby="propertyEditModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="propertyEditModalLabel">
+                    <i class="fas fa-edit me-2"></i>
+                    Edit Property
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+
+            <!-- Error Alert Container -->
+            <div id="propertyEditErrorContainer" class="alert alert-danger mx-3 mt-3 d-none" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <span id="propertyEditErrorMessage"></span>
+            </div>
+
+            <!-- Success Alert Container -->
+            <div id="propertyEditSuccessContainer" class="alert alert-success mx-3 mt-3 d-none" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <span id="propertyEditSuccessMessage"></span>
+            </div>
+
+            <form id="propertyEditForm" method="POST" novalidate enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+                <input type="hidden" name="_method" value="PUT">
+                <input type="hidden" name="property_id" value="{{ property.id if property is defined else '' }}">
+
+                <div class="modal-body">
+                    <ul class="nav nav-tabs mb-3" id="editPropertyTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="details-tab" data-bs-toggle="tab"
+                                data-bs-target="#details" type="button" role="tab" aria-controls="details"
+                                aria-selected="true">Details</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history"
+                                type="button" role="tab" aria-controls="history" aria-selected="false">AI
+                                History</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="editPropertyTabsContent">
+                        <div class="tab-pane fade show active" id="details" role="tabpanel"
+                            aria-labelledby="details-tab">
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label for="edit_title" class="form-label">Property Title *</label>
+                                    <input type="text" class="form-control" id="edit_title" name="title"
+                                        value="{{ property.title if property is defined else '' }}" required
+                                        maxlength="255" data-validate="required">
+                                    <div class="invalid-feedback"></div>
+                                    <div class="valid-feedback">
+                                        <i class="fas fa-check me-1"></i>Title looks good
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="edit_property_type" class="form-label">Type *</label>
+                                    <select class="form-select" id="edit_property_type" name="property_type" required>
+                                        <option value="">Select Type</option>
+                                        {% for key, label in maskan_property_types.items() %}
+                                        <option value="{{ key }}" {{ 'selected' if property.property_type==key }}>{{
+                                            label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Please select a property type.
+                                    </div>
+                                    <div class="valid-feedback">
+                                        <i class="fas fa-check me-1"></i>Property type selected
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_address" class="form-label">Address *</label>
+                                <textarea class="form-control" id="edit_address" name="address" rows="2" required
+                                    data-validate="required"
+                                    maxlength="500">{{ property.address if property is defined else '' }}</textarea>
+                                <div class="invalid-feedback"></div>
+                                <div class="valid-feedback">
+                                    <i class="fas fa-check me-1"></i>Address provided
+                                </div>
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <span id="edit_address_count">0</span>/500 characters
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Listing Type Selection -->
+                            <div class="mb-4">
+                                <label class="form-label">Listing Type *</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="listing_type"
+                                                id="edit_listing_sale" value="sale" {{ 'checked' if
+                                                property.listing_type=='sale' else 'checked' if not property }}
+                                                data-validate="required">
+                                            <label class="form-check-label" for="edit_listing_sale">
+                                                <i class="fas fa-dollar-sign me-1"></i> For Sale
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="listing_type"
+                                                id="edit_listing_rental" value="rental" {{ 'checked' if
+                                                property.listing_type=='rental' }} data-validate="required">
+                                            <label class="form-check-label" for="edit_listing_rental">
+                                                <i class="fas fa-home me-1"></i> For Rent (Iranian System)
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="invalid-feedback d-block" id="listing_type_error"></div>
+                            </div>
+
+                            <!-- Dynamic Pricing Section -->
+                            <div id="edit-pricing-section">
+                                <!-- Sale Pricing -->
+                                <div id="edit-sale-pricing" class="pricing-option"
+                                    style="display: {{ 'block' if property.listing_type == 'sale' else 'none' }};">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="fas fa-dollar-sign me-2"></i>Sale Pricing
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="edit_sale_price" class="form-label">Sale Price *</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="edit_sale_price"
+                                                    name="sale_price" step="1000" min="0"
+                                                    value="{{ property.price if property.listing_type == 'sale' else '' }}"
+                                                    data-validate="price" data-pricing-type="sale">
+                                                <div class="invalid-feedback"></div>
+                                                <div class="valid-feedback">
+                                                    <i class="fas fa-check me-1"></i>Valid price
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="edit_sale_price_per_meter" class="form-label">Price per
+                                                Meter
+                                                (Auto)</label>
+                                            <input type="text" class="form-control bg-light"
+                                                id="edit_sale_price_per_meter" readonly
+                                                placeholder="Calculated automatically">
+                                            <div class="form-text">
+                                                <small class="text-muted">Automatically calculated based on
+                                                    square
+                                                    meters</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Rental Pricing -->
+                                <div id="edit-rental-pricing" class="pricing-option"
+                                    style="display: {{ 'block' if property.listing_type == 'rental' else 'none' }};">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="fas fa-home me-2"></i>Iranian Rental System
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="edit_rahn" class="form-label">رهن (Rahn/Deposit)</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="edit_rahn" name="rahn"
+                                                    step="1000000" min="0" value="{{ property.rahn or '' }}"
+                                                    data-validate="rental-price" data-pricing-type="rental">
+                                                <span class="input-group-text">تومان</span>
+                                                <div class="invalid-feedback"></div>
+                                                <div class="valid-feedback">
+                                                    <i class="fas fa-check me-1"></i>Valid amount
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">Deposit amount in Toman</small>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="edit_ejare" class="form-label">اجاره (Ejare/Monthly
+                                                Rent)</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="edit_ejare" name="ejare"
+                                                    step="100000" min="0" value="{{ property.ejare or '' }}"
+                                                    data-validate="rental-price" data-pricing-type="rental">
+                                                <span class="input-group-text">تومان</span>
+                                                <div class="invalid-feedback"></div>
+                                                <div class="valid-feedback">
+                                                    <i class="fas fa-check me-1"></i>Valid amount
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">Monthly rent in Toman</small>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Per Meter (Auto)</label>
+                                            <input type="text" class="form-control bg-light" id="edit_rahn_per_meter"
+                                                readonly placeholder="Rahn per m²">
+                                            <input type="text" class="form-control bg-light mt-1"
+                                                id="edit_ejare_per_meter" readonly placeholder="Ejare per m²">
+                                            <div class="form-text">
+                                                <small class="text-muted">Automatically calculated per square
+                                                    meter</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="invalid-feedback d-block" id="rental_pricing_error"></div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label for="edit_square_feet" class="form-label">Square Meters *</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="edit_square_feet"
+                                            name="square_feet" min="1" max="10000"
+                                            value="{{ property.square_feet if property is defined else '' }}" required
+                                            data-validate="required">
+                                        <span class="input-group-text">m²</span>
+                                        <div class="invalid-feedback"></div>
+                                        <div class="valid-feedback">
+                                            <i class="fas fa-check me-1"></i>Valid size
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="edit_bedrooms" class="form-label">Bedrooms</label>
+                                    <input type="number" class="form-control" id="edit_bedrooms" name="bedrooms" min="0"
+                                        max="20" value="{{ property.bedrooms if property is defined else '' }}"
+                                        data-validate="range" data-min="0" data-max="20">
+                                    <div class="invalid-feedback"></div>
+                                    <div class="valid-feedback">
+                                        <i class="fas fa-check me-1"></i>Valid count
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="edit_bathrooms" class="form-label">Bathrooms</label>
+                                    <input type="number" class="form-control" id="edit_bathrooms" name="bathrooms"
+                                        min="0" max="20" step="0.5"
+                                        value="{{ property.bathrooms if property is defined else '' }}"
+                                        data-validate="range" data-min="0" data-max="20">
+                                    <div class="invalid-feedback"></div>
+                                    <div class="valid-feedback">
+                                        <i class="fas fa-check me-1"></i>Valid count
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="edit_parking_spaces" class="form-label">Parking</label>
+                                    <input type="number" class="form-control" id="edit_parking_spaces"
+                                        name="parking_spaces" min="0" max="10"
+                                        value="{{ property.parking_spaces if property is defined else '' }}"
+                                        data-validate="range" data-min="0" data-max="10">
+                                    <div class="invalid-feedback"></div>
+                                    <div class="valid-feedback">
+                                        <i class="fas fa-check me-1"></i>Valid count
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label for="edit_floors" class="form-label">Floors</label>
+                                    <input type="number" class="form-control" id="edit_floors" name="floors" min="1"
+                                        max="50" value="{{ property.floors if property is defined else '1' }}"
+                                        data-validate="range" data-min="1" data-max="50">
+                                    <div class="invalid-feedback"></div>
+                                    <div class="valid-feedback">
+                                        <i class="fas fa-check me-1"></i>Valid count
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="edit_units" class="form-label">Units</label>
+                                    <input type="number" class="form-control" id="edit_units" name="units" min="1"
+                                        max="100" value="{{ property.units if property is defined else '1' }}"
+                                        data-validate="range" data-min="1" data-max="100">
+                                    <div class="invalid-feedback"></div>
+                                    <div class="valid-feedback">
+                                        <i class="fas fa-check me-1"></i>Valid count
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="edit_year_built" class="form-label">Year Built</label>
+                                    <input type="number" class="form-control" id="edit_year_built" name="year_built"
+                                        min="1800" max="2030" value="{{ property.year_built or '' }}"
+                                        data-validate="year">
+                                    <div class="invalid-feedback"></div>
+                                    <div class="valid-feedback">
+                                        <i class="fas fa-check me-1"></i>Valid year
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="edit_property_condition" class="form-label">Condition</label>
+                                    <select class="form-select" id="edit_property_condition" name="property_condition">
+                                        <option value="">Select Condition</option>
+                                        <option value="excellent" {{ 'selected' if
+                                            property.property_condition=='excellent' }}>
+                                            Excellent</option>
+                                        <option value="good" {{ 'selected' if property.property_condition=='good'
+                                            else 'selected' if not property }}>Good</option>
+                                        <option value="fair" {{ 'selected' if property.property_condition=='fair' }}>
+                                            Fair
+                                        </option>
+                                        <option value="needs_renovation" {{ 'selected' if
+                                            property.property_condition=='needs_renovation' }}>Needs Renovation
+                                        </option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                    <div class="valid-feedback">
+                                        <i class="fas fa-check me-1"></i>Condition selected
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="edit_neighborhood" class="form-label">Neighborhood</label>
+                                    <input type="text" class="form-control" id="edit_neighborhood" name="neighborhood"
+                                        maxlength="100" value="{{ property.neighborhood or '' }}" data-validate="length"
+                                        data-max="100">
+                                    <div class="invalid-feedback"></div>
+                                    <div class="valid-feedback">
+                                        <i class="fas fa-check me-1"></i>Valid neighborhood
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="edit_property_category" class="form-label">Category</label>
+                                    <select class="form-select" id="edit_property_category" name="property_category">
+                                        <option value="">Select Category</option>
+                                        <option value="residential" {{ 'selected' if
+                                            property.property_category=='residential' else 'selected' if not property
+                                            }}>Residential</option>
+                                        <option value="commercial" {{ 'selected' if
+                                            property.property_category=='commercial' }}>
+                                            Commercial</option>
+                                        <option value="industrial" {{ 'selected' if
+                                            property.property_category=='industrial' }}>
+                                            Industrial</option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                    <div class="valid-feedback">
+                                        <i class="fas fa-check me-1"></i>Category selected
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="edit_agent_id" class="form-label">Assigned Agent</label>
+                                    <select class="form-select" id="edit_agent_id" name="agent_id">
+                                        <option value="">Unassigned</option>
+                                        <!-- Agents will be populated via JavaScript -->
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                    <div class="valid-feedback">
+                                        <i class="fas fa-check me-1"></i>Agent assigned
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_latitude" class="form-label">Latitude</label>
+                                    <input type="number" step="any" class="form-control" id="edit_latitude"
+                                        name="latitude"
+                                        value="{{ property.latitude if property.latitude is not none else '' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_longitude" class="form-label">Longitude</label>
+                                    <input type="number" step="any" class="form-control" id="edit_longitude"
+                                        name="longitude"
+                                        value="{{ property.longitude if property.longitude is not none else '' }}">
+                                </div>
+                            </div>
+
+                            <!-- Maskan Specifications -->
+                            <h6 class="text-primary mb-3 mt-4"><i class="fas fa-ruler-combined me-2"></i>Maskan
+                                Details
+                            </h6>
+
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Document Type (سند)</label>
+                                    <select class="form-select" name="document_type">
+                                        <option value="">Unknown / نامشخص</option>
+                                        {% for key, label in document_types.items() %}
+                                        <option value="{{ key }}" {{ 'selected' if property.document_type==key }}>{{
+                                            label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Floor Number (طبقه)</label>
+                                    <input type="number" class="form-control" name="floor_number"
+                                        value="{{ property.floor_number if property.floor_number is not none else '' }}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Built Area (زیربنا)</label>
+                                    <input type="number" class="form-control" name="built_area"
+                                        value="{{ property.built_area if property.built_area is not none else '' }}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Land Area (زمین)</label>
+                                    <input type="number" class="form-control" name="land_area"
+                                        value="{{ property.land_area if property.land_area is not none else '' }}">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Direction (جهت)</label>
+                                    <select class="form-select" name="property_direction">
+                                        <option value="">Unknown / نامشخص</option>
+                                        {% for key, label in directions.items() %}
+                                        <option value="{{ key }}" {{ 'selected' if property.property_direction==key }}>
+                                            {{ label
+                                            }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Floor Covering (کفپوش)</label>
+                                    <select class="form-select" name="floor_covering">
+                                        <option value="">Unknown / نامشخص</option>
+                                        {% for key, label in flooring_types.items() %}
+                                        <option value="{{ key }}" {{ 'selected' if property.floor_covering==key }}>{{
+                                            label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Facade (نما)</label>
+                                    <select class="form-select" name="facade_type">
+                                        <option value="">Unknown / نامشخص</option>
+                                        {% for key, label in facade_types.items() %}
+                                        <option value="{{ key }}" {{ 'selected' if property.facade_type==key }}>
+                                            {{ label
+                                            }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Wall Covering (دیوارپوش)</label>
+                                    <select class="form-select" name="wall_covering">
+                                        <option value="">Unknown / نامشخص</option>
+                                        {% for key, label in wall_coverings.items() %}
+                                        <option value="{{ key }}" {{ 'selected' if property.wall_covering==key }}>{{
+                                            label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Cabinet (کابینت)</label>
+                                    <select class="form-select" name="cabinet_type">
+                                        <option value="">Unknown / نامشخص</option>
+                                        {% for key, label in cabinet_types.items() %}
+                                        <option value="{{ key }}" {{ 'selected' if property.cabinet_type==key }}>{{
+                                            label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Cooling (سرمایش)</label>
+                                    <select class="form-select" name="cooling_type">
+                                        <option value="">Unknown / نامشخص</option>
+                                        {% for key, label in cooling_systems.items() %}
+                                        <option value="{{ key }}" {{ 'selected' if property.cooling_type==key }}>{{
+                                            label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Heating (گرمایش)</label>
+                                    <select class="form-select" name="heating_type">
+                                        <option value="">Unknown / نامشخص</option>
+                                        {% for key, label in heating_systems.items() %}
+                                        <option value="{{ key }}" {{ 'selected' if property.heating_type==key }}>{{
+                                            label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Exchangeable</label>
+                                    <select class="form-select" name="is_exchangeable">
+                                        <option value="0" {{ 'selected' if not property.is_exchangeable }}>No
+                                        </option>
+                                        <option value="1" {{ 'selected' if property.is_exchangeable }}>Yes
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Boundary Width</label>
+                                    <input type="number" step="0.01" class="form-control" name="boundary_width"
+                                        value="{{ property.boundary_width if property.boundary_width is not none else '' }}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Length</label>
+                                    <input type="number" step="0.01" class="form-control" name="property_length"
+                                        value="{{ property.property_length if property.property_length is not none else '' }}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Height</label>
+                                    <input type="number" step="0.01" class="form-control" name="property_height"
+                                        value="{{ property.property_height if property.property_height is not none else '' }}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Density</label>
+                                    <input type="text" class="form-control" name="density"
+                                        value="{{ property.density or '' }}">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Commercial Status</label>
+                                    <input type="text" class="form-control" name="commercial_status"
+                                        value="{{ property.commercial_status or '' }}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Usage Type</label>
+                                    <input type="text" class="form-control" name="usage_type"
+                                        value="{{ property.usage_type or '' }}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Ceiling Count</label>
+                                    <input type="number" class="form-control" name="ceiling_count"
+                                        value="{{ property.ceiling_count if property.ceiling_count is not none else '' }}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Permit Ceiling</label>
+                                    <input type="text" class="form-control" name="permit_ceiling"
+                                        value="{{ property.permit_ceiling or '' }}">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_property_features" class="form-label">Features</label>
+                                <input type="text" class="form-control" id="edit_property_features"
+                                    name="property_features" maxlength="500"
+                                    value="{{ property.property_features or '' }}"
+                                    placeholder="e.g. Swimming Pool, Gym, Parking, Balcony (comma-separated)"
+                                    data-validate="length" data-max="500">
+                                <div class="invalid-feedback"></div>
+                                <div class="valid-feedback">
+                                    <i class="fas fa-check me-1"></i>Features listed
+                                </div>
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        Separate features with commas. <span id="edit_features_count">0</span>/500
+                                        characters
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_description" class="form-label">Description</label>
+                                <textarea class="form-control" id="edit_description" name="description" rows="4"
+                                    maxlength="1000" data-validate="length"
+                                    data-max="1000">{{ property.description or '' }}</textarea>
+                                <div class="invalid-feedback"></div>
+                                <div class="valid-feedback">
+                                    <i class="fas fa-check me-1"></i>Description provided
+                                </div>
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <span id="edit_description_count">0</span>/1000 characters
+                                    </small>
+                                </div>
+                            </div>
+                        </div> <!-- End details tab -->
+
+                        <!-- History Tab -->
+                        <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">Extraction History</h6>
+                                <span class="badge bg-info text-dark">{{ history|length if history else 0 }}
+                                    Records</span>
+                            </div>
+
+                            {% if history %}
+                            <div class="list-group list-group-flush">
+                                {% for item in history %}
+                                <div class="list-group-item px-0" id="history-item-{{ item.id }}">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">
+                                            <i class="fas fa-robot me-2 text-primary"></i>Extraction #{{
+                                            loop.index }}
+                                        </h6>
+                                        <small class="text-muted">{{ item.created_at.strftime('%Y-%m-%d %H:%M')
+                                            }}</small>
+                                    </div>
+                                    <p class="mb-1 small text-muted">{{ item.user_note or 'Auto-extracted' }}
+                                    </p>
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-sm btn-outline-primary me-2"
+                                            onclick='restoreHistoryItem(this, {{ item.raw_data|tojson }})'>
+                                            <i class="fas fa-undo me-1"></i>Restore
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                            onclick="deleteHistoryItem({{ item.id }})">
+                                            <i class="fas fa-trash me-1"></i>Delete
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            onclick='viewHistoryItem({{ item.raw_data|tojson }})'>
+                                            <i class="fas fa-code me-1"></i>JSON
+                                        </button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-history fa-2x mb-2"></i>
+                                <p>No AI extraction history available.</p>
+                            </div>
+                            {% endif %}
+
+                            <!-- JSON Viewer -->
+                            <div id="jsonViewer" class="mt-3 d-none bg-light p-3 rounded position-relative">
+                                <button type="button" class="btn-close position-absolute top-0 end-0 m-2"
+                                    onclick="this.parentElement.classList.add('d-none')"></button>
+                                <pre class="mb-0"
+                                    style="max-height: 300px; overflow: auto;"><code id="jsonContent"></code></pre>
+                            </div>
+                        </div>
+                    </div> <!-- End tab-content -->
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="validateFormBtn">
+                        <i class="fas fa-check-circle me-1"></i>Validate Form
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitPropertyBtn">
+                        <span class="spinner-border spinner-border-sm d-none me-2" role="status"
+                            aria-hidden="true"></span>
+                        <i class="fas fa-save me-1"></i>
+                        Update Property
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Handle listing type changes
+        const saleRadio = document.getElementById('edit_listing_sale');
+        const rentalRadio = document.getElementById('edit_listing_rental');
+        const salePricing = document.getElementById('edit-sale-pricing');
+        const rentalPricing = document.getElementById('edit-rental-pricing');
+
+        function togglePricingSection() {
+            if (saleRadio.checked) {
+                salePricing.style.display = 'block';
+                rentalPricing.style.display = 'none';
+            } else {
+                salePricing.style.display = 'none';
+                rentalPricing.style.display = 'block';
+            }
+        }
+
+        saleRadio.addEventListener('change', togglePricingSection);
+        rentalRadio.addEventListener('change', togglePricingSection);
+
+        // Calculate price per meter
+        function calculatePricePerMeter() {
+            const squareFeet = parseFloat(document.getElementById('edit_square_feet').value) || 0;
+
+            if (squareFeet > 0) {
+                // Sale price per meter
+                const salePrice = parseFloat(document.getElementById('edit_sale_price').value) || 0;
+                if (salePrice > 0) {
+                    document.getElementById('edit_sale_price_per_meter').value = `$${(salePrice / squareFeet).toFixed(0)}/m²`;
+                }
+
+                // Rental price per meter
+                const rahn = parseFloat(document.getElementById('edit_rahn').value) || 0;
+                const ejare = parseFloat(document.getElementById('edit_ejare').value) || 0;
+
+                if (rahn > 0) {
+                    document.getElementById('edit_rahn_per_meter').value = `${(rahn / squareFeet).toLocaleString()} تومان/m²`;
+                }
+                if (ejare > 0) {
+                    document.getElementById('edit_ejare_per_meter').value = `${(ejare / squareFeet).toLocaleString()} تومان/m²`;
+                }
+            }
+        }
+
+        // Add event listeners for price calculation
+        ['edit_square_feet', 'edit_sale_price', 'edit_rahn', 'edit_ejare'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('input', calculatePricePerMeter);
+            }
+        });
+
+        // Initial calculation
+        calculatePricePerMeter();
+    });
+
+    // History Helper Functions
+    window.viewHistoryItem = function (data) {
+        const viewer = document.getElementById('jsonViewer');
+        const code = document.getElementById('jsonContent');
+
+        let jsonStr = data;
+        if (typeof data === 'string') {
+            try { jsonStr = JSON.parse(data); } catch (e) { }
+        }
+
+        code.textContent = JSON.stringify(jsonStr, null, 2);
+        viewer.classList.remove('d-none');
+    };
+
+    window.restoreHistoryItem = function (btn, data) {
+        if (!confirm('Restore this data? Current form values will be overwritten.')) return;
+
+        let formData = data;
+        if (typeof data === 'string') {
+            try { formData = JSON.parse(data); } catch (e) {
+                alert('Invalid JSON data');
+                return;
+            }
+        }
+
+        const fieldMap = {
+            'title': 'edit_title',
+            'address': 'edit_address',
+            'description': 'edit_description',
+            'property_type': 'edit_property_type',
+            'price': 'edit_sale_price',
+            'rahn': 'edit_rahn',
+            'ejare': 'edit_ejare',
+            'bedrooms': 'edit_bedrooms',
+            'bathrooms': 'edit_bathrooms',
+            'square_feet': 'edit_square_feet',
+            'year_built': 'edit_year_built',
+            'parking_spaces': 'edit_parking_spaces',
+            'floors': 'edit_floors',
+            'units': 'edit_units',
+            'neighborhood': 'edit_neighborhood',
+            'property_condition': 'edit_property_condition',
+            'property_category': 'edit_property_category',
+            'property_features': 'edit_property_features',
+            'latitude': 'edit_latitude',
+            'longitude': 'edit_longitude'
+        };
+
+        for (const [jsonKey, elementId] of Object.entries(fieldMap)) {
+            if (formData[jsonKey] !== undefined && formData[jsonKey] !== null) {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.value = formData[jsonKey];
+                    element.dispatchEvent(new Event('input'));
+                    element.dispatchEvent(new Event('change'));
+                }
+            }
+        }
+
+        // Maskan fields
+        ['document_type', 'floor_covering', 'facade_type', 'wall_covering', 'cabinet_type', 'cooling_type', 'heating_type', 'property_direction'].forEach(field => {
+            if (formData[field]) {
+                const select = document.querySelector(`#details [name="${field}"]`);
+                if (select) {
+                    let option = Array.from(select.options).find(o => o.value === String(formData[field]));
+                    if (option) select.value = option.value;
+                }
+            }
+        });
+
+        const detailsTab = new bootstrap.Tab(document.getElementById('details-tab'));
+        detailsTab.show();
+
+        alert("Data restored from history!");
+    };
+
+    window.deleteHistoryItem = async function (id) {
+        if (!confirm('Permanently delete this history record?')) return;
+
+        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+        try {
+            const response = await fetch(`/properties/ai-history/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.ok) {
+                const el = document.getElementById(`history-item-${id}`);
+                if (el) el.remove();
+            } else {
+                alert('Failed to delete history item');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error deleting history item');
+        }
+    };
+</script>

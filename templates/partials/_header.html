@@ -1,0 +1,71 @@
+<header
+    class="flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200 dark:border-gray-800 bg-white dark:bg-background-dark px-6 py-3 shrink-0">
+    <div class="flex items-center gap-8">
+        <a href="{{ url_for('main.dashboard') }}" class="flex items-center gap-4 text-primary">
+            <div class="size-6">
+                <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2182 14.2173 24 4Z"
+                        fill="currentColor"></path>
+                </svg>
+            </div>
+            <h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">EstateFlow
+            </h2>
+        </a>
+        <form action="{{ url_for('properties.properties') }}" method="GET" class="flex flex-col min-w-40 h-10 max-w-64">
+            <div
+                class="flex w-full flex-1 items-stretch rounded-lg h-full transition-shadow focus-within:ring-2 focus-within:ring-primary/50">
+                <div
+                    class="text-[#617589] flex border-none bg-gray-100 dark:bg-gray-800 items-center justify-center pl-4 rounded-l-lg border-r-0">
+                    <span class="material-symbols-outlined text-xl">search</span>
+                </div>
+                <input type="search" name="search"
+                    class="form-input flex w-full min-w-0 flex-1 border-none bg-gray-100 dark:bg-gray-800 text-[#111418] dark:text-white focus:ring-0 h-full placeholder:text-[#617589] px-4 rounded-r-lg text-sm font-normal focus:outline-none"
+                    placeholder="Search properties..." value="{{ request.args.get('search', '') }}" />
+            </div>
+        </form>
+    </div>
+    <div class="flex flex-1 justify-end gap-8 items-center">
+        <nav class="hidden lg:flex items-center gap-8">
+            <a class="text-[#111418] dark:text-white text-sm font-medium hover:text-primary transition-colors"
+                href="{{ url_for('main.dashboard') }}">Dashboard</a>
+            <a class="text-[#111418] dark:text-white text-sm font-medium hover:text-primary transition-colors"
+                href="{{ url_for('properties.properties') }}">Properties</a>
+            <a class="text-[#111418] dark:text-white text-sm font-medium hover:text-primary transition-colors"
+                href="{{ url_for('customers.customers') }}">Customers</a>
+            <a class="text-[#111418] dark:text-white text-sm font-medium hover:text-primary transition-colors"
+                href="{{ url_for('deals.deals') }}">Deals</a>
+            <a class="text-[#111418] dark:text-white text-sm font-medium hover:text-primary transition-colors"
+                href="{{ url_for('tasks.tasks') }}">Tasks</a>
+        </nav>
+        <div class="flex gap-2">
+            <button type="button"
+                onclick="if(window.showNotification) showNotification('Notifications feature is coming soon.', 'info');"
+                class="flex size-10 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 text-[#111418] dark:text-white hover:bg-gray-200"
+                title="Notifications (Coming Soon)">
+                <span class="material-symbols-outlined">notifications</span>
+            </button>
+            <a href="{{ url_for('main.settings') }}"
+                class="flex size-10 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 text-[#111418] dark:text-white hover:bg-gray-200">
+                <span class="material-symbols-outlined">settings</span>
+            </a>
+        </div>
+        {% if current_user %}
+        <a href="{{ url_for('auth.profile') }}" class="flex items-center gap-2 group" title="My Profile">
+            <div
+                class="bg-primary text-white rounded-full size-10 flex items-center justify-center text-sm font-bold group-hover:ring-2 ring-primary/30 transition-all">
+                {{ (current_user.full_name or current_user.username)[:2]|upper }}
+            </div>
+            <span
+                class="hidden xl:block text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-primary transition-colors">
+                {{ current_user.full_name or current_user.username }}
+            </span>
+        </a>
+        {% else %}
+        <a href="{{ url_for('auth.login') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-all">
+            <span class="material-symbols-outlined text-base">login</span> Sign In
+        </a>
+        {% endif %}
+    </div>
+</header>

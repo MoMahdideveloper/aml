@@ -1,0 +1,63 @@
+# Persian translations for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-02-13 16:17-0600\n"
+"PO-Revision-Date: 2026-02-13 16:17-0600\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: fa <LL@li.org>\n"
+"Language: fa\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: templates/base.html:45 templates/base.html:137 templates/base.html:144
+msgid "Dashboard"
+msgstr ""
+
+#: templates/base.html:53
+msgid "Properties"
+msgstr ""
+
+#: templates/base.html:61
+msgid "Agents"
+msgstr ""
+
+#: templates/base.html:69
+msgid "Customers"
+msgstr ""
+
+#: templates/base.html:76
+msgid "Deals"
+msgstr ""
+
+#: templates/base.html:83
+msgid "Tasks"
+msgstr ""
+
+#: templates/base.html:90
+msgid "AI Recommendations"
+msgstr ""
+
+#: templates/base.html:98
+msgid "Administration"
+msgstr ""
+
+#: templates/base.html:105
+msgid "Environment Settings"
+msgstr ""
+
+#: templates/base.html:112
+msgid "Automation Rules"
+msgstr ""
+
+#: templates/base.html:142
+msgid "Home"
+msgstr ""

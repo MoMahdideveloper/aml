@@ -1,0 +1,180 @@
+<!-- Property Viewing Schedule Modal -->
+<div class="modal fade" id="viewingScheduleModal" tabindex="-1" aria-labelledby="viewingScheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="viewingScheduleModalLabel">
+                    <i class="fas fa-calendar-plus me-2"></i>
+                    Schedule Property Viewing
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        data-close-modal="{{ close_modal_id }}"
+                        aria-label="Close"></button>
+            </div>
+            
+            <form id="viewingScheduleForm" method="POST" action="{{ url_for('main.schedule_viewing', property_id=property.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+                <div class="modal-body">
+                    <div id="viewingScheduleError" class="alert alert-danger" role="alert" style="display:none;"></div>
+                    <!-- Property Information -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-home me-2"></i>
+                                Property Details
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h6 id="property-title" class="text-primary">{{ property.title if property else '' }}</h6>
+                                    <p class="text-muted mb-2">
+                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                        <span id="property-address">{{ property.address if property else '' }}</span>
+                                    </p>
+                                    <div class="property-features">
+                                        <span class="badge bg-primary me-2">
+                                            <i class="fas fa-bed me-1"></i>
+                                            <span id="property-bedrooms">{{ property.bedrooms if property else 0 }}</span> Beds
+                                        </span>
+                                        <span class="badge bg-primary me-2">
+                                            <i class="fas fa-bath me-1"></i>
+                                            <span id="property-bathrooms">{{ property.bathrooms if property else 0 }}</span> Baths
+                                        </span>
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-ruler-combined me-1"></i>
+                                            <span id="property-sqft">{{ "{:,}".format(property.square_feet) if property else 0 }}</span> sqft
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <div class="price-display">
+                                        <h4 class="text-success mb-0">
+                                            $<span id="property-price">{{ "{:,.0f}".format(property.price) if property else 0 }}</span>
+                                        </h4>
+                                        <small class="text-muted" id="property-type">{{ property.property_type if property else '' }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Viewing Details Form -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="customer_id" class="form-label">Customer *</label>
+                                <select class="form-select" id="customer_id" name="customer_id" required>
+                                    <option value="">Select Customer</option>
+                                    {% if customers %}
+                                        {% for customer in customers %}
+                                        <option value="{{ customer.id }}">{{ customer.name }} - {{ customer.email }}</option>
+                                        {% endfor %}
+                                    {% endif %}
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a customer.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="agent_id" class="form-label">Assigned Agent *</label>
+                                <select class="form-select" id="agent_id" name="agent_id" required>
+                                    <option value="">Select Agent</option>
+                                    {% if agents %}
+                                        {% for agent in agents %}
+                                        <option value="{{ agent.id }}">{{ agent.name }} - {{ agent.specialization or 'Agent' }}</option>
+                                        {% endfor %}
+                                    {% endif %}
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select an agent.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="viewing_date" class="form-label">Viewing Date *</label>
+                                <input type="date" class="form-control" id="viewing_date" name="viewing_date" required min="{{ today }}" value="{{ today }}">
+                                <div class="invalid-feedback">
+                                    Please select a viewing date.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="viewing_time" class="form-label">Viewing Time *</label>
+                                <input type="time" class="form-control" id="viewing_time" name="viewing_time" required>
+                                <div class="invalid-feedback">
+                                    Please select a viewing time.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="viewing_duration" class="form-label">Duration (minutes)</label>
+                        <select class="form-select" id="viewing_duration" name="viewing_duration">
+                            <option value="30">30 minutes</option>
+                            <option value="45" selected>45 minutes</option>
+                            <option value="60">1 hour</option>
+                            <option value="90">1.5 hours</option>
+                            <option value="120">2 hours</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="viewing_type" class="form-label">Viewing Type</label>
+                        <select class="form-select" id="viewing_type" name="viewing_type">
+                            <option value="in-person" selected>In-Person Viewing</option>
+                            <option value="virtual">Virtual Tour</option>
+                            <option value="drive-by">Drive-by Viewing</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="special_requirements" class="form-label">Special Requirements</label>
+                        <textarea class="form-control" id="special_requirements" name="special_requirements" rows="3" 
+                                  placeholder="Any special requirements or notes for the viewing..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="send_notifications" name="send_notifications" checked>
+                            <label class="form-check-label" for="send_notifications">
+                                Send email notifications to customer and agent
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Information Display -->
+                    <div class="alert alert-info" id="contact-info" style="display: none;">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Contact Information
+                        </h6>
+                        <div id="customer-contact"></div>
+                        <div id="agent-contact"></div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-close-modal="{{ close_modal_id }}">
+                        <i class="fas fa-times me-1"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-calendar-plus me-1"></i>
+                        Schedule Viewing
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

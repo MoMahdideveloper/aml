@@ -1,0 +1,194 @@
+{
+  "project": "gptvli",
+  "generated_at": "2026-02-18T22:06:20Z",
+  "sources": [
+    "deep_think/responses/P1_20260218T213403Z.md",
+    "deep_think/responses/P2_20260218T214348Z.md",
+    "deep_think/responses/P3_20260218T215248Z.md",
+    "deep_think/responses/P4_20260218T215856Z.md",
+    "deep_think/responses/P5_20260218T220404Z.md"
+  ],
+  "items": [
+    {
+      "stage": "P2",
+      "priority": "P0",
+      "summary": "- P0 security: Inject CSRF token source in `templates/base.html` and enforce token/header propagation in `static/js/crud-utils.js`.",
+      "change_scope": [
+        "templates/base.html",
+        "static/js/crud-utils.js"
+      ],
+      "risk": "security",
+      "tests_needed": [
+        "integration"
+      ]
+    },
+    {
+      "stage": "P2",
+      "priority": "P1",
+      "summary": "- P1 regression: Return deterministic JSON CSRF/auth error contracts for AJAX in `app.py` to avoid frontend parser crashes.",
+      "change_scope": [
+        "app.py"
+      ],
+      "risk": "security",
+      "tests_needed": [
+        "integration"
+      ]
+    },
+    {
+      "stage": "P2",
+      "priority": "P1",
+      "summary": "- P1 regression: Refactor modal/action event binding in `static/js/main.js` and related view payload wiring in `views/properties.py` for dynamic DOM stability.",
+      "change_scope": [
+        "static/js/main.js",
+        "views/properties.py"
+      ],
+      "risk": "regression",
+      "tests_needed": [
+        "integration"
+      ]
+    },
+    {
+      "stage": "P3",
+      "priority": "P0",
+      "summary": "- P0 security: Enforce API/XHR auth contract and RBAC in `app.py` (`401/403` JSON, `/admin/*` role gate), with integration tests for TC007/TC012.",
+      "change_scope": [
+        "app.py"
+      ],
+      "risk": "security",
+      "tests_needed": [
+        "integration"
+      ]
+    },
+    {
+      "stage": "P3",
+      "priority": "P0",
+      "summary": "- P0 security: Implement CSRF token propagation contract across `templates/base.html` and `static/js/crud-utils.js`; remove broad exemptions; validate TC010.",
+      "change_scope": [
+        "templates/base.html",
+        "static/js/crud-utils.js"
+      ],
+      "risk": "security",
+      "tests_needed": [
+        "integration"
+      ]
+    },
+    {
+      "stage": "P3",
+      "priority": "P1",
+      "summary": "- P1 security: Enforce login/session cookie hardening in `app.py` and verify `Set-Cookie` flags with auth regression tests.",
+      "change_scope": [
+        "app.py"
+      ],
+      "risk": "security",
+      "tests_needed": [
+        "integration"
+      ]
+    },
+    {
+      "stage": "P4",
+      "priority": "P0",
+      "summary": "- P0 regression: Enforce strict API-vs-browser auth contract in `app.py` middleware (`401/403` JSON for API/XHR, `302` for browser flows) with integration tests for TC007/TC013.",
+      "change_scope": [
+        "app.py"
+      ],
+      "risk": "security",
+      "tests_needed": [
+        "integration"
+      ]
+    },
+    {
+      "stage": "P4",
+      "priority": "P0",
+      "summary": "- P0 regression: Implement deterministic fallback ranking and vector-failure degradation in `services/search_service.py` and `services/vector_service.py`.",
+      "change_scope": [
+        "services/search_service.py",
+        "services/vector_service.py"
+      ],
+      "risk": "regression",
+      "tests_needed": [
+        "integration"
+      ]
+    },
+    {
+      "stage": "P4",
+      "priority": "P1",
+      "summary": "- P1 regression: Harden provider timeout/error and malformed-output handling in `services/llm/providers/gemini_provider.py` and `services/gemini_service.py`.",
+      "change_scope": [
+        "services/llm/providers/gemini_provider.py",
+        "services/gemini_service.py"
+      ],
+      "risk": "regression",
+      "tests_needed": [
+        "integration"
+      ]
+    },
+    {
+      "stage": "P4",
+      "priority": "P1",
+      "summary": "- P1 regression: Refactor `views/main.py` recommendations/export handlers to propagate `is_fallback` metadata and consistent UX messaging for degraded mode.",
+      "change_scope": [
+        "views/main.py"
+      ],
+      "risk": "data",
+      "tests_needed": [
+        "integration"
+      ]
+    },
+    {
+      "stage": "P5",
+      "priority": "P0",
+      "summary": "- P0 security: Implement strict unauthorized response split in `app.py` and eliminate blanket CSRF exemptions; ensure `templates/base.html` + `static/js/crud-utils.js` provide working CSRF token propagation.",
+      "change_scope": [
+        "app.py",
+        "templates/base.html",
+        "static/js/crud-utils.js"
+      ],
+      "risk": "security",
+      "tests_needed": [
+        "integration"
+      ]
+    },
+    {
+      "stage": "P5",
+      "priority": "P0",
+      "summary": "- P0 regression: Eliminate baseline frontend runtime breakage in `static/js/main.js` and `static/js/crud-utils.js` so critical CRUD/UI flows initialize reliably.",
+      "change_scope": [
+        "static/js/main.js",
+        "static/js/crud-utils.js"
+      ],
+      "risk": "regression",
+      "tests_needed": [
+        "integration"
+      ]
+    },
+    {
+      "stage": "P5",
+      "priority": "P1",
+      "summary": "- P1 regression: Stabilize modal routing and teardown behavior in `views/properties.py`, `views/main.py`, and `static/js/main.js` without changing public API schema.",
+      "change_scope": [
+        "views/properties.py",
+        "views/main.py",
+        "static/js/main.js"
+      ],
+      "risk": "data",
+      "tests_needed": [
+        "integration"
+      ]
+    },
+    {
+      "stage": "P5",
+      "priority": "P2",
+      "summary": "- P2 regression: Implement deterministic degraded recommendation orchestration in `services/search_service.py`, `services/vector_service.py`, `services/gemini_service.py`, and `services/llm/providers/gemini_provider.py`.",
+      "change_scope": [
+        "services/search_service.py",
+        "services/vector_service.py",
+        "services/gemini_service.py",
+        "services/llm/providers/gemini_provider.py"
+      ],
+      "risk": "regression",
+      "tests_needed": [
+        "integration"
+      ]
+    }
+  ]
+}

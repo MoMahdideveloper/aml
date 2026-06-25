@@ -1,0 +1,23 @@
+{
+  "name": "real-estate-crm-tests",
+  "version": "1.0.0",
+  "description": "Test suite for Real Estate CRM CRUD operations",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:crud": "jest tests/test_crud_utils.js"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/jest.setup.js"
+    ]
+  },
+  "dependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}

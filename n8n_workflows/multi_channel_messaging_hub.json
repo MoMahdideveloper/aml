@@ -1,0 +1,149 @@
+{
+  "name": "Multi-Channel Messaging Hub",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/send-message",
+        "responseMode": "onReceived",
+        "responseData": {
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": "{\"status\": \"message processing\"}"
+        }
+      },
+      "name": "Webhook: Message Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "id": "webhook1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Prepare message for multi-channel delivery\nconst body = $json[\"body\"] || {};\n\nreturn [{ json: {\n  recipientId: body.recipientId || '',\n  recipientType: body.recipientType || 'customer', // customer, agent, seller, admin\n  message: body.message || '',\n  subject: body.subject || '',\n  channels: body.channels || ['email', 'sms', 'in_app'], // email, sms, in_app, slack, push, whatsapp\n  templateId: body.templateId || null,\n  templateData: body.templateData || {},\n  priority: body.priority || 'normal', // low, normal, high, urgent\n  metadata: body.metadata || {}\n} }];"
+      },
+      "name": "Prepare Message",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        500,
+        100
+      ],
+      "id": "function1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Determine recipient contact information\nconst { recipientId, recipientType, metadata } = $json;\n\n// In practice, this would query your CRM for contact details\n// For now, we'll simulate based on recipient type\nconst contactInfo = {};\n\nswitch (recipientType) {\n  case 'customer':\n    contactInfo = {\n      email: `${recipientId.toLowerCase().replace(/[^a-z0-9]/g, '')}@example.com`,\n      phone: `+1555${recipientId.toString().padStart(7, '0').substring(0, 7)}`,\n      slackId: `U${recipientId}`,\n      userId: recipientId\n    };\n    break;\n  case 'agent':\n    contactInfo = {\n      email: `agent.${recipientId.toLowerCase()}@company.com`,\n      phone: `+1555${parseInt(recipientId) + 1000}`.padStart(12, '0'),\n      slackId: `UAGENT${recipientId}`,\n      userId: recipientId\n    };\n    break;\n  case 'seller':\n    contactInfo = {\n      email: `seller.${recipientId.toLowerCase()}@propertyseller.com`,\n      phone: `+1555${parseInt(recipientId) + 2000}`.padStart(12, '0'),\n      slackId: `U${recipientId}`,\n      userId: recipientId\n    };\n    break;\n  default:\n    contactInfo = {\n      email: `user.${recipientId}@example.com`,\n      phone: `+1555${recipientId.toString().padStart(7, '0')}`,\n      slackId: `U${recipientId}`,\n      userId: recipientId\n    };\n}\n\nreturn [{ json: {\n  ...$json,\n  contactInfo\n} }];"
+      },
+      "name": "Get Recipient Contact Info",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        750,
+        100
+      ],
+      "id": "function2"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Send message via multiple channels\nconst { recipientId, recipientType, message, subject, channels, templateId, templateData, priority, contactInfo, metadata } = $json;\nconst results = {};\n\n// Process each channel\nif (channels.includes('email')) {\n  // Simulate sending email\n  results.email = {\n    status: 'sent',\n    messageId: `email_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,\n    sentAt: new Date().toISOString(),\n    templateUsed: templateId || 'default',\n    recipient: contactInfo.email\n  };\n}\n\nif (channels.includes('sms')) {\n  // Simulate sending SMS\n  results.sms = {\n    status: 'sent',\n    messageId: `sms_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,\n    sentAt: new Date().toISOString(),\n    recipient: contactInfo.phone\n  };\n}\n\nif (channels.includes('in_app')) {\n  // Simulate in-app notification\n  results.in_app = {\n    status: 'delivered',\n    notificationId: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,\n    deliveredAt: new Date().toISOString(),\n    recipientId: contactInfo.userId\n  };\n}\n\nif (channels.includes('slack')) {\n  // Simulate Slack message\n  results.slack = {\n    status: 'sent',\n    messageId: `slack_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,\n    sentAt: new Date().toISOString(),\n    recipient: contactInfo.slackId\n  };\n}\n\nif (channels.includes('push')) {\n  // Simulate push notification\n  results.push = {\n    status: 'sent',\n    notificationId: `push_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,\n    sentAt: new Date().toISOString(),\n    recipientId: contactInfo.userId\n  };\n}\n\nif (channels.includes('whatsapp')) {\n  // Simulate WhatsApp message\n  results.whatsapp = {\n    status: 'sent',\n    messageId: `whatsapp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,\n    sentAt: new Date().toISOString(),\n    recipient: contactInfo.phone // WhatsApp uses phone number\n  };\n}\n\n// Determine overall status\nconst allSent = Object.values(results).every(r => r.status === 'sent' || r.status === 'delivered');\nconst overallStatus = allSent ? 'completed' : 'partial_failure';\n\nreturn [{ json: {\n  status: overallStatus,\n  recipientId,\n  recipientType,\n  message,\n  subject,\n  channelsUsed: Object.keys(results),\n  results,\n  metadata: {\n    ...metadata,\n    processedAt: new Date().toISOString(),\n    priority,\n    templateUsed: templateId\n  }\n} }];"
+      },
+      "name": "Send Multi-Channel Message",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        100
+      ],
+      "id": "function3"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "INSERT INTO message_logs (recipient_id, recipient_type, message, subject, channels_used, results, status, metadata, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {
+                "parameters": {
+                  "value": "={{[\\n    $json[\\\"recipientId\\\"],\\n    $json[\\\"recipientType\\\"],\\n    $json[\\\"message\\\"],\\n    $json[\\\"subject\\\"],\\n    $json.containsKey('channelsUsed') ? JSON.stringify($json[\\\"channelsUsed\\\"]) : '[]',\\n    $json.containsKey('results') ? JSON.stringify($json[\\\"results\\\"]) : '{}',\\n    $json[\\\"status\\\"],\\n    '{{JSON.stringify($json[\\\"metadata\\\"])}}'\\n  ]}}"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "name": "Log Message Activity",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        50
+      ],
+      "id": "postgres1"
+    }
+  ],
+  "connections": {
+    "Webhook: Message Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Message": {
+      "main": [
+        [
+          {
+            "node": "Get Recipient Contact Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Recipient Contact Info": {
+      "main": [
+        [
+          {
+            "node": "Send Multi-Channel Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Multi-Channel Message": {
+      "main": [
+        [
+          {
+            "node": "Log Message Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "multi_channel_messaging_hub"
+}

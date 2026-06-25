@@ -1,0 +1,492 @@
+openapi: 3.0.3
+info:
+  title: Project Analysis API
+  description: API for project analysis and suggestion management
+  version: 1.0.0
+  
+servers:
+  - url: /api/analysis
+    description: Analysis API endpoints
+
+paths:
+  /trigger:
+    post:
+      summary: Trigger new project analysis
+      description: Starts a comprehensive analysis of the current project codebase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_name:
+                  type: string
+                  description: Name of the project to analyze
+                  example: "Real Estate CRM"
+                analysis_type:
+                  type: string
+                  enum: [full, incremental, targeted]
+                  description: Type of analysis to perform
+                  example: "full"
+                target_areas:
+                  type: array
+                  items:
+                    type: string
+                    enum: [code_quality, architecture, feature_completeness, technical_debt, user_experience, testing_coverage]
+                  description: Specific areas to analyze (for targeted analysis)
+              required:
+                - project_name
+                - analysis_type
+      responses:
+        '202':
+          description: Analysis started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  analysis_id:
+                    type: integer
+                    description: Unique identifier for the analysis
+                    example: 123
+                  status:
+                    type: string
+                    example: "in_progress"
+                  estimated_duration:
+                    type: integer
+                    description: Estimated completion time in seconds
+                    example: 25
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /reports:
+    get:
+      summary: List all analysis reports
+      description: Retrieve paginated list of analysis reports
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of reports per page
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [in_progress, completed, failed]
+          description: Filter by analysis status
+      responses:
+        '200':
+          description: List of analysis reports
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reports:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AnalysisReportSummary'
+                  total:
+                    type: integer
+                    description: Total number of reports
+                    example: 45
+                  page:
+                    type: integer
+                    example: 1
+                  pages:
+                    type: integer
+                    example: 3
+
+  /reports/{id}:
+    get:
+      summary: Get detailed analysis report
+      description: Retrieve complete analysis report with suggestions and metrics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Analysis report ID
+      responses:
+        '200':
+          description: Complete analysis report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisReportDetailed'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /reports/{id}/status:
+    get:
+      summary: Get analysis status
+      description: Check the current status of an analysis operation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Analysis report ID
+      responses:
+        '200':
+          description: Current analysis status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [in_progress, completed, failed]
+                    example: "completed"
+                  progress:
+                    type: integer
+                    description: Completion percentage (0-100)
+                    example: 100
+                  current_task:
+                    type: string
+                    description: Current analysis task
+                    example: "Generating suggestions"
+
+  /suggestions:
+    get:
+      summary: List suggestions with filtering
+      description: Retrieve filtered and sorted list of suggestions
+      parameters:
+        - name: analysis_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by analysis report ID
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [critical_fixes, technical_debt, feature_enhancements, architecture, testing_quality, documentation]
+          description: Filter by suggestion category
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_progress, completed, dismissed]
+          description: Filter by suggestion status
+        - name: min_priority
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 100
+          description: Minimum priority score filter
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [priority_score, business_impact, technical_impact, risk_level, created_at]
+            default: priority_score
+          description: Sort field
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order
+      responses:
+        '200':
+          description: Filtered list of suggestions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suggestions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SuggestionItem'
+
+  /suggestions/{id}:
+    put:
+      summary: Update suggestion status
+      description: Update the status and details of a specific suggestion
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Suggestion ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [pending, in_progress, completed, dismissed]
+                assigned_to:
+                  type: string
+                  description: Person assigned to work on suggestion
+                notes:
+                  type: string
+                  description: Additional notes or comments
+      responses:
+        '200':
+          description: Suggestion updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuggestionItem'
+
+  /export/{id}:
+    get:
+      summary: Export analysis report
+      description: Export analysis report in specified format
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Analysis report ID
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [pdf, excel, json]
+            default: pdf
+          description: Export format
+        - name: include_suggestions
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include suggestions in export
+      responses:
+        '200':
+          description: Exported report file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisReportDetailed'
+
+components:
+  schemas:
+    AnalysisReportSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 123
+        project_name:
+          type: string
+          example: "Real Estate CRM"
+        analysis_date:
+          type: string
+          format: date-time
+          example: "2025-09-06T10:30:00Z"
+        version:
+          type: string
+          example: "1.0.0"
+        status:
+          type: string
+          enum: [in_progress, completed, failed]
+          example: "completed"
+        total_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          example: 78.5
+        execution_time:
+          type: integer
+          example: 28
+        suggestion_count:
+          type: integer
+          example: 15
+
+    AnalysisReportDetailed:
+      allOf:
+        - $ref: '#/components/schemas/AnalysisReportSummary'
+        - type: object
+          properties:
+            codebase_size:
+              type: integer
+              example: 2500
+            dimensions:
+              type: array
+              items:
+                $ref: '#/components/schemas/AnalysisDimension'
+            suggestions:
+              type: array
+              items:
+                $ref: '#/components/schemas/SuggestionItem'
+            metrics:
+              type: array
+              items:
+                $ref: '#/components/schemas/MetricSnapshot'
+
+    AnalysisDimension:
+      type: object
+      properties:
+        dimension_type:
+          type: string
+          enum: [code_quality, architecture, feature_completeness, technical_debt, user_experience, testing_coverage]
+          example: "code_quality"
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+          example: 85.0
+        max_possible:
+          type: number
+          minimum: 0
+          maximum: 100
+          example: 100.0
+        improvement_potential:
+          type: number
+          minimum: 0
+          example: 15.0
+        critical_issues:
+          type: integer
+          minimum: 0
+          example: 2
+        details:
+          type: object
+          description: Dimension-specific metrics and findings
+
+    SuggestionItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 456
+        title:
+          type: string
+          example: "Implement input validation for property forms"
+        description:
+          type: string
+          example: "Add comprehensive input validation to prevent SQL injection and XSS attacks"
+        category:
+          type: string
+          enum: [critical_fixes, technical_debt, feature_enhancements, architecture, testing_quality, documentation]
+          example: "critical_fixes"
+        priority_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          example: 92.5
+        business_impact:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        technical_impact:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 4
+        risk_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        implementation_effort:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 2
+        estimated_hours:
+          type: integer
+          example: 8
+        affected_files:
+          type: array
+          items:
+            type: string
+          example: ["forms.py", "views/properties.py"]
+        status:
+          type: string
+          enum: [pending, in_progress, completed, dismissed]
+          example: "pending"
+        assigned_to:
+          type: string
+          nullable: true
+          example: "john.doe@company.com"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["security", "urgent", "backend"]
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-09-06T10:30:00Z"
+
+    MetricSnapshot:
+      type: object
+      properties:
+        metric_name:
+          type: string
+          example: "Lines of Code"
+        metric_value:
+          type: number
+          example: 2500
+        previous_value:
+          type: number
+          nullable: true
+          example: 2350
+        change_percentage:
+          type: number
+          example: 6.4
+        trend:
+          type: string
+          enum: [improving, stable, declining]
+          example: "stable"
+        measurement_unit:
+          type: string
+          example: "lines"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid analysis type specified"
+        code:
+          type: string
+          description: Error code
+          example: "INVALID_PARAMETER"
+        details:
+          type: object
+          description: Additional error details

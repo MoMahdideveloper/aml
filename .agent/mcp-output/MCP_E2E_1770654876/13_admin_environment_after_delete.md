@@ -1,0 +1,147 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "EstateFlow" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - heading "EstateFlow" [level=2] [ref=e9]
+      - generic [ref=e11]:
+        - generic [ref=e13]: search
+        - textbox "search" [ref=e14]:
+          - /placeholder: Search...
+    - generic [ref=e16]:
+      - button "notifications" [ref=e17] [cursor=pointer]:
+        - generic [ref=e18]: notifications
+      - button "settings" [ref=e19] [cursor=pointer]:
+        - generic [ref=e20]: settings
+  - generic [ref=e22]:
+    - complementary [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - heading "Real Estate CRM" [level=1] [ref=e26]
+          - paragraph [ref=e27]: Workflow Management
+        - navigation "Main navigation" [ref=e28]:
+          - link "grid_view Overview" [ref=e29] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e30]: grid_view
+            - paragraph [ref=e31]: Overview
+          - link "real_estate_agent Properties" [ref=e32] [cursor=pointer]:
+            - /url: /properties
+            - generic [ref=e33]: real_estate_agent
+            - paragraph [ref=e34]: Properties
+          - link "person_pin Agents" [ref=e35] [cursor=pointer]:
+            - /url: /agents
+            - generic [ref=e36]: person_pin
+            - paragraph [ref=e37]: Agents
+          - link "groups Customers" [ref=e38] [cursor=pointer]:
+            - /url: /customers
+            - generic [ref=e39]: groups
+            - paragraph [ref=e40]: Customers
+          - link "monetization_on Deals" [ref=e41] [cursor=pointer]:
+            - /url: /deals
+            - generic [ref=e42]: monetization_on
+            - paragraph [ref=e43]: Deals
+          - link "task_alt Tasks" [ref=e44] [cursor=pointer]:
+            - /url: /tasks
+            - generic [ref=e45]: task_alt
+            - paragraph [ref=e46]: Tasks
+          - link "auto_awesome Recommendations" [ref=e47] [cursor=pointer]:
+            - /url: /recommendations
+            - generic [ref=e48]: auto_awesome
+            - paragraph [ref=e49]: Recommendations
+          - link "bar_chart Reports" [ref=e50] [cursor=pointer]:
+            - /url: /market-analysis
+            - generic [ref=e51]: bar_chart
+            - paragraph [ref=e52]: Reports
+          - link "settings Settings" [ref=e53] [cursor=pointer]:
+            - /url: /settings
+            - generic [ref=e54]: settings
+            - paragraph [ref=e55]: Settings
+          - link "smart_toy Automations" [ref=e56] [cursor=pointer]:
+            - /url: /admin/automations
+            - generic [ref=e57]: smart_toy
+            - paragraph [ref=e58]: Automations
+        - generic [ref=e59]:
+          - generic [ref=e60]:
+            - paragraph [ref=e61]: Storage
+            - paragraph [ref=e64]: 15.2 GB of 20 GB used
+          - link "logout Logout" [ref=e65] [cursor=pointer]:
+            - /url: /admin/logout
+            - generic [ref=e66]: logout
+            - paragraph [ref=e67]: Logout
+    - main [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e71]:
+            - heading "Environment Variables" [level=1] [ref=e72]
+            - paragraph [ref=e73]: Manage runtime configuration values via admin environment endpoints.
+          - generic [ref=e74]:
+            - link "history History" [ref=e75] [cursor=pointer]:
+              - /url: /admin/environment/history
+              - generic [ref=e76]: history
+              - text: History
+            - button "rule Validation" [ref=e77] [cursor=pointer]:
+              - generic [ref=e78]: rule
+              - text: Validation
+            - button "health_and_safety Health Check" [ref=e79] [cursor=pointer]:
+              - generic [ref=e80]: health_and_safety
+              - text: Health Check
+            - button "undo Rollback" [ref=e81] [cursor=pointer]:
+              - generic [ref=e82]: undo
+              - text: Rollback
+        - generic [ref=e84]: "Rollback successful: Successfully rolled back environment changes. Restored 69 variables."
+        - generic [ref=e85]:
+          - article [ref=e86]:
+            - paragraph [ref=e87]: Total Variables
+            - paragraph [ref=e88]: "0"
+          - article [ref=e89]:
+            - paragraph [ref=e90]: Required Variables
+            - paragraph [ref=e91]: "0"
+          - article [ref=e92]:
+            - paragraph [ref=e93]: Sensitive Variables
+            - paragraph [ref=e94]: "0"
+        - generic [ref=e95]:
+          - generic [ref=e96]:
+            - generic [ref=e97]:
+              - heading "Current Settings" [level=2] [ref=e98]
+              - generic [ref=e99]: 0 variables
+            - table [ref=e101]:
+              - rowgroup [ref=e102]:
+                - row "Key Value Flags Updated Actions" [ref=e103]:
+                  - columnheader "Key" [ref=e104]
+                  - columnheader "Value" [ref=e105]
+                  - columnheader "Flags" [ref=e106]
+                  - columnheader "Updated" [ref=e107]
+                  - columnheader "Actions" [ref=e108]
+              - rowgroup [ref=e109]:
+                - row "No environment variables found." [ref=e110]:
+                  - cell "No environment variables found." [ref=e111]
+          - generic [ref=e112]:
+            - generic [ref=e113]:
+              - heading "Create Variable" [level=2] [ref=e114]
+              - generic [ref=e115]:
+                - generic [ref=e116]:
+                  - text: Key
+                  - textbox "DATABASE_URL" [ref=e117]
+                - generic [ref=e118]:
+                  - text: Value
+                  - textbox [ref=e119]
+                - generic [ref=e120]:
+                  - text: Description
+                  - textbox [ref=e121]
+                - generic [ref=e122]:
+                  - checkbox "Mark as required" [ref=e123]
+                  - text: Mark as required
+                - button "Add New Variable" [ref=e124] [cursor=pointer]
+            - generic [ref=e125]:
+              - heading "Validation Summary" [level=2] [ref=e126]
+              - generic [ref=e127]:
+                - generic [ref=e128]:
+                  - paragraph [ref=e129]: Missing Required Variables
+                  - paragraph [ref=e130]: None
+                - generic [ref=e131]:
+                  - paragraph [ref=e132]: Security Issues
+                  - paragraph [ref=e133]: None
+                - generic [ref=e134]:
+                  - paragraph [ref=e135]: Validation Errors
+                  - paragraph [ref=e136]: None

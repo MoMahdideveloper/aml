@@ -1,0 +1,8 @@
+[GET] http://127.0.0.1:5000/admin/automations => [401] UNAUTHORIZED
+[GET] http://127.0.0.1:5000/admin/environment/MCP_E2E_1770597248_TEST_VAR/details => [200] OK
+[GET] http://127.0.0.1:5000/admin/environment/MCP_E2E_1770597248_TEST_VAR/details => [200] OK
+[PUT] http://127.0.0.1:5000/admin/environment/MCP_E2E_1770597248_TEST_VAR => [200] OK
+[GET] http://127.0.0.1:5000/admin/environment/validation => [200] OK
+[GET] http://127.0.0.1:5000/admin/environment/health-check => [200] OK
+[POST] http://127.0.0.1:5000/admin/environment/rollback => [200] OK
+[DELETE] http://127.0.0.1:5000/admin/environment/MCP_E2E_1770597248_TEST_VAR => [200] OK

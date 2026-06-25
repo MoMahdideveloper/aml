@@ -1,0 +1,112 @@
+{# View Option Selector Component #}
+{# Usage: {% include 'partials/view_option_selector.html' with context %} #}
+{# Required variables: entity_type, entity_id #}
+{# Optional variables: default_mode, show_labels, size #}
+
+<div class="view-options-selector" 
+     data-entity-type="{{ entity_type }}" 
+     data-entity-id="{{ entity_id }}"
+     data-default-mode="{{ default_mode|default('modal') }}"
+     role="group" 
+     aria-label="View options for {{ entity_type }}">
+    
+    <div class="btn-group {{ 'btn-group-' + size if size else 'btn-group-sm' }}" 
+         role="group" 
+         aria-label="Choose viewing method">
+        
+        <!-- Modal View Button -->
+        <button type="button" 
+                class="btn btn-outline-primary view-modal-btn" 
+                data-view-mode="modal"
+                data-bs-toggle="tooltip" 
+                data-bs-placement="top"
+                title="Quick view in modal overlay"
+                aria-label="View {{ entity_type }} details in modal">
+            <i class="fas fa-eye" aria-hidden="true"></i>
+            {% if show_labels != false %}
+                <span class="d-none d-md-inline ms-1">Quick View</span>
+            {% endif %}
+        </button>
+        
+        <!-- New Tab View Button -->
+        <button type="button" 
+                class="btn btn-outline-primary view-tab-btn" 
+                data-view-mode="tab"
+                data-bs-toggle="tooltip" 
+                data-bs-placement="top"
+                title="Open in new tab for full functionality"
+                aria-label="Open {{ entity_type }} details in new tab">
+            <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+            {% if show_labels != false %}
+                <span class="d-none d-md-inline ms-1">Full View</span>
+            {% endif %}
+        </button>
+    </div>
+    
+    <!-- Screen reader description -->
+    <div class="visually-hidden" id="view-options-help-{{ entity_type }}-{{ entity_id }}">
+        Choose between quick modal view or full page view in new tab. 
+        Your preference will be remembered for future use.
+    </div>
+</div>
+
+<script>
+// Initialize view option selector for {{ entity_type }}-{{ entity_id }}
+(function() {
+    const selector = document.querySelector('[data-entity-type="{{ entity_type }}"][data-entity-id="{{ entity_id }}"]');
+    if (!selector) return;
+    
+    // Initialize tooltips for this selector
+    const tooltips = selector.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltips.forEach(tooltip => {
+        new bootstrap.Tooltip(tooltip);
+    });
+    
+    // Initialize dual view handler when DualViewHandler is available
+    if (typeof DualViewHandler !== 'undefined') {
+        const handler = new DualViewHandler('{{ entity_type }}', '{{ entity_id }}');
+        
+        // Attach click handlers
+        const modalBtn = selector.querySelector('.view-modal-btn');
+        const tabBtn = selector.querySelector('.view-tab-btn');
+        
+        if (modalBtn) {
+            modalBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                handler.handleViewAction('modal');
+            });
+        }
+        
+        if (tabBtn) {
+            tabBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                handler.handleViewAction('tab');
+            });
+        }
+        
+        // Set initial active state based on user preference
+        const userPreference = handler.getUserPreference();
+        const defaultMode = selector.dataset.defaultMode || 'modal';
+        const activeMode = userPreference || defaultMode;
+        
+        if (activeMode === 'tab') {
+            tabBtn?.classList.add('active');
+            modalBtn?.classList.remove('active');
+        } else {
+            modalBtn?.classList.add('active');
+            tabBtn?.classList.remove('active');
+        }
+        
+        // Add keyboard support
+        selector.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                const activeBtn = selector.querySelector('.btn.active') || modalBtn;
+                if (activeBtn) {
+                    e.preventDefault();
+                    activeBtn.click();
+                }
+            }
+        });
+    }
+})();
+</script>

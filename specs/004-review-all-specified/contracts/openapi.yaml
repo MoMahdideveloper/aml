@@ -1,0 +1,496 @@
+openapi: 3.0.0
+info:
+  title: UI Review API
+  version: 1.0.0
+  description: API for managing UI review reports and non-functional elements
+servers:
+  - url: http://localhost:5678/webhook
+    description: n8n webhook server
+paths:
+  /reviews:
+    post:
+      summary: Create a new UI review report
+      operationId: createReview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UIReviewReportCreate'
+      responses:
+        '201':
+          description: Review created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UIReviewReport'
+    get:
+      summary: List UI review reports
+      operationId: listReviews
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, in_progress, completed]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List of reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UIReviewReport'
+  /reviews/{id}:
+    get:
+      summary: Get a UI review report by ID
+      operationId: getReviewById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Review details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UIReviewReport'
+        '404':
+          description: Review not found
+    put:
+      summary: Update a UI review report
+      operationId: updateReview
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UIReviewReportUpdate'
+      responses:
+        '200':
+          description: Review updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UIReviewReport'
+        '404':
+          description: Review not found
+  /reviews/{id}/elements:
+    post:
+      summary: Add a non-functional element to a review
+      operationId: addElement
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NonFunctionalElementCreate'
+      responses:
+        '201':
+          description: Element added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NonFunctionalElement'
+    get:
+      summary: List non-functional elements for a review
+      operationId: listElements
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: severity
+          schema:
+            type: string
+            enum: [critical, high, medium, low]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List of elements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NonFunctionalElement'
+  /reviews/{id}/elements/{elementId}:
+    get:
+      summary: Get a non-functional element by ID
+      operationId: getElementById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: elementId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Element details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NonFunctionalElement'
+        '404':
+          description: Element not found
+    put:
+      summary: Update a non-functional element
+      operationId: updateElement
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: elementId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NonFunctionalElementUpdate'
+      responses:
+        '200':
+          description: Element updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NonFunctionalElement'
+        '404':
+          description: Element not found
+    delete:
+      summary: Delete a non-functional element
+      operationId: deleteElement
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: elementId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Element deleted successfully
+        '404':
+          description: Element not found
+  /reviews/{id}/elements/{elementId}/errors:
+    post:
+      summary: Add an error log entry to an element
+      operationId: addErrorLog
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: elementId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorLogEntryCreate'
+      responses:
+        '201':
+          description: Error log added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorLogEntry'
+  /reviews/{id}/report:
+    get:
+      summary: Generate a structured report for the review
+      operationId: generateReport
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: format
+          schema:
+            type: string
+            enum: [json, pdf, excel]
+            default: json
+      responses:
+        '200':
+          description: Report generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+components:
+  schemas:
+    UIReviewReportCreate:
+      type: object
+      required:
+        - reviewer_name
+        - review_date
+      properties:
+        reviewer_name:
+          type: string
+        review_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+          default: pending
+    UIReviewReportUpdate:
+      type: object
+      properties:
+        reviewer_name:
+          type: string
+        review_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+    UIReviewReport:
+      allOf:
+        - $ref: '#/components/schemas/UIReviewReportCreate'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+            total_issues:
+              type: integer
+              default: 0
+            critical_issues:
+              type: integer
+              default: 0
+            high_issues:
+              type: integer
+              default: 0
+            medium_issues:
+              type: integer
+              default: 0
+            low_issues:
+              type: integer
+              default: 0
+    NonFunctionalElementCreate:
+      type: object
+      required:
+        - page
+        - section
+        - element_type
+        - element_description
+        - expected_behavior
+        - actual_behavior
+        - severity
+      properties:
+        page:
+          type: string
+        section:
+          type: string
+        element_type:
+          type: string
+        element_description:
+          type: string
+        expected_behavior:
+          type: string
+        actual_behavior:
+          type: string
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        error_message:
+          type: string
+        steps_to_reproduce:
+          type: string
+        screenshot:
+          type: string
+    NonFunctionalElementUpdate:
+      type: object
+      properties:
+        page:
+          type: string
+        section:
+          type: string
+        element_type:
+          type: string
+        element_description:
+          type: string
+        expected_behavior:
+          type: string
+        actual_behavior:
+          type: string
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        error_message:
+          type: string
+        steps_to_reproduce:
+          type: string
+        screenshot:
+          type: string
+    NonFunctionalElement:
+      allOf:
+        - $ref: '#/components/schemas/NonFunctionalElementCreate'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            report_id:
+              type: string
+              format: uuid
+            created_at:
+              type: string
+              format: date-time
+    ErrorLogEntryCreate:
+      type: object
+      required:
+        - message
+        - log_level
+      properties:
+        element_id:
+          type: string
+          format: uuid
+        log_level:
+          type: string
+          enum: [error, warn, info]
+        message:
+          type: string
+        source:
+          type: string
+    ErrorLogEntry:
+      allOf:
+        - $ref: '#/components/schemas/ErrorLogEntryCreate'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            report_id:
+              type: string
+              format: uuid
+            timestamp:
+              type: string
+              format: date-time
+    Report:
+      type: object
+      properties:
+        report_id:
+          type: string
+          format: uuid
+        generated_at:
+          type: string
+          format: date-time
+        total_issues:
+          type: integer
+        by_severity:
+          type: object
+          properties:
+            critical:
+              type: integer
+            high:
+              type: integer
+            medium:
+              type: integer
+            low:
+              type: integer
+        pages:
+          type: array
+          items:
+            type: object
+            properties:
+              page:
+                type: string
+              sections:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    section_name:
+                      type: string
+                    element_count:
+                      type: integer
+                    issues:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/NonFunctionalElement'

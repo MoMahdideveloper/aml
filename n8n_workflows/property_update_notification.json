@@ -1,0 +1,225 @@
+{
+  "name": "Property Update Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": [
+          {
+            "mode": "everyHour",
+            "minute": 0
+          }
+        ]
+      },
+      "name": "Hourly Property Check",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "id": "cron1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "SELECT p.*, u.first_name as agent_first_name, u.last_name as agent_last_name FROM properties p LEFT JOIN users u ON p.agent_id = u.id WHERE p.updated_at > $1 ORDER BY p.updated_at DESC LIMIT 50",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {
+                "parameters": {
+                  "value": "={{new Date(Date.now() - 60 * 60 * 1000).toISOString()}}"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "name": "Get Recently Updated Properties",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        500,
+        100
+      ],
+      "id": "postgres1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process each property and find interested customers\nconst properties = $json;\nconst results = [];\n\nfor (const property of properties) {\n  // In a real implementation, you would query a customer_preferences or saved_searches table\n  // For now, we'll simulate finding interested customers based on property type/price range\n  \n  const interestedCustomers = [\n    { id: 1, name: 'John Doe', email: 'john@example.com', phone: '+1234567890', preferences: { type: property.property_type, maxPrice: 500000 } },\n    { id: 2, name: 'Jane Smith', email: 'jane@example.com', phone: '+1234567891', preferences: { type: property.property_type, minBeds: 3 } }\n  ].filter(c => {\n    // Simple matching logic - in reality this would be more sophisticated\n    const matchesType = !c.preferences.type || c.preferences.type === property.property_type;\n    const matchesPrice = !c.preferences.maxPrice || property.price <= c.preferences.maxPrice;\n    const matchesBeds = !c.preferences.minBeds || property.bedrooms >= c.preferences.minBeds;\n    return matchesType && matchesPrice && matchesBeds;\n  });\n\n  for (const customer of interestedCustomers) {\n    results.push({\n      json: {\n        propertyId: property.id,\n        propertyTitle: property.title,\n        propertyPrice: property.price,\n        propertyAddress: property.address,\n        customerId: customer.id,\n        customerName: customer.name,\n        customerEmail: customer.email,\n        customerPhone: customer.phone,\n        agentName: property.agent_first_name && property.agent_last_name ? `${property.agent_first_name} ${property.agent_last_name}` : 'Unassigned',\n        updateType: property.updated_at > new Date(Date.now() - 15 * 60 * 1000) ? 'new' : 'updated', // New if updated in last 15 min\n        timestamp: new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "name": "Find Interested Customers",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        750,
+        100
+      ],
+      "id": "function1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "INSERT INTO property_notifications (property_id, customer_id, notification_type, sent_at, status) VALUES ($1, $2, $3, NOW(), 'pending')",
+              "valueType": "string"
+            }
+          ]
+          "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {
+                "parameters": {
+                  "value": "={{[$json[\"propertyId\"], $json[\"customerId\"], 'property_update']}}"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "name": "Log Notification",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        50
+      ],
+      "id": "postgres2"
+    },
+    {
+      "parameters": {
+        "assign": {
+          "values": [
+            {
+              "name": "property_id",
+              "value": "={{$json[\"propertyId\"]}}"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{$json[\"customerId\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "Set Notification Params",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        950,
+        50
+      ],
+      "id": "set1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Send email notification\nreturn [{ json: {\n  notificationId: 'email_' + $json[\"propertyId\"] + '_' + $json[\"customerId\"],\n  type: 'email',\n  to: $json[\"customerEmail\"],\n  subject: `New Property Match: ${$json[\"propertyTitle\"]}`,\n  body: `Hello ${$json[\"customerName\"]},\n\nWe have a new property that matches your criteria:\n\nTitle: ${$json[\"propertyTitle\"]}\nPrice: $${$json[\"propertyPrice\"].toLocaleString()}\nAddress: ${$json[\"propertyAddress\"]}\nAgent: ${$json[\"agentName\"]}\n\nView details: http://your-crm-domain.com/properties/${$json[\"propertyId\"]}\n\nBest regards,\nYour Real Estate Team`,\n  status: 'sent',\n  timestamp: new Date().toISOString()\n} }];"
+      },
+      "name": "Send Email Notification",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        200
+      ],
+      "id": "function2"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Send SMS notification (if phone available and opt-in)\nif (!$json[\"customerPhone\"]) {\n  return []; // Skip if no phone\n}\n\nreturn [{ json: {\n  notificationId: 'sms_' + $json[\"propertyId\"] + '_' + $json[\"customerId\"],\n  type: 'sms',\n  to: $json[\"customerPhone\"],\n  message: `New ${$json[\"propertyType\"]||'property'}: ${$json[\"propertyTitle\"]} - $$${$json[\"propertyPrice\"].toLocaleString()}. Reply STOP to opt-out.`,\n  status: 'sent',\n  timestamp: new Date().toISOString()\n} }];"
+      },
+      "name": "Prepare SMS Notification",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        350
+      ],
+      "id": "function3"
+    }
+  ],
+  "connections": {
+    "Hourly Property Check": {
+      "main": [
+        [
+          {
+            "node": "Get Recently Updated Properties",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Recently Updated Properties": {
+      "main": [
+        [
+          {
+            "node": "Find Interested Customers",
+            "node": {
+            "node": "Find Interested Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Interested Customers": {
+      "main": [
+        [
+          {
+            "node": "Log Notification",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Email Notification",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare SMS Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Notification": {
+      "main": [
+        [
+          {
+            "node": "Set Notification Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Notification Params": {
+      "main": [
+        [
+          {
+            "node": "Store Interests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "property_update_notification"
+}

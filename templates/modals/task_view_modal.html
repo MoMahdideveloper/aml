@@ -1,0 +1,223 @@
+<!-- Task View Modal Content -->
+<div class="row">
+    <div class="col-12">
+        <!-- Task Header -->
+        <div class="d-flex justify-content-between align-items-start mb-4">
+            <div>
+                <h4 class="mb-2">{{ task.title }}</h4>
+                <div class="d-flex gap-2 mb-2">
+                    <span class="badge bg-{{ 'danger' if task.priority == 'high' else 'warning' if task.priority == 'medium' else 'secondary' }}">
+                        {{ task.priority.title() }} Priority
+                    </span>
+                    <span class="badge bg-{{ 'success' if task.status == 'completed' else 'primary' if task.status == 'in_progress' else 'warning' if task.status == 'pending' else 'danger' }}">
+                        {{ task.status.replace('_', ' ').title() }}
+                    </span>
+                </div>
+            </div>
+            <div class="text-end">
+                <small class="text-muted">Task ID: #{{ task.id }}</small>
+            </div>
+        </div>
+
+        <!-- Task Description -->
+        <div class="mb-4">
+            <h6 class="text-muted mb-2">
+                <i class="fas fa-align-left me-2"></i>
+                Description
+            </h6>
+            <div class="bg-light p-3 rounded">
+                <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ task.description }}</pre>
+            </div>
+        </div>
+
+        <!-- Task Details Grid -->
+        <div class="row mb-4">
+            <!-- Assigned Agent -->
+            <div class="col-md-6 mb-3">
+                <h6 class="text-muted mb-2">
+                    <i class="fas fa-user me-2"></i>
+                    Assigned Agent
+                </h6>
+                {% if task.agent_obj %}
+                <div class="d-flex align-items-center">
+                    <div class="agent-avatar me-3">
+                        <div class="avatar-circle bg-primary text-white">
+                            {{ task.agent_obj.name.split()[0][0] }}{{ task.agent_obj.name.split()[-1][0] if task.agent_obj.name.split()|length > 1 else '' }}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">{{ task.agent_obj.name }}</div>
+                        <small class="text-muted">{{ task.agent_obj.specialization or "Agent" }}</small>
+                        <div class="small text-muted">
+                            <i class="fas fa-envelope me-1"></i>
+                            {{ task.agent_obj.email }}
+                        </div>
+                        {% if task.agent_obj.phone %}
+                        <div class="small text-muted">
+                            <i class="fas fa-phone me-1"></i>
+                            {{ task.agent_obj.phone }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-muted">
+                    <i class="fas fa-user-slash me-2"></i>
+                    No agent assigned
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Due Date -->
+            <div class="col-md-6 mb-3">
+                <h6 class="text-muted mb-2">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    Due Date
+                </h6>
+                {% if task.due_date %}
+                <div class="fw-semibold">
+                    {{ task.due_date.strftime('%B %d, %Y at %I:%M %p') }}
+                </div>
+                {% set days_until_due = (task.due_date.date() - current_date.date()).days if current_date else 0 %}
+                {% if days_until_due < 0 %}
+                <div class="small text-danger">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Overdue by {{ -days_until_due }} day{{ 's' if -days_until_due != 1 }}
+                </div>
+                {% elif days_until_due == 0 %}
+                <div class="small text-warning">
+                    <i class="fas fa-clock me-1"></i>
+                    Due today
+                </div>
+                {% elif days_until_due <= 3 %}
+                <div class="small text-warning">
+                    <i class="fas fa-clock me-1"></i>
+                    Due in {{ days_until_due }} day{{ 's' if days_until_due != 1 }}
+                </div>
+                {% else %}
+                <div class="small text-muted">
+                    <i class="fas fa-clock me-1"></i>
+                    Due in {{ days_until_due }} day{{ 's' if days_until_due != 1 }}
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="text-muted">
+                    <i class="fas fa-calendar-times me-2"></i>
+                    No due date set
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Task Timeline -->
+        <div class="mb-4">
+            <h6 class="text-muted mb-3">
+                <i class="fas fa-history me-2"></i>
+                Task Timeline
+            </h6>
+            <div class="timeline">
+                <!-- Created -->
+                <div class="timeline-item">
+                    <div class="timeline-marker bg-info"></div>
+                    <div class="timeline-content">
+                        <div class="fw-semibold">Task Created</div>
+                        <div class="small text-muted">
+                            {{ task.created_at.strftime('%B %d, %Y at %I:%M %p') if task.created_at }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Completed (if applicable) -->
+                {% if task.status == 'completed' and task.completed_at %}
+                <div class="timeline-item">
+                    <div class="timeline-marker bg-success"></div>
+                    <div class="timeline-content">
+                        <div class="fw-semibold">Task Completed</div>
+                        <div class="small text-muted">
+                            {{ task.completed_at.strftime('%B %d, %Y at %I:%M %p') }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Task Actions -->
+        <div class="d-flex gap-2 justify-content-end">
+            {% if task.status != 'completed' %}
+            <form method="POST" action="{{ url_for('tasks.complete_task', task_id=task.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+                <button type="submit" class="btn btn-success btn-sm">
+                    <i class="fas fa-check me-1"></i>
+                    Mark Complete
+                </button>
+            </form>
+            {% endif %}
+            
+            <button type="button" class="btn btn-primary btn-sm" 
+                    onclick="crudUtils.showModal('taskEditModal', {contentUrl: '{{ url_for('tasks.edit_task_form', task_id=task.id) }}'})">
+                <i class="fas fa-edit me-1"></i>
+                Edit Task
+            </button>
+            
+            <button type="button" class="btn btn-danger btn-sm" 
+                    data-action="delete" 
+                    data-url="{{ url_for('tasks.delete_task', task_id=task.id) }}"
+                    data-message="Are you sure you want to delete the task '{{ task.title }}'? This action cannot be undone.">
+                <i class="fas fa-trash me-1"></i>
+                Delete Task
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -25px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #dee2e6;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border-left: 3px solid #dee2e6;
+}
+</style>

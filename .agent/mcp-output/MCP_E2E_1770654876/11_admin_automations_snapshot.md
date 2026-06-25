@@ -1,0 +1,117 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]:
+    - navigation "Main navigation" [ref=e4]:
+      - heading "Real Estate CRM" [level=4] [ref=e6]:
+        - generic [ref=e7]: 
+        - text: Real Estate CRM
+      - list [ref=e8]:
+        - listitem [ref=e9]:
+          - link "Dashboard" [ref=e10] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e11]: 
+            - text: Dashboard
+        - listitem [ref=e12]:
+          - link "Properties" [ref=e13] [cursor=pointer]:
+            - /url: /properties
+            - generic [ref=e14]: 
+            - text: Properties
+        - listitem [ref=e15]:
+          - link "Agents" [ref=e16] [cursor=pointer]:
+            - /url: /agents
+            - generic [ref=e17]: 
+            - text: Agents
+        - listitem [ref=e18]:
+          - link "Customers" [ref=e19] [cursor=pointer]:
+            - /url: /customers
+            - generic [ref=e20]: 
+            - text: Customers
+        - listitem [ref=e21]:
+          - link " Deals" [ref=e22] [cursor=pointer]:
+            - /url: /deals
+            - generic [ref=e23]: 
+            - text: Deals
+        - listitem [ref=e24]:
+          - link " Tasks" [ref=e25] [cursor=pointer]:
+            - /url: /tasks
+            - generic [ref=e26]: 
+            - text: Tasks
+        - listitem [ref=e27]:
+          - link " AI Recommendations" [ref=e28] [cursor=pointer]:
+            - /url: /recommendations
+            - generic [ref=e29]: 
+            - text: AI Recommendations
+      - heading "Administration" [level=6] [ref=e31]
+      - list [ref=e32]:
+        - listitem [ref=e33]:
+          - link " Environment Settings" [ref=e34] [cursor=pointer]:
+            - /url: /admin/environment
+            - generic [ref=e35]: 
+            - text: Environment Settings
+        - listitem [ref=e36]:
+          - link " Automation Rules" [ref=e37] [cursor=pointer]:
+            - /url: /admin/automations
+            - generic [ref=e38]: 
+            - text: Automation Rules
+      - generic [ref=e41]:
+        - generic [ref=e43]: 
+        - generic [ref=e44]:
+          - generic [ref=e45]: Admin User
+          - text: System Administrator
+    - main [ref=e46]:
+      - banner [ref=e47]:
+        - button "Toggle navigation menu" [ref=e48] [cursor=pointer]:
+          - generic [ref=e49]: 
+          - generic [ref=e50]: Toggle navigation menu
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - heading "Automation Rules" [level=1] [ref=e53]
+            - navigation "Breadcrumb navigation" [ref=e54]:
+              - list [ref=e55]:
+                - listitem [ref=e56]:
+                  - link "Home" [ref=e57] [cursor=pointer]:
+                    - /url: /
+                - listitem [ref=e58]: / Automation Rules
+          - generic [ref=e59]:
+            - button "View notifications (3 unread)" [ref=e60] [cursor=pointer]:
+              - generic [ref=e61]: 
+              - generic "3 unread notifications" [ref=e62]: "3"
+            - generic [ref=e63]:
+              - button "User settings menu" [ref=e64] [cursor=pointer]:
+                - generic [ref=e65]: 
+                - text: Settings
+              - text:   
+      - main [ref=e66]:
+        - generic [ref=e67]:
+          - generic [ref=e68]:
+            - heading "Workflow Automation" [level=2] [ref=e69]
+            - link "Environment" [ref=e70] [cursor=pointer]:
+              - /url: /admin/environment
+          - generic [ref=e72]:
+            - paragraph [ref=e73]:
+              - text: "Trigger types:"
+              - code [ref=e74]: deal_stage_changed
+              - text: ","
+              - code [ref=e75]: task_overdue
+              - text: ","
+              - code [ref=e76]: high_match_score
+            - paragraph [ref=e77]:
+              - text: Manage rules via API endpoints under
+              - code [ref=e78]: /api/automations/*
+              - text: .
+          - generic [ref=e79]:
+            - strong [ref=e81]: Configured Rules
+            - table [ref=e83]:
+              - rowgroup [ref=e84]:
+                - row "ID Name Trigger Enabled Updated" [ref=e85]:
+                  - columnheader "ID" [ref=e86]
+                  - columnheader "Name" [ref=e87]
+                  - columnheader "Trigger" [ref=e88]
+                  - columnheader "Enabled" [ref=e89]
+                  - columnheader "Updated" [ref=e90]
+              - rowgroup [ref=e91]:
+                - button "Table row 1" [ref=e92] [cursor=pointer]:
+                  - cell "No automation rules configured." [ref=e93]
+  - text:   
+  - text:  

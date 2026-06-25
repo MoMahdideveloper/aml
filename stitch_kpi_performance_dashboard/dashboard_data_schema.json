@@ -1,0 +1,49 @@
+{
+  "pageTitle": "string",
+  "brandName": "string",
+  "ctaButtonText": "string",
+  "userAvatarUrl": "string (URL)",
+  "pageHeading": "string",
+  "pageSubheading": "string",
+  "statsCards": [
+    {
+      "label": "string",
+      "icon": "string (material icon name)",
+      "value": "string or number",
+      "trendClass": "string (CSS class for trend color, e.g., 'text-surface-tint' or 'text-error')",
+      "trendIcon": "string (material icon name for trend)",
+      "trendValue": "string (e.g., '+4% vs last month')"
+    }
+  ],
+  "recentActivityTitle": "string",
+  "recentActivities": [
+    {
+      "icon": "string (material icon name)",
+      "title": "string",
+      "description": "string",
+      "timeAgo": "string (e.g., '2 hours ago')"
+    }
+  ],
+  "scheduleTitle": "string",
+  "currentMonth": "string (e.g., 'October 2024')",
+  "calendarDays": [
+    {
+      "dayNumber": "string or number (1-31)",
+      "dayClass": "string (CSS classes for styling, e.g., 'text-outline-variant' or 'hover:bg-surface-container')",
+      "hasEvent": "boolean"
+    }
+  ],
+  "todayScheduleTitle": "string",
+  "todaySchedule": [
+    {
+      "icon": "string (material icon name)",
+      "title": "string",
+      "time": "string (e.g., '2:00 PM')"
+    }
+  ],
+  "analyticsTitle": "string",
+  "analyticsQuote": "string",
+  "analyticsDescription": "string",
+  "analyticsButtonText": "string",
+  "footerText": "string (e.g., '© 2024 Luxe Estate Realty. All rights reserved.')"
+}

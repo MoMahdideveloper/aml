@@ -1,0 +1,113 @@
+{
+  "name": "Chat/Copilot Integration",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/chat-message",
+        "responseMode": "onReceived",
+        "responseData": {
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": "{\"status\": \"received\"}"
+        }
+      },
+      "name": "Webhook: Incoming Chat",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        100
+      ],
+      "id": "webhook1"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse incoming chat message\nconst body = $json[\"body\"] || {};\n\nconst chatData = {\n  messageId: body.message_id || '',\n  conversationId: body.conversation_id || '',\n  userId: body.user_id || '',\n  userName: body.user_name || '',\n  message: body.message || '',\n  timestamp: body.timestamp || new Date().toISOString(),\n  platform: body.platform || 'website',\n  metadata: body.metadata || {}\n};\n\nreturn [{ json: chatData }];"
+      },
+      "name": "Parse Chat Message",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        500,
+        100
+      ],
+      "id": "function1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "SELECT c.id, c.first_name, c.last_name, c.email, c.phone FROM customers c WHERE c.user_id = $1 OR (c.email = $2 AND $2 != '')",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {
+                "parameters": {
+                  "value": "={{[$json[\"userId\"], $json[\"userName\"]]}}"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "name": "Find Customer",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        750,
+        50
+      ],
+      "id": "postgres1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "query",
+              "value": "INSERT INTO chat_messages (message_id, conversation_id, user_id, customer_id, message_content, timestamp, platform, processed) VALUES ($1, $2, $3, $4, $5, $6, $7, false)",
+              "valueType": "string"
+            }
+          ]
+        },
+        "options": {
+          "values": [
+            {
+              "name": "postgresQueryOptions",
+              "value": {
+                "parameters": {
+                  "value": "={{[$json[\"messageId\"], $json[\"conversationId\"], $json[\"userId\"], (($json[\"customer\"] || [{}])[0]?.id || null), $json[\"message\"], $json[\"timestamp\"], $json[\"platform\"], false]}}"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "name": "Log Chat Message",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        50
+      ],
+      "id": "postgres2"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Determine customer info and message intent\nconst customers = $json;\nconst message = ($json[\"message\"] || '').toLowerCase();\nconst userId = $json[\"userId\"];\n\nlet customer = null;\nif (customers && customers.length > 0) {\n  customer = customers[0];\n}\n\n// Analyze message for intent\nconst intents = [];\nif (message.includes('price') || message.includes('cost') || message.includes('value')) {\n  intents.push('price_inquiry');\n}\nif (message.includes('visit') || message.contains('tour') || message.contains('see')) {\n  intents.push('viewing_request');\n}\nif (message.includes('agent') || message.contains('representative')) {\n  intents.push('agent_request');\n}\nif (message.includes('mortgage') || message.contains('financing') || message.contains('loan')) {\n  intents.push('financing_question');\n}\nif (message.includes('buy') || message.contains('purchase') || message.contains('offer')) {\n  intents.push('purchase_intent');\n}\nif (message.includes('sell') || message.contains('listing') || message.contains('market')) {\n  intents.push('selling_inquiry');\n}\n\n// Default to general inquiry if no specific intent\nif (intents.length === 0) {\n  intents.push('general_inquiry');\n}\n\nreturn [{ json: {\n  customerId: customer ? customer.id : null,\n  customerName: customer ? `${customer.first_name} ${customer.last_name}` : 'Unknown User',\n  customerEmail: customer ? customer.email : null,\n  customerPhone: customer ? customer.phone : null,\n  originalMessage: $json[\"message\"],\n  detectedIntents: intents,\n  conversationId: $json[\"conversationId\"],\n  messageId: $json[\"messageId\"],\n  needsFollowUp: intents.includes('viewing_request') || intents.includes('purchase_intent'),\n  priority: intents.includes('purchase_intent') ? 'high' : (intents.includes('viewing_request') ? 'medium' : 'low'),\n  suggestedResponse: generateSuggestedResponse(intents, customer),\n  timestamp: new Date().toISOString()\n} }];\n\nfunction generateSuggestedResponse(intents, customer) {\n  const name = customer ? customer.first_name : 'there';\n  \n  if (intents.includes('price_inquiry')) {\n    return `Hi ${name}! I'd be happy to help you with pricing information. Could you tell me which property you're interested in?`;\n  }\n  if (intents.includes('viewing_request')) {\n    return `Hi ${name}! I can help you schedule a viewing. What date and time works best for you?`;\n  }\n  if (intents.includes('agent_request')) {\n    return `Hi ${name}! Would you like to be connected with a specific agent, or shall I have our team lead assist you?`;\n  }\n  if (intents.includes('financing_question')) {\n    return `Hi ${name}! Our financing specialists can help answer your mortgage questions. Would you like me to connect you with one?`;\n  }\n  if (intents.includes('purchase_intent')) {\n    return `Hi ${name}! It sounds like you're ready to make an offer. Let's discuss the details and next steps.`;\n  }\n  if (intents.includes('selling_inquiry')) {\n    return `Hi ${name}! I'd be glad to help you with selling your property. Can you tell me more about what you're looking to sell?`;\n  }\n  return `Hi ${name}! Thanks for reaching out. How can I assist you with your real estate needs today?`;\n}"
+      }
+    }
+  ]
+}

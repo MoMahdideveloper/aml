@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Agent Dashboard - Platinum Heritage</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS Setup -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary": "#ffffff",
+                        "surface": "#f7f9ff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#38485a",
+                        "surface-container": "#e3effe",
+                        "surface-variant": "#d8e4f3",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "error": "#ba1a1a",
+                        "primary-container": "#2a3a4b",
+                        "on-primary-fixed": "#0c1d2d",
+                        "tertiary": "#23241c",
+                        "secondary-fixed": "#e3e2e2",
+                        "on-secondary-container": "#626363",
+                        "secondary-fixed-dim": "#c6c6c6",
+                        "on-primary": "#ffffff",
+                        "surface-container-highest": "#d8e4f3",
+                        "inverse-surface": "#26313d",
+                        "secondary": "#5d5e5f",
+                        "on-tertiary-fixed": "#1c1c14",
+                        "surface-tint": "#506072",
+                        "outline": "#74777d",
+                        "primary-fixed-dim": "#b7c8dd",
+                        "tertiary-fixed-dim": "#c8c7bb",
+                        "surface-container-low": "#edf4ff",
+                        "primary-fixed": "#d3e4fa",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "on-surface": "#111d27",
+                        "secondary-container": "#e0dfdf",
+                        "outline-variant": "#c4c6cc",
+                        "tertiary-container": "#393930",
+                        "on-tertiary-container": "#a3a297",
+                        "on-surface-variant": "#44474c",
+                        "surface-bright": "#f7f9ff",
+                        "inverse-primary": "#b7c8dd",
+                        "on-primary-container": "#93a4b8",
+                        "on-tertiary-fixed-variant": "#47473e",
+                        "surface-dim": "#d0dbea",
+                        "inverse-on-surface": "#e8f2ff",
+                        "error-red": "#BA1A1A",
+                        "background": "#f7f9ff",
+                        "on-secondary-fixed-variant": "#464747",
+                        "on-background": "#111d27",
+                        "tertiary-fixed": "#e5e3d6",
+                        "surface-white": "#FFFFFF",
+                        "primary": "#142435",
+                        "surface-container-high": "#dee9f8",
+                        "on-error-container": "#93000a"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    spacing: {
+                        "margin-desktop": "64px",
+                        "base": "8px",
+                        "margin-mobile": "16px",
+                        "max-width": "1280px",
+                        "gutter": "24px"
+                    },
+                    fontFamily: {
+                        "display-lg": ["IBM Plex Sans"],
+                        "body-md": ["IBM Plex Sans"],
+                        "body-lg": ["IBM Plex Sans"],
+                        "label-sm": ["IBM Plex Sans"],
+                        "label-md": ["IBM Plex Sans"],
+                        "headline-lg-mobile": ["IBM Plex Sans"],
+                        "headline-md": ["IBM Plex Sans"],
+                        "headline-lg": ["IBM Plex Sans"]
+                    },
+                    fontSize: {
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #F4F2E5; /* Cream override from prompt instructions */
+        }
+        .platinum-border {
+            border-color: #C0C0C0;
+        }
+        .deep-blue-bg {
+            background-color: #2A3A4B;
+        }
+        .deep-blue-text {
+            color: #2A3A4B;
+        }
+        .card-shadow {
+            box-shadow: 0 8px 30px rgba(27, 38, 49, 0.06);
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface antialiased min-h-screen flex flex-col">
+<!-- TopNavBar (Modified for Back action and Profile context as per Prompt) -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-desktop h-20 bg-surface-white border-b platinum-border">
+<!-- Left Area: Back Button & Context -->
+<div class="flex items-center gap-6">
+<button class="flex items-center gap-2 text-secondary hover:deep-blue-text transition-colors group">
+<span class="material-symbols-outlined text-[20px] group-hover:-translate-x-1 transition-transform">arrow_back</span>
+<span class="font-label-md">Agents</span>
+</button>
+<div class="h-8 w-px bg-[#C0C0C0]"></div> <!-- Divider -->
+<div class="flex items-center gap-4">
+<img alt="Agent Portrait" class="w-10 h-10 rounded-full object-cover platinum-border border" data-alt="A professional headshot of a senior real estate associate in a modern, brightly lit office environment. The lighting is soft and flattering, highlighting a crisp navy suit. The style is clean, corporate, and premium, consistent with a high-end agency aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKsvsBxQVURvUWS6kg3fuEylDzaDP6LRT7mJ948G_9e-UYfjQquDEJOywTP6fN0ZXMBVBko4XTNr8kfGr0ESSAo3XFmmFHy2q9M0h3xznaW8m8wFprp8ByYtBmdW7oKjNoFnyVVz-1dpqay1rK1pLTdP0i4fL459V5LBwf0BoSKjv6l_sYmvZAIQAwHTmG53bfIR2KHt2f-Sn4WniuYVvXvqHQA6-9VWBaUNPN3jtinXAYE_L5Vdc"/>
+<div>
+<h1 class="font-headline-md deep-blue-text leading-tight text-[18px]">Alexander Sterling</h1>
+<p class="font-label-sm text-secondary">Senior Associate</p>
+</div>
+</div>
+</div>
+<!-- Right Area: Navigation & Actions (from JSON spec, adjusted for layout) -->
+<div class="hidden md:flex items-center gap-8">
+<nav class="flex gap-6">
+<a class="font-label-md deep-blue-text font-bold border-b-2 border-[#2A3A4B] pb-1" href="#">Dashboard</a>
+<a class="font-label-md text-secondary hover:deep-blue-text transition-colors" href="#">Portfolio</a>
+<a class="font-label-md text-secondary hover:deep-blue-text transition-colors" href="#">Clients</a>
+<a class="font-label-md text-secondary hover:deep-blue-text transition-colors" href="#">Analytics</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="text-secondary hover:deep-blue-text transition-colors">
+<span class="material-symbols-outlined">mail</span>
+</button>
+<button class="text-secondary hover:deep-blue-text transition-colors">
+<span class="material-symbols-outlined">call</span>
+</button>
+<div class="h-6 w-px bg-[#C0C0C0] mx-2"></div>
+<button class="deep-blue-bg text-on-primary font-label-md px-6 py-2 rounded-lg hover:opacity-90 transition-opacity">
+                    List Property
+                </button>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 mt-20 px-margin-mobile md:px-margin-desktop py-12 max-w-max-width mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Top Full Width: Performance Stats Grid -->
+<section class="col-span-1 lg:col-span-12 mb-8">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Stat Card 1 -->
+<div class="bg-surface-white rounded-xl p-6 border platinum-border card-shadow flex flex-col justify-between h-[140px] hover:-translate-y-1 transition-transform">
+<div class="flex justify-between items-start">
+<p class="font-label-sm text-secondary uppercase tracking-wider">Active Listings</p>
+<span class="material-symbols-outlined text-secondary">domain</span>
+</div>
+<div>
+<p class="font-display-lg deep-blue-text">24</p>
+</div>
+</div>
+<!-- Stat Card 2 -->
+<div class="bg-surface-white rounded-xl p-6 border platinum-border card-shadow flex flex-col justify-between h-[140px] hover:-translate-y-1 transition-transform">
+<div class="flex justify-between items-start">
+<p class="font-label-sm text-secondary uppercase tracking-wider">Recent Deals</p>
+<span class="material-symbols-outlined text-secondary">handshake</span>
+</div>
+<div>
+<p class="font-display-lg deep-blue-text">8</p>
+<p class="font-label-sm text-[#506072] mt-1">+2 this month</p>
+</div>
+</div>
+<!-- Stat Card 3 -->
+<div class="bg-surface-white rounded-xl p-6 border platinum-border card-shadow flex flex-col justify-between h-[140px] hover:-translate-y-1 transition-transform">
+<div class="flex justify-between items-start">
+<p class="font-label-sm text-secondary uppercase tracking-wider">Pending Tasks</p>
+<span class="material-symbols-outlined text-secondary">assignment</span>
+</div>
+<div>
+<p class="font-display-lg deep-blue-text">12</p>
+</div>
+</div>
+<!-- Stat Card 4 -->
+<div class="bg-surface-white rounded-xl p-6 border platinum-border card-shadow flex flex-col justify-between h-[140px] hover:-translate-y-1 transition-transform relative">
+<div class="flex justify-between items-start">
+<p class="font-label-sm text-secondary uppercase tracking-wider">Notifications</p>
+<div class="relative">
+<span class="material-symbols-outlined text-secondary">notifications</span>
+<span class="absolute -top-1 -right-1 w-3 h-3 bg-error-red rounded-full border-2 border-surface-white"></span>
+</div>
+</div>
+<div>
+<p class="font-display-lg deep-blue-text">5</p>
+<p class="font-label-sm text-error-red mt-1 font-medium">3 Priority</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Left Column: Notifications Panel (7 cols) -->
+<section class="col-span-1 lg:col-span-7 flex flex-col gap-6">
+<div class="flex justify-between items-end">
+<h2 class="font-headline-md deep-blue-text">Activity Stream</h2>
+<div class="flex gap-2">
+<button class="font-label-sm px-4 py-1.5 rounded-full border border-[#2A3A4B] deep-blue-text bg-surface-white">All</button>
+<button class="font-label-sm px-4 py-1.5 rounded-full border platinum-border text-secondary hover:border-[#2A3A4B] transition-colors bg-surface-white">Unread</button>
+<button class="font-label-sm px-4 py-1.5 rounded-full border platinum-border text-secondary hover:border-[#2A3A4B] transition-colors bg-surface-white flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-error-red"></span>
+                        Priority
+                    </button>
+</div>
+</div>
+<!-- Notifications List -->
+<div class="bg-surface-white rounded-xl border platinum-border card-shadow flex flex-col">
+<!-- Item 1 (Priority) -->
+<div class="p-6 border-b platinum-border flex gap-4 hover:bg-[#F4F2E5]/30 transition-colors cursor-pointer relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-error-red"></div>
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[#2A3A4B]">warning</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-label-md deep-blue-text font-bold">Offer Received: 1420 Luxury Ave</h3>
+<span class="font-label-sm text-secondary">10m ago</span>
+</div>
+<p class="font-body-md text-on-surface-variant">Client J. Smith submitted an offer for $4.2M. Review required before end of day.</p>
+<div class="mt-3 flex gap-3">
+<button class="font-label-sm deep-blue-text underline hover:opacity-80">View Offer</button>
+</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="p-6 border-b platinum-border flex gap-4 hover:bg-[#F4F2E5]/30 transition-colors cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[#2A3A4B]">schedule</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-label-md deep-blue-text font-bold">Showing Confirmed</h3>
+<span class="font-label-sm text-secondary">1h ago</span>
+</div>
+<p class="font-body-md text-on-surface-variant">Showing confirmed at Penthouse B with the Harrison family tomorrow at 2:00 PM.</p>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="p-6 border-b platinum-border flex gap-4 hover:bg-[#F4F2E5]/30 transition-colors cursor-pointer opacity-70">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-secondary">description</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-label-md text-secondary">Contract Signed</h3>
+<span class="font-label-sm text-secondary">Yesterday</span>
+</div>
+<p class="font-body-md text-on-surface-variant">The listing agreement for 88 Park Place has been finalized and uploaded to the vault.</p>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="p-6 flex gap-4 hover:bg-[#F4F2E5]/30 transition-colors cursor-pointer opacity-70">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-secondary">forum</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-label-md text-secondary">Client Inquiry</h3>
+<span class="font-label-sm text-secondary">Yesterday</span>
+</div>
+<p class="font-body-md text-on-surface-variant">New message from E. Vance regarding property tax details for the waterfront estate.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: Smart Intake (5 cols) -->
+<section class="col-span-1 lg:col-span-5 flex flex-col gap-6">
+<div class="flex items-end gap-2">
+<span class="material-symbols-outlined deep-blue-text">psychology</span>
+<h2 class="font-headline-md deep-blue-text">Smart Intake</h2>
+</div>
+<div class="bg-surface-white rounded-xl border platinum-border card-shadow p-6 flex flex-col h-full">
+<p class="font-body-md text-secondary mb-4">Paste raw property descriptions or client notes to automatically extract listing data.</p>
+<div class="relative flex-1 min-h-[200px] mb-4">
+<textarea class="w-full h-full p-4 border platinum-border rounded-lg bg-[#F4F2E5]/10 font-body-md text-on-surface focus:outline-none focus:border-[#2A3A4B] focus:ring-1 focus:ring-[#2A3A4B] resize-none" placeholder="e.g., Stunning 4 bed 3 bath home in the hills. Approx 3500 sqft. Asking $2.1M. Features a pool and newly renovated kitchen..."></textarea>
+<button class="absolute bottom-4 right-4 deep-blue-bg text-on-primary font-label-md px-6 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+                        Analyze
+                    </button>
+</div>
+<div class="border-t platinum-border pt-4">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-label-md deep-blue-text font-bold">Extracted Entities</h3>
+<span class="font-label-sm text-secondary">Waiting for input...</span>
+</div>
+<!-- Dummy extraction state for visual preview -->
+<div class="space-y-3 opacity-50 pointer-events-none">
+<div class="flex items-center justify-between p-3 border platinum-border rounded-lg bg-[#F4F2E5]/30">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-[20px]">payments</span>
+<span class="font-label-md text-secondary">Price</span>
+</div>
+<div class="flex gap-2">
+<span class="font-body-md border-b border-dashed platinum-border w-24 inline-block text-right">--</span>
+<button class="text-[#2A3A4B] opacity-50"><span class="material-symbols-outlined text-[20px]">add_circle</span></button>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 border platinum-border rounded-lg bg-[#F4F2E5]/30">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-[20px]">bed</span>
+<span class="font-label-md text-secondary">Beds</span>
+</div>
+<div class="flex gap-2">
+<span class="font-body-md border-b border-dashed platinum-border w-12 inline-block text-right">--</span>
+<button class="text-[#2A3A4B] opacity-50"><span class="material-symbols-outlined text-[20px]">add_circle</span></button>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 border platinum-border rounded-lg bg-[#F4F2E5]/30">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-[20px]">square_foot</span>
+<span class="font-label-md text-secondary">Area</span>
+</div>
+<div class="flex gap-2">
+<span class="font-body-md border-b border-dashed platinum-border w-20 inline-block text-right">--</span>
+<button class="text-[#2A3A4B] opacity-50"><span class="material-symbols-outlined text-[20px]">add_circle</span></button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer Component from JSON -->
+<footer class="w-full py-8 px-margin-desktop flex flex-col md:flex-row justify-between items-center mt-auto border-t platinum-border bg-surface-white">
+<p class="font-label-sm text-secondary mb-4 md:mb-0">© 2024 Platinum Heritage Real Estate. All rights reserved.</p>
+<div class="flex gap-6">
+<a class="font-label-sm text-secondary hover:text-[#2A3A4B] opacity-80 hover:opacity-100 transition-opacity" href="#">Privacy Policy</a>
+<a class="font-label-sm text-secondary hover:text-[#2A3A4B] opacity-80 hover:opacity-100 transition-opacity" href="#">Terms of Service</a>
+<a class="font-label-sm text-secondary hover:text-[#2A3A4B] opacity-80 hover:opacity-100 transition-opacity" href="#">Compliance</a>
+<a class="font-label-sm text-secondary hover:text-[#2A3A4B] opacity-80 hover:opacity-100 transition-opacity" href="#">Contact</a>
+</div>
+</footer>
+</body></html>
