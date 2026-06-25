@@ -3,19 +3,18 @@ from flask import Blueprint, jsonify, render_template, send_file
 from database_service import database_service
 from gemini_service import gemini_service
 import os
-from utils.execution_tracer import log_execution
 
 bp = Blueprint("main", __name__)
 
 
 
 @bp.route('/')
-@log_execution
 def serve_code_html():
     """Serve the code.html file as the root page."""
     try:
         file_path = os.path.join(
             os.path.dirname(__file__),
+            '..', '..', '..', '..',
             'stitch_kpi_performance_dashboard',
             'dashboard_overview',
             'code.html'
