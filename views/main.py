@@ -1,10 +1,31 @@
-from flask import Blueprint, jsonify, render_template
+from flask import Blueprint, jsonify, render_template, send_file
 
 from database_service import database_service
 from gemini_service import gemini_service
+import os
+from utils.execution_tracer import log_execution
 
 bp = Blueprint("main", __name__)
 
+
+
+@bp.route('/')
+@log_execution
+def serve_code_html():
+    """Serve the code.html file as the root page."""
+    try:
+        file_path = os.path.join(
+            os.path.dirname(__file__),
+            'stitch_kpi_performance_dashboard',
+            'dashboard_overview',
+            'code.html'
+        )
+        return send_file(file_path, mimetype='text/html')
+    except FileNotFoundError:
+        return "File not found: code.html", 404
+    except Exception as e:
+        # Log the error (optional)
+        return f"Error reading file: {str(e)}", 500
 
 @bp.route("/")
 def dashboard():
@@ -50,3 +71,4 @@ def api_market_analysis():
         return jsonify({"analysis": str(result), "bullets": [], "updated_at": datetime.utcnow().isoformat() + "Z"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
