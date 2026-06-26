@@ -95,7 +95,16 @@ class BackgroundMatcher:
                 candidates = self._prefilter_candidate_properties(customer, properties)
                 if not candidates:
                     continue
-                matches.extend(self._process_customer_candidates(customer, candidates))
+                # Deduplicate candidates by property id to avoid processing the same property multiple times for the same customer
+                seen_property_ids = set()
+                deduped_candidates = []
+                for prop in candidates:
+                    if prop.id not in seen_property_ids:
+                        seen_property_ids.add(prop.id)
+                        deduped_candidates.append(prop)
+                if not deduped_candidates:
+                    continue
+                matches.extend(self._process_customer_candidates(customer, deduped_candidates))
 
             valid_matches = [m for m in matches if m["match_score"] >= self.min_match_score]
             valid_matches.sort(key=lambda x: x["match_score"], reverse=True)
@@ -177,12 +186,12 @@ class BackgroundMatcher:
             for prop in properties
             if (
                 not max_budget
-                or (prop.price and prop.price <= int(max_budget * 1.2))
-                or (prop.rahn and prop.rahn <= int(max_budget * 1.2))
+                or (prop.price is not None and prop.price <= int(max_budget * 1.2))
+                or (prop.rahn is not None and prop.rahn <= int(max_budget * 1.2))
             )
-            and (not min_budget or prop.price >= int(min_budget * 0.5) or prop.price == 0)
+            and (not min_budget or prop.price >= int(min_budget * 0.5))
         ]
-        candidate_pool = budget_filtered or properties
+        candidate_pool = budget_filtered
         if not candidate_pool:
             return []
 
@@ -251,36 +260,60 @@ class BackgroundMatcher:
         return matches
 
     def _calculate_basic_match_score(self, customer: Customer, property_obj: Property) -> float:
-        score = 0.0
-        factors = 0
+        # Calculate score for each category between 0 and 1, then average
+        scores = []
 
-        if customer.budget_min and customer.budget_max and property_obj.price:
+        # Budget score
+        if customer.budget_min is not None and customer.budget_max is not None and property_obj.price is not None:
             if customer.budget_min <= property_obj.price <= customer.budget_max:
-                score += 0.4
+                budget_score = 1.0
             elif property_obj.price <= customer.budget_max * 1.1:
-                score += 0.2
-            factors += 1
+                # Within 10% above max: give half credit (since full credit is 1.0)
+                budget_score = 0.5
+            else:
+                budget_score = 0.0
+            scores.append(budget_score)
+        else:
+            scores.append(0.0)
 
-        if customer.preferred_bedrooms and property_obj.bedrooms:
-            if customer.preferred_bedrooms == property_obj.bedrooms:
-                score += 0.3
-            elif abs(customer.preferred_bedrooms - property_obj.bedrooms) == 1:
-                score += 0.15
-            factors += 1
+        # Bedrooms score
+        if customer.preferred_bedrooms is not None and property_obj.bedrooms is not None:
+            diff = abs(customer.preferred_bedrooms - property_obj.bedrooms)
+            if diff == 0:
+                bedroom_score = 1.0
+            elif diff == 1:
+                bedroom_score = 0.5
+            else:
+                bedroom_score = 0.0
+            scores.append(bedroom_score)
+        else:
+            scores.append(0.0)
 
-        if customer.preferred_bathrooms and property_obj.bathrooms:
-            if customer.preferred_bathrooms == property_obj.bathrooms:
-                score += 0.2
-            elif abs(customer.preferred_bathrooms - property_obj.bathrooms) == 1:
-                score += 0.1
-            factors += 1
+        # Bathrooms score
+        if customer.preferred_bathrooms is not None and property_obj.bathrooms is not None:
+            diff = abs(customer.preferred_bathrooms - property_obj.bathrooms)
+            if diff == 0:
+                bathroom_score = 1.0
+            elif diff == 1:
+                bathroom_score = 0.5
+            else:
+                bathroom_score = 0.0
+            scores.append(bathroom_score)
+        else:
+            scores.append(0.0)
 
-        if customer.preferred_type and property_obj.property_type:
+        # Property type score
+        if customer.preferred_type is not None and property_obj.property_type is not None:
             if customer.preferred_type.lower() == property_obj.property_type.lower():
-                score += 0.1
-            factors += 1
+                type_score = 1.0
+            else:
+                type_score = 0.0
+            scores.append(type_score)
+        else:
+            scores.append(0.0)
 
-        return score / factors if factors > 0 else 0.0
+        # Average the four scores
+        return sum(scores) / len(scores)
 
     def save_matches_to_database(self, matches: List[Dict]) -> List[PropertyMatch]:
         saved_matches: List[PropertyMatch] = []
