@@ -46,6 +46,10 @@ def build_property_search_query(search_request):
     if search_request.property_category:
         query = query.filter(Property.property_category == search_request.property_category)
 
+    # Property condition filter
+    if search_request.property_condition:
+        query = query.filter(Property.property_condition == search_request.property_condition)
+
     # Neighborhood filter
     if search_request.neighborhood:
         query = query.filter(Property.neighborhood == search_request.neighborhood)

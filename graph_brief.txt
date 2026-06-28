@@ -1,0 +1,1 @@
+Graph brief: Packet: relationship-trace-packet, Primary mode: graph-query-followup, Scope: templates/ + static/ + templates/base.html, Artifacts: graphify-out/GRAPH_REPORT.md (existing), Next steps: Query existing graph for template file relationships, inheritance patterns, and static asset usage

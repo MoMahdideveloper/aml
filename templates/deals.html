@@ -1,94 +1,111 @@
-{% extends "base.html" %}
+{% extends get_template_variant('base.html') %}
 
-{% block title %}Deals - Real Estate CRM{% endblock %}
+{% block title %}Deals - Stitch KPI{% endblock %}
 {% block page_title %}Deal Pipeline{% endblock %}
-
-{% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
-<li class="breadcrumb-item active" aria-current="page">Deals</li>
-{% endblock %}
 
 {% block content %}
 <!-- Header Section -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h4 class="mb-1">Deal Pipeline Management</h4>
-        <p class="text-muted mb-0">Track and manage your real estate deals through the sales pipeline</p>
+<div class="bg-surface-white rounded-lg shadow-sm p-6">
+    <div class="border-l-4 border-primary/20 pl-4 mb-4">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="font-semibold text-on-surface">Deal Pipeline Management</h3>
+                <p class="text-label-sm text-on-surface-variant">Track and manage your real estate deals through the sales pipeline</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="showPipelineReport()"
+                        class="flex items-center gap-2 px-4 py-2 bg-success/10 text-success rounded-lg hover:bg-success/20 transition-colors font-medium">
+                    <i class="fas fa-chart-bar text-success"></i>
+                    <span>Pipeline Report</span>
+                </button>
+                <button onclick="document.getElementById('addDealModal').classList.remove('hidden')"
+                        class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium">
+                    <i class="fas fa-handshake"></i>
+                    <span>Add Deal</span>
+                </button>
+            </div>
+        </div>
     </div>
-    <div class="d-flex gap-2">
-        <button class="btn btn-outline-success" onclick="showPipelineReport()">
-            <i class="fas fa-chart-bar me-2"></i>
-            Pipeline Report
-        </button>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDealModal">
-            <i class="fas fa-handshake me-2"></i>
-            Add Deal
-        </button>
-    </div>
-</div>
 
-<!-- Pipeline Overview Cards -->
-<div class="row mb-4">
-    <div class="col-lg-2 col-md-4 mb-3">
-        <div class="card pipeline-stage bg-light">
-            <div class="card-body text-center">
-                <h6 class="text-muted mb-1">Prospecting</h6>
-                <h4 class="text-primary">{{ deals | selectattr("status", "equalto", "prospecting") | list | length }}</h4>
+    <!-- Pipeline Overview Cards -->
+    <div class="grid gap-6 mb-6">
+        <div class="bg-surface-white rounded-lg shadow-sm p-4 flex items-center justify-between hover:shadow-md transition-shadow">
+            <div class="flex items-center space-x-3">
+                <div class="flex h-10 w-10 items-center justify-center bg-primary/10 rounded-lg flex-shrink-0">
+                    <i class="fas fa-search text-primary"></i>
+                </div>
+                <div>
+                    <p class="font-medium text-on-surface">Prospecting</p>
+                    <p class="text-headline-md text-primary font-bold">{{ deals | selectattr("status", "equalto", "prospecting") | list | length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface-white rounded-lg shadow-sm p-4 flex items-center justify-between hover:shadow-md transition-shadow">
+            <div class="flex items-center space-x-3">
+                <div class="flex h-10 w-10 items-center justify-center bg-info/10 rounded-lg flex-shrink-0">
+                    <i class="fas fa-user-check text-info"></i>
+                </div>
+                <div>
+                    <p class="font-medium text-on-surface">Qualified</p>
+                    <p class="text-headline-md text-info font-bold">{{ deals | selectattr("status", "equalto", "qualified") | list | length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface-white rounded-lg shadow-sm p-4 flex items-center justify-between hover:shadow-md transition-shadow">
+            <div class="flex items-center space-x-3">
+                <div class="flex h-10 w-10 items-center justify-center bg-warning/10 rounded-lg flex-shrink-0">
+                    <i class="fas fa-file-alt text-warning"></i>
+                </div>
+                <div>
+                    <p class="font-medium text-on-surface">Proposal</p>
+                    <p class="text-headline-md text-warning font-bold">{{ deals | selectattr("status", "equalto", "proposal") | list | length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface-white rounded-lg shadow-sm p-4 flex items-center justify-between hover:shadow-md transition-shadow">
+            <div class="flex items-center space-x-3">
+                <div class="flex h-10 w-10 items-center justify-center bg-orange/10 rounded-lg flex-shrink-0">
+                    <i class="fas fa-balance-scale text-orange"></i>
+                </div>
+                <div>
+                    <p class="font-medium text-on-surface">Negotiation</p>
+                    <p class="text-headline-md text-orange font-bold">{{ deals | selectattr("status", "equalto", "negotiation") | list | length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface-white rounded-lg shadow-sm p-4 flex items-center justify-between hover:shadow-md transition-shadow">
+            <div class="flex items-center space-x-3">
+                <div class="flex h-10 w-10 items-center justify-center bg-success/10 rounded-lg flex-shrink-0">
+                    <i class="fas fa-check-circle text-success"></i>
+                </div>
+                <div>
+                    <p class="font-medium text-on-surface">Closed Won</p>
+                    <p class="text-headline-md text-success font-bold">{{ deals | selectattr("status", "equalto", "closed_won") | list | length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface-white rounded-lg shadow-sm p-4 flex items-center justify-between hover:shadow-md transition-shadow">
+            <div class="flex items-center space-x-3">
+                <div class="flex h-10 w-10 items-center justify-center bg-error/10 rounded-lg flex-shrink-0">
+                    <i class="fas fa-times-circle text-error"></i>
+                </div>
+                <div>
+                    <p class="font-medium text-on-surface">Closed Lost</p>
+                    <p class="text-headline-md text-error font-bold">{{ deals | selectattr("status", "equalto", "closed_lost") | list | length }}</p>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-lg-2 col-md-4 mb-3">
-        <div class="card pipeline-stage bg-info-light">
-            <div class="card-body text-center">
-                <h6 class="text-muted mb-1">Qualified</h6>
-                <h4 class="text-info">{{ deals | selectattr("status", "equalto", "qualified") | list | length }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-2 col-md-4 mb-3">
-        <div class="card pipeline-stage bg-warning-light">
-            <div class="card-body text-center">
-                <h6 class="text-muted mb-1">Proposal</h6>
-                <h4 class="text-warning">{{ deals | selectattr("status", "equalto", "proposal") | list | length }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-2 col-md-4 mb-3">
-        <div class="card pipeline-stage bg-orange-light">
-            <div class="card-body text-center">
-                <h6 class="text-muted mb-1">Negotiation</h6>
-                <h4 class="text-orange">{{ deals | selectattr("status", "equalto", "negotiation") | list | length }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-2 col-md-4 mb-3">
-        <div class="card pipeline-stage bg-success-light">
-            <div class="card-body text-center">
-                <h6 class="text-muted mb-1">Closed Won</h6>
-                <h4 class="text-success">{{ deals | selectattr("status", "equalto", "closed_won") | list | length }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-2 col-md-4 mb-3">
-        <div class="card pipeline-stage bg-danger-light">
-            <div class="card-body text-center">
-                <h6 class="text-muted mb-1">Closed Lost</h6>
-                <h4 class="text-danger">{{ deals | selectattr("status", "equalto", "closed_lost") | list | length }}</h4>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Deals Table -->
-<div class="card">
-    <div class="card-header bg-primary text-white">
-        <div class="d-flex justify-content-between align-items-center">
-            <h6 class="card-title mb-0">
-                <i class="fas fa-handshake me-2"></i>
-                All Deals
-            </h6>
-            <div class="d-flex gap-2">
-                <select class="form-select form-select-sm" id="statusFilter" onchange="filterDeals()">
+    <!-- Deals Table Section -->
+    <div class="border-l-4 border-primary/20 pl-4 mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="font-semibold text-on-surface">All Deals</h3>
+            </div>
+            <div class="flex items-center gap-3">
+                <select id="statusFilter" onchange="filterDeals()"
+                        class="w-[200px] px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                     <option value="">All Statuses</option>
                     <option value="prospecting">Prospecting</option>
                     <option value="qualified">Qualified</option>
@@ -100,135 +117,138 @@
             </div>
         </div>
     </div>
-    <div class="card-body p-0">
+
+    <!-- Deals Table -->
+    <div class="bg-surface-white rounded-lg shadow-sm p-6">
         {% if deals %}
-        <div class="table-responsive">
-            <table class="table table-hover mb-0" id="dealsTable">
-                <thead class="table-light">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-outline/20">
+                <thead class="bg-surface/50">
                     <tr>
-                        <th>Deal ID</th>
-                        <th>Property</th>
-                        <th>Customer</th>
-                        <th>Agent</th>
-                        <th>Offer Amount</th>
-                        <th>Status</th>
-                        <th>Created</th>
-                        <th>Actions</th>
+                        <th class="px-6 py-3 text-left text-label-sm text-on-surface-variant font-medium">Deal ID</th>
+                        <th class="px-6 py-3 text-left text-label-sm text-on-surface-variant font-medium">Property</th>
+                        <th class="px-6 py-3 text-left text-label-sm text-on-surface-variant font-medium">Customer</th>
+                        <th class="px-6 py-3 text-left text-label-sm text-on-surface-variant font-medium">Agent</th>
+                        <th class="px-6 py-3 text-left text-label-sm text-on-surface-variant font-medium">Offer Amount</th>
+                        <th class="px-6 py-3 text-left text-label-sm text-on-surface-variant font-medium">Status</th>
+                        <th class="px-6 py-3 text-left text-label-sm text-on-surface-variant font-medium">Created</th>
+                        <th class="px-6 py-3 text-left text-label-sm text-on-surface-variant font-medium">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-outline/20">
                     {% for deal in deals %}
-                    <tr data-status="{{ deal.status }}">
-                        <td>
-                            <span class="fw-semibold text-primary">#{{ deal.id }}</span>
+                    <tr class="hover:bg-surface/50 transition-colors" data-status="{{ deal.status }}">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="font-medium text-on-surface">#{{ deal.id }}</span>
                         </td>
-                        <td>
+                        <td class="px-6 py-4 whitespace-nowrap">
                             {% if deal.property_obj %}
-                            <div>
-                                <div class="fw-semibold">{{ deal.property_obj.title }}</div>
-                                <small class="text-muted">{{ deal.property_obj.address }}</small>
-                                <div class="small text-success">${{ "{:,.0f}".format(deal.property_obj.price) }}</div>
+                            <div class="flex flex-col">
+                                <p class="font-medium text-on-surface">{{ deal.property_obj.title }}</p>
+                                <p class="text-label-sm text-on-surface-variant truncate">{{ deal.property_obj.address }}</p>
+                                <p class="text-label-sm text-on-surface-variant">${{ "{:,.0f}".format(deal.property_obj.price) }}</p>
                             </div>
                             {% else %}
-                            <span class="text-muted">Property not found</span>
+                            <span class="text-label-sm text-on-surface-variant">Property not found</span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td class="px-6 py-4 whitespace-nowrap">
                             {% if deal.customer_obj %}
-                            <div class="d-flex align-items-center">
-                                <div class="customer-avatar me-2">
-                                    <div class="avatar-circle bg-success text-white small-avatar">
-                                        {{ deal.customer_obj.name.split()[0][0] }}{{ deal.customer_obj.name.split()[-1][0] if deal.customer_obj.name.split()|length > 1 else '' }}
+                            <div class="flex flex-col">
+                                <div class="flex items-center space-x-2">
+                                    <div class="flex h-8 w-8 items-center justify-center bg-primary/10 rounded-lg flex-shrink-0">
+                                        <span class="font-medium text-primary">{{ deal.customer_obj.name.split()[0][0] }}{{ deal.customer_obj.name.split()[-1][0] if deal.customer_obj.name.split()|length > 1 else '' }}</span>
                                     </div>
+                                    <p class="font-medium text-on-surface">{{ deal.customer_obj.name }}</p>
                                 </div>
-                                <div>
-                                    <div class="fw-semibold">{{ deal.customer_obj.name }}</div>
-                                    <small class="text-muted">{{ deal.customer_obj.email }}</small>
-                                </div>
+                                <p class="text-label-sm text-on-surface-variant">{{ deal.customer_obj.email }}</p>
                             </div>
                             {% else %}
-                            <span class="text-muted">Customer not found</span>
+                            <span class="text-label-sm text-on-surface-variant">Customer not found</span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td class="px-6 py-4 whitespace-nowrap">
                             {% if deal.agent_obj %}
-                            <div class="d-flex align-items-center">
-                                <div class="agent-avatar me-2">
-                                    <div class="avatar-circle bg-primary text-white small-avatar">
-                                        {{ deal.agent_obj.name.split()[0][0] }}{{ deal.agent_obj.name.split()[-1][0] if deal.agent_obj.name.split()|length > 1 else '' }}
+                            <div class="flex flex-col">
+                                <div class="flex items-center space-x-2">
+                                    <div class="flex h-8 w-8 items-center justify-center bg-primary/10 rounded-lg flex-shrink-0">
+                                        <span class="font-medium text-primary">{{ deal.agent_obj.name.split()[0][0] }}{{ deal.agent_obj.name.split()[-1][0] if deal.agent_obj.name.split()|length > 1 else '' }}</span>
                                     </div>
+                                    <p class="font-medium text-on-surface">{{ deal.agent_obj.name }}</p>
                                 </div>
-                                <div>
-                                    <div class="fw-semibold">{{ deal.agent_obj.name }}</div>
-                                    <small class="text-muted">{{ deal.agent_obj.specialization or "Agent" }}</small>
-                                </div>
+                                <p class="text-label-sm text-on-surface-variant">{{ deal.agent_obj.specialization or "Agent" }}</p>
                             </div>
                             {% else %}
-                            <span class="text-muted">Agent not found</span>
+                            <span class="text-label-sm text-on-surface-variant">Agent not found</span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td class="px-6 py-4 whitespace-nowrap">
                             {% if deal.offer_amount > 0 %}
-                            <div class="fw-semibold text-success">${{ "{:,.0f}".format(deal.offer_amount) }}</div>
+                            <div class="font-medium text-success">${{ "{:,.0f}".format(deal.offer_amount) }}</div>
                             {% if deal.property_obj %}
-                            <small class="text-muted">
+                            <div class="text-label-sm text-on-surface-variant mt-1">
                                 {% set difference = deal.offer_amount - deal.property_obj.price %}
                                 {% if difference > 0 %}
-                                    <span class="text-success">+${{ "{:,.0f}".format(difference) }}</span>
+                                <span class="text-success">+${{ "{:,.0f}".format(difference) }}</span>
                                 {% elif difference < 0 %}
-                                    <span class="text-danger">${{ "{:,.0f}".format(difference) }}</span>
+                                <span class="text-error">${{ "{:,.0f}".format(difference) }}</span>
                                 {% else %}
-                                    <span class="text-muted">List price</span>
+                                <span class="text-label-sm text-on-surface-variant">List price</span>
                                 {% endif %}
-                            </small>
+                            </div>
                             {% endif %}
                             {% else %}
-                            <span class="text-muted">No offer</span>
+                            <span class="text-label-sm text-on-surface-variant">No offer</span>
                             {% endif %}
                         </td>
-                        <td>
-                            <span class="badge bg-{{ 
-                                'secondary' if deal.status == 'prospecting' else 
-                                'info' if deal.status == 'qualified' else 
-                                'warning' if deal.status == 'proposal' else 
-                                'orange' if deal.status == 'negotiation' else 
-                                'success' if deal.status == 'closed_won' else 
-                                'danger' 
-                            }}">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 text-xs rounded-full
+                                {% if deal.status == 'prospecting' %}bg-primary/10 text-primary{% endif %}
+                                {% if deal.status == 'qualified' %}bg-info/10 text-info{% endif %}
+                                {% if deal.status == 'proposal' %}bg-warning/10 text-warning{% endif %}
+                                {% if deal.status == 'negotiation' %}bg-orange/10 text-orange{% endif %}
+                                {% if deal.status == 'closed_won' %}bg-success/10 text-success{% endif %}
+                                {% if deal.status == 'closed_lost' %}bg-error/10 text-error{% endif %}">
                                 {{ deal.status.replace('_', ' ').title() }}
                             </span>
                         </td>
-                        <td>
-                            <div>{{ deal.created_at.strftime('%m/%d/%Y') }}</div>
-                            <small class="text-muted">{{ deal.created_at.strftime('%I:%M %p') }}</small>
+                        <td class="px-6 py-4 whitespace-nowrap text-label-sm text-on-surface-variant">
+                            <span class="whitespace-nowrap">{{ deal.created_at.strftime('%m/%d/%Y') }}</span><br>
+                            <span class="text-label-sm text-on-surface-variant/70 whitespace-nowrap">{{ deal.created_at.strftime('%I:%M %p') }}</span>
                         </td>
-                        <td>
-                            <div class="btn-group" role="group">
-                                <button class="btn btn-outline-primary btn-sm" onclick="viewDeal({{ deal.id }})">
-                                    <i class="fas fa-eye"></i>
+                        <td class="px-6 py-4 whitespace-nowrap text-right space-x-2">
+                            <button class="btn btn-outline-primary btn-sm" onclick="viewDeal({{ deal.id }})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" onclick="showUpdateDealModal({{ deal.id }}, '{{ deal.status }}', {{ deal.offer_amount or 0 }})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <div class="relative">
+                                <button class="btn btn-outline-secondary btn-sm" id="dealActionsMenu{{ deal.id }}" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-h"></i>
                                 </button>
-                                <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#updateDealModal" onclick="loadDealForUpdate({{ deal.id }}, '{{ deal.status }}', {{ deal.offer_amount or 0 }})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <div class="dropdown">
-                                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                                        <i class="fas fa-ellipsis-h"></i>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#" onclick="addDealNote({{ deal.id }})">
-                                            <i class="fas fa-sticky-note me-2"></i>Add Note
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="scheduleMeeting({{ deal.id }})">
-                                            <i class="fas fa-calendar me-2"></i>Schedule Meeting
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="sendDealEmail({{ deal.id }})">
-                                            <i class="fas fa-envelope me-2"></i>Send Email
-                                        </a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="confirmDeleteDeal({{ deal.id }})">
-                                            <i class="fas fa-trash me-2"></i>Delete Deal
-                                        </a></li>
-                                    </ul>
+                                <div class="absolute right-0 mt-2 w-48 origin-top-right border-divider bg-surface-white shadow-lg rounded-md py-1 z-20 hidden" id="dealActionsMenuContent{{ deal.id }}">
+                                    <div class="px-4 py-2 text-sm text-on-surface" role="none">
+                                        <a href="#" onclick="addDealNote({{ deal.id }})" class="block w-full text-left px-4 py-2">
+                                            <i class="fas fa-sticky-note me-2 text-primary"></i>Add Note
+                                        </a>
+                                    </div>
+                                    <div class="px-4 py-2 text-sm text-on-surface" role="none">
+                                        <a href="#" onclick="scheduleMeeting({{ deal.id }})" class="block w-full text-left px-4 py-2">
+                                            <i class="fas fa-calendar me-2 text-info"></i>Schedule Meeting
+                                        </a>
+                                    </div>
+                                    <div class="px-4 py-2 text-sm text-on-surface" role="none">
+                                        <a href="#" onclick="sendDealEmail({{ deal.id }})" class="block w-full text-left px-4 py-2">
+                                            <i class="fas fa-envelope me-2 text-success"></i>Send Email
+                                        </a>
+                                    </div>
+                                    <hr class="my-1 border-outline/20" role="none">
+                                    <div class="px-4 py-2 text-sm text-on-surface" role="none">
+                                        <button onclick="confirmDeleteDeal({{ deal.id }})" class="block w-full text-left text-error px-4 py-2">
+                                            <i class="fas fa-trash me-2"></i>Delete
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </td>
@@ -238,195 +258,470 @@
             </table>
         </div>
         {% else %}
-        <div class="text-center py-5">
-            <i class="fas fa-handshake fa-4x text-muted mb-3"></i>
-            <h5 class="text-muted">No Deals Found</h5>
-            <p class="text-muted">Start tracking your first deal to build your sales pipeline.</p>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDealModal">
-                <i class="fas fa-handshake me-2"></i>
-                Create Your First Deal
-            </button>
+        <div class="text-center py-12">
+            <div class="flex flex-col items-center justify-center space-y-4">
+                <i class="fas fa-handshake text-primary/20 text-8xl"></i>
+                <p class="text-label-md text-on-surface-variant">No Deals Found</p>
+                <p class="text-label-sm text-on-surface-variant">Start tracking your first deal to build your sales pipeline.</p>
+                <button onclick="document.getElementById('addDealModal').classList.remove('hidden')"
+                        class="flex items-center justify-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium gap-2">
+                    <i class="fas fa-handshake"></i>
+                    <span>Add Your First Deal</span>
+                </button>
+            </div>
         </div>
         {% endif %}
     </div>
 </div>
 
 <!-- Add Deal Modal -->
-<div class="modal fade" id="addDealModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">
-                    <i class="fas fa-handshake me-2"></i>
-                    Create New Deal
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+<div id="addDealModal" class="fixed inset-0 z-50 flex pointer-events-none">
+    <div class="w-full max-w-[600px] mx-auto mt-16 space-y-6 pointer-auto bg-surface-white rounded-lg shadow-xl p-6">
+        <div class="flex justify-between items-start mb-4">
+            <div class="flex items-center">
+                <i class="fas fa-plus text-primary text-2xl mr-3"></i>
+                <div>
+                    <h3 class="font-semibold text-on-surface">Add New Deal</h3>
+                    <p class="text-label-sm text-on-surface-variant">Complete the form below to add a deal</p>
+                </div>
             </div>
-            <form method="POST" action="{{ url_for('add_deal') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="property_id" class="form-label">Property *</label>
-                            <select class="form-select" id="property_id" name="property_id" required>
-                                <option value="">Select Property</option>
-                                {% for property in properties %}
-                                <option value="{{ property.id }}">
-                                    {{ property.title }} - ${{ "{:,.0f}".format(property.price) }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="customer_id" class="form-label">Customer *</label>
-                            <select class="form-select" id="customer_id" name="customer_id" required>
-                                <option value="">Select Customer</option>
-                                {% for customer in customers %}
-                                <option value="{{ customer.id }}">
-                                    {{ customer.name }} - {{ customer.email }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="agent_id" class="form-label">Assigned Agent *</label>
-                            <select class="form-select" id="agent_id" name="agent_id" required>
-                                <option value="">Select Agent</option>
-                                {% for agent in agents %}
-                                <option value="{{ agent.id }}">
-                                    {{ agent.name }} - {{ agent.specialization or "Agent" }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="status" class="form-label">Initial Status</label>
-                            <select class="form-select" id="status" name="status">
-                                <option value="prospecting">Prospecting</option>
-                                <option value="qualified">Qualified</option>
-                                <option value="proposal">Proposal</option>
-                                <option value="negotiation">Negotiation</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="offer_amount" class="form-label">Offer Amount (Optional)</label>
-                        <input type="number" class="form-control" id="offer_amount" name="offer_amount" 
-                               step="1000" placeholder="Enter offer amount if available">
+            <button onclick="document.getElementById('addDealModal').classList.add('hidden')"
+                    class="text-on-surface-variant hover:text-on-surface/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-primary/50">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ url_for('add_deal') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+            <!-- Basic Information -->
+            <div class="border-l-4 border-primary/20 pl-4 mb-6">
+                <div class="flex items-center mb-3">
+                    <i class="fas fa-file-contract text-primary text-xl mr-3"></i>
+                    <div>
+                        <p class="font-medium text-on-surface">Deal Information</p>
+                        <p class="text-label-sm text-on-surface-variant">Enter basic deal details</p>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-1"></i>
-                        Create Deal
+                <div class="grid gap-4">
+                    <div>
+                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Property *</label>
+                        <select id="property_id" name="property_id" required
+                                class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                            <option value="">Select Property</option>
+                            {% for property in properties %}
+                            <option value="{{ property.id }}">{{ property.title }} - ${{ "{:,.0f}".format(property.price) }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Customer *</label>
+                        <select id="customer_id" name="customer_id" required
+                                class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                            <option value="">Select Customer</option>
+                            {% for customer in customers %}
+                            <option value="{{ customer.id }}">{{ customer.name }} - {{ customer.email }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Agent *</label>
+                        <select id="agent_id" name="agent_id" required
+                                class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                            <option value="">Select Agent</option>
+                            {% for agent in agents %}
+                            <option value="{{ agent.id }}">{{ agent.name }} - {{ agent.specialization }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Offer Amount ($)</label>
+                        <input type="number" id="offer_amount" name="offer_amount"
+                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                               placeholder="e.g. 450000">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Selection -->
+            <div class="border-l-4 border-success/20 pl-4 mb-6">
+                <div class="flex items-center mb-3">
+                    <i class="fas fa-tasks text-success text-xl mr-3"></i>
+                    <div>
+                        <p class="font-medium text-on-surface">Deal Status</p>
+                        <p class="text-label-sm text-on-surface-variant">Select current stage in pipeline</p>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Status</label>
+                    <select id="status" name="status"
+                            class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                        <option value="prospecting">Prospecting</option>
+                        <option value="qualified">Qualified</option>
+                        <option value="proposal">Proposal</option>
+                        <option value="negotiation">Negotiation</option>
+                        <option value="closed_won">Closed Won</option>
+                        <option value="closed_lost">Closed Lost</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-outline/20">
+                <div class="flex justify-end">
+                    <button type="button" onclick="document.getElementById('addDealModal').classList.add('hidden')"
+                            class="mr-4 px-4 py-2 bg-surface border border-outline/20 rounded-lg hover:bg-surface/50 transition-colors font-medium">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium flex-items-center justify-center gap-2">
+                        <i class="fas fa-save me-2"></i>
+                        Add Deal
                     </button>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 </div>
 
 <!-- Update Deal Modal -->
-<div class="modal fade" id="updateDealModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">
-                    <i class="fas fa-edit me-2"></i>
-                    Update Deal
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+<div id="updateDealModal" class="fixed inset-0 z-50 hidden pointer-events-none">
+    <div class="w-full max-w-[600px] mx-auto mt-16 space-y-6 pointer-auto bg-surface-white rounded-lg shadow-xl p-6">
+        <div class="flex justify-between items-start mb-4">
+            <div class="flex items-center">
+                <i class="fas fa-edit text-primary text-2xl mr-3"></i>
+                <div>
+                    <h3 class="font-semibold text-on-surface">Update Deal</h3>
+                    <p class="text-label-sm text-on-surface-variant">Modify deal details</p>
+                </div>
             </div>
-            <form id="updateDealForm" method="POST">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="update_status" class="form-label">Deal Status</label>
-                        <select class="form-select" id="update_status" name="status" required>
-                            <option value="prospecting">Prospecting</option>
-                            <option value="qualified">Qualified</option>
-                            <option value="proposal">Proposal</option>
-                            <option value="negotiation">Negotiation</option>
-                            <option value="closed_won">Closed Won</option>
-                            <option value="closed_lost">Closed Lost</option>
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="update_offer_amount" class="form-label">Offer Amount</label>
-                        <input type="number" class="form-control" id="update_offer_amount" name="offer_amount" 
-                               step="1000" placeholder="Enter offer amount">
+            <button onclick="document.getElementById('updateDealModal').classList.add('hidden')"
+                    class="text-on-surface-variant hover:text-on-surface/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-primary/50">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="updateDealForm" method="POST" action="">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+            <input type="hidden" id="deal_id" name="deal_id">
+
+            <!-- Basic Information (Read-only) -->
+            <div class="border-l-4 border-primary/20 pl-4 mb-6">
+                <div class="flex items-center mb-3">
+                    <i class="fas fa-file-contract text-primary text-xl mr-3"></i>
+                    <div>
+                        <p class="font-medium text-on-surface">Deal Information</p>
+                        <p class="text-label-sm text-on-surface-variant">View current deal details</p>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save me-1"></i>
+                <div class="grid gap-4">
+                    <div>
+                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Property</label>
+                        <input type="text" id="update_property" readonly
+                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Customer</label>
+                        <input type="text" id="update_customer" readonly
+                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Agent</label>
+                        <input type="text" id="update_agent" readonly
+                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Offer Amount ($)</label>
+                        <input type="number" id="update_offer_amount" name="offer_amount"
+                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                               placeholder="e.g. 450000">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Selection -->
+            <div class="border-l-4 border-success/20 pl-4 mb-6">
+                <div class="flex items-center mb-3">
+                    <i class="fas fa-tasks text-success text-xl mr-3"></i>
+                    <div>
+                        <p class="font-medium text-on-surface">Deal Status</p>
+                        <p class="text-label-sm text-on-surface-variant">Update pipeline stage</p>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Status</label>
+                    <select id="update_status" name="status"
+                            class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                        <option value="prospecting">Prospecting</option>
+                        <option value="qualified">Qualified</option>
+                        <option value="proposal">Proposal</option>
+                        <option value="negotiation">Negotiation</option>
+                        <option value="closed_won">Closed Won</option>
+                        <option value="closed_lost">Closed Lost</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-outline/20">
+                <div class="flex justify-end">
+                    <button type="button" onclick="document.getElementById('updateDealModal').classList.add('hidden')"
+                            class="mr-4 px-4 py-2 bg-surface border border-outline/20 rounded-lg hover:bg-surface/50 transition-colors font-medium">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium flex-items-center justify-center gap-2">
+                        <i class="fas fa-save me-2"></i>
                         Update Deal
                     </button>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 </div>
 
-<!-- Pipeline Report Modal -->
-<div class="modal fade" id="pipelineReportModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">
-                    <i class="fas fa-chart-bar me-2"></i>
-                    Pipeline Report
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="pipelineReportContent">
-                    <!-- Content will be loaded dynamically -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-success" onclick="exportReport()">
-                    <i class="fas fa-download me-1"></i>
-                    Export Report
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
 <script>
-let currentDealId = null;
+// Deal Management Functions
+document.addEventListener('DOMContentLoaded', function() {
+    // Format offer amount inputs
+    const offerInputs = document.querySelectorAll('#offer_amount, #update_offer_amount');
+    offerInputs.forEach(input => {
+        input.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/,/g, '');
+            if (!isNaN(value) && value !== '') {
+                e.target.value = parseInt(value).toLocaleString();
+            }
+        });
+    });
 
-function loadDealForUpdate(dealId, status, offerAmount) {
-    currentDealId = dealId;
-    document.getElementById('update_status').value = status;
-    document.getElementById('update_offer_amount').value = offerAmount || '';
-    document.getElementById('updateDealForm').action = `/deals/${dealId}/update`;
-}
+    // Deal actions dropdowns
+    document.querySelectorAll('[id^="dealActionsMenu"]').forEach(button => {
+        button.addEventListener('click', function() {
+            const menuId = this.id.replace('dealActionsMenu', 'dealActionsMenuContent');
+            const menu = document.getElementById(menuId);
 
-function filterDeals() {
-    const filter = document.getElementById('statusFilter').value;
-    const rows = document.querySelectorAll('#dealsTable tbody tr');
-    
-    rows.forEach(row => {
-        if (!filter || row.getAttribute('data-status') === filter) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
+            // Close all other menus
+            document.querySelectorAll('[id^="dealActionsMenuContent"]').forEach(m => {
+                if (m.id !== menuId) {
+                    m.classList.add('hidden');
+                }
+            });
+
+            // Toggle this menu
+            menu.classList.toggle('hidden');
+        });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('[id^="dealActionsMenu"]')) {
+            document.querySelectorAll('[id^="dealActionsMenuContent"]').forEach(menu => {
+                menu.classList.add('hidden');
+            });
         }
     });
+});
+
+// Update Deal Modal Functions
+let currentDealId = null;
+
+function showUpdateDealModal(dealId, status, offerAmount) {
+    currentDealId = dealId;
+    document.getElementById('deal_id').value = dealId;
+    document.getElementById('update_status').value = status;
+    document.getElementById('update_offer_amount').value = offerAmount || '';
+
+    // Fetch and display current deal details (simplified for demo)
+    // In a real implementation, this would fetch from an API
+    const dealRow = document.querySelector(`#dealsTable tbody tr[data-status="${status}"]:nth-child(${getDealRowIndex(dealId, status) + 1})`);
+    if (dealRow) {
+        const cells = dealRow.cells;
+        document.getElementById('update_property').textContent = cells[1].textContent;
+        document.getElementById('update_customer').textContent = cells[2].textContent;
+        document.getElementById('update_agent').textContent = cells[3].textContent;
+    }
+
+    document.getElementById('updateDealModal').classList.remove('hidden');
 }
 
+// Helper function to get deal row index (simplified)
+function getDealRowIndex(dealId, status) {
+    // This is a simplified implementation - in reality you'd need to find the exact row
+    return 0;
+}
+
+// Pipeline Report Modal Functions
+function showPipelineReport() {
+    // Create modal dynamically
+    const modalHtml = `
+        <div id="pipelineReportModal" class="fixed inset-0 z-50 flex pointer-events-none">
+            <div class="w-full max-w-[600px] mx-auto mt-16 space-y-6 pointer-auto bg-surface-white rounded-lg shadow-xl p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-chart-bar text-primary text-2xl mr-3"></i>
+                        <div>
+                            <h3 class="font-semibold text-on-surface">Pipeline Report</h3>
+                            <p class="text-label-sm text-on-surface-variant">Analytics and performance metrics for your deal pipeline</p>
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('pipelineReportModal').classList.add('hidden')"
+                            class="text-on-surface-variant hover:text-on-surface/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-primary/50">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="text-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                        <p class="mt-4 text-label-sm text-on-surface-variant">Loading report...</p>
+                    </div>
+
+                    <div id="reportContent" class="space-y-4 hidden">
+                        <div class="grid gap-6 mb-6">
+                            <div class="bg-surface-white rounded-lg shadow-sm p-4">
+                                <p class="font-medium text-on-surface mb-2">Total Deals</p>
+                                <p class="text-headline-md text-primary font-bold" id="totalDeals">0</p>
+                            </div>
+                            <div class="bg-surface-white rounded-lg shadow-sm p-4">
+                                <p class="font-medium text-on-surface mb-2">Pipeline Value</p>
+                                <p class="text-headline-md text-success font-bold" id="pipelineValue">$0</p>
+                            </div>
+                            <div class="bg-surface-white rounded-lg shadow-sm p-4">
+                                <p class="font-medium text-on-surface mb-2">Active Deals</p>
+                                <p class="text-headline-md text-warning font-bold" id="activeDeals">0</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-surface-white rounded-lg shadow-sm p-4 mb-6">
+                            <p class="font-medium text-on-surface mb-2">Performance Summary</p>
+                            <div class="space-y-3" id="performanceSummary">
+                                <!-- Content will be populated here -->
+                            </div>
+                        </div>
+
+                        <div class="bg-surface-white rounded-lg shadow-sm p-4">
+                            <p class="font-medium text-on-surface mb-2">Deal Distribution</p>
+                            <div class="grid gap-4" id="dealDistribution">
+                                <!-- Status badges will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-outline/20">
+                    <div class="flex justify-end">
+                        <button onclick="document.getElementById('pipelineReportModal').classList.add('hidden')"
+                                class="px-4 py-2 bg-surface border border-outline/20 rounded-lg hover:bg-surface/50 transition-colors font-medium">
+                            Close
+                        </button>
+                        <button onclick="exportReport()"
+                                class="ml-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium flex-items-center justify-center gap-2">
+                            <i class="fas fa-file-export me-2"></i>
+                            <span>Export Report</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Show modal with animation
+    setTimeout(() => {
+        document.getElementById('pipelineReportModal').classList.remove('pointer-events-none');
+        document.getElementById('pipelineReportModal').classList.remove('opacity-0');
+
+        // Hide loading spinner and show content after a brief delay
+        setTimeout(() => {
+            document.querySelector('#pipelineReportModal .animate-spin').closest('div').classList.add('hidden');
+            document.getElementById('reportContent').classList.remove('hidden');
+
+            // Populate report data
+            populatePipelineReport();
+        }, 1500);
+    }, 50);
+}
+
+function populatePipelineReport() {
+    // Calculate stats (these would come from actual data in a real implementation)
+    const totalDeals = {{ deals|length }};
+    const totalValue = {{ deals|map(attribute='offer_amount')|sum }};
+    const activeDeals = {{ deals | rejectattr("status", "in", ["closed_won", "closed_lost"]) | list | length }};
+    const wonDeals = {{ deals | selectattr("status", "equalto", "closed_won") | list | length }};
+    const lostDeals = {{ deals | selectattr("status", "equalto", "closed_lost") | list | length }};
+
+    // Update basic stats
+    document.getElementById('totalDeals').textContent = totalDeals;
+    document.getElementById('pipelineValue').textContent = `$${totalValue.toLocaleString()}`;
+    document.getElementById('activeDeals').textContent = activeDeals;
+
+    // Populate performance summary
+    const performanceHtml = `
+        <div class="space-y-2">
+            <p><i class="fas fa-check-circle text-success me-2"></i>Win Rate: ${(wonDeals + lostDeals) > 0 ? ((wonDeals / (wonDeals + lostDeals)) * 100).toFixed(1) : '0'}%</p>
+            <p><i class="fas fa-dollar-sign text-primary me-2"></i>Average Deal Value: $${totalDeals > 0 ? (totalValue / totalDeals).toLocaleString() : '0'}</p>
+            <p><i class="fas fa-clock text-warning me-2"></i>Deals in Negotiation: {{ deals | selectattr("status", "equalto", "negotiation") | list | length }}</p>
+        </div>
+    `;
+    document.getElementById('performanceSummary').innerHTML = performanceHtml;
+
+    // Populate deal distribution
+    const statuses = ['prospecting', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'];
+    const statusLabels = {
+        'prospecting': 'Prospecting',
+        'qualified': 'Qualified',
+        'proposal': 'Proposal',
+        'negotiation': 'Negotiation',
+        'closed_won': 'Closed Won',
+        'closed_lost': 'Closed Lost'
+    };
+    const statusColors = {
+        'prospecting': 'primary',
+        'qualified': 'info',
+        'proposal': 'warning',
+        'negotiation': 'orange',
+        'closed_won': 'success',
+        'closed_lost': 'error'
+    };
+
+    const statusCounts = {
+        'prospecting': {{ deals | selectattr("status", "equalto", "prospecting") | list | length }},
+        'qualified': {{ deals | selectattr("status", "equalto", "qualified") | list | length }},
+        'proposal': {{ deals | selectattr("status", "equalto", "proposal") | list | length }},
+        'negotiation': {{ deals | selectattr("status", "equalto", "negotiation") | list | length }},
+        'closed_won': {{ deals | selectattr("status", "equalto", "closed_won") | list | length }},
+        'closed_lost': {{ deals | selectattr("status", "equalto", "closed_lost") | list | length }}
+    };
+
+    let distributionHtml = '';
+    statuses.forEach(status => {
+        const count = statusCounts[status];
+        distributionHtml += `
+            <div class="flex items-center space-x-3">
+                <div class="flex h-8 w-8 items-center justify-center bg-${statusColors[status]}/10 rounded-lg flex-shrink-0">
+                    <span class="font-medium text-${statusColors[status]}">${getStatusIcon(status)}</span>
+                </div>
+                <div>
+                    <p class="font-medium text-on-surface">${statusLabels[status]}</p>
+                    <p class="text-headline-md text-${statusColors[status]} font-bold">${count}</p>
+                </div>
+            </div>
+        `;
+    });
+    document.getElementById('dealDistribution').innerHTML = distributionHtml;
+}
+
+function getStatusIcon(status) {
+    const icons = {
+        'prospecting': '🔍',
+        'qualified': '✅',
+        'proposal': '📄',
+        'negotiation': '⚖️',
+        'closed_won': '🏆',
+        'closed_lost': '❌'
+    };
+    return icons[status] || '📊';
+}
+
+// Other deal functions
 function viewDeal(dealId) {
     alert(`View deal functionality would be implemented here for deal ID: ${dealId}`);
 }
@@ -452,75 +747,8 @@ function confirmDeleteDeal(dealId) {
     }
 }
 
-function showPipelineReport() {
-    const modal = new bootstrap.Modal(document.getElementById('pipelineReportModal'));
-    document.getElementById('pipelineReportContent').innerHTML = `
-        <div class="text-center">
-            <div class="spinner-border text-success" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2">Generating pipeline report...</p>
-        </div>
-    `;
-    modal.show();
-    
-    // Simulate loading report
-    setTimeout(() => {
-        const totalDeals = {{ deals|length }};
-        const totalValue = {{ deals|map(attribute='offer_amount')|sum }};
-        const activeDeals = {{ deals | rejectattr("status", "in", ["closed_won", "closed_lost"]) | list | length }};
-        
-        document.getElementById('pipelineReportContent').innerHTML = `
-            <div class="row mb-4">
-                <div class="col-md-4">
-                    <div class="card bg-primary text-white">
-                        <div class="card-body text-center">
-                            <h3>${totalDeals}</h3>
-                            <p class="mb-0">Total Deals</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card bg-success text-white">
-                        <div class="card-body text-center">
-                            <h3>$${totalValue.toLocaleString()}</h3>
-                            <p class="mb-0">Pipeline Value</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card bg-warning text-white">
-                        <div class="card-body text-center">
-                            <h3>${activeDeals}</h3>
-                            <p class="mb-0">Active Deals</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-3">
-                <h6>Performance Summary:</h6>
-                <ul class="list-unstyled">
-                    <li><i class="fas fa-check-circle text-success me-2"></i>Pipeline conversion rate: ${(({{ deals | selectattr("status", "equalto", "closed_won") | list | length }} / totalDeals) * 100).toFixed(1)}%</li>
-                    <li><i class="fas fa-clock text-warning me-2"></i>Average deal value: $${(totalValue / totalDeals || 0).toLocaleString()}</li>
-                    <li><i class="fas fa-trend-up text-info me-2"></i>Deals in negotiation: {{ deals | selectattr("status", "equalto", "negotiation") | list | length }}</li>
-                </ul>
-            </div>
-        `;
-    }, 1500);
-}
-
 function exportReport() {
     alert('Report export functionality would be implemented here');
 }
-
-// Format offer amount inputs
-document.querySelectorAll('#offer_amount, #update_offer_amount').forEach(input => {
-    input.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/,/g, '');
-        if (!isNaN(value) && value !== '') {
-            e.target.value = parseInt(value).toLocaleString();
-        }
-    });
-});
 </script>
 {% endblock %}

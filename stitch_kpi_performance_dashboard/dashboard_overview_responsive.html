@@ -4,8 +4,8 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>{{pageTitle}}</title>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <link href="/css/dashboard.css" rel="stylesheet"/>
 </head>
 <body class="bg-background font-body-md text-on-background antialiased min-h-screen flex flex-col">
@@ -45,7 +45,7 @@
                 <span class="material-symbols-outlined">settings</span>
             </button>
             <div class="relative w-8 h-8">
-                <img alt="User profile" class="w-full h-full rounded-full object-cover border-1.5 border-outline-variant"
+                <img alt="User profile" class="w-full h-full rounded-full object-cover-full border-outline-variant"
                      src="{{userAvatarUrl}}"
                      onerror="this.src='/images/default-avatar.png'"/>
             </div>
@@ -66,19 +66,19 @@
 
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {{#each statsCards}}
+            {% for card in statsCards %}
             <div class="bg-surface-white rounded-xl p-4 border border-outline-variant hover:shadow-lg transition-shadow">
                 <div class="flex justify-between items-start mb-2">
-                    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">{{label}}</span>
-                    <span class="material-symbols-outlined text-primary">{{icon}}</span>
+                    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">{{ card.label }}</span>
+                    <span class="material-symbols-outlined text-primary">{{ card.icon }}</span>
                 </div>
-                <div class="font-headline-md text-headline-md text-primary mb-1">{{value}}</div>
-                <div class="font-label-xs text-label-xs {{trendClass}} flex items-center">
-                    <span class="material-symbols-outlined text-[14px] mr-0.5">{{trendIcon}}</span>
-                    {{trendValue}}
+                <div class="font-headline-md text-headline-md text-primary mb-1">{{ card.value }}</div>
+                <div class="font-label-xs text-label-xs {{ card.trendClass }} flex items-center">
+                    <span class="material-symbols-outlined text-[14px] mr-0.5">{{ card.trendIcon }}</span>
+                    {{ card.trendValue }}
                 </div>
             </div>
-            {{/each}}
+            {% endfor %}
         </div>
 
         <!-- Main Content Area -->
@@ -89,20 +89,20 @@
                     {{recentActivityTitle}}
                 </h2>
                 <div class="space-y-3 relative">
-                    {{#each recentActivities}}
+                    {% for activity in recentActivities %}
                     <div class="relative flex items-center justify-between">
                         <div class="flex items-center justify-center w-8 h-8 rounded-full border border-white bg-surface-container-low text-primary shrink-0">
-                            <span class="material-symbols-outiled">{{icon}}</span>
+                            <span class="material-symbols-outiled">{{activity.icon}}</span>
                         </div>
                         <div class="w-[calc(100%-3.5rem)] p-3 rounded border border-outline-variant bg-background shadow-sm">
                             <div class="flex items-center justify-between space-x-1.5 mb-0.5">
-                                <div class="font-label-sm text-label-sm text-primary">{{title}}</div>
-                                <time class="font-label-xs text-label-xs text-on-surface-variant">{{timeAgo}}</time>
+                                <div class="font-label-sm text-label-sm text-primary">{{activity.title}}</div>
+                                <time class="font-label-xs text-label-xs text-on-surface-variant">{{activity.timeAgo}}</time>
                             </div>
-                            <div class="font-body-sm text-body-sm text-on-surface">{{description}}</div>
+                            <div class="font-body-sm text-body-sm text-on-surface">{{activity.description}}</div>
                         </div>
                     </div>
-                    {{/each}}
+                    {% endfor %}
                 </div>
             </div>
 
@@ -126,14 +126,14 @@
                         <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
                     </div>
                     <div class="grid grid-cols-7 gap-0.5 text-center font-body-sm text-body-sm">
-                        {{#each calendarDays}}
-                        <div class="p-0.5 {{dayClass}} hover:bg-surface-container rounded cursor-pointer relative">
-                            {{dayNumber}}
-                            {{#if hasEvent}}
+                        {% for day in calendarDays %}
+                        <div class="p-0.5 {{day.dayClass}} hover:bg-surface-container rounded cursor-pointer relative">
+                            {{day.dayNumber}}
+                            {% if day.hasEvent %}
                             <span class="absolute bottom-0 left-1/2 w-1 h-1 bg-primary rounded-full -translate-x-1/2"></span>
-                            {{/if}}
+                            {% endif %}
                         </div>
-                        {{/each}}
+                        {% endfor %}
                     </div>
                 </div>
 
@@ -143,15 +143,15 @@
                         {{todayScheduleTitle}}
                     </h3>
                     <ul class="space-y-1.5">
-                        {{#each todaySchedule}}
+                        {% for item in todaySchedule %}
                         <li class="flex items-start gap-2 p-2 rounded bg-surface-container-low border border-outline-variant">
-                            <span class="material-symbols-outlined text-primary mt-0">{{icon}}</span>
+                            <span class="material-symbols-outlined text-primary mt-0>{{item.icon}}</span>
                             <div>
-                                <div class="font-label-sm text-label-sm text-primary">{{title}}</div>
-                                <div class="font-label-xs text-label-xs text-on-surface-variant">{{time}}</div>
+                                <div class="font-label-sm text-label-sm text-primary">{{item.title}}</div>
+                                <div class="font-label-xs text-label-xs text-on-surface-variant">{{item.time}}</div>
                             </div>
                         </li>
-                        {{/each}}
+                        {% endfor %}
                     </ul>
                 </div>
             </div>

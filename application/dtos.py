@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
+
 @dataclass
 class SearchRequest:
     query: Optional[str] = None
@@ -29,6 +30,24 @@ class SearchRequest:
 class RecommendationRequest:
     customer_id: int
     limit: int = 10
+    # Filters (same as SearchRequest for consistency)
+    query: Optional[str] = None
+    listing_type: Optional[str] = None
+    status: Optional[str] = None
+    property_type: Optional[str] = None
+    property_category: Optional[str] = None
+    property_condition: Optional[str] = None
+    neighborhood: Optional[str] = None
+    min_price: Optional[float] = None
+    max_price: Optional[float] = None
+    bedrooms: Optional[int] = None
+    bathrooms: Optional[int] = None
+    min_sqft: Optional[int] = None
+    max_sqft: Optional[int] = None
+    year_built_min: Optional[int] = None
+    year_built_max: Optional[int] = None
+    agent_id: Optional[int] = None
+    source: Optional[str] = None
 
 
 @dataclass
@@ -40,11 +59,13 @@ class RecommendationResult:
     cons: List[str]
     hybrid_breakdown: Dict[str, Any]
 
+
 @dataclass
 class PropertyMatchInput:
     property_id: str
     embedding: List[float]
     metadata: Dict[str, Any]
+
 
 @dataclass
 class RecommendationContext:
@@ -53,6 +74,7 @@ class RecommendationContext:
     preferences: Dict[str, Any]
     timestamp: datetime
 
+
 @dataclass
 class SyncBatchResult:
     success_count: int
@@ -60,11 +82,13 @@ class SyncBatchResult:
     errors: List[str]
     synced_at: datetime
 
+
 @dataclass
 class EnvironmentUpdateRequest:
     key: str
     value: str
     description: Optional[str] = None
+
 
 @dataclass
 class WebhookSignaturePayload:

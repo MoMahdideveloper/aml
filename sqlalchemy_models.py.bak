@@ -13,6 +13,63 @@ def _utcnow_naive() -> datetime:
     return datetime.now(UTC).replace(tzinfo=None)
 
 
+class SuggestionItem(db.Model):
+    __tablename__ = "suggestion_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    # Add other fields as needed by the test
+    # For now, we'll add a placeholder to satisfy the import
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+
+
+class AnalysisTemplate(db.Model):
+    __tablename__ = "analysis_templates"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    analysis_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    configuration: Mapped[Optional[str]] = mapped_column(Text)  # JSON string
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship
+    reports = relationship("AnalysisReport", back_populates="template", cascade="all, delete-orphan")
+
+    def to_dict(self) -> Dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "analysis_type": self.analysis_type,
+            "configuration": self.configuration,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+class AnalysisReport(db.Model):
+    __tablename__ = "analysis_reports"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    template_id: Mapped[int] = mapped_column(Integer, ForeignKey("analysis_templates.id"), nullable=False)
+    # Add other fields as needed by the test
+    # For now, we'll keep it simple to satisfy the import
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Relationship
+    template = relationship("AnalysisTemplate", back_populates="reports")
+
+    def to_dict(self) -> Dict:
+        return {
+            "id": self.id,
+            "template_id": self.template_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
+
 class Property(db.Model):
     __tablename__ = "properties"
 

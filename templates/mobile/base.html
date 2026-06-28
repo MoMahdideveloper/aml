@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- Mobile-specific content wrapper -->
+    <div class="mobile-content-wrapper">
+        {{ super() }}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    {{ super() }}
+    <!-- Mobile-specific JavaScript -->
+    <script>
+        // Mobile-specific enhancements can go here
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add touch-friendly enhancements
+            const buttons = document.querySelectorAll('button, .btn');
+            buttons.forEach(button => {
+                // Ensure minimum touch target size
+                const minHeight = 44; // Apple/HIG recommended minimum
+                const computedStyle = window.getComputedStyle(button);
+                const height = parseInt(computedStyle.height);
+                if (height < minHeight) {
+                    button.style.minHeight = minHeight + 'px';
+                }
+            });
+
+            // Improve form input touch targets
+            const inputs = document.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                const minHeight = 44;
+                const computedStyle = window.getComputedStyle(input);
+                const height = parseInt(computedStyle.height);
+                if (height < minHeight) {
+                    input.style.minHeight = minHeight + 'px';
+                }
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,1 @@
+Fact 1: User wants to use --chrome to open the Documentation Index page and use it to discover all available pages before exploring further.

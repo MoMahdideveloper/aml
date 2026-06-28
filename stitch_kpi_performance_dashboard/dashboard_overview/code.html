@@ -3,10 +3,10 @@
 <html class="light" lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Luxe Estate - Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<title>{{ pageTitle }}</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script id="tailwind-config">
         tailwind.config = {
@@ -47,7 +47,7 @@
                       "surface-container-high": "#dee9f8",
                       "error-container": "#ffdad6",
                       "on-tertiary-fixed-variant": "#47473e",
-                      "inverse-on-surface": "#e8f2ff",
+                      "inverse-on-surface": "$e8f2ff",
                       "on-error-container": "#93000a",
                       "inverse-surface": "#26313d",
                       "secondary-fixed": "#e3e2e2",
@@ -163,10 +163,10 @@
                               }
                       ]
               }
-      },
+          }
           },
         }
-      </script>
+        </script>
 <style>
         body {
             background-color: #F4F2E5; /* Cream background based on prompt, though using theme tokens where possible */
@@ -184,7 +184,7 @@
 <!-- TopNavBar -->
 <header class="bg-surface dark:bg-surface-container-low fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-desktop py-4 max-w-max-width mx-auto border-b border-outline-variant dark:border-outline">
 <div class="flex items-center gap-8">
-<a class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed" href="#">LUXE ESTATE</a>
+<a class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed" href="#">{{ brandName }}</a>
 <div class="hidden md:flex items-center bg-surface-container-low rounded-full px-4 py-2 border border-outline-variant">
 <span class="material-symbols-outlined text-outline mr-2" data-icon="search">search</span>
 <input class="bg-transparent border-none focus:ring-0 text-body-md font-body-md outline-none w-48" placeholder="Search..." type="text"/>
@@ -205,7 +205,7 @@
 <span class="material-symbols-outlined" data-icon="settings">settings</span>
 </button>
 <div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-outline-variant">
-<img alt="User profile" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate real estate executive in a modern, well-lit office. The lighting is soft and natural, creating a sophisticated and trustworthy mood. The aesthetic is clean, corporate, and premium, perfectly matching the light-mode UI design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA93ysII8UECes2JHe7fNsINjhJIr-91cvexr9gzEzzMljBoYFJUe6vJ1XtFJcWYZTNyHc7XnmrfMEXrb42LM8Ny3AORjrvE0Tbj8vsdSMoLDTE5iqlT64rqg82ryFIcJqyMISK9oRgDvA2UFLTCUT92ibOGDGcJj6cDWWbcdr-rEa0mIZio-JKiFzveZKcpJCJlzpD31lx1vA5cabuNjFZbLiftAMCk2JkmaXuFznxBirg4_CubZk"/>
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate real estate executive in a modern, well-lit office. The lighting is soft and natural, creating a sophisticated and trustworthy mood. The aesthetic is clean, corporate, and premium, perfectly matching the light-mode UI design system." src="{{ userAvatarUrl }}">
 </div>
 </div>
 </header>
@@ -218,50 +218,19 @@
 </div>
 <!-- Stats Cards (Bento Grid Style) -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-12">
+{% for stat in stats %}
 <div class="bg-surface-white rounded-xl p-6 border border-outline-variant hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow">
 <div class="flex justify-between items-start mb-4">
-<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Total Properties</span>
-<span class="material-symbols-outlined text-primary" data-icon="real_estate_agent">real_estate_agent</span>
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">{{ stat.label }}</span>
+<span class="material-symbols-outlined text-primary" data-icon="{{ stat.icon }}">{{ stat.icon }}</span>
 </div>
-<div class="font-headline-lg text-headline-lg text-primary mb-2">1,284</div>
-<div class="font-label-sm text-label-sm text-surface-tint flex items-center">
-<span class="material-symbols-outlined text-[16px] mr-1" data-icon="trending_up">trending_up</span>
-                    +4% vs last month
-                </div>
+<div class="font-headline-lg text-headline-lg text-primary mb-2">{{ stat.value }}</div>
+<div class="font-label-sm text-label-sm flex items-center {% if stat.trend_direction == 'down' %}text-error{% else %}text-surface-tint{% endif %}">
+<span class="material-symbols-outlined text-[16px] mr-1" data-icon="{{ stat.trend_icon }}">{{ stat.trend_icon }}</span>
+{{ stat.trend_sign }}{{ stat.trend_percent }}% vs last month
 </div>
-<div class="bg-surface-white rounded-xl p-6 border border-outline-variant hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow">
-<div class="flex justify-between items-start mb-4">
-<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Active Deals</span>
-<span class="material-symbols-outlined text-primary" data-icon="handshake">handshake</span>
 </div>
-<div class="font-headline-lg text-headline-lg text-primary mb-2">86</div>
-<div class="font-label-sm text-label-sm text-surface-tint flex items-center">
-<span class="material-symbols-outlined text-[16px] mr-1" data-icon="trending_up">trending_up</span>
-                    +12% vs last month
-                </div>
-</div>
-<div class="bg-surface-white rounded-xl p-6 border border-outline-variant hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow">
-<div class="flex justify-between items-start mb-4">
-<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Monthly Revenue</span>
-<span class="material-symbols-outlined text-primary" data-icon="account_balance">account_balance</span>
-</div>
-<div class="font-headline-lg text-headline-lg text-primary mb-2">$42,500</div>
-<div class="font-label-sm text-label-sm text-surface-tint flex items-center">
-<span class="material-symbols-outlined text-[16px] mr-1" data-icon="trending_up">trending_up</span>
-                    +8% vs last month
-                </div>
-</div>
-<div class="bg-surface-white rounded-xl p-6 border border-outline-variant hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow">
-<div class="flex justify-between items-start mb-4">
-<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Pending Inquiries</span>
-<span class="material-symbols-outlined text-primary" data-icon="pending_actions">pending_actions</span>
-</div>
-<div class="font-headline-lg text-headline-lg text-primary mb-2">156</div>
-<div class="font-label-sm text-label-sm text-error flex items-center">
-<span class="material-symbols-outlined text-[16px] mr-1" data-icon="trending_down">trending_down</span>
-                    -2% vs last month
-                </div>
-</div>
+{% endfor %}
 </div>
 <!-- Main Content Area (2-column layout) -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter mb-12">
@@ -269,45 +238,20 @@
 <div class="lg:col-span-2 bg-surface-white rounded-xl p-6 border border-outline-variant">
 <h2 class="font-headline-md text-headline-md text-primary mb-6 border-b border-outline-variant pb-2">Recent Activity</h2>
 <div class="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-outline-variant before:to-transparent">
-<!-- Activity Item -->
-<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+{% for activity in recent_activities %}
+<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group {% if loop.first %}is-active{% endif %}">
 <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-surface-container-low text-primary shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow shadow-surface-tint/20">
-<span class="material-symbols-outlined" data-icon="mail">mail</span>
+<span class="material-symbols-outlined" data-icon="{{ activity.icon }}">{{ activity.icon }}</span>
 </div>
 <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded border border-outline-variant bg-background shadow-sm">
 <div class="flex items-center justify-between space-x-2 mb-1">
-<div class="font-label-md text-label-md text-primary">New Inquiry</div>
-<time class="font-label-sm text-label-sm text-on-surface-variant">2 hours ago</time>
+<div class="font-label-md text-label-md text-primary">{{ activity.type }}</div>
+<time class="font-label-sm text-label-sm text-on-surface-variant">{{ activity.time }}</time>
 </div>
-<div class="font-body-md text-body-md text-on-surface">New inquiry for 123 Maple St.</div>
-</div>
-</div>
-<!-- Activity Item -->
-<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-<div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-surface-container-low text-primary shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow shadow-surface-tint/20">
-<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span>
-</div>
-<div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded border border-outline-variant bg-background shadow-sm">
-<div class="flex items-center justify-between space-x-2 mb-1">
-<div class="font-label-md text-label-md text-primary">Offer Accepted</div>
-<time class="font-label-sm text-label-sm text-on-surface-variant">5 hours ago</time>
-</div>
-<div class="font-body-md text-body-md text-on-surface">Offer accepted: Ocean View Penthouse.</div>
+<div class="font-body-md text-body-md text-on-surface">{{ activity.description }}</div>
 </div>
 </div>
-<!-- Activity Item -->
-<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-<div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-surface-container-low text-primary shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow shadow-surface-tint/20">
-<span class="material-symbols-outlined" data-icon="event">event</span>
-</div>
-<div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded border border-outline-variant bg-background shadow-sm">
-<div class="flex items-center justify-between space-x-2 mb-1">
-<div class="font-label-md text-label-md text-primary">Viewing Scheduled</div>
-<time class="font-label-sm text-label-sm text-on-surface-variant">1 day ago</time>
-</div>
-<div class="font-body-md text-body-md text-on-surface">Viewing scheduled for 789 Oak Ave.</div>
-</div>
-</div>
+{% endfor %}
 </div>
 </div>
 <!-- Right Column: Calendar & Schedule -->
@@ -317,7 +261,7 @@
 <div class="mb-6">
 <div class="flex justify-between items-center mb-4">
 <button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span></button>
-<span class="font-label-md text-label-md text-primary uppercase tracking-wide">October 2024</span>
+<span class="font-label-md text-label-md text-primary uppercase tracking-wide">{{ currentMonth }}</span>
 <button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span></button>
 </div>
 <div class="grid grid-cols-7 gap-1 text-center font-label-sm text-label-sm text-on-surface-variant mb-2">
@@ -331,15 +275,16 @@
 <div class="p-1 hover:bg-surface-container rounded cursor-pointer">4</div>
 <div class="p-1 hover:bg-surface-container rounded cursor-pointer">5</div>
 <div class="p-1 hover:bg-surface-container rounded cursor-pointer">6</div>
+<div class="p-1 hover:bg-surface-container rounded cursor-pointer">7</div>
 <div class="p-1 hover:bg-surface-container rounded cursor-pointer relative">7<span class="absolute bottom-1 left-1/2 w-1 h-1 bg-primary rounded-full -translate-x-1/2"></span></div>
 <div class="p-1 hover:bg-surface-container rounded cursor-pointer">8</div>
 <div class="p-1 hover:bg-surface-container rounded cursor-pointer">9</div>
-<div class="p-1 bg-primary text-on-primary rounded cursor-pointer shadow-sm relative">10<span class="absolute bottom-1 left-1/2 w-1 h-1 bg-white rounded-full -translate-x-1/2"></span></div>
+<div class="p-1 hover:bg-surface-container rounded cursor-pointer">10</div>
 <div class="p-1 hover:bg-surface-container rounded cursor-pointer">11</div>
 <div class="p-1 hover:bg-surface-container rounded cursor-pointer">12</div>
 <div class="p-1 hover:bg-surface-container rounded cursor-pointer">13</div>
 <div class="p-1 hover:bg-surface-container rounded cursor-pointer">14</div>
-<div class="p-1 hover:bg-surface-container rounded cursor-pointer relative">15<span class="absolute bottom-1 left-1/2 w-1 h-1 bg-primary rounded-full -translate-x-1/2"></span></div>
+<div class="p-1 hover:bg-surface-container rounded cursor-pointer">15<span class="absolute bottom-1 left-1/2 w-1 h-1 bg-primary rounded-full -translate-x-1/2"></span></div>
 <div class="p-1 hover:bg-surface-container rounded cursor-pointer">16</div>
 <div class="p-1 hover:bg-surface-container rounded cursor-pointer">17</div>
 <div class="p-1 hover:bg-surface-container rounded cursor-pointer">18</div>
@@ -350,20 +295,15 @@
 <div class="flex-grow border-t border-outline-variant pt-4">
 <h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide mb-3">Today</h3>
 <ul class="space-y-3">
+{% for task in todays_schedule %}
 <li class="flex items-start gap-3 p-3 rounded bg-surface-container-low border border-outline-variant">
-<span class="material-symbols-outlined text-primary mt-0.5" data-icon="location_on">location_on</span>
+<span class="material-symbols-outlined text-primary mt-0.5" data-icon="{{ task.icon }}">{{ task.icon }}</span>
 <div>
-<div class="font-label-md text-label-md text-primary">Client Viewing: 456 Pine Rd</div>
-<div class="font-label-sm text-label-sm text-on-surface-variant">2:00 PM</div>
+<div class="font-label-md text-label-md text-primary">{{ task.title }}</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">{{ task.time }}</div>
 </div>
 </li>
-<li class="flex items-start gap-3 p-3 rounded bg-surface-container-low border border-outline-variant">
-<span class="material-symbols-outlined text-primary mt-0.5" data-icon="groups">groups</span>
-<div>
-<div class="font-label-md text-label-md text-primary">Team Sync</div>
-<div class="font-label-sm text-label-sm text-on-surface-variant">4:30 PM</div>
-</div>
-</li>
+{% endfor %}
 </ul>
 </div>
 </div>
@@ -376,9 +316,9 @@
 <div class="max-w-2xl">
 <h2 class="font-display-lg text-headline-lg-mobile md:text-display-lg font-bold mb-4">Strategic Insights</h2>
 <p class="font-body-lg text-body-lg text-primary-fixed mb-6 border-l-4 border-primary-fixed pl-4 py-1">
-                        "15% increase in lead conversion projected for next quarter."
+                        "{{ insights.quote }}"
                     </p>
-<p class="font-body-md text-body-md text-on-primary-container">Based on recent market trends and portfolio performance analysis.</p>
+<p class="font-body-md text-body-md text-on-primary-container">{{ insights.description }}</p>
 </div>
 <button class="shrink-0 bg-surface-white text-primary border border-outline-variant hover:bg-surface-container-low font-label-md text-label-md px-8 py-3 rounded transition-all shadow-sm hover:shadow-md flex items-center gap-2">
 <span class="material-symbols-outlined" data-icon="download">download</span>

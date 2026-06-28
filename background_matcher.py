@@ -38,7 +38,7 @@ class BackgroundMatcher:
             "trigger": trigger_source,
             "properties": sorted(property_ids or []),
             "customers": sorted(customer_ids or []),
-            "bucket": datetime.utcnow().strftime("%Y%m%d%H%M"),
+            "bucket": datetime.utcnow().strftime("%Y%m%d%H"),
         }
         return hashlib.sha256(json.dumps(base, sort_keys=True).encode("utf-8")).hexdigest()[:32]
 
@@ -55,14 +55,27 @@ class BackgroundMatcher:
             return None
 
         if existing:
-            existing.status = "running"
-            existing.started_at = datetime.utcnow()
-            existing.finished_at = None
-            existing.trigger_source = trigger_source
-            existing.property_ids = json.dumps(property_ids or [])
-            existing.customer_ids = json.dumps(customer_ids or [])
-            existing.result_summary = None
-            run = existing
+            # For failed jobs, create a new attempt instead of updating the existing one
+            if existing.status == "failed":
+                self.logger.info(f"Previous matching job {existing.id} failed, creating new attempt")
+                run = MatchingJobRun(
+                    idempotency_key=idempotency_key,
+                    status="running",
+                    trigger_source=trigger_source,
+                    property_ids=json.dumps(property_ids or []),
+                    customer_ids=json.dumps(customer_ids or []),
+                )
+                db.session.add(run)
+            else:
+                # For other statuses (e.g., pending, cancelled), update the existing job
+                existing.status = "running"
+                existing.started_at = datetime.utcnow()
+                existing.finished_at = None
+                existing.trigger_source = trigger_source
+                existing.property_ids = json.dumps(property_ids or [])
+                existing.customer_ids = json.dumps(customer_ids or [])
+                existing.result_summary = None
+                run = existing
         else:
             run = MatchingJobRun(
                 idempotency_key=idempotency_key,
@@ -181,15 +194,34 @@ class BackgroundMatcher:
         max_budget = customer.budget_max or 0
         min_budget = customer.budget_min or 0
 
+        # Input validation: if properties is None or not a list, return empty list
+        if not properties:
+            return []
+
+        # Define a helper function to check if a property passes the budget filters
+        def _passes_budget_filter(prop: Property) -> bool:
+            # Filter out negative prices
+            if prop.price is not None and prop.price < 0:
+                return False
+
+            # Treat None price as 0 for budget comparisons
+            price_for_comparison = prop.price if prop.price is not None else 0
+
+            # Max budget check: if max_budget is 0 (unset), skip; else check price or rahn
+            max_budget_ok = (max_budget == 0) or (
+                (price_for_comparison <= int(max_budget * 1.2)) or
+                (prop.rahn is not None and prop.rahn <= int(max_budget * 1.2))
+            )
+            # Min budget check: if min_budget is 0 (unset), skip; else check price >= min_budget * 0.5
+            min_budget_ok = (min_budget == 0) or (
+                price_for_comparison >= int(min_budget * 0.5)
+            )
+            return max_budget_ok and min_budget_ok
+
         budget_filtered = [
             prop
             for prop in properties
-            if (
-                not max_budget
-                or (prop.price is not None and prop.price <= int(max_budget * 1.2))
-                or (prop.rahn is not None and prop.rahn <= int(max_budget * 1.2))
-            )
-            and (not min_budget or prop.price >= int(min_budget * 0.5))
+            if _passes_budget_filter(prop)
         ]
         candidate_pool = budget_filtered
         if not candidate_pool:
@@ -353,29 +385,67 @@ class BackgroundMatcher:
             return []
 
     def create_agent_notifications(self, matches: List[PropertyMatch]) -> List[AgentNotification]:
+        """
+        Create agent notifications for saved matches.
+        Fixed: Added try/except around monitoring service calls to prevent breaking the loop.
+        """
         notifications: List[AgentNotification] = []
 
-        try:
-            agent_matches: Dict[int, List[PropertyMatch]] = {}
-            for match in matches:
-                if match.match_score >= self.notification_threshold and match.agent_id:
-                    agent_matches.setdefault(match.agent_id, []).append(match)
+        if not matches:
+            return notifications
 
-            for agent_id, agent_match_list in agent_matches.items():
-                for match in agent_match_list:
+        # Group matches by agent_id for efficiency
+        matches_by_agent: Dict[int, List[PropertyMatch]] = {}
+        for match in matches:
+            if match.match_score >= self.notification_threshold and match.agent_id:
+                matches_by_agent.setdefault(match.agent_id, []).append(match)
+
+        # Process each agent's matches
+        for agent_id, agent_match_list in matches_by_agent.items():
+            agent_notifications: List[AgentNotification] = []
+
+            for match in agent_match_list:
+                try:
                     notification = self._create_match_notification(agent_id, match)
                     if notification:
-                        notifications.append(notification)
+                        agent_notifications.append(notification)
+                except Exception as e:
+                    self.logger.error(f"Failed to create notification for agent {agent_id}, match {match.id}: {e}")
+                    # Continue with other matches
 
-            for notification in notifications:
-                db.session.add(notification)
+            # Add notifications to session
+            if agent_notifications:
+                try:
+                    db.session.add_all(agent_notifications)
+                    db.session.flush()  # Get IDs without committing yet
+                    notifications.extend(agent_notifications)
 
+                    # Log each notification individually with error handling
+                    for notification in agent_notifications:
+                        try:
+                            monitoring_service.log_notification_activity(
+                                agent_id=agent_id,
+                                notification_id=notification.id,
+                                match_id=notification.property_match_id
+                            )
+                        except Exception as e:
+                            self.logger.error(f"Failed to log notification activity for notification {notification.id}: {e}")
+                            # Continue logging other notifications
+
+                except Exception as e:
+                    self.logger.error(f"Failed to save notifications for agent {agent_id}: {e}")
+                    db.session.rollback()
+                    # Continue with other agents
+
+        # Commit all notifications at once
+        try:
             db.session.commit()
-            return notifications
-        except Exception as exc:
+        except Exception as e:
+            self.logger.error(f"Failed to commit notifications: {e}")
             db.session.rollback()
-            self.logger.error(f"Error creating notifications: {exc}")
-            return []
+            return []  # Return empty list on commit failure
+
+        return notifications
 
     def _create_match_notification(self, agent_id: int, match: PropertyMatch) -> Optional[AgentNotification]:
         try:

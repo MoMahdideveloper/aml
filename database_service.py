@@ -192,6 +192,27 @@ class DatabaseService:
         """Get an agent by ID"""
         return db.session.get(Agent, agent_id)
 
+    def update_agent(self, agent_id: int, **kwargs) -> Optional[Agent]:
+        """Update an agent"""
+        agent = db.session.get(Agent, agent_id)
+        if agent:
+            for key, value in kwargs.items():
+                if hasattr(agent, key):
+                    setattr(agent, key, value)
+            db.session.commit()
+        return agent
+
+    def delete_agent(self, agent_id: int) -> bool:
+        """Delete an agent"""
+        agent = db.session.get(Agent, agent_id)
+        if agent:
+            for prop in agent.properties:
+                prop.agent_id = None
+            db.session.delete(agent)
+            db.session.commit()
+            return True
+        return False
+
     # Customer operations
     def add_customer(
         self,

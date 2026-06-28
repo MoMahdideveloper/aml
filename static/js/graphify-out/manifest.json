@@ -1,0 +1,67 @@
+{
+  "accessibility-enhancements.js": {
+    "mtime": 1782469567.775834,
+    "ast_hash": "403187c9797101caef82a662b3baa796",
+    "semantic_hash": "403187c9797101caef82a662b3baa796"
+  },
+  "analysis.js": {
+    "mtime": 1782469567.7778351,
+    "ast_hash": "74354a9750b6ded50e56a7dd198da76a",
+    "semantic_hash": "74354a9750b6ded50e56a7dd198da76a"
+  },
+  "button-diagnostics.js": {
+    "mtime": 1782469567.7778351,
+    "ast_hash": "37a182aafc51d3ec2688a70aaa1ea0c1",
+    "semantic_hash": "37a182aafc51d3ec2688a70aaa1ea0c1"
+  },
+  "button-fixes.js": {
+    "mtime": 1782469567.7788348,
+    "ast_hash": "1162448ce5ba143d7c82034e6a7eb82e",
+    "semantic_hash": "1162448ce5ba143d7c82034e6a7eb82e"
+  },
+  "crud-utils.js": {
+    "mtime": 1782469567.7798345,
+    "ast_hash": "f362a44766ff4d2fe53a92c4495b8000",
+    "semantic_hash": "f362a44766ff4d2fe53a92c4495b8000"
+  },
+  "dual-view-handler.js": {
+    "mtime": 1782469567.7808342,
+    "ast_hash": "5d6924cb313ea2989784bbf2539021aa",
+    "semantic_hash": "5d6924cb313ea2989784bbf2539021aa"
+  },
+  "main.js": {
+    "mtime": 1782469567.7828374,
+    "ast_hash": "49729e71e8ad58f986843b03bf2a2574",
+    "semantic_hash": "49729e71e8ad58f986843b03bf2a2574"
+  },
+  "preference-storage.js": {
+    "mtime": 1782469567.7848349,
+    "ast_hash": "c0992e7cc3e3e56175089c38b7e834ba",
+    "semantic_hash": "c0992e7cc3e3e56175089c38b7e834ba"
+  },
+  "property-edit-modal.js": {
+    "mtime": 1782469567.785835,
+    "ast_hash": "43f5ab337024bfb45a751f239980e08f",
+    "semantic_hash": "43f5ab337024bfb45a751f239980e08f"
+  },
+  "property-modal-system.js": {
+    "mtime": 1782469567.7869425,
+    "ast_hash": "97461e27f43d3063c7477d136f36b91f",
+    "semantic_hash": "97461e27f43d3063c7477d136f36b91f"
+  },
+  "property-view-modal.js": {
+    "mtime": 1782469567.79601,
+    "ast_hash": "facb71f588d515584e1645520e75a6b8",
+    "semantic_hash": "facb71f588d515584e1645520e75a6b8"
+  },
+  "recommendations.js": {
+    "mtime": 1782469567.7980099,
+    "ast_hash": "145c23a1c16e644576349336749c289b",
+    "semantic_hash": "145c23a1c16e644576349336749c289b"
+  },
+  "url-fix.js": {
+    "mtime": 1782469567.79901,
+    "ast_hash": "de7087f76faf5f513ea681937598a485",
+    "semantic_hash": "de7087f76faf5f513ea681937598a485"
+  }
+}

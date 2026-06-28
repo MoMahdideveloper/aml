@@ -1,14 +1,13 @@
 <!DOCTYPE html>
-
 <html class="light" lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Agent Dashboard - Platinum Heritage</title>
+<title>{{agentName}} Dashboard - {{companyName}}</title>
 <!-- Material Symbols -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <!-- Tailwind CSS Setup -->
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script id="tailwind-config">
@@ -56,11 +55,11 @@
                         "on-primary-container": "#93a4b8",
                         "on-tertiary-fixed-variant": "#47473e",
                         "surface-dim": "#d0dbea",
-                        "inverse-on-surface": "#e8f2ff",
+                        "inverse-on-surface": "$e8f2ff",
                         "error-red": "#BA1A1A",
                         "background": "#f7f9ff",
                         "on-secondary-fixed-variant": "#464747",
-                        "on-background": "#111d27",
+                        "on-background": "$111d27",
                         "tertiary-fixed": "#e5e3d6",
                         "surface-white": "#FFFFFF",
                         "primary": "#142435",
@@ -133,20 +132,21 @@
 </button>
 <div class="h-8 w-px bg-[#C0C0C0]"></div> <!-- Divider -->
 <div class="flex items-center gap-4">
-<img alt="Agent Portrait" class="w-10 h-10 rounded-full object-cover platinum-border border" data-alt="A professional headshot of a senior real estate associate in a modern, brightly lit office environment. The lighting is soft and flattering, highlighting a crisp navy suit. The style is clean, corporate, and premium, consistent with a high-end agency aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKsvsBxQVURvUWS6kg3fuEylDzaDP6LRT7mJ948G_9e-UYfjQquDEJOywTP6fN0ZXMBVBko4XTNr8kfGr0ESSAo3XFmmFHy2q9M0h3xznaW8m8wFprp8ByYtBmdW7oKjNoFnyVVz-1dpqay1rK1pLTdP0i4fL459V5LBwf0BoSKjv6l_sYmvZAIQAwHTmG53bfIR2KHt2f-Sn4WniuYVvXvqHQA6-9VWBaUNPN3jtinXAYE_L5Vdc"/>
+<img alt="Agent Portrait" class="w-10 h-10 rounded-full object-cover platinum-border border" data-alt="A professional headshot of a senior real estate associate in a modern, brightly lit office environment. The lighting is soft and flattering, highlighting a crisp navy suit. The style is clean, corporate, and premium, consistent with a high-end agency aesthetic." src="{{agentAvatarUrl}}">
 <div>
-<h1 class="font-headline-md deep-blue-text leading-tight text-[18px]">Alexander Sterling</h1>
-<p class="font-label-sm text-secondary">Senior Associate</p>
+<h1 class="font-headline-md deep-blue-text leading-tight text-[18px]">{{agentName}}</h1>
+<p class="font-label-sm text-secondary">{{agentTitle}}</p>
+</div>
 </div>
 </div>
 </div>
 <!-- Right Area: Navigation & Actions (from JSON spec, adjusted for layout) -->
 <div class="hidden md:flex items-center gap-8">
 <nav class="flex gap-6">
-<a class="font-label-md deep-blue-text font-bold border-b-2 border-[#2A3A4B] pb-1" href="#">Dashboard</a>
-<a class="font-label-md text-secondary hover:deep-blue-text transition-colors" href="#">Portfolio</a>
-<a class="font-label-md text-secondary hover:deep-blue-text transition-colors" href="#">Clients</a>
-<a class="font-label-md text-secondary hover:deep-blue-text transition-colors" href="#">Analytics</a>
+<a class="font-label-md deep-blue-text font-bold border-b-2 border-[#2A3A4B] pb-1" href="/dashboard">Dashboard</a>
+<a class="font-label-md text-secondary hover:deep-blue-text transition-colors" href="/agents/{{agentId}}/portfolio">Portfolio</a>
+<a class="font-label-md text-secondary hover:deep-blue-text transition-colors" href="/agents/{{agentId}}/clients">Clients</a>
+<a class="font-label-md text-secondary hover:deep-blue-text transition-colors" href="/agents/{{agentId}}/analytics">Analytics</a>
 </nav>
 <div class="flex items-center gap-4">
 <button class="text-secondary hover:deep-blue-text transition-colors">
@@ -157,8 +157,8 @@
 </button>
 <div class="h-6 w-px bg-[#C0C0C0] mx-2"></div>
 <button class="deep-blue-bg text-on-primary font-label-md px-6 py-2 rounded-lg hover:opacity-90 transition-opacity">
-                    List Property
-                </button>
+                List Property
+            </button>
 </div>
 </div>
 </header>
@@ -174,7 +174,7 @@
 <span class="material-symbols-outlined text-secondary">domain</span>
 </div>
 <div>
-<p class="font-display-lg deep-blue-text">24</p>
+<p class="font-display-lg deep-blue-text">{{activeListings}}</p>
 </div>
 </div>
 <!-- Stat Card 2 -->
@@ -184,8 +184,8 @@
 <span class="material-symbols-outlined text-secondary">handshake</span>
 </div>
 <div>
-<p class="font-display-lg deep-blue-text">8</p>
-<p class="font-label-sm text-[#506072] mt-1">+2 this month</p>
+<p class="font-display-lg deep-blue-text">{{recentDeals}}</p>
+<p class="font-label-sm text-[#506072] mt-1">{{newDealsThisMonth}} this month</p>
 </div>
 </div>
 <!-- Stat Card 3 -->
@@ -195,7 +195,7 @@
 <span class="material-symbols-outlined text-secondary">assignment</span>
 </div>
 <div>
-<p class="font-display-lg deep-blue-text">12</p>
+<p class="font-display-lg deep-blue-text">{{pendingTasks}}</p>
 </div>
 </div>
 <!-- Stat Card 4 -->
@@ -208,8 +208,8 @@
 </div>
 </div>
 <div>
-<p class="font-display-lg deep-blue-text">5</p>
-<p class="font-label-sm text-error-red mt-1 font-medium">3 Priority</p>
+<p class="font-display-lg deep-blue-text">{{notificationsCount}}</p>
+<p class="font-label-sm text-error-red mt-1 font-medium">{{priorityNotifications}} Priority</p>
 </div>
 </div>
 </div>
@@ -229,62 +229,24 @@
 </div>
 <!-- Notifications List -->
 <div class="bg-surface-white rounded-xl border platinum-border card-shadow flex flex-col">
-<!-- Item 1 (Priority) -->
+{% for activity in recentActivities %}
 <div class="p-6 border-b platinum-border flex gap-4 hover:bg-[#F4F2E5]/30 transition-colors cursor-pointer relative overflow-hidden">
 <div class="absolute left-0 top-0 bottom-0 w-1 bg-error-red"></div>
 <div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center flex-shrink-0">
-<span class="material-symbols-outlined text-[#2A3A4B]">warning</span>
+<span class="material-symbols-outlined text-[#2A3A4B]">{{activity.icon}}</span>
 </div>
 <div class="flex-1">
 <div class="flex justify-between items-start mb-1">
-<h3 class="font-label-md deep-blue-text font-bold">Offer Received: 1420 Luxury Ave</h3>
-<span class="font-label-sm text-secondary">10m ago</span>
+<h3 class="font-label-md deep-blue-text font-bold">{{activity.title}}</h3>
+<span class="font-label-sm text-secondary">{{activity.timeAgo}}</span>
 </div>
-<p class="font-body-md text-on-surface-variant">Client J. Smith submitted an offer for $4.2M. Review required before end of day.</p>
+<p class="font-body-md text-on-surface-variant">{{activity.description}}</p>
 <div class="mt-3 flex gap-3">
-<button class="font-label-sm deep-blue-text underline hover:opacity-80">View Offer</button>
+<button class="font-label-sm deep-blue-text underline hover:opacity-80">{{activity.actionButtonText}}</button>
 </div>
 </div>
 </div>
-<!-- Item 2 -->
-<div class="p-6 border-b platinum-border flex gap-4 hover:bg-[#F4F2E5]/30 transition-colors cursor-pointer">
-<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center flex-shrink-0">
-<span class="material-symbols-outlined text-[#2A3A4B]">schedule</span>
-</div>
-<div class="flex-1">
-<div class="flex justify-between items-start mb-1">
-<h3 class="font-label-md deep-blue-text font-bold">Showing Confirmed</h3>
-<span class="font-label-sm text-secondary">1h ago</span>
-</div>
-<p class="font-body-md text-on-surface-variant">Showing confirmed at Penthouse B with the Harrison family tomorrow at 2:00 PM.</p>
-</div>
-</div>
-<!-- Item 3 -->
-<div class="p-6 border-b platinum-border flex gap-4 hover:bg-[#F4F2E5]/30 transition-colors cursor-pointer opacity-70">
-<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center flex-shrink-0">
-<span class="material-symbols-outlined text-secondary">description</span>
-</div>
-<div class="flex-1">
-<div class="flex justify-between items-start mb-1">
-<h3 class="font-label-md text-secondary">Contract Signed</h3>
-<span class="font-label-sm text-secondary">Yesterday</span>
-</div>
-<p class="font-body-md text-on-surface-variant">The listing agreement for 88 Park Place has been finalized and uploaded to the vault.</p>
-</div>
-</div>
-<!-- Item 4 -->
-<div class="p-6 flex gap-4 hover:bg-[#F4F2E5]/30 transition-colors cursor-pointer opacity-70">
-<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center flex-shrink-0">
-<span class="material-symbols-outlined text-secondary">forum</span>
-</div>
-<div class="flex-1">
-<div class="flex justify-between items-start mb-1">
-<h3 class="font-label-md text-secondary">Client Inquiry</h3>
-<span class="font-label-sm text-secondary">Yesterday</span>
-</div>
-<p class="font-body-md text-on-surface-variant">New message from E. Vance regarding property tax details for the waterfront estate.</p>
-</div>
-</div>
+{% endfor %}
 </div>
 </section>
 <!-- Right Column: Smart Intake (5 cols) -->
@@ -346,12 +308,12 @@
 </main>
 <!-- Footer Component from JSON -->
 <footer class="w-full py-8 px-margin-desktop flex flex-col md:flex-row justify-between items-center mt-auto border-t platinum-border bg-surface-white">
-<p class="font-label-sm text-secondary mb-4 md:mb-0">© 2024 Platinum Heritage Real Estate. All rights reserved.</p>
+<p class="font-label-sm text-secondary mb-4 md:mb-0">© {{currentYear}} {{companyName}}. All rights reserved.</p>
 <div class="flex gap-6">
-<a class="font-label-sm text-secondary hover:text-[#2A3A4B] opacity-80 hover:opacity-100 transition-opacity" href="#">Privacy Policy</a>
-<a class="font-label-sm text-secondary hover:text-[#2A3A4B] opacity-80 hover:opacity-100 transition-opacity" href="#">Terms of Service</a>
-<a class="font-label-sm text-secondary hover:text-[#2A3A4B] opacity-80 hover:opacity-100 transition-opacity" href="#">Compliance</a>
-<a class="font-label-sm text-secondary hover:text-[#2A3A4B] opacity-80 hover:opacity-100 transition-opacity" href="#">Contact</a>
+<a class="font-label-sm text-secondary hover:text-[#2A3A4B] opacity-80 hover:opacity-100 transition-opacity" href="/privacy">Privacy Policy</a>
+<a class="font-label-sm text-secondary hover:text-[#2A3A4B] opacity-80 hover:opacity-100 transition-opacity" href="/terms">Terms of Service</a>
+<a class="font-label-sm text-secondary hover:text-[#2A3A4B] opacity-80 hover:opacity-100 transition-opacity" href="/compliance">Compliance</a>
+<a class="font-label-sm text-secondary hover:text-[#2A3A4B] opacity-80 hover:opacity-100 transition-opacity" href="/contact">Contact</a>
 </div>
 </footer>
 </body></html>

@@ -1,0 +1,1 @@
+Fact 2: This command verifies we have extracted the list of documentation URLs from the opened page.
