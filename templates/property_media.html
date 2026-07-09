@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}Media · {{ property.title }} · Platinum Heritage{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        font-family: 'Material Symbols Outlined';
+    }
+    .shadow-ph-soft { box-shadow: 0 8px 30px rgba(27, 38, 49, 0.06); }
+    .drop-zone.dragover { border-color: #142435; background: rgba(20,36,53,0.04); }
+</style>
+{% endblock %}
+
+{% block content %}
+<header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+    <div>
+        <nav class="flex flex-wrap items-center gap-2 text-sm text-secondary mb-3">
+            <a href="{{ url_for('properties') }}" class="hover:text-primary">Properties</a>
+            <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+            <a href="{{ url_for('properties.property_detail', property_id=property.id) }}" class="hover:text-primary truncate max-w-[12rem]">{{ property.title }}</a>
+            <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+            <span class="text-primary font-medium">Media</span>
+        </nav>
+        <h1 class="text-2xl md:text-3xl font-semibold text-primary mb-2">Property media</h1>
+        <p class="text-sm text-on-surface-variant max-w-2xl">
+            Upload a gallery for <span class="font-medium text-primary">{{ property.title }}</span>. The cover image appears on inventory cards and detail hero.
+        </p>
+    </div>
+    <a href="{{ url_for('properties.property_detail', property_id=property.id) }}"
+       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-outline-variant text-primary text-sm font-medium hover:bg-surface-container">
+        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+        Back to detail
+    </a>
+</header>
+
+{# Upload zone #}
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 mb-8 shadow-ph-soft">
+    <h2 class="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-[22px]">upload</span>
+        Upload photos
+    </h2>
+    <form method="POST" action="{{ url_for('properties.upload_property_media', property_id=property.id) }}"
+          enctype="multipart/form-data" id="mediaUploadForm" class="space-y-4">
+        {% if csrf_token is defined %}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% endif %}
+        <input type="hidden" name="next" value="{{ url_for('properties.property_media', property_id=property.id) }}">
+
+        <label id="dropZone"
+               class="drop-zone flex flex-col items-center justify-center gap-3 min-h-[200px] rounded-xl border-2 border-dashed border-outline-variant cursor-pointer hover:bg-surface-container-low transition-colors p-8">
+            <span class="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                <span class="material-symbols-outlined text-3xl">add_photo_alternate</span>
+            </span>
+            <span class="text-sm font-medium text-primary">Click or drag images here</span>
+            <span class="text-xs text-on-surface-variant">PNG, JPG, WEBP, GIF · up to 12 files</span>
+            <input type="file" name="images" id="imagesInput" accept="image/png,image/jpeg,image/webp,image/gif" multiple
+                   class="sr-only">
+        </label>
+        <p id="fileList" class="text-xs text-on-surface-variant"></p>
+        <div class="flex flex-wrap gap-3">
+            <button type="submit"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90">
+                <span class="material-symbols-outlined text-[18px]">cloud_upload</span>
+                Upload selected
+            </button>
+        </div>
+    </form>
+</section>
+
+{# Gallery grid #}
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-ph-soft">
+    <div class="flex items-center justify-between mb-5">
+        <h2 class="text-lg font-semibold text-primary flex items-center gap-2">
+            <span class="material-symbols-outlined text-[22px]">photo_library</span>
+            Gallery
+            <span class="text-sm font-normal text-on-surface-variant">({{ images|length }}{% if legacy_image and not images %} + cover{% endif %})</span>
+        </h2>
+    </div>
+
+    {% if images %}
+    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+        {% for img in images %}
+        <article class="rounded-xl border border-outline-variant overflow-hidden bg-surface flex flex-col">
+            <div class="relative aspect-video bg-surface-container-high">
+                <img src="{{ url_for('static', filename='uploads/' + img.filename) }}"
+                     alt="{{ img.caption or property.title }}"
+                     class="w-full h-full object-cover"
+                     loading="lazy">
+                {% if img.is_primary %}
+                <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-primary text-on-primary text-[10px] font-semibold uppercase">Cover</span>
+                {% endif %}
+            </div>
+            <div class="p-3 flex flex-col gap-2 flex-1">
+                {% if img.caption %}
+                <p class="text-xs text-on-surface-variant line-clamp-2">{{ img.caption }}</p>
+                {% else %}
+                <p class="text-xs text-on-surface-variant truncate">{{ img.filename }}</p>
+                {% endif %}
+                <div class="flex gap-2 mt-auto">
+                    {% if not img.is_primary %}
+                    <form method="POST" action="{{ url_for('properties.set_primary_image', property_id=property.id, image_id=img.id) }}" class="flex-1">
+                        {% if csrf_token is defined %}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% endif %}
+                        <button type="submit" class="w-full text-xs py-1.5 rounded-lg border border-outline-variant text-primary hover:bg-surface-container">
+                            Set cover
+                        </button>
+                    </form>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('properties.delete_property_image', property_id=property.id, image_id=img.id) }}"
+                          onsubmit="return confirm('Delete this image?');" class="{{ 'flex-1' if img.is_primary else '' }}">
+                        {% if csrf_token is defined %}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% endif %}
+                        <button type="submit" class="w-full text-xs py-1.5 rounded-lg border border-outline-variant text-error hover:bg-error/5">
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% elif legacy_image %}
+    <div class="flex flex-col sm:flex-row gap-4 items-start">
+        <div class="w-full sm:w-64 aspect-video rounded-xl overflow-hidden border border-outline-variant">
+            <img src="{{ url_for('static', filename='uploads/' + legacy_image) }}" alt="Cover" class="w-full h-full object-cover">
+        </div>
+        <div>
+            <p class="text-sm text-primary font-medium mb-1">Legacy cover image</p>
+            <p class="text-xs text-on-surface-variant mb-3">This is the single image on the property record. Upload more above to build a full gallery.</p>
+            <code class="text-xs bg-surface-container px-2 py-1 rounded">{{ legacy_image }}</code>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-12 text-on-surface-variant">
+        <span class="material-symbols-outlined text-5xl text-outline mb-2 block">photo_library</span>
+        <p class="text-sm">No gallery images yet. Upload your first photos above.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var input = document.getElementById('imagesInput');
+    var list = document.getElementById('fileList');
+    var zone = document.getElementById('dropZone');
+    if (!input || !list) return;
+
+    function showFiles() {
+        var files = input.files;
+        if (!files || !files.length) {
+            list.textContent = '';
+            return;
+        }
+        var names = [];
+        for (var i = 0; i < files.length; i++) names.push(files[i].name);
+        list.textContent = files.length + ' file(s): ' + names.join(', ');
+    }
+    input.addEventListener('change', showFiles);
+
+    if (zone) {
+        ['dragenter', 'dragover'].forEach(function (ev) {
+            zone.addEventListener(ev, function (e) {
+                e.preventDefault();
+                zone.classList.add('dragover');
+            });
+        });
+        ['dragleave', 'drop'].forEach(function (ev) {
+            zone.addEventListener(ev, function (e) {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+            });
+        });
+        zone.addEventListener('drop', function (e) {
+            if (e.dataTransfer && e.dataTransfer.files) {
+                input.files = e.dataTransfer.files;
+                showFiles();
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}

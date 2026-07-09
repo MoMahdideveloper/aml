@@ -1,505 +1,349 @@
-{% extends get_template_variant('base.html') %}
+{% extends 'base.html' %}
 
-{% block title %}Customers - Stitch KPI{% endblock %}
-{% block page_title %}Customers{% endblock %}
+{% block title %}Customers - Platinum Heritage{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        font-family: 'Material Symbols Outlined';
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<!-- Header Section -->
-<div class="bg-surface-white rounded-lg shadow-sm p-6">
-    <div class="border-l-4 border-primary/20 pl-4 mb-4">
-        <div class="flex items-center justify-between mb-4">
-            <div>
-                <h3 class="font-semibold text-on-surface">Customer Management</h3>
-                <p class="text-label-sm text-on-surface-variant">Manage your customers and their property preferences</p>
-            </div>
-            <div class="flex items-center gap-3">
-                <button onclick="showCustomerInsights()"
-                        class="flex items-center gap-2 px-4 py-2 bg-info/10 text-info rounded-lg hover:bg-info/20 transition-colors font-medium">
-                    <i class="fas fa-chart-pie text-info"></i>
-                    <span>Customer Insights</span>
-                </button>
-                <button onclick="document.getElementById('addCustomerModal').classList.remove('hidden')"
-                        class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium">
-                    <i class="fas fa-user-plus"></i>
-                    <span>Add Customer</span>
-                </button>
-            </div>
-        </div>
+<!-- Page Header -->
+<header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+    <div>
+        <h1 class="text-display-lg font-display-lg text-primary mb-2">Clients</h1>
+        <p class="text-body-lg font-body-lg text-on-surface-variant">Manage client relationships and engagement history</p>
     </div>
+    <button data-open-modal="addCustomerModal"
+            class="bg-primary text-on-primary px-6 py-3 rounded-lg text-label-md font-label-md hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] hover:opacity-95 transition-all flex items-center gap-2 w-fit">
+        <span class="material-symbols-outlined text-lg">add</span>
+        Add New Client
+    </button>
+</header>
 
-    <!-- Customers Grid -->
-    <div class="space-y-6">
-        {% if customers %}
-        <div class="grid gap-6">
-            {% for customer in customers %}
-            <div class="bg-surface-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center space-x-4">
-                        <div class="flex h-10 w-10 items-center justify-center bg-primary/10 rounded-lg flex-shrink-0">
-                            <div class="flex flex-col items-center justify-center text-center">
-                                <span class="font-medium text-primary">{{ customer.name.split()[0][0] }}{{ customer.name.split()[-1][0] if customer.name.split()|length > 1 else '' }}</span>
-                            </div>
-                        </div>
-                        <div>
-                            <p class="font-medium text-on-surface">{{ customer.name }}</p>
-                            <p class="text-label-sm text-on-surface-variant">Customer ID: #{{ customer.id }}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <button class="btn btn-outline-primary btn-sm" onclick="viewCustomer({{ customer.id }})">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-outline-success btn-sm" onclick="editCustomer({{ customer.id }})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <div class="relative">
-                            <button class="btn btn-outline-secondary btn-sm" id="customerActionsMenu{{ customer.id }}" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-ellipsis-h"></i>
-                            </button>
-                            <div class="absolute right-0 mt-2 w-48 origin-top-right border-divider bg-surface-white shadow-lg rounded-md py-1 z-20 hidden" id="customerActionsMenuContent{{ customer.id }}">
-                                <div class="px-4 py-2 text-sm text-on-surface" role="none">
-                                    <a href="{{ url_for('recommendations') }}" class="block w-full text-left px-4 py-2">
-                                        <i class="fas fa-magic me-2 text-primary"></i>AI Recommendations
-                                    </a>
-                                </div>
-                                <div class="px-4 py-2 text-sm text-on-surface" role="none">
-                                    <a href="{{ url_for('deals') }}?customer={{ customer.id }}" class="block w-full text-left px-4 py-2">
-                                        <i class="fas fa-handshake me-2 text-warning"></i>View Deals
-                                    </a>
-                                </div>
-                                <div class="px-4 py-2 text-sm text-on-surface" role="none">
-                                    <button onclick="sendEmail({{ customer.id }})" class="block w-full text-left px-4 py-2">
-                                        <i class="fas fa-envelope me-2 text-info"></i>Send Email
-                                    </button>
-                                </div>
-                                <div class="px-4 py-2 text-sm text-on-surface" role="none">
-                                    <button onclick="sendSMS({{ customer.id }})" class="block w-full text-left px-4 py-2">
-                                        <i class="fas fa-sms me-2 text-success"></i>Send SMS
-                                    </button>
-                                </div>
-                                <hr class="my-1 border-outline/20" role="none">
-                                <div class="px-4 py-2 text-sm text-on-surface" role="none">
-                                    <button onclick="confirmDeleteCustomer({{ customer.id }})" class="block w-full text-left text-danger px-4 py-2">
-                                        <i class="fas fa-trash me-2"></i>Delete
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid gap-4">
-                    <!-- Contact Info -->
-                    <div class="border-outline/20 p-4 rounded-lg">
-                        <p class="font-medium text-on-surface mb-2">Contact Information</p>
-                        <div class="space-y-2">
-                            <div class="flex items-center space-x-3">
-                                <i class="fas fa-envelope text-primary text-sm"></i>
-                                <span class="text-label-sm text-on-surface-variant">{{ customer.email }}</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <i class="fas fa-phone text-primary text-sm"></i>
-                                <span class="text-label-sm text-on-surface-variant">{{ customer.phone }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Budget Range -->
-                    {% if customer.budget_min > 0 or customer.budget_max > 0 %}
-                    <div class="border-outline/20 p-4 rounded-lg">
-                        <p class="font-medium text-on-surface mb-2">Budget Range</p>
-                        <div class="text-center">
-                            <p class="text-headline-md text-success font-bold">${{ "{:,.0f}".format(customer.budget_min) }} - ${{ "{:,.0f}".format(customer.budget_max) }}</p>
-                            <p class="text-label-sm text-on-surface-variant">Budget Range</p>
-                        </div>
-                    </div>
-                    {% else %}
-                    <div class="border-outline/20 p-4 rounded-lg text-center">
-                        <p class="font-medium text-on-surface mb-2">Budget Range</p>
-                        <p class="text-label-sm text-on-surface-variant">Not specified</p>
-                    </div>
-                    {% endif %}
-
-                    <!-- Preferences -->
-                    <div class="border-outline/20 p-4 rounded-lg">
-                        <p class="font-medium text-on-surface mb-2">Preferences</p>
-                        <div class="flex flex-wrap gap-2">
-                            {% if customer.preferred_bedrooms > 0 %}
-                            <span class="px-3 py-1 text-xs rounded-full bg-primary/10 text-primary">
-                                {{ customer.preferred_bedrooms }} Beds
-                            </span>
-                            {% endif %}
-                            {% if customer.preferred_bathrooms > 0 %}
-                            <span class="px-3 py-1 text-xs rounded-full bg-primary/10 text-primary">
-                                {{ customer.preferred_bathrooms }} Baths
-                            </span>
-                            {% endif %}
-                            {% if customer.preferred_type %}
-                            <span class="px-3 py-1 text-xs rounded-full bg-primary/10 text-primary">
-                                {{ customer.preferred_type }}
-                            </span>
-                            {% endif %}
-                            {% if customer.location_preference %}
-                            <span class="px-3 py-1 text-xs rounded-full bg-primary/10 text-primary">
-                                {{ customer.location_preference }}
-                            </span>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <!-- Deals Info -->
-                    <div class="grid grid-cols-2 gap-4 border-outline/20 p-4 rounded-lg">
-                        <div class="text-center">
-                            <p class="text-label-sm text-on-surface-variant">Total Deals</p>
-                            <p class="text-headline-md text-primary font-bold">{{ customer.total_deals }}</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-label-sm text-on-surface-variant">Active Deals</p>
-                            <p class="text-headline-md text-{{ 'success' if customer.active_deals > 0 else 'on-surface-variant' }} font-bold">{{ customer.active_deals }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Status -->
-                    <div class="flex items-center justify-between border-outline/20 p-4 rounded-lg">
-                        <div>
-                            <p class="font-medium text-on-surface mb-1">Status</p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="flex h-8 w-8 items-center justify-center bg-{{ 'green-50' if customer.status == 'active' else 'gray-50' }} rounded-lg flex-shrink-0">
-                                <i class="fas fa-circle text-{{ 'green-500' if customer.status == 'active' else 'gray-500' }} text-sm"></i>
-                            </div>
-                            <span class="text-label-sm text-on-surface-variant font-medium text-{{ 'green-600' if customer.status == 'active' else 'gray-600' }}">
-                                {{ customer.status.title() }}
-                            </span>
-                        </div>
-                    </div>
+<!-- Search & Filters Panel -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 mb-12 shadow-sm">
+    <form method="GET" action="{{ url_for('customers') }}" id="customerSearchForm">
+        <div class="flex flex-col xl:flex-row gap-6 mb-6">
+            <!-- Text Search -->
+            <div class="flex-1">
+                <label class="block text-label-sm font-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Search Clients</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+                    <input type="text" name="search" value="{{ search_query or '' }}"
+                           class="w-full bg-surface border border-outline-variant rounded-lg pl-10 pr-4 py-2.5 text-body-md font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-colors outline-none"
+                           placeholder="Search by name, email...">
                 </div>
             </div>
-            {% endfor %}
+            <!-- Dropdowns -->
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="w-full md:w-48">
+                    <label class="block text-label-sm font-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Client Type</label>
+                    <select name="customer_type"
+                            class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 text-body-md font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+                        <option value="">All Types</option>
+                        <option value="buyer" {{ 'selected' if customer_type == 'buyer' }}>Buyer</option>
+                        <option value="seller" {{ 'selected' if customer_type == 'seller' }}>Seller</option>
+                        <option value="investor" {{ 'selected' if customer_type == 'investor' }}>Investor</option>
+                    </select>
+                </div>
+                <div class="w-full md:w-48">
+                    <label class="block text-label-sm font-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Status</label>
+                    <select name="status"
+                            class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 text-body-md font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+                        <option value="active" {{ 'selected' if status == 'active' }}>Active</option>
+                        <option value="lead" {{ 'selected' if status == 'lead' }}>Lead</option>
+                        <option value="inactive" {{ 'selected' if status == 'inactive' }}>Inactive</option>
+                    </select>
+                </div>
+                <div class="w-full md:w-48">
+                    <label class="block text-label-sm font-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Assigned Agent</label>
+                    <select name="agent_id"
+                            class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 text-body-md font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+                        <option value="">Any Agent</option>
+                        {% for agent in agents_list %}
+                        <option value="{{ agent.id }}" {{ 'selected' if selected_agent == agent.id|string }}>{{ agent.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
         </div>
-        {% else %}
-        <div class="text-center py-12">
-            <div class="flex flex-col items-center justify-center space-y-4">
-                <i class="fas fa-user-friends text-primary/20 text-8xl"></i>
-                <p class="text-label-md text-on-surface-variant">No Customers Found</p>
-                <p class="text-label-sm text-on-surface-variant">Start building your customer base by adding your first customer.</p>
-                <button onclick="document.getElementById('addCustomerModal').classList.remove('hidden')"
-                        class="flex items-center justify-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium gap-2">
-                    <i class="fas fa-user-plus"></i>
-                    <span>Add Your First Customer</span>
-                </button>
+        <!-- Quick Filter Tags -->
+        <div class="flex flex-wrap items-center gap-3">
+            <span class="text-label-sm font-label-sm text-on-surface-variant mr-2">Quick Filters:</span>
+            <button type="submit" name="budget_filter" value="high"
+                    class="border border-outline-variant rounded-full px-4 py-1.5 text-label-md font-label-md text-primary hover:bg-surface-container-low transition-colors bg-surface {{ 'bg-primary text-on-primary' if budget_filter == 'high' else '' }}">
+                High Budget
+            </button>
+            <button type="submit" name="urgency" value="immediate"
+                    class="border border-outline-variant rounded-full px-4 py-1.5 text-label-md font-label-md text-primary hover:bg-surface-container-low transition-colors bg-surface {{ 'bg-primary text-on-primary' if urgency == 'immediate' else '' }}">
+                Immediate
+            </button>
+            <button type="submit" name="property_type_filter" value="commercial"
+                    class="border border-outline-variant rounded-full px-4 py-1.5 text-label-md font-label-md text-primary hover:bg-surface-container-low transition-colors bg-surface {{ 'bg-primary text-on-primary' if property_type_filter == 'commercial' else '' }}">
+                Commercial
+            </button>
+        </div>
+    </form>
+</section>
+
+<!-- Clients Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-gutter">
+    {% for customer in customers %}
+    <article class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-all flex flex-col">
+        <!-- Card Header -->
+        <div class="flex justify-between items-start mb-6">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center text-primary font-headline-md text-headline-md select-none flex-shrink-0">
+                    {{ customer.name.split()[0][0] }}{{ customer.name.split()[-1][0] if customer.name.split()|length > 1 else '' }}
+                </div>
+                <div>
+                    <h3 class="text-headline-md font-headline-md text-primary leading-tight">{{ customer.name }}</h3>
+                    <span class="inline-block mt-1 bg-surface-container-high text-primary border border-outline-variant rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-wider font-label-sm">
+                        {{ customer.customer_type or 'Buyer' }}
+                    </span>
+                </div>
             </div>
+            <div class="flex gap-2">
+                <a href="mailto:{{ customer.email }}"
+                   class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface-variant hover:text-primary hover:border-primary transition-colors">
+                    <span class="material-symbols-outlined text-sm">mail</span>
+                </a>
+                <a href="tel:{{ customer.phone }}"
+                   class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface-variant hover:text-primary hover:border-primary transition-colors">
+                    <span class="material-symbols-outlined text-sm">call</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="grid grid-cols-3 gap-4 mb-6 text-center border-y border-outline-variant py-4">
+            <div>
+                <div class="text-headline-md font-headline-md text-primary">{{ customer.properties_viewed or 0 }}</div>
+                <div class="text-label-sm font-label-sm text-on-surface-variant">Viewed</div>
+            </div>
+            <div class="border-x border-outline-variant">
+                <div class="text-headline-md font-headline-md text-primary">{{ customer.properties_saved or 0 }}</div>
+                <div class="text-label-sm font-label-sm text-on-surface-variant">Saved</div>
+            </div>
+            <div>
+                <div class="text-headline-md font-headline-md text-primary">{{ customer.match_score or '—' }}{% if customer.match_score %}%{% endif %}</div>
+                <div class="text-label-sm font-label-sm text-on-surface-variant">Score</div>
+            </div>
+        </div>
+
+        <!-- Preferences -->
+        <div class="mb-6 flex-1">
+            <h4 class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Preferences</h4>
+            {% if customer.property_type %}
+            <p class="text-body-md font-body-md text-primary flex items-center gap-2 mb-1">
+                <span class="material-symbols-outlined text-base text-outline">apartment</span>
+                {{ customer.property_type }}
+            </p>
+            {% endif %}
+            {% if customer.preferred_location %}
+            <p class="text-body-md font-body-md text-primary flex items-center gap-2 mb-1">
+                <span class="material-symbols-outlined text-base text-outline">location_on</span>
+                {{ customer.preferred_location }}
+            </p>
+            {% endif %}
+            {% if customer.budget_min or customer.budget_max %}
+            <p class="text-body-md font-body-md text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined text-base text-outline">payments</span>
+                {% if customer.budget_min and customer.budget_max %}
+                    ${{ "{:,.0f}".format(customer.budget_min) }} – ${{ "{:,.0f}".format(customer.budget_max) }}
+                {% elif customer.budget_max %}
+                    Up to ${{ "{:,.0f}".format(customer.budget_max) }}
+                {% else %}
+                    From ${{ "{:,.0f}".format(customer.budget_min) }}
+                {% endif %}
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- Last Activity -->
+        {% if customer.last_activity %}
+        <div class="bg-surface rounded-lg p-3 mb-6 border border-outline-variant">
+            <p class="text-label-sm font-label-sm text-on-surface-variant flex items-start gap-2">
+                <span class="material-symbols-outlined text-base mt-0.5">history</span>
+                <span>{{ customer.last_activity }}</span>
+            </p>
         </div>
         {% endif %}
+
+        <!-- Actions -->
+        <div class="flex items-center gap-3 mt-auto">
+            <a href="mailto:{{ customer.email }}"
+               class="flex-1 text-center border border-outline-variant text-primary rounded-lg py-2 text-label-md font-label-md hover:bg-surface-container-low transition-colors">
+                Message
+            </a>
+            <button type="button" onclick="openCustomerProfile({{ customer.id }})"
+                    class="flex-1 bg-primary text-on-primary rounded-lg py-2 text-label-md font-label-md hover:opacity-90 transition-opacity">
+                View Profile
+            </button>
+            <form method="POST" action="{{ url_for('customers.delete_customer', customer_id=customer.id) }}" class="inline"
+                  onsubmit="return confirm('Delete client {{ customer.name|e }}?');">
+                {% if csrf_token is defined %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% endif %}
+                <button type="submit" class="p-2 border border-outline-variant rounded-lg text-secondary hover:text-error" title="Delete">
+                    <span class="material-symbols-outlined text-[18px]">delete</span>
+                </button>
+            </form>
+        </div>
+    </article>
+    {% else %}
+    <div class="col-span-3 flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-outline-variant rounded-xl">
+        <span class="material-symbols-outlined text-5xl text-outline mb-4">group</span>
+        <p class="font-body-lg text-body-lg text-secondary mb-2">No clients yet</p>
+        <p class="font-body-md text-body-md text-on-surface-variant mb-6">Add your first client to get started</p>
+        <button data-open-modal="addCustomerModal"
+                class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity">
+            Add New Client
+        </button>
     </div>
+    {% endfor %}
 </div>
 
 <!-- Add Customer Modal -->
-<div id="addCustomerModal" class="fixed inset-0 z-50 flex pointer-events-none">
-    <div class="w-full max-w-[600px] mx-auto mt-16 space-y-6 pointer-auto bg-surface-white rounded-lg shadow-xl p-6">
-        <div class="flex justify-between items-start mb-4">
-            <div class="flex items-center">
-                <i class="fas fa-plus text-primary text-2xl mr-3"></i>
-                <div>
-                    <h3 class="font-semibold text-on-surface">Add New Customer</h3>
-                    <p class="text-label-sm text-on-surface-variant">Complete the form below to add a customer</p>
-                </div>
-            </div>
-            <button onclick="document.getElementById('addCustomerModal').classList.add('hidden')"
-                    class="text-on-surface-variant hover:text-on-surface/80 focus:focus:focus:outline-none:focus:ring-2:focus:ring-offset-2:focus:ring-offset-surface:focus:ring-primary/50">
-                <i class="fas fa-times"></i>
+<div id="addCustomerModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50" data-modal>
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl w-full max-w-lg mx-4 p-8 max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="addCustomerTitle">
+        <div class="flex items-center justify-between mb-6">
+            <h2 id="addCustomerTitle" class="font-headline-md text-headline-md text-primary">Add New Client</h2>
+            <button data-modal-close
+                    data-modal-close onclick="window.PHModal ? PHModal.hide('addCustomerModal') : document.getElementById('addCustomerModal').classList.add('hidden')"
+                    class="text-secondary hover:text-primary transition-colors">
+                <span class="material-symbols-outlined">close</span>
             </button>
         </div>
 
-        <form method="POST" action="{{ url_for('add_customer') }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
-
-            <!-- Basic Information -->
-            <div class="border-l-4 border-info/20 pl-4 mb-6">
-                <div class="flex items-center mb-3">
-                    <i class="fas fa-user text-info text-xl mr-3"></i>
-                    <div>
-                        <p class="font-medium text-on-surface">Basic Information</p>
-                        <p class="text-label-sm text-on-surface-variant">Enter customer contact details</p>
-                    </div>
+        <form method="POST" action="{{ url_for('add_customer') }}" class="space-y-4" data-loading>
+            <div>
+                <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Full Name *</label>
+                <input type="text" name="name" required
+                       class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                       placeholder="e.g. Julian Vance">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Email *</label>
+                    <input type="email" name="email" required
+                           class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                           placeholder="client@example.com">
                 </div>
-                <div class="grid gap-4">
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Full Name *</label>
-                        <input type="text" id="name" name="name" required
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    </div>
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Email Address *</label>
-                        <input type="email" id="email" name="email" required
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    </div>
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Phone Number *</label>
-                        <input type="tel" id="phone" name="phone" required
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    </div>
+                <div>
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Phone *</label>
+                    <input type="tel" name="phone" required
+                           class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                           placeholder="+1 (555) 000-0000">
                 </div>
             </div>
-
-            <!-- Budget Information -->
-            <div class="border-l-4 border-success/20 pl-4 mb-6">
-                <div class="flex items-center mb-3">
-                    <i class="fas fa-dollar-sign text-success text-xl mr-3"></i>
-                    <div>
-                        <p class="font-medium text-on-surface">Budget Range</p>
-                        <p class="text-label-sm text-on-surface-variant">Specify customer's property budget range</p>
-                    </div>
+            <div>
+                <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Client Type</label>
+                <select name="customer_type"
+                        class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+                    <option value="buyer">Buyer</option>
+                    <option value="seller">Seller</option>
+                    <option value="investor">Investor</option>
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Budget Min ($)</label>
+                    <input type="number" name="budget_min"
+                           class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                           placeholder="500000">
                 </div>
-                <div class="grid gap-4">
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Minimum Budget</label>
-                        <input type="number" id="budget_min" name="budget_min"
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                               placeholder="e.g. 250000">
-                    </div>
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Maximum Budget</label>
-                        <input type="number" id="budget_max" name="budget_max"
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                               placeholder="e.g. 500000">
-                    </div>
+                <div>
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Budget Max ($)</label>
+                    <input type="number" name="budget_max"
+                           class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                           placeholder="2000000">
                 </div>
             </div>
-
-            <!-- Property Preferences -->
-            <div class="border-l-4 border-primary/20 pl-4 mb-6">
-                <div class="flex items-center mb-3">
-                    <i class="fas fa-home text-primary text-xl mr-3"></i>
-                    <div>
-                        <p class="font-medium text-on-surface">Property Preferences</p>
-                        <p class="text-label-sm text-on-surface-variant">Select customer's desired property features</p>
-                    </div>
-                </div>
-                <div class="grid gap-4">
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Preferred Bedrooms</label>
-                        <select id="preferred_bedrooms" name="preferred_bedrooms"
-                                class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                            <option value="0">Any</option>
-                            <option value="1">1 Bedroom</option>
-                            <option value="2">2 Bedrooms</option>
-                            <option value="3">3 Bedrooms</option>
-                            <option value="4">4 Bedrooms</option>
-                            <option value="5">5+ Bedrooms</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Preferred Bathrooms</label>
-                        <select id="preferred_bathrooms" name="preferred_bathrooms"
-                                class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                            <option value="0">Any</option>
-                            <option value="1">1 Bathroom</option>
-                            <option value="2">2 Bathrooms</option>
-                            <option value="3">3 Bathrooms</option>
-                            <option value="4">4+ Bathrooms</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Property Type</label>
-                        <select id="preferred_type" name="preferred_type"
-                                class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                            <option value="">Any Type</option>
-                            <option value="House">House</option>
-                            <option value="Condo">Condo</option>
-                            <option value="Loft">Loft</option>
-                            <option value="Townhouse">Townhouse</option>
-                            <option value="Commercial">Commercial</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Location Preference</label>
-                        <input type="text" id="location_preference" name="location_preference"
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                               placeholder="e.g. Downtown, Suburbia, Waterfront">
-                    </div>
-                </div>
+            <div>
+                <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Location preference</label>
+                <input type="text" name="location_preference"
+                       class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                       placeholder="e.g. Downtown, Northside">
             </div>
-
-            <div class="mt-6 pt-4 border-t border-outline/20">
-                <div class="flex justify-end">
-                    <button type="button" onclick="document.getElementById('addCustomerModal').classList.add('hidden')"
-                            class="mr-4 px-4 py-2 bg-surface border border-outline/20 rounded-lg hover:bg-surface/50 transition-colors font-medium">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium flex-items-center justify-center gap-2">
-                        <i class="fas fa-save me-2"></i>
-                        Add Customer
-                    </button>
-                </div>
+            <div>
+                <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Preferred property type</label>
+                <input type="text" name="preferred_type"
+                       class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                       placeholder="e.g. Condo, Villa">
+            </div>
+            <div class="flex items-center gap-3 pt-2">
+                <button type="button"
+                        data-modal-close onclick="window.PHModal ? PHModal.hide('addCustomerModal') : document.getElementById('addCustomerModal').classList.add('hidden')"
+                        class="flex-1 border border-outline-variant text-primary rounded-lg py-2.5 font-label-md text-label-md hover:bg-surface-container-low transition-colors">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="flex-1 bg-primary text-on-primary rounded-lg py-2.5 font-label-md text-label-md hover:opacity-90 transition-opacity">
+                    Add Client
+                </button>
             </div>
         </form>
     </div>
 </div>
 
-<script>
-// Customer Insights Modal
-function showCustomerInsights() {
-    // Create modal dynamically
-    const modalHtml = `
-        <div id="customerInsightsModal" class="fixed inset-0 z-50 flex pointer-events-none">
-            <div class="w-full max-w-[600px] mx-auto mt-16 space-y-6 pointer-auto bg-surface-white rounded-lg shadow-xl p-6">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="flex items-center">
-                        <i class="fas fa-chart-pie text-primary text-2xl mr-3"></i>
-                        <div>
-                            <h3 class="font-semibold text-on-surface">Customer Insights</h3>
-                            <p class="text-label-sm text-on-surface-variant">Analytics and trends for your customer base</p>
-                        </div>
-                    </div>
-                    <button onclick="document.getElementById('customerInsightsModal').classList.add('hidden')"
-                            class="text-on-surface-variant hover:text-on-surface/80:focus:outline-none:focus:ring-2:focus:ring-offset-2:focus:ring-offset-surface:focus:ring-primary/50">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-
-                <div class="space-y-6">
-                    <div class="text-center">
-                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                        <p class="mt-4 text-label-sm text-on-surface-variant">Loading insights...</p>
-                    </div>
-
-                    <div id="insightsContent" class="space-y-4 hidden">
-                        <div class="grid gap-6">
-                            <div class="bg-surface-white rounded-lg shadow-sm p-4">
-                                <p class="font-medium text-on-surface mb-2">Popular Preferences</p>
-                                <div class="flex flex-wrap gap-2">
-                                    <span class="px-3 py-1 text-xs rounded-full bg-primary/10 text-primary">3 Bedrooms</span>
-                                    <span style="background-color: #f0f9ff; color: #1px-p-1 text-xs rounded-full bg-blue-100 text-blue-800">2 Bathrooms</span>
-                                    <span class="px-3 py-1 text-xs rounded-full bg-primary/10 text-primary">House</span>
-                                    <span class="px-3 py-1 text-xs rounded-full bg-primary/10 text-primary">Suburban Areas</span>
-                                </div>
-                            </div>
-
-                            <div class="bg-surface-white rounded-lg shadow-sm p-4 grid gap-4">
-                                <div class="text-center">
-                                    <p class="text-label-sm text-on-surface-variant">Average Budget</p>
-                                    <p class="text-headline-md text-success font-bold">$350,000</p>
-                                </div>
-                                <div class="text-center">
-                                    <p class="text-label-sm text-on-surface-variant">Active Customers</p>
-                                    <p class="text-headline-md text-primary font-bold">24</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-surface-white rounded-lg shadow-sm p-4">
-                            <p class="font-medium text-on-surface mb-2">Recent Activity</p>
-                            <div class="space-y-3">
-                                <div class="flex items-center justify-between p-3 bg-primary/10 rounded-lg">
-                                    <div class="flex items-center space-x-3">
-                                        <i class="fas fa-user-plus text-success text-sm"></i>
-                                        <span class="font-medium text-on-surface">New customers this week</span>
-                                    </div>
-                                    <span class="text-headline-md text-success font-bold">8</span>
-                                </div>
-                                <div class="flex items-center justify-between p-3 bg-primary/10 rounded-lg">
-                                    <div class="flex items-center space-x-3">
-                                        <i class="fas fa-handshake text-warning text-sm"></i>
-                                        <span class="font-medium text-on-surface">Deals closed this month</span>
-                                    </div>
-                                    <span class="text-headline-md text-warning font-bold">15</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-6 pt-4 border-t border-outline/20">
-                    <div class="flex justify-end">
-                        <button onclick="document.getElementById('customerInsightsModal').classList.add('hidden')"
-                                class="px-4 py-2 bg-surface border border-outline/20 rounded-lg hover:bg-surface/50 transition-colors font-medium">
-                            Close
-                        </button>
-                    </div>
-                </div>
-            </div>
+<!-- Customer profile modal shell -->
+<div id="customerProfileModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]" data-modal role="dialog" aria-modal="true" aria-labelledby="customerProfileTitle">
+    <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-lg max-h-[90vh] flex flex-col" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
+            <h2 id="customerProfileTitle" class="text-lg font-semibold text-primary">Client profile</h2>
+            <button type="button" data-modal-close onclick="window.PHModal ? PHModal.hide('customerProfileModal') : document.getElementById('customerProfileModal').classList.add('hidden')"
+                    class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" aria-label="Close">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
         </div>
-    `;
+        <div id="customerProfileBody" class="px-5 py-4 overflow-y-auto flex-1 text-sm text-on-surface">
+            Loading…
+        </div>
+        <div class="px-5 py-4 border-t border-outline-variant flex justify-end gap-2">
+            <button type="button" class="px-4 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container"
+                    onclick="window.PHModal ? PHModal.hide('customerProfileModal') : document.getElementById('customerProfileModal').classList.add('hidden')">Close</button>
+            <a id="customerProfileMail" href="#" class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90">Email client</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-    // Add modal to body
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-    // Show modal with animation
-    setTimeout(() => {
-        document.getElementById('customerInsightsModal').classList.remove('pointer-events-none');
-        document.getElementById('customerInsightsModal').classList.remove('opacity-0');
-
-        // Hide loading spinner and show content after a brief delay
-        setTimeout(() => {
-            document.querySelector('#customerInsightsModal .animate-spin').closest('div').classList.add('hidden');
-            document.getElementById('insightsContent').classList.remove('hidden');
-        }, 1500);
-    }, 50);
+{% block extra_js %}
+<script>
+async function openCustomerProfile(customerId) {
+  const modal = document.getElementById('customerProfileModal');
+  const body = document.getElementById('customerProfileBody');
+  const mail = document.getElementById('customerProfileMail');
+  if (!modal || !body) return;
+  body.innerHTML = '<p class="text-on-surface-variant">Loading…</p>';
+  if (window.PHModal) PHModal.show(modal); else { modal.classList.remove('hidden'); document.body.style.overflow='hidden'; }
+  try {
+    const res = await fetch('/api/customers/' + customerId, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }});
+    if (!res.ok) throw new Error('Failed to load client');
+    const c = await res.json();
+    const money = (n) => n != null ? '$' + Number(n).toLocaleString() : '—';
+    body.innerHTML = `
+      <dl class="space-y-3">
+        <div><dt class="text-xs text-on-surface-variant uppercase tracking-wide">Name</dt><dd class="font-semibold text-primary mt-0.5">${esc(c.name)}</dd></div>
+        <div><dt class="text-xs text-on-surface-variant uppercase tracking-wide">Email</dt><dd class="mt-0.5"><a class="text-primary hover:underline" href="mailto:${esc(c.email||'')}">${esc(c.email||'—')}</a></dd></div>
+        <div><dt class="text-xs text-on-surface-variant uppercase tracking-wide">Phone</dt><dd class="mt-0.5">${esc(c.phone||'—')}</dd></div>
+        <div><dt class="text-xs text-on-surface-variant uppercase tracking-wide">Budget</dt><dd class="mt-0.5 tabular-nums">${money(c.budget_min)} – ${money(c.budget_max)}</dd></div>
+        <div><dt class="text-xs text-on-surface-variant uppercase tracking-wide">Prefs</dt><dd class="mt-0.5">${esc(c.preferred_type||'—')} · ${esc(c.location_preference||c.preferred_location||'—')}</dd></div>
+      </dl>`;
+    if (mail) mail.href = c.email ? ('mailto:' + c.email) : '#';
+  } catch (e) {
+    body.innerHTML = `<p class="text-error">${esc(e.message||'Error')}</p>`;
+  }
 }
-
-// SMS character counter
-document.addEventListener('DOMContentLoaded', function() {
-    const smsMessage = document.getElementById('smsMessage');
-    if (smsMessage) {
-        smsMessage.addEventListener('input', function(e) {
-            const counter = document.getElementById('smsCounter');
-            if (counter) {
-                counter.textContent = e.target.value.length;
-            }
-        });
-    }
-
-    // Format phone number input
-    const phoneInput = document.getElementById('phone');
-    if (phoneInput) {
-        phoneInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length >= 6) {
-                value = value.replace(/(\d{3})(\d{3})(\s{4})/, '($1) $2-$3');
-            } else if (value.length >= 3) {
-                value = value.replace(/(\d{3})(\d{0,3})/, '($1) $2');
-            }
-            e.target.value = value;
-        });
-    }
-
-    // Format budget inputs
-    document.querySelectorAll('#budget_min, #budget_max').forEach(input => {
-        input.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/,/g, '');
-            if (!isNaN(value) && value !== '') {
-                e.target.value = parseInt(value).toLocaleString();
-            }
-        });
-    });
-
-    // Customer actions dropdowns
-    document.querySelectorAll('[id^="customerActionsMenu"]').forEach(button => {
-        button.addEventListener('click', function() {
-            const menuId = this.id.replace('customerActionsMenu', 'customerActionsMenuContent');
-            const menu = document.getElementById(menuId);
-
-            // Close all other menus
-            document.querySelectorAll('[id^="customerActionsMenuContent"]').forEach(m => {
-                if (m.id !== menuId) {
-                    m.classList.add('hidden');
-                }
-            });
-
-            // Toggle this menu
-            menu.classList.toggle('hidden');
-        });
-    });
-
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('[id^="customerActionsMenu"]')) {
-            document.querySelectorAll('[id^="customerActionsMenuContent"]').forEach(menu => {
-                menu.classList.add('hidden');
-            });
-        }
-    });
-});
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
 </script>
 {% endblock %}

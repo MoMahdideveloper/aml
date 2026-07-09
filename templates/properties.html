@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Property Inventory - Real Estate CRM{% endblock %}
+{% block title %}Property Inventory - Platinum Heritage{% endblock %}
 
 {% block extra_css %}
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -31,7 +31,7 @@
             <span class="material-symbols-outlined">download</span>
             Export
         </button>
-        <button onclick="document.getElementById('addPropertyModal').classList.remove('hidden')"
+        <button data-open-modal="addPropertyModal"
                 class="flex-1 md:flex-none bg-primary text-on-primary rounded-lg px-6 py-3 font-label-md text-label-md hover:opacity-90 transition-all shadow-sm flex items-center justify-center gap-2">
             <span class="material-symbols-outlined">add</span>
             Add New Property
@@ -250,18 +250,31 @@
 
             <!-- Actions -->
             <div class="flex items-center gap-2 mt-auto pt-4 border-t border-outline-variant">
+                <button type="button"
+                        onclick="typeof viewPropertyModal==='function' && viewPropertyModal({{ property.id }})"
+                        class="flex-1 text-center border border-outline-variant text-primary rounded-lg py-2 font-label-md text-label-md hover:bg-surface-container-low transition-colors text-sm">
+                    Quick view
+                </button>
                 <a href="{{ detail_href }}"
-                   class="flex-1 text-center border border-outline-variant text-primary rounded-lg py-2 font-label-md text-label-md hover:bg-surface-container-low transition-colors text-sm">
-                    View Details
+                   class="flex-1 text-center bg-primary text-on-primary rounded-lg py-2 font-label-md text-label-md hover:opacity-90 transition-opacity text-sm">
+                    Full page
                 </a>
-                <button type="button" class="p-2 text-secondary hover:text-primary transition-colors border border-transparent hover:border-outline-variant rounded"
+                <button type="button"
+                        onclick="if (typeof editProperty==='function') { editProperty({{ property.id }}); } else { window.location='{{ detail_href }}'; }"
+                        class="p-2 text-secondary hover:text-primary transition-colors border border-outline-variant rounded"
                         title="Edit property">
                     <span class="material-symbols-outlined text-[20px]">edit</span>
                 </button>
-                <button type="button" class="p-2 text-secondary hover:text-error transition-colors border border-transparent hover:border-outline-variant rounded"
-                        title="Delete property">
-                    <span class="material-symbols-outlined text-[20px]">delete</span>
-                </button>
+                <form method="POST" action="{{ url_for('properties.delete_property', property_id=property.id) }}" class="inline"
+                      onsubmit="return confirm('Delete this property?');">
+                    {% if csrf_token is defined %}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% endif %}
+                    <button type="submit" class="p-2 text-secondary hover:text-error transition-colors border border-outline-variant rounded"
+                            title="Delete property">
+                        <span class="material-symbols-outlined text-[20px]">delete</span>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -277,7 +290,7 @@
                 Add your first property to get started
             {% endif %}
         </p>
-        <button onclick="document.getElementById('addPropertyModal').classList.remove('hidden')"
+        <button data-open-modal="addPropertyModal"
                 class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity">
             Add New Property
         </button>
@@ -290,8 +303,8 @@
     <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl w-full max-w-2xl mx-4 p-8 max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="addPropertyTitle">
         <div class="flex items-center justify-between mb-6">
             <h2 id="addPropertyTitle" class="font-headline-md text-headline-md text-primary">Add New Property</h2>
-            <button data-modal-close
-                    onclick="document.getElementById('addPropertyModal').classList.add('hidden')"
+            <button type="button" data-modal-close
+                    onclick="window.PHModal ? PHModal.hide('addPropertyModal') : document.getElementById('addPropertyModal').classList.add('hidden')"
                     class="text-secondary hover:text-primary transition-colors">
                 <span class="material-symbols-outlined">close</span>
             </button>
@@ -307,24 +320,39 @@
                 </div>
                 <div class="md:col-span-2">
                     <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Address *</label>
-                    <input type="text" name="address" required
+                    <textarea name="address" required rows="2"
                            class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
-                           placeholder="e.g. 1240 High Ridge Road, Beverly Hills">
+                           placeholder="e.g. 1240 High Ridge Road, Beverly Hills"></textarea>
                 </div>
                 <div>
-                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Price ($) *</label>
-                    <input type="number" name="price" required
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Listing type</label>
+                    <select name="listing_type"
+                            class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+                        <option value="sale" selected>For sale</option>
+                        <option value="rental">For rent</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Sale price ($)</label>
+                    <input type="number" name="sale_price" min="0" step="1000"
                            class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
                            placeholder="e.g. 2500000">
                 </div>
                 <div>
-                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Property Type</label>
-                    <select name="property_type"
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Property Type *</label>
+                    <select name="property_type" required
                             class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
-                        <option value="">Select type...</option>
+                        <option value="">Select type…</option>
                         {% for pt in property_types %}
                         <option value="{{ pt }}">{{ pt }}</option>
                         {% endfor %}
+                        {% if not property_types %}
+                        <option value="Villa">Villa</option>
+                        <option value="Apartment">Apartment</option>
+                        <option value="House">House</option>
+                        <option value="Condo">Condo</option>
+                        <option value="Land">Land</option>
+                        {% endif %}
                     </select>
                 </div>
                 <div>
@@ -335,13 +363,13 @@
                 </div>
                 <div>
                     <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Bathrooms</label>
-                    <input type="number" name="bathrooms" min="0" step="0.5"
+                    <input type="number" name="bathrooms" min="0" step="1"
                            class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
                            placeholder="0">
                 </div>
                 <div>
-                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Square Footage</label>
-                    <input type="number" name="sqft" min="0"
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Square footage</label>
+                    <input type="number" name="square_feet" min="0"
                            class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
                            placeholder="e.g. 3500">
                 </div>
@@ -355,6 +383,16 @@
                         <option value="off_market">Off Market</option>
                     </select>
                 </div>
+                <div>
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Agent</label>
+                    <select name="agent_id"
+                            class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+                        <option value="">Unassigned</option>
+                        {% for agent in agents %}
+                        <option value="{{ agent.id }}">{{ agent.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
                 <div class="md:col-span-2">
                     <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Description</label>
                     <textarea name="description" rows="3"
@@ -364,7 +402,7 @@
             </div>
             <div class="flex items-center gap-3 pt-2">
                 <button type="button"
-                        onclick="document.getElementById('addPropertyModal').classList.add('hidden')"
+                        data-modal-close onclick="window.PHModal ? PHModal.hide('addPropertyModal') : document.getElementById('addPropertyModal').classList.add('hidden')"
                         class="flex-1 border border-outline-variant text-primary rounded-lg py-2.5 font-label-md text-label-md hover:bg-surface-container-low transition-colors">
                     Cancel
                 </button>
@@ -376,4 +414,46 @@
         </form>
     </div>
 </div>
+
+{# Shared property modals (PH) #}
+{% include 'modals/property_view_modal.html' %}
+{% include 'modals/property_share_modal.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/property-view-modal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/property-modal-system.js') }}"></script>
+<script src="{{ url_for('static', filename='js/property-edit-modal.js') }}"></script>
+<script>
+// Prefer full-page edit if editProperty not provided by edit-modal JS
+if (typeof window.editProperty !== 'function') {
+  window.editProperty = function(id) {
+    window.location.href = '/properties/' + id + '/detail';
+  };
+}
+// Wire full-details button inside view modal
+document.addEventListener('DOMContentLoaded', function() {
+  const fullBtn = document.getElementById('view-full-details-btn');
+  if (fullBtn) {
+    fullBtn.addEventListener('click', function(e) {
+      if (typeof openPropertyFullDetails === 'function') {
+        e.preventDefault();
+        openPropertyFullDetails();
+      }
+    });
+  }
+  const shareBtn = document.getElementById('share-property-btn');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', function() {
+      if (typeof sharePropertyFromModal === 'function') sharePropertyFromModal();
+    });
+  }
+  const editBtn = document.getElementById('edit-property-btn');
+  if (editBtn) {
+    editBtn.addEventListener('click', function() {
+      if (typeof editPropertyFromModal === 'function') editPropertyFromModal();
+    });
+  }
+});
+</script>
 {% endblock %}

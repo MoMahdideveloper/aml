@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Admin Login · Platinum Heritage</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#142435",
+              "on-primary": "#ffffff",
+              background: "#f7f9ff",
+              "on-surface": "#111d27",
+              "on-surface-variant": "#44474c",
+              "outline-variant": "#c4c6cc",
+              "surface-white": "#FFFFFF",
+              error: "#ba1a1a",
+              "error-container": "#ffdad6",
+              "on-error-container": "#93000a",
+              "surface-container": "#e3effe",
+            },
+            fontFamily: { sans: ["IBM Plex Sans", "sans-serif"] },
+            boxShadow: { ph: "0 8px 30px rgba(27, 38, 49, 0.06)" }
+          }
+        }
+      };
+    </script>
+</head>
+<body class="bg-background flex h-screen items-center justify-center font-sans p-4">
+    <div class="bg-surface-white p-8 rounded-lg shadow-ph border border-outline-variant w-full max-w-md">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-semibold text-primary">Platinum Heritage</h1>
+            <p class="text-sm text-on-surface-variant mt-2">Admin access · Environment & system</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="mb-4 p-3 rounded {% if category == 'error' %}bg-red-50 text-red-700{% else %}bg-blue-50 text-blue-700{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('admin_environment.admin_login') }}">
+            {{ form.hidden_tag() if form }}
+
+            <div class="mb-4">
+                <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+                    Admin Username
+                </label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    required
+                    autocomplete="username"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter admin username"
+                />
+            </div>
+
+            <div class="mb-6">
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                    Password
+                </label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                    autocomplete="current-password"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter password"
+                />
+            </div>
+
+            <button
+                type="submit"
+                class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
+            >
+                Sign In to Admin Panel
+            </button>
+        </form>
+
+        <div class="mt-6 text-center">
+            <a href="{{ url_for('dashboard') }}" class="text-sm text-primary hover:underline">
+                ← Back to Dashboard
+            </a>
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-gray-200 text-center text-xs text-gray-500">
+            <p>⚠️ Admin access required</p>
+            <p class="mt-1">Contact system administrator for credentials</p>
+        </div>
+    </div>
+</body>
+</html>

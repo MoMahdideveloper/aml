@@ -42,10 +42,17 @@ from .property_api import (
 
 # Import property_details module to avoid circular import issues
 from . import property_details
+from . import property_media as property_media_views
+
 view_property = property_details.view_property
 property_detail = property_details.property_detail
 edit_property = property_details.edit_property
 get_edit_modal_html = property_details.get_edit_modal_html
+schedule_viewing = property_details.schedule_viewing
+property_media = property_media_views.property_media
+upload_property_media = property_media_views.upload_property_media
+set_primary_image = property_media_views.set_primary_image
+delete_property_image = property_media_views.delete_property_image
 
 bp = Blueprint("properties", __name__)
 
@@ -251,3 +258,122 @@ bp.add_url_rule("/properties/extract-from-text", "extract_property_from_text", e
 bp.add_url_rule("/properties/<int:property_id>/ai-history", "get_property_ai_history", get_property_ai_history, methods=["GET"])
 bp.add_url_rule("/properties/ai-history/<int:history_id>", "delete_property_ai_history", delete_property_ai_history, methods=["DELETE"])
 bp.add_url_rule("/properties/<int:property_id>/share", "share_property", share_property)
+bp.add_url_rule(
+    "/properties/<int:property_id>/schedule-viewing",
+    "schedule_viewing",
+    schedule_viewing,
+    methods=["GET", "POST"],
+)
+bp.add_url_rule(
+    "/properties/<int:property_id>/media",
+    "property_media",
+    property_media,
+    methods=["GET", "POST"],
+)
+bp.add_url_rule(
+    "/properties/<int:property_id>/media/upload",
+    "upload_property_media",
+    upload_property_media,
+    methods=["POST"],
+)
+bp.add_url_rule(
+    "/properties/<int:property_id>/media/<int:image_id>/primary",
+    "set_primary_image",
+    set_primary_image,
+    methods=["POST"],
+)
+bp.add_url_rule(
+    "/properties/<int:property_id>/media/<int:image_id>/delete",
+    "delete_property_image",
+    delete_property_image,
+    methods=["POST"],
+)
+
+
+def persist_approx_coords():
+    """Write approximate map pins into property.latitude/longitude for rows missing coords."""
+    from services.geo_service import estimate_coordinates
+
+    updated = 0
+    try:
+        props = Property.query.filter(Property.is_deleted.is_(False)).all()
+        for p in props:
+            lat, lng = p.latitude, p.longitude
+            has_real = False
+            try:
+                if lat is not None and lng is not None and (float(lat) != 0 or float(lng) != 0):
+                    has_real = True
+            except (TypeError, ValueError):
+                has_real = False
+            if has_real:
+                continue
+            geo = estimate_coordinates(p, try_nominatim=False)
+            p.latitude = geo["latitude"]
+            p.longitude = geo["longitude"]
+            updated += 1
+        db.session.commit()
+        flash(f"Saved approximate coordinates on {updated} listing{'s' if updated != 1 else ''}.", "success")
+    except Exception as e:
+        db.session.rollback()
+        logging.exception("persist_approx_coords failed")
+        flash(f"Could not save coordinates: {e}", "error")
+    return redirect(url_for("properties.map_view"))
+
+
+def geocode_missing_coords():
+    """Geocode a batch of listings missing lat/lng via Nominatim (rate-limited)."""
+    from services.geo_service import estimate_coordinates
+
+    # Keep batch small to respect Nominatim usage policy
+    batch = min(int(request.form.get("limit") or 15), 25)
+    updated = 0
+    failed = 0
+    try:
+        props = Property.query.filter(Property.is_deleted.is_(False)).all()
+        missing = []
+        for p in props:
+            try:
+                if p.latitude is not None and p.longitude is not None and (
+                    float(p.latitude) != 0 or float(p.longitude) != 0
+                ):
+                    continue
+            except (TypeError, ValueError):
+                pass
+            missing.append(p)
+
+        for p in missing[:batch]:
+            geo = estimate_coordinates(p, try_nominatim=True)
+            if geo.get("source") == "nominatim" or not geo.get("approx"):
+                p.latitude = geo["latitude"]
+                p.longitude = geo["longitude"]
+                updated += 1
+            else:
+                # Still save approx so map works offline after attempt
+                p.latitude = geo["latitude"]
+                p.longitude = geo["longitude"]
+                failed += 1
+        db.session.commit()
+        flash(
+            f"Geocoded batch: {updated} precise, {failed} approximate fallback "
+            f"(processed {min(batch, len(missing))} of {len(missing)} missing).",
+            "success",
+        )
+    except Exception as e:
+        db.session.rollback()
+        logging.exception("geocode_missing_coords failed")
+        flash(f"Geocoding failed: {e}", "error")
+    return redirect(url_for("properties.map_view"))
+
+
+bp.add_url_rule(
+    "/properties/map/persist-approx",
+    "persist_approx_coords",
+    persist_approx_coords,
+    methods=["POST"],
+)
+bp.add_url_rule(
+    "/properties/map/geocode",
+    "geocode_missing_coords",
+    geocode_missing_coords,
+    methods=["POST"],
+)

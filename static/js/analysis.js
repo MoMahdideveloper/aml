@@ -274,12 +274,11 @@ const AnalysisDashboard = {
             }
             
             // Close analysis modal and show progress modal
-            const analysisModal = bootstrap.Modal.getInstance(document.getElementById('analysisModal'));
-            analysisModal.hide();
-            
+            this._hideEl(document.getElementById('analysisModal'));
+
             // Start analysis
             const response = await this.apiCall('/api/analysis/trigger', 'POST', payload);
-            
+
             if (response.analysis_id) {
                 this.currentAnalysisId = response.analysis_id;
                 this.showProgressModal(response.estimated_duration);
@@ -295,13 +294,42 @@ const AnalysisDashboard = {
     /**
      * Show progress modal and start tracking
      */
+    _showEl(el) {
+        if (!el) return;
+        if (window.PHModal) window.PHModal.show(el);
+        else {
+            el.classList.remove('hidden');
+            el.style.display = '';
+            document.body.style.overflow = 'hidden';
+        }
+    },
+
+    _hideEl(el) {
+        if (!el) return;
+        if (window.PHModal) window.PHModal.hide(el);
+        else {
+            el.classList.add('hidden');
+            el.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            try {
+                const inst = bootstrap.Modal.getInstance(el);
+                if (inst) inst.hide();
+            } catch (_) { /* ignore */ }
+        }
+    },
+
     showProgressModal(estimatedDuration) {
-        const progressModal = new bootstrap.Modal(document.getElementById('progressModal'));
-        progressModal.show();
-        
-        document.getElementById('estimatedTime').textContent = `Estimated time: ${estimatedDuration} seconds`;
-        document.getElementById('progressText').textContent = 'Analysis in progress...';
-        document.getElementById('progressBar').style.width = '10%';
+        const progressModal = document.getElementById('progressModal');
+        this._showEl(progressModal);
+
+        const est = document.getElementById('estimatedTime');
+        const text = document.getElementById('progressText');
+        const bar = document.getElementById('progressBar');
+        if (est) est.textContent = `Estimated time: ${estimatedDuration} seconds`;
+        if (text) text.textContent = 'Analysis in progress...';
+        if (bar) bar.style.width = '10%';
     },
 
     /**
@@ -342,9 +370,8 @@ const AnalysisDashboard = {
         
         // Close progress modal after a short delay
         setTimeout(() => {
-            const progressModal = bootstrap.Modal.getInstance(document.getElementById('progressModal'));
-            progressModal.hide();
-            
+            this._hideEl(document.getElementById('progressModal'));
+
             // Refresh dashboard data
             this.loadDashboardData();
             this.showSuccess('Analysis completed successfully!');
@@ -356,10 +383,9 @@ const AnalysisDashboard = {
      */
     handleAnalysisFailed() {
         clearInterval(this.progressInterval);
-        
-        const progressModal = bootstrap.Modal.getInstance(document.getElementById('progressModal'));
-        progressModal.hide();
-        
+
+        this._hideEl(document.getElementById('progressModal'));
+
         this.showError('Analysis failed. Please try again.');
     },
 
@@ -508,67 +534,70 @@ const AnalysisDashboard = {
      * Show report details in modal
      */
     showReportModal(report) {
+        const suggestionsHtml = report.suggestions && report.suggestions.length
+            ? report.suggestions.map(suggestion => `
+                <div class="rounded-lg border border-outline-variant p-3 mb-2 bg-background">
+                    <div class="flex justify-between gap-2 mb-1">
+                        <h3 class="text-sm font-semibold text-primary">${this.escapeHtml(suggestion.title)}</h3>
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">${suggestion.priority_score}</span>
+                    </div>
+                    <p class="text-xs text-on-surface-variant mb-2">${this.escapeHtml(suggestion.description || '')}</p>
+                    <span class="text-[10px] uppercase tracking-wide text-on-surface-variant">${(suggestion.category || '').replace('_', ' ')}</span>
+                </div>
+            `).join('')
+            : '<p class="text-sm text-on-surface-variant">No suggestions available</p>';
+
         const modalContent = `
-            <div class="modal fade" id="reportModal" tabindex="-1">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Analysis Report - ${this.escapeHtml(report.project_name)}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <strong>Overall Score:</strong><br>
-                                    <span class="badge bg-${this.getScoreColor(report.total_score)} fs-6">${report.total_score || '--'}</span>
-                                </div>
-                                <div class="col-md-4">
-                                    <strong>Analysis Date:</strong><br>
-                                    ${new Date(report.analysis_date).toLocaleString()}
-                                </div>
-                                <div class="col-md-4">
-                                    <strong>Codebase Size:</strong><br>
-                                    ${report.codebase_size || 0} lines
-                                </div>
+            <div id="reportModal" class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]" data-modal role="dialog" aria-modal="true">
+                <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-3xl max-h-[90vh] flex flex-col" onclick="event.stopPropagation()">
+                    <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
+                        <h2 class="text-lg font-semibold text-primary truncate">Analysis — ${this.escapeHtml(report.project_name || 'Report')}</h2>
+                        <button type="button" class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" data-analysis-close aria-label="Close">
+                            <span class="material-symbols-outlined text-[20px]">close</span>
+                        </button>
+                    </div>
+                    <div class="px-5 py-4 overflow-y-auto flex-1 space-y-4 text-sm">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="rounded-lg border border-outline-variant p-3 bg-background">
+                                <div class="text-xs text-on-surface-variant uppercase tracking-wide">Score</div>
+                                <div class="text-xl font-semibold text-primary mt-1">${report.total_score ?? '—'}</div>
                             </div>
-                            <div class="mb-3">
-                                <h6>Suggestions (${report.suggestions ? report.suggestions.length : 0})</h6>
-                                <div class="suggestions-list">
-                                    ${report.suggestions ? report.suggestions.map(suggestion => `
-                                        <div class="card mb-2">
-                                            <div class="card-body p-3">
-                                                <div class="d-flex justify-content-between">
-                                                    <h6 class="mb-1">${this.escapeHtml(suggestion.title)}</h6>
-                                                    <span class="badge bg-${this.getScoreColor(suggestion.priority_score)}">${suggestion.priority_score}</span>
-                                                </div>
-                                                <p class="mb-1 text-muted small">${this.escapeHtml(suggestion.description)}</p>
-                                                <span class="badge bg-secondary">${suggestion.category.replace('_', ' ').toUpperCase()}</span>
-                                            </div>
-                                        </div>
-                                    `).join('') : '<p class="text-muted">No suggestions available</p>'}
-                                </div>
+                            <div class="rounded-lg border border-outline-variant p-3 bg-background">
+                                <div class="text-xs text-on-surface-variant uppercase tracking-wide">Date</div>
+                                <div class="font-medium text-on-surface mt-1">${report.analysis_date ? new Date(report.analysis_date).toLocaleString() : '—'}</div>
+                            </div>
+                            <div class="rounded-lg border border-outline-variant p-3 bg-background">
+                                <div class="text-xs text-on-surface-variant uppercase tracking-wide">Size</div>
+                                <div class="font-medium text-on-surface mt-1">${report.codebase_size || 0} lines</div>
                             </div>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-success" onclick="AnalysisDashboard.exportReport(${report.id})">
-                                <i class="fas fa-download"></i> Export Report
-                            </button>
+                        <div>
+                            <h3 class="text-sm font-semibold text-primary mb-2">Suggestions (${report.suggestions ? report.suggestions.length : 0})</h3>
+                            ${suggestionsHtml}
                         </div>
+                    </div>
+                    <div class="px-5 py-4 border-t border-outline-variant flex justify-end gap-2">
+                        <button type="button" class="px-4 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container" data-analysis-close>Close</button>
+                        <button type="button" class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90" onclick="AnalysisDashboard.exportReport(${report.id})">Export</button>
                     </div>
                 </div>
             </div>
         `;
 
-        // Remove existing modal and add new one
         const existingModal = document.getElementById('reportModal');
-        if (existingModal) {
-            existingModal.remove();
-        }
+        if (existingModal) existingModal.remove();
 
         document.body.insertAdjacentHTML('beforeend', modalContent);
-        const modal = new bootstrap.Modal(document.getElementById('reportModal'));
-        modal.show();
+        const modal = document.getElementById('reportModal');
+        if (window.PHModal) window.PHModal.show(modal);
+        else document.body.style.overflow = 'hidden';
+        modal.querySelectorAll('[data-analysis-close]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (window.PHModal) window.PHModal.hide(modal);
+                modal.remove();
+                document.body.style.overflow = '';
+            });
+        });
     },
 
     /**
@@ -576,54 +605,50 @@ const AnalysisDashboard = {
      */
     showSuggestionModal(suggestion) {
         const modalContent = `
-            <div class="modal fade" id="suggestionModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Suggestion Details</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div id="suggestionModal" class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]" data-modal role="dialog" aria-modal="true">
+                <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-lg max-h-[90vh] flex flex-col" onclick="event.stopPropagation()">
+                    <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
+                        <h2 class="text-lg font-semibold text-primary">Suggestion</h2>
+                        <button type="button" class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" data-analysis-close aria-label="Close">
+                            <span class="material-symbols-outlined text-[20px]">close</span>
+                        </button>
+                    </div>
+                    <div class="px-5 py-4 overflow-y-auto space-y-3 text-sm">
+                        <h3 class="font-semibold text-primary">${this.escapeHtml(suggestion.title || '')}</h3>
+                        <div class="flex flex-wrap gap-2 text-xs">
+                            <span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary">Priority ${suggestion.priority_score ?? '—'}</span>
+                            <span class="px-2 py-0.5 rounded-full border border-outline-variant text-on-surface-variant uppercase tracking-wide">${(suggestion.category || '').replace('_', ' ')}</span>
                         </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <h6>${this.escapeHtml(suggestion.title)}</h6>
-                                <span class="badge bg-${this.getScoreColor(suggestion.priority_score)}">Priority: ${suggestion.priority_score}</span>
-                                <span class="badge bg-secondary ms-2">${suggestion.category.replace('_', ' ').toUpperCase()}</span>
-                            </div>
-                            <div class="mb-3">
-                                <strong>Description:</strong>
-                                <p>${this.escapeHtml(suggestion.description)}</p>
-                            </div>
-                            <div class="row">
-                                <div class="col-6">
-                                    <strong>Business Impact:</strong> ${suggestion.business_impact}/5<br>
-                                    <strong>Technical Impact:</strong> ${suggestion.technical_impact}/5
-                                </div>
-                                <div class="col-6">
-                                    <strong>Risk Level:</strong> ${suggestion.risk_level}/5<br>
-                                    <strong>Estimated Hours:</strong> ${suggestion.estimated_hours || 'TBD'}
-                                </div>
-                            </div>
+                        <p class="text-on-surface">${this.escapeHtml(suggestion.description || '')}</p>
+                        <div class="grid grid-cols-2 gap-3 text-xs text-on-surface-variant">
+                            <div>Business impact: <span class="text-on-surface font-medium">${suggestion.business_impact ?? '—'}/5</span></div>
+                            <div>Technical impact: <span class="text-on-surface font-medium">${suggestion.technical_impact ?? '—'}/5</span></div>
+                            <div>Risk: <span class="text-on-surface font-medium">${suggestion.risk_level ?? '—'}/5</span></div>
+                            <div>Hours: <span class="text-on-surface font-medium">${suggestion.estimated_hours || 'TBD'}</span></div>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary" onclick="AnalysisDashboard.markSuggestionCompleted(${suggestion.id})">
-                                Mark as Completed
-                            </button>
-                        </div>
+                    </div>
+                    <div class="px-5 py-4 border-t border-outline-variant flex justify-end gap-2">
+                        <button type="button" class="px-4 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container" data-analysis-close>Close</button>
+                        <button type="button" class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90" onclick="AnalysisDashboard.markSuggestionCompleted(${suggestion.id})">Mark completed</button>
                     </div>
                 </div>
             </div>
         `;
 
-        // Remove existing modal and add new one
         const existingModal = document.getElementById('suggestionModal');
-        if (existingModal) {
-            existingModal.remove();
-        }
+        if (existingModal) existingModal.remove();
 
         document.body.insertAdjacentHTML('beforeend', modalContent);
-        const modal = new bootstrap.Modal(document.getElementById('suggestionModal'));
-        modal.show();
+        const modal = document.getElementById('suggestionModal');
+        if (window.PHModal) window.PHModal.show(modal);
+        else document.body.style.overflow = 'hidden';
+        modal.querySelectorAll('[data-analysis-close]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (window.PHModal) window.PHModal.hide(modal);
+                modal.remove();
+                document.body.style.overflow = '';
+            });
+        });
     },
 
     /**
@@ -633,10 +658,13 @@ const AnalysisDashboard = {
         try {
             await this.apiCall(`/api/analysis/suggestions/${suggestionId}`, 'PUT', { status: 'completed' });
             this.showSuccess('Suggestion marked as completed');
-            
-            // Close modal and refresh data
-            const modal = bootstrap.Modal.getInstance(document.getElementById('suggestionModal'));
-            modal.hide();
+
+            const modal = document.getElementById('suggestionModal');
+            if (modal) {
+                if (window.PHModal) window.PHModal.hide(modal);
+                modal.remove();
+                document.body.style.overflow = '';
+            }
             this.loadDashboardData();
         } catch (error) {
             console.error('Failed to update suggestion:', error);

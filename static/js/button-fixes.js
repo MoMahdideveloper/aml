@@ -36,12 +36,18 @@ class ButtonFixes {
                             this.form.submit();
                         }
                         
-                        // Handle modal triggers
+                        // Handle modal triggers (Bootstrap or PH)
                         if (this.getAttribute('data-bs-target')) {
                             const targetModal = document.querySelector(this.getAttribute('data-bs-target'));
                             if (targetModal) {
-                                const modal = new bootstrap.Modal(targetModal);
-                                modal.show();
+                                if (window.PHModal) {
+                                    window.PHModal.show(targetModal);
+                                } else if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                                    new bootstrap.Modal(targetModal).show();
+                                } else {
+                                    targetModal.classList.remove('hidden');
+                                    document.body.style.overflow = 'hidden';
+                                }
                             }
                         }
                     });
@@ -63,9 +69,14 @@ class ButtonFixes {
             closeButtons.forEach(btn => {
                 if (!this.hasEventListener(btn)) {
                     btn.addEventListener('click', () => {
-                        const modalInstance = bootstrap.Modal.getInstance(modal);
-                        if (modalInstance) {
-                            modalInstance.hide();
+                        if (window.PHModal) {
+                            window.PHModal.hide(modal);
+                        } else if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                            const modalInstance = bootstrap.Modal.getInstance(modal);
+                            if (modalInstance) modalInstance.hide();
+                        } else {
+                            modal.classList.add('hidden');
+                            document.body.style.overflow = '';
                         }
                     });
                 }
@@ -97,9 +108,14 @@ class ButtonFixes {
                                 }
                                 
                                 // Close modal
-                                const modalInstance = bootstrap.Modal.getInstance(modal);
-                                if (modalInstance) {
-                                    modalInstance.hide();
+                                if (window.PHModal) {
+                                    window.PHModal.hide(modal);
+                                } else if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                                    const modalInstance = bootstrap.Modal.getInstance(modal);
+                                    if (modalInstance) modalInstance.hide();
+                                } else {
+                                    modal.classList.add('hidden');
+                                    document.body.style.overflow = '';
                                 }
                                 
                                 // Reload page

@@ -1,211 +1,92 @@
-<!-- Customer Edit Modal Content -->
-<form id="customerEditForm" method="POST" action="{{ url_for('customers.update_customer', customer_id=customer.id) }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
-    <input type="hidden" name="_method" value="PUT">
-    
-    <!-- Basic Information -->
-    <h6 class="fw-semibold text-primary mb-3">
-        <i class="fas fa-user me-2"></i>
-        Basic Information
-    </h6>
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <label for="edit_name" class="form-label">Full Name *</label>
-            <input type="text" class="form-control {{ 'is-invalid' if form.name.errors else '' }}" 
-                   id="edit_name" name="name" value="{{ form.name.data or '' }}" required>
-            {% if form.name.errors %}
-                <div class="invalid-feedback">
-                    {{ form.name.errors[0] }}
-                </div>
-            {% endif %}
-        </div>
-        <div class="col-md-6 mb-3">
-            <label for="edit_email" class="form-label">Email Address *</label>
-            <input type="email" class="form-control {{ 'is-invalid' if form.email.errors else '' }}" 
-                   id="edit_email" name="email" value="{{ form.email.data or '' }}" required>
-            {% if form.email.errors %}
-                <div class="invalid-feedback">
-                    {{ form.email.errors[0] }}
-                </div>
-            {% endif %}
-        </div>
-    </div>
-    <div class="mb-3">
-        <label for="edit_phone" class="form-label">Phone Number *</label>
-        <input type="tel" class="form-control {{ 'is-invalid' if form.phone.errors else '' }}" 
-               id="edit_phone" name="phone" value="{{ form.phone.data or '' }}" required>
-        {% if form.phone.errors %}
-            <div class="invalid-feedback">
-                {{ form.phone.errors[0] }}
-            </div>
-        {% endif %}
-    </div>
-    
-    <hr>
-    
-    <!-- Budget Information -->
-    <h6 class="fw-semibold text-success mb-3">
-        <i class="fas fa-dollar-sign me-2"></i>
-        Budget Range
-    </h6>
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <label for="edit_budget_min" class="form-label">Minimum Budget</label>
-            <input type="number" class="form-control {{ 'is-invalid' if form.budget_min.errors else '' }}" 
-                   id="edit_budget_min" name="budget_min" value="{{ form.budget_min.data or '' }}" 
-                   step="10000" placeholder="e.g., 250000">
-            {% if form.budget_min.errors %}
-                <div class="invalid-feedback">
-                    {{ form.budget_min.errors[0] }}
-                </div>
-            {% endif %}
-        </div>
-        <div class="col-md-6 mb-3">
-            <label for="edit_budget_max" class="form-label">Maximum Budget</label>
-            <input type="number" class="form-control {{ 'is-invalid' if form.budget_max.errors else '' }}" 
-                   id="edit_budget_max" name="budget_max" value="{{ form.budget_max.data or '' }}" 
-                   step="10000" placeholder="e.g., 500000">
-            {% if form.budget_max.errors %}
-                <div class="invalid-feedback">
-                    {{ form.budget_max.errors[0] }}
-                </div>
-            {% endif %}
-        </div>
-    </div>
-    
-    <hr>
-    
-    <!-- Property Preferences -->
-    <h6 class="fw-semibold text-info mb-3">
-        <i class="fas fa-home me-2"></i>
-        Property Preferences
-    </h6>
-    <div class="row">
-        <div class="col-md-4 mb-3">
-            <label for="edit_preferred_bedrooms" class="form-label">Preferred Bedrooms</label>
-            <select class="form-select {{ 'is-invalid' if form.preferred_bedrooms.errors else '' }}" 
-                    id="edit_preferred_bedrooms" name="preferred_bedrooms">
-                <option value="0" {{ 'selected' if (form.preferred_bedrooms.data or 0) == 0 else '' }}>Any</option>
-                <option value="1" {{ 'selected' if (form.preferred_bedrooms.data or 0) == 1 else '' }}>1 Bedroom</option>
-                <option value="2" {{ 'selected' if (form.preferred_bedrooms.data or 0) == 2 else '' }}>2 Bedrooms</option>
-                <option value="3" {{ 'selected' if (form.preferred_bedrooms.data or 0) == 3 else '' }}>3 Bedrooms</option>
-                <option value="4" {{ 'selected' if (form.preferred_bedrooms.data or 0) == 4 else '' }}>4 Bedrooms</option>
-                <option value="5" {{ 'selected' if (form.preferred_bedrooms.data or 0) == 5 else '' }}>5+ Bedrooms</option>
-            </select>
-            {% if form.preferred_bedrooms.errors %}
-                <div class="invalid-feedback">
-                    {{ form.preferred_bedrooms.errors[0] }}
-                </div>
-            {% endif %}
-        </div>
-        <div class="col-md-4 mb-3">
-            <label for="edit_preferred_bathrooms" class="form-label">Preferred Bathrooms</label>
-            <select class="form-select {{ 'is-invalid' if form.preferred_bathrooms.errors else '' }}" 
-                    id="edit_preferred_bathrooms" name="preferred_bathrooms">
-                <option value="0" {{ 'selected' if (form.preferred_bathrooms.data or 0) == 0 else '' }}>Any</option>
-                <option value="1" {{ 'selected' if (form.preferred_bathrooms.data or 0) == 1 else '' }}>1 Bathroom</option>
-                <option value="2" {{ 'selected' if (form.preferred_bathrooms.data or 0) == 2 else '' }}>2 Bathrooms</option>
-                <option value="3" {{ 'selected' if (form.preferred_bathrooms.data or 0) == 3 else '' }}>3 Bathrooms</option>
-                <option value="4" {{ 'selected' if (form.preferred_bathrooms.data or 0) == 4 else '' }}>4+ Bathrooms</option>
-            </select>
-            {% if form.preferred_bathrooms.errors %}
-                <div class="invalid-feedback">
-                    {{ form.preferred_bathrooms.errors[0] }}
-                </div>
-            {% endif %}
-        </div>
-        <div class="col-md-4 mb-3">
-            <label for="edit_preferred_type" class="form-label">Property Type</label>
-            <select class="form-select {{ 'is-invalid' if form.preferred_type.errors else '' }}" 
-                    id="edit_preferred_type" name="preferred_type">
-                <option value="" {{ 'selected' if not form.preferred_type.data else '' }}>Any Type</option>
-                <option value="House" {{ 'selected' if form.preferred_type.data == 'House' else '' }}>House</option>
-                <option value="Condo" {{ 'selected' if form.preferred_type.data == 'Condo' else '' }}>Condo</option>
-                <option value="Loft" {{ 'selected' if form.preferred_type.data == 'Loft' else '' }}>Loft</option>
-                <option value="Townhouse" {{ 'selected' if form.preferred_type.data == 'Townhouse' else '' }}>Townhouse</option>
-            </select>
-            {% if form.preferred_type.errors %}
-                <div class="invalid-feedback">
-                    {{ form.preferred_type.errors[0] }}
-                </div>
-            {% endif %}
-        </div>
-    </div>
-    
-    <div class="mb-3">
-        <label for="edit_location_preference" class="form-label">Location Preference</label>
-        <input type="text" class="form-control {{ 'is-invalid' if form.location_preference.errors else '' }}" 
-               id="edit_location_preference" name="location_preference" 
-               value="{{ form.location_preference.data or '' }}" 
-               placeholder="e.g., Downtown, Suburbia, Waterfront">
-        {% if form.location_preference.errors %}
-            <div class="invalid-feedback">
-                {{ form.location_preference.errors[0] }}
-            </div>
-        {% endif %}
-    </div>
-    
-    <!-- Form validation summary -->
-    {% if form.errors %}
-    <div class="alert alert-danger">
-        <h6><i class="fas fa-exclamation-triangle me-2"></i>Please correct the following errors:</h6>
-        <ul class="mb-0">
-            {% for field, errors in form.errors.items() %}
-                {% for error in errors %}
-                    <li>{{ field.replace('_', ' ').title() }}: {{ error }}</li>
-                {% endfor %}
-            {% endfor %}
-        </ul>
-    </div>
+<!-- Customer Edit Modal Content — Platinum Heritage -->
+<form id="customerEditForm" method="POST" action="/customers/{{ customer.id }}/edit" class="space-y-6">
+    {% if csrf_token is defined %}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     {% endif %}
+    <input type="hidden" name="_method" value="PUT">
+
+    <section>
+        <h3 class="text-sm font-semibold text-primary uppercase tracking-wide mb-3">Basic information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="edit_name" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Full name *</label>
+                <input type="text" id="edit_name" name="name" required
+                       value="{{ form.name.data if form is defined and form.name is defined else customer.name }}"
+                       class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+            </div>
+            <div>
+                <label for="edit_email" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Email *</label>
+                <input type="email" id="edit_email" name="email" required
+                       value="{{ form.email.data if form is defined and form.email is defined else customer.email }}"
+                       class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+            </div>
+            <div class="md:col-span-2">
+                <label for="edit_phone" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Phone *</label>
+                <input type="tel" id="edit_phone" name="phone" required
+                       value="{{ form.phone.data if form is defined and form.phone is defined else customer.phone }}"
+                       class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+            </div>
+        </div>
+    </section>
+
+    <section class="border-t border-outline-variant pt-5">
+        <h3 class="text-sm font-semibold text-primary uppercase tracking-wide mb-3">Budget range</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="edit_budget_min" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Minimum</label>
+                <input type="number" id="edit_budget_min" name="budget_min" step="1000" min="0"
+                       value="{{ form.budget_min.data if form is defined and form.budget_min is defined else customer.budget_min or '' }}"
+                       class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                       placeholder="e.g. 250000">
+            </div>
+            <div>
+                <label for="edit_budget_max" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Maximum</label>
+                <input type="number" id="edit_budget_max" name="budget_max" step="1000" min="0"
+                       value="{{ form.budget_max.data if form is defined and form.budget_max is defined else customer.budget_max or '' }}"
+                       class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                       placeholder="e.g. 500000">
+            </div>
+        </div>
+    </section>
+
+    <section class="border-t border-outline-variant pt-5">
+        <h3 class="text-sm font-semibold text-primary uppercase tracking-wide mb-3">Preferences</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="edit_preferred_bedrooms" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Bedrooms</label>
+                <input type="number" id="edit_preferred_bedrooms" name="preferred_bedrooms" min="0"
+                       value="{{ form.preferred_bedrooms.data if form is defined and form.preferred_bedrooms is defined else customer.preferred_bedrooms or '' }}"
+                       class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+            </div>
+            <div>
+                <label for="edit_preferred_bathrooms" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Bathrooms</label>
+                <input type="number" id="edit_preferred_bathrooms" name="preferred_bathrooms" min="0" step="0.5"
+                       value="{{ form.preferred_bathrooms.data if form is defined and form.preferred_bathrooms is defined else customer.preferred_bathrooms or '' }}"
+                       class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+            </div>
+            <div>
+                <label for="edit_preferred_type" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Property type</label>
+                <input type="text" id="edit_preferred_type" name="preferred_type"
+                       value="{{ form.preferred_type.data if form is defined and form.preferred_type is defined else customer.preferred_type or '' }}"
+                       class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+            </div>
+            <div>
+                <label for="edit_location_preference" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Location</label>
+                <input type="text" id="edit_location_preference" name="location_preference"
+                       value="{{ form.location_preference.data if form is defined and form.location_preference is defined else customer.location_preference or '' }}"
+                       class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+            </div>
+        </div>
+    </section>
+
+    <div class="flex justify-end gap-2 pt-2 border-t border-outline-variant">
+        <button type="button" data-modal-close
+                class="px-4 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container">
+            Cancel
+        </button>
+        <button type="submit"
+                class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90">
+            Save customer
+        </button>
+    </div>
 </form>
-
-<script>
-// Format phone number input
-document.getElementById('edit_phone').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length >= 6) {
-        value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
-    } else if (value.length >= 3) {
-        value = value.replace(/(\d{3})(\d{0,3})/, '($1) $2');
-    }
-    e.target.value = value;
-});
-
-// Format budget inputs with commas
-document.querySelectorAll('#edit_budget_min, #edit_budget_max').forEach(input => {
-    input.addEventListener('blur', function(e) {
-        let value = e.target.value.replace(/,/g, '');
-        if (!isNaN(value) && value !== '') {
-            e.target.value = parseInt(value).toLocaleString();
-        }
-    });
-    
-    input.addEventListener('focus', function(e) {
-        e.target.value = e.target.value.replace(/,/g, '');
-    });
-});
-
-// Budget validation
-document.getElementById('edit_budget_max').addEventListener('blur', function() {
-    const minBudget = parseFloat(document.getElementById('edit_budget_min').value.replace(/,/g, '')) || 0;
-    const maxBudget = parseFloat(this.value.replace(/,/g, '')) || 0;
-    
-    if (minBudget > 0 && maxBudget > 0 && maxBudget < minBudget) {
-        this.classList.add('is-invalid');
-        let feedback = this.parentNode.querySelector('.invalid-feedback');
-        if (!feedback) {
-            feedback = document.createElement('div');
-            feedback.className = 'invalid-feedback';
-            this.parentNode.appendChild(feedback);
-        }
-        feedback.textContent = 'Maximum budget must be greater than or equal to minimum budget.';
-    } else {
-        this.classList.remove('is-invalid');
-        const feedback = this.parentNode.querySelector('.invalid-feedback');
-        if (feedback) {
-            feedback.remove();
-        }
-    }
-});
-</script>

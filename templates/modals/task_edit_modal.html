@@ -1,253 +1,80 @@
-<!-- Task Edit Modal Content -->
-<form id="taskEditForm" method="POST" action="{{ url_for('tasks.update_task', task_id=task.id) }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
-    <input type="hidden" name="_method" value="PUT">
-    
-    <div class="row">
-        <div class="col-12">
-            <!-- Task Title -->
-            <div class="mb-3">
-                <label for="title" class="form-label">
-                    <i class="fas fa-heading me-1"></i>
-                    Task Title *
-                </label>
-                <input type="text" 
-                       class="form-control {{ 'is-invalid' if form.title.errors else '' }}" 
-                       id="title" 
-                       name="title" 
-                       value="{{ form.title.data or task.title }}" 
-                       required
-                       placeholder="Enter task title">
-                {% if form.title.errors %}
-                    <div class="invalid-feedback">
-                        {{ form.title.errors[0] }}
-                    </div>
-                {% endif %}
-            </div>
-
-            <!-- Task Description -->
-            <div class="mb-3">
-                <label for="description" class="form-label">
-                    <i class="fas fa-align-left me-1"></i>
-                    Description *
-                </label>
-                <textarea class="form-control {{ 'is-invalid' if form.description.errors else '' }}" 
-                          id="description" 
-                          name="description" 
-                          rows="4" 
-                          required
-                          placeholder="Provide detailed description of the task">{{ form.description.data or task.description }}</textarea>
-                {% if form.description.errors %}
-                    <div class="invalid-feedback">
-                        {{ form.description.errors[0] }}
-                    </div>
-                {% endif %}
-            </div>
-
-            <!-- Priority and Status Row -->
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="priority" class="form-label">
-                        <i class="fas fa-exclamation-triangle me-1"></i>
-                        Priority *
-                    </label>
-                    <select class="form-select {{ 'is-invalid' if form.priority.errors else '' }}" 
-                            id="priority" 
-                            name="priority" 
-                            required>
-                        <option value="">Select Priority</option>
-                        <option value="low" {{ 'selected' if (form.priority.data or task.priority) == 'low' }}>
-                            Low Priority
-                        </option>
-                        <option value="medium" {{ 'selected' if (form.priority.data or task.priority) == 'medium' }}>
-                            Medium Priority
-                        </option>
-                        <option value="high" {{ 'selected' if (form.priority.data or task.priority) == 'high' }}>
-                            High Priority
-                        </option>
-                    </select>
-                    {% if form.priority.errors %}
-                        <div class="invalid-feedback">
-                            {{ form.priority.errors[0] }}
-                        </div>
-                    {% endif %}
-                </div>
-
-                <div class="col-md-6">
-                    <label for="status" class="form-label">
-                        <i class="fas fa-tasks me-1"></i>
-                        Status *
-                    </label>
-                    <select class="form-select {{ 'is-invalid' if form.status.errors else '' }}" 
-                            id="status" 
-                            name="status" 
-                            required>
-                        <option value="">Select Status</option>
-                        <option value="pending" {{ 'selected' if (form.status.data or task.status) == 'pending' }}>
-                            Pending
-                        </option>
-                        <option value="in_progress" {{ 'selected' if (form.status.data or task.status) == 'in_progress' }}>
-                            In Progress
-                        </option>
-                        <option value="completed" {{ 'selected' if (form.status.data or task.status) == 'completed' }}>
-                            Completed
-                        </option>
-                        <option value="overdue" {{ 'selected' if (form.status.data or task.status) == 'overdue' }}>
-                            Overdue
-                        </option>
-                    </select>
-                    {% if form.status.errors %}
-                        <div class="invalid-feedback">
-                            {{ form.status.errors[0] }}
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Due Date -->
-            <div class="mb-3">
-                <label for="due_date" class="form-label">
-                    <i class="fas fa-calendar-alt me-1"></i>
-                    Due Date
-                </label>
-                <input type="date" 
-                       class="form-control {{ 'is-invalid' if form.due_date.errors else '' }}" 
-                       id="due_date" 
-                       name="due_date" 
-                       value="{{ form.due_date.data.strftime('%Y-%m-%d') if form.due_date.data else (task.due_date.strftime('%Y-%m-%d') if task.due_date else '') }}"
-                       min="{{ datetime.now().strftime('%Y-%m-%d') }}">
-                <div class="form-text">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Leave empty if no specific due date is required
-                </div>
-                {% if form.due_date.errors %}
-                    <div class="invalid-feedback">
-                        {{ form.due_date.errors[0] }}
-                    </div>
-                {% endif %}
-            </div>
-
-            <!-- Current Assignment Info -->
-            <div class="mb-3">
-                <label class="form-label">
-                    <i class="fas fa-user me-1"></i>
-                    Currently Assigned To
-                </label>
-                <div class="bg-light p-3 rounded">
-                    {% if task.agent_obj %}
-                    <div class="d-flex align-items-center">
-                        <div class="agent-avatar me-3">
-                            <div class="avatar-circle bg-primary text-white small-avatar">
-                                {{ task.agent_obj.name.split()[0][0] }}{{ task.agent_obj.name.split()[-1][0] if task.agent_obj.name.split()|length > 1 else '' }}
-                            </div>
-                        </div>
-                        <div>
-                            <div class="fw-semibold">{{ task.agent_obj.name }}</div>
-                            <small class="text-muted">{{ task.agent_obj.specialization or "Agent" }}</small>
-                            <div class="small text-muted">
-                                <i class="fas fa-envelope me-1"></i>
-                                {{ task.agent_obj.email }}
-                            </div>
-                        </div>
-                    </div>
-                    {% else %}
-                    <div class="text-muted">
-                        <i class="fas fa-user-slash me-2"></i>
-                        No agent assigned
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="form-text">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Agent assignment can only be changed when creating a new task
-                </div>
-            </div>
-
-            <!-- Form Actions -->
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted small">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Last updated: {{ task.updated_at.strftime('%B %d, %Y at %I:%M %p') if task.updated_at else task.created_at.strftime('%B %d, %Y at %I:%M %p') }}
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <span class="spinner-border spinner-border-sm d-none me-2" role="status"></span>
-                        <i class="fas fa-save me-1"></i>
-                        Update Task
-                    </button>
-                </div>
-            </div>
+<!-- Task Edit Modal — Platinum Heritage -->
+<div id="taskEditModal"
+     class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]"
+     data-modal
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="taskEditModalLabel">
+    <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-lg max-h-[90vh] flex flex-col"
+         onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
+            <h2 id="taskEditModalLabel" class="text-lg font-semibold text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined text-[20px]">edit_note</span>
+                {% if task %}Edit task{% else %}Task{% endif %}
+            </h2>
+            <button type="button" data-modal-close
+                    onclick="document.getElementById('taskEditModal').classList.add('hidden'); document.body.style.overflow=''"
+                    class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" aria-label="Close">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
         </div>
+        <form method="POST"
+              action="{{ url_for('add_task') }}"
+              class="flex flex-col flex-1 min-h-0"
+              id="taskEditForm">
+            {% if csrf_token is defined %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% endif %}
+            <div class="px-5 py-4 space-y-4 overflow-y-auto">
+                <div>
+                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Title *</label>
+                    <input type="text" name="title" required
+                           value="{{ task.title if task is defined and task else '' }}"
+                           class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Description</label>
+                    <textarea name="description" rows="3"
+                              class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">{{ task.description if task is defined and task and task.description is defined else '' }}</textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Priority</label>
+                        <select name="priority" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                            {% for p in ['low','medium','high','urgent'] %}
+                            <option value="{{ p }}" {% if task is defined and task and task.priority == p %}selected{% endif %}>{{ p|capitalize }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Due date</label>
+                        <input type="date" name="due_date"
+                               value="{{ task.due_date.strftime('%Y-%m-%d') if task is defined and task and task.due_date and task.due_date.strftime is defined else '' }}"
+                               class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                    </div>
+                </div>
+                {% if agents is defined %}
+                <div>
+                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Assignee</label>
+                    <select name="agent_id" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                        <option value="">Unassigned</option>
+                        {% for a in agents %}
+                        <option value="{{ a.id }}" {% if task is defined and task and task.agent_id == a.id %}selected{% endif %}>{{ a.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+            </div>
+            <div class="px-5 py-4 border-t border-outline-variant flex justify-end gap-2">
+                <button type="button" data-modal-close
+                        onclick="document.getElementById('taskEditModal').classList.add('hidden'); document.body.style.overflow=''"
+                        class="px-4 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90">
+                    Save task
+                </button>
+            </div>
+        </form>
     </div>
-</form>
-
-<style>
-.small-avatar {
-    width: 32px;
-    height: 32px;
-    font-size: 12px;
-}
-
-.avatar-circle {
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-}
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Handle form submission
-    const form = document.getElementById('taskEditForm');
-    if (form && !form.hasAttribute('data-crud-bound')) {
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const submitBtn = form.querySelector('[type="submit"]');
-            const spinner = submitBtn.querySelector('.spinner-border');
-            
-            try {
-                // Show loading state
-                submitBtn.disabled = true;
-                if (spinner) spinner.classList.remove('d-none');
-                
-                // Submit form
-                await crudUtils.submitForm(form, {
-                    onSuccess: function(response) {
-                        crudUtils.showToast('Task updated successfully!', 'success');
-                        crudUtils.hideModal('taskEditModal');
-                        // Reload the page to show updated data
-                        setTimeout(() => window.location.reload(), 1000);
-                    },
-                    onError: function(error) {
-                        crudUtils.showToast(error.message || 'Failed to update task', 'error');
-                    }
-                });
-                
-            } catch (error) {
-                console.error('Form submission error:', error);
-                crudUtils.showToast('An error occurred while updating the task', 'error');
-            } finally {
-                // Reset loading state
-                submitBtn.disabled = false;
-                if (spinner) spinner.classList.add('d-none');
-            }
-        });
-        
-        form.setAttribute('data-crud-bound', 'true');
-    }
-    
-    // Set minimum date for due date to today
-    const dueDateInput = document.getElementById('due_date');
-    if (dueDateInput) {
-        const today = new Date().toISOString().split('T')[0];
-        dueDateInput.min = today;
-    }
-});
-</script>
+</div>

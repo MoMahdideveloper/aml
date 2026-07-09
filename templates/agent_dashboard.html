@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ agent.name }} · Agent Dashboard · Platinum Heritage{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        font-family: 'Material Symbols Outlined';
+    }
+    .shadow-ph-soft { box-shadow: 0 8px 30px rgba(27, 38, 49, 0.06); }
+</style>
+{% endblock %}
+
+{% block content %}
+<header class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
+    <div class="flex items-start gap-4 min-w-0">
+        <a href="{{ url_for('agents') }}"
+           class="mt-1 p-2 rounded-lg border border-outline-variant text-secondary hover:text-primary hover:bg-surface-container transition-colors flex-shrink-0"
+           title="Back to agents">
+            <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+        </a>
+        <div class="flex items-center gap-4 min-w-0">
+            <div class="w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center text-lg font-semibold flex-shrink-0">
+                {{ agent.name.split()[0][0] }}{{ agent.name.split()[-1][0] if agent.name.split()|length > 1 else '' }}
+            </div>
+            <div class="min-w-0">
+                <p class="text-xs font-medium text-on-surface-variant uppercase tracking-[0.15em] mb-1">Agent dashboard</p>
+                <h1 class="text-2xl md:text-3xl font-semibold text-primary truncate">{{ agent.name }}</h1>
+                <p class="text-sm text-on-surface-variant">{{ agent.specialization or 'Real estate agent' }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="flex flex-wrap gap-2">
+        {% if agent.email %}
+        <a href="mailto:{{ agent.email }}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-outline-variant text-primary text-sm font-medium hover:bg-surface-container">
+            <span class="material-symbols-outlined text-[18px]">mail</span>
+            Email
+        </a>
+        {% endif %}
+        {% if agent.phone %}
+        <a href="tel:{{ agent.phone }}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-outline-variant text-primary text-sm font-medium hover:bg-surface-container">
+            <span class="material-symbols-outlined text-[18px]">call</span>
+            Call
+        </a>
+        {% endif %}
+        <a href="{{ url_for('agents') }}#edit-{{ agent.id }}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90">
+            <span class="material-symbols-outlined text-[18px]">edit</span>
+            Edit profile
+        </a>
+    </div>
+</header>
+
+{# KPI grid #}
+<section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-10">
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-ph-soft">
+        <div class="flex justify-between items-start mb-3">
+            <p class="text-xs font-medium text-on-surface-variant uppercase tracking-wider">Active listings</p>
+            <span class="material-symbols-outlined text-secondary text-[20px]">domain</span>
+        </div>
+        <p class="text-3xl font-semibold text-primary tabular-nums">{{ metrics.active_listings_count }}</p>
+        <p class="text-xs text-on-surface-variant mt-2">{{ metrics.total_listings }} total assigned</p>
+    </div>
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-ph-soft">
+        <div class="flex justify-between items-start mb-3">
+            <p class="text-xs font-medium text-on-surface-variant uppercase tracking-wider">Deals</p>
+            <span class="material-symbols-outlined text-secondary text-[20px]">handshake</span>
+        </div>
+        <p class="text-3xl font-semibold text-primary tabular-nums">{{ metrics.total_deals }}</p>
+        <p class="text-xs text-on-surface-variant mt-2">{{ metrics.deals_this_month }} new (30 days) · {{ metrics.pending_deals_count }} open</p>
+    </div>
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-ph-soft">
+        <div class="flex justify-between items-start mb-3">
+            <p class="text-xs font-medium text-on-surface-variant uppercase tracking-wider">Pipeline value</p>
+            <span class="material-symbols-outlined text-secondary text-[20px]">payments</span>
+        </div>
+        <p class="text-3xl font-semibold text-primary tabular-nums">${{ "{:,.0f}".format(metrics.pipeline_value or 0) }}</p>
+        <p class="text-xs text-on-surface-variant mt-2">Open deal offers</p>
+    </div>
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-ph-soft">
+        <div class="flex justify-between items-start mb-3">
+            <p class="text-xs font-medium text-on-surface-variant uppercase tracking-wider">Pending tasks</p>
+            <span class="material-symbols-outlined text-secondary text-[20px]">assignment</span>
+        </div>
+        <p class="text-3xl font-semibold text-primary tabular-nums">{{ metrics.pending_tasks_count }}</p>
+        <p class="text-xs text-on-surface-variant mt-2">{{ metrics.completed_tasks_count }} completed</p>
+    </div>
+</section>
+
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    {# Listings #}
+    <div class="lg:col-span-7 space-y-6">
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-ph-soft">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-primary flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[22px]">home_work</span>
+                    Portfolio listings
+                </h2>
+                <a href="{{ url_for('properties') }}" class="text-xs text-primary hover:underline">All inventory</a>
+            </div>
+            {% if metrics.recent_properties %}
+            <ul class="divide-y divide-outline-variant">
+                {% for p in metrics.recent_properties %}
+                <li class="py-3 flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                        <a href="{{ url_for('properties.property_detail', property_id=p.id) }}"
+                           class="font-medium text-primary hover:underline truncate block">{{ p.title }}</a>
+                        <p class="text-xs text-on-surface-variant truncate">{{ p.address or p.neighborhood or '—' }} · {{ (p.status or '')|replace('_',' ')|title }}</p>
+                    </div>
+                    <span class="text-sm font-semibold text-primary tabular-nums flex-shrink-0">${{ "{:,.0f}".format(p.price or 0) }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-sm text-on-surface-variant py-6 text-center">No properties assigned to this agent yet.</p>
+            {% endif %}
+        </div>
+
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-ph-soft">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-primary flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[22px]">handshake</span>
+                    Recent deals
+                </h2>
+                <a href="{{ url_for('deals') }}" class="text-xs text-primary hover:underline">Pipeline</a>
+            </div>
+            {% if metrics.recent_deals %}
+            <ul class="divide-y divide-outline-variant">
+                {% for d in metrics.recent_deals %}
+                <li class="py-3 flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="font-medium text-primary truncate">
+                            {{ d.property.title if d.property else 'Property' }}
+                            {% if d.customer %} · {{ d.customer.name }}{% endif %}
+                        </p>
+                        <p class="text-xs text-on-surface-variant capitalize">{{ (d.status or '—')|replace('_',' ') }}</p>
+                    </div>
+                    <span class="text-sm font-semibold text-primary tabular-nums flex-shrink-0">${{ "{:,.0f}".format(d.offer_amount or 0) }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-sm text-on-surface-variant py-6 text-center">No deals yet for this agent.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Tasks + contact #}
+    <div class="lg:col-span-5 space-y-6">
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-ph-soft">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-primary flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[22px]">task_alt</span>
+                    Upcoming tasks
+                </h2>
+                <a href="{{ url_for('tasks') }}" class="text-xs text-primary hover:underline">All tasks</a>
+            </div>
+            {% if metrics.upcoming_tasks %}
+            <ul class="space-y-3">
+                {% for t in metrics.upcoming_tasks %}
+                <li class="rounded-lg border border-outline-variant bg-surface p-3">
+                    <p class="text-sm font-medium text-primary">{{ t.title }}</p>
+                    <div class="flex flex-wrap gap-2 mt-1 text-xs text-on-surface-variant">
+                        <span class="capitalize">{{ t.priority or 'medium' }}</span>
+                        {% if t.due_date %}
+                        <span>· Due {{ t.due_date.strftime('%b %d, %Y') if t.due_date is not string else t.due_date }}</span>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-sm text-on-surface-variant py-6 text-center">No pending tasks.</p>
+            {% endif %}
+        </div>
+
+        <div class="bg-primary text-on-primary rounded-xl p-6">
+            <h3 class="font-semibold mb-3">Contact</h3>
+            <dl class="space-y-2 text-sm">
+                {% if agent.email %}
+                <div class="flex justify-between gap-2">
+                    <dt class="opacity-70">Email</dt>
+                    <dd class="truncate">{{ agent.email }}</dd>
+                </div>
+                {% endif %}
+                {% if agent.phone %}
+                <div class="flex justify-between gap-2">
+                    <dt class="opacity-70">Phone</dt>
+                    <dd>{{ agent.phone }}</dd>
+                </div>
+                {% endif %}
+                <div class="flex justify-between gap-2">
+                    <dt class="opacity-70">Specialization</dt>
+                    <dd class="text-right">{{ agent.specialization or '—' }}</dd>
+                </div>
+            </dl>
+            {% if agent.bio %}
+            <p class="text-sm opacity-80 mt-4 border-t border-white/20 pt-4">{{ agent.bio }}</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

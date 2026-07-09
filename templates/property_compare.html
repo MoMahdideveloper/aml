@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% block title %}Compare Properties · Platinum Heritage{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        font-family: 'Material Symbols Outlined';
+    }
+    .shadow-ph-soft { box-shadow: 0 8px 30px rgba(27, 38, 49, 0.06); }
+</style>
+{% endblock %}
+
+{% block content %}
+<header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+    <div>
+        <p class="text-xs font-medium text-on-surface-variant uppercase tracking-[0.15em] mb-2">Analytics</p>
+        <h1 class="text-2xl md:text-3xl font-semibold text-primary mb-2">Property comparison</h1>
+        <p class="text-sm md:text-base text-on-surface-variant max-w-2xl">
+            Side-by-side evaluation of up to four listings — price, size, beds, and fit signals.
+        </p>
+    </div>
+    <div class="flex flex-wrap gap-3">
+        <a href="{{ url_for('properties') }}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-outline-variant text-primary text-sm font-medium hover:bg-surface-container">
+            <span class="material-symbols-outlined text-[18px]">domain</span>
+            Inventory
+        </a>
+        <button type="button" onclick="window.print()"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90">
+            <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+            Export
+        </button>
+    </div>
+</header>
+
+{# Picker #}
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 mb-8 shadow-ph-soft">
+    <h2 class="text-lg font-semibold text-primary mb-1">Select properties</h2>
+    <p class="text-sm text-on-surface-variant mb-4">Choose 2–4 listings, then compare.</p>
+    <form method="GET" action="{{ url_for('main.property_compare') }}" id="compareForm">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-72 overflow-y-auto mb-4 pr-1">
+            {% for p in catalog %}
+            <label class="flex items-start gap-3 p-3 rounded-lg border border-outline-variant hover:border-primary cursor-pointer transition-colors
+                          {{ 'border-primary bg-surface-container-low' if p.id in selected_ids else 'bg-surface' }}">
+                <input type="checkbox" name="ids" value="{{ p.id }}"
+                       class="mt-1 rounded border-outline-variant text-primary focus:ring-primary"
+                       {{ 'checked' if p.id in selected_ids }}
+                       onchange="limitCompareChecks(this)">
+                <span class="min-w-0">
+                    <span class="block text-sm font-medium text-primary truncate">{{ p.title }}</span>
+                    <span class="block text-xs text-on-surface-variant truncate">{{ p.address or p.neighborhood or '—' }}</span>
+                    <span class="block text-xs text-primary tabular-nums mt-0.5">${{ "{:,.0f}".format(p.price or 0) }}</span>
+                </span>
+            </label>
+            {% else %}
+            <p class="text-sm text-on-surface-variant col-span-full">No properties available to compare.</p>
+            {% endfor %}
+        </div>
+        <div class="flex flex-wrap gap-3">
+            <button type="submit"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90">
+                <span class="material-symbols-outlined text-[18px]">compare_arrows</span>
+                Compare selected
+            </button>
+            <a href="{{ url_for('main.property_compare') }}"
+               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-outline-variant text-primary text-sm font-medium hover:bg-surface-container">
+                Clear
+            </a>
+        </div>
+    </form>
+</section>
+
+{% if selected|length >= 2 %}
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-ph-soft mb-8">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[640px]">
+            <thead>
+                <tr class="bg-surface-container-low border-b border-outline-variant">
+                    <th class="p-4 md:p-5 text-sm font-semibold text-on-surface-variant w-40">Specification</th>
+                    {% for p in selected %}
+                    <th class="p-4 md:p-5 border-l border-outline-variant min-w-[10rem]">
+                        <a href="{{ url_for('properties.property_detail', property_id=p.id) }}"
+                           class="font-semibold text-primary hover:underline block leading-snug">{{ p.title }}</a>
+                        <div class="text-primary font-semibold tabular-nums mt-1">${{ "{:,.0f}".format(p.price or 0) }}</div>
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody class="text-sm divide-y divide-outline-variant">
+                {% set rows = [
+                    ('Address', none),
+                    ('Neighborhood', none),
+                    ('Type', none),
+                    ('Status', none),
+                    ('Listing', none),
+                    ('Bedrooms', none),
+                    ('Bathrooms', none),
+                    ('Square feet', none),
+                    ('Year built', none),
+                    ('Parking', none),
+                    ('Price / sqft', none),
+                ] %}
+                <tr>
+                    <td class="p-4 md:p-5 font-medium text-on-surface-variant">Address</td>
+                    {% for p in selected %}
+                    <td class="p-4 md:p-5 border-l border-outline-variant text-on-surface">{{ p.address or '—' }}</td>
+                    {% endfor %}
+                </tr>
+                <tr class="bg-surface/40">
+                    <td class="p-4 md:p-5 font-medium text-on-surface-variant">Neighborhood</td>
+                    {% for p in selected %}
+                    <td class="p-4 md:p-5 border-l border-outline-variant">{{ p.neighborhood or '—' }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td class="p-4 md:p-5 font-medium text-on-surface-variant">Type</td>
+                    {% for p in selected %}
+                    <td class="p-4 md:p-5 border-l border-outline-variant capitalize">{{ p.property_type or '—' }}</td>
+                    {% endfor %}
+                </tr>
+                <tr class="bg-surface/40">
+                    <td class="p-4 md:p-5 font-medium text-on-surface-variant">Status</td>
+                    {% for p in selected %}
+                    <td class="p-4 md:p-5 border-l border-outline-variant capitalize">{{ (p.status or '—')|replace('_',' ') }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td class="p-4 md:p-5 font-medium text-on-surface-variant">Listing</td>
+                    {% for p in selected %}
+                    <td class="p-4 md:p-5 border-l border-outline-variant capitalize">{{ (p.listing_type or 'sale')|replace('_',' ') }}</td>
+                    {% endfor %}
+                </tr>
+                <tr class="bg-surface/40">
+                    <td class="p-4 md:p-5 font-medium text-on-surface-variant">Bedrooms</td>
+                    {% for p in selected %}
+                    <td class="p-4 md:p-5 border-l border-outline-variant tabular-nums font-semibold">{{ p.bedrooms if p.bedrooms is not none else '—' }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td class="p-4 md:p-5 font-medium text-on-surface-variant">Bathrooms</td>
+                    {% for p in selected %}
+                    <td class="p-4 md:p-5 border-l border-outline-variant tabular-nums font-semibold">{{ p.bathrooms if p.bathrooms is not none else '—' }}</td>
+                    {% endfor %}
+                </tr>
+                <tr class="bg-surface/40">
+                    <td class="p-4 md:p-5 font-medium text-on-surface-variant">Square feet</td>
+                    {% for p in selected %}
+                    <td class="p-4 md:p-5 border-l border-outline-variant tabular-nums">
+                        {% if p.square_feet %}{{ "{:,.0f}".format(p.square_feet) }}{% else %}—{% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td class="p-4 md:p-5 font-medium text-on-surface-variant">Year built</td>
+                    {% for p in selected %}
+                    <td class="p-4 md:p-5 border-l border-outline-variant tabular-nums">{{ p.year_built or '—' }}</td>
+                    {% endfor %}
+                </tr>
+                <tr class="bg-surface/40">
+                    <td class="p-4 md:p-5 font-medium text-on-surface-variant">Parking</td>
+                    {% for p in selected %}
+                    <td class="p-4 md:p-5 border-l border-outline-variant tabular-nums">{{ p.parking_spaces if p.parking_spaces is not none else '—' }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td class="p-4 md:p-5 font-medium text-on-surface-variant">Price / sqft</td>
+                    {% for p in selected %}
+                    <td class="p-4 md:p-5 border-l border-outline-variant tabular-nums font-semibold text-primary">
+                        {% if p.price and p.square_feet %}
+                        ${{ "{:,.0f}".format(p.price / p.square_feet) }}
+                        {% else %}—{% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                <tr class="bg-surface/40">
+                    <td class="p-4 md:p-5 font-medium text-on-surface-variant">Actions</td>
+                    {% for p in selected %}
+                    <td class="p-4 md:p-5 border-l border-outline-variant">
+                        <div class="flex flex-col gap-2">
+                            <a href="{{ url_for('properties.property_detail', property_id=p.id) }}"
+                               class="text-primary text-xs font-medium hover:underline">View detail</a>
+                            <a href="{{ url_for('main.roi_calculator', property_id=p.id) }}"
+                               class="text-primary text-xs font-medium hover:underline">ROI model</a>
+                        </div>
+                    </td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+{% elif selected|length == 1 %}
+<div class="rounded-xl border border-outline-variant bg-surface-container-low px-5 py-4 text-sm text-on-surface mb-8">
+    Select at least one more property to build a comparison matrix.
+</div>
+{% else %}
+<div class="rounded-xl border border-outline-variant bg-surface-container-low px-5 py-8 text-center text-sm text-on-surface-variant mb-8">
+    <span class="material-symbols-outlined text-4xl text-outline mb-2 block">compare</span>
+    Select two or more properties above to see the comparison matrix.
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function limitCompareChecks(el) {
+    var boxes = document.querySelectorAll('#compareForm input[name="ids"]:checked');
+    if (boxes.length > 4) {
+        el.checked = false;
+        alert('You can compare up to 4 properties at a time.');
+    }
+}
+</script>
+{% endblock %}

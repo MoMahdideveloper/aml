@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}SMS Broadcast · Platinum Heritage{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        font-family: 'Material Symbols Outlined';
+    }
+    .shadow-ph-soft { box-shadow: 0 8px 30px rgba(27, 38, 49, 0.06); }
+</style>
+{% endblock %}
+
+{% block content %}
+<header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+    <div>
+        <p class="text-xs font-medium text-on-surface-variant uppercase tracking-[0.15em] mb-2">Outreach</p>
+        <h1 class="text-2xl md:text-3xl font-semibold text-primary mb-2">SMS broadcast</h1>
+        <p class="text-sm text-on-surface-variant max-w-2xl">
+            Queue bulk SMS to client segments. Default provider is <code class="text-xs bg-surface-container px-1 rounded">log</code>
+            (safe for local); set <code class="text-xs bg-surface-container px-1 rounded">SMS_PROVIDER</code> for Melipayamak.
+        </p>
+    </div>
+    <a href="{{ url_for('main.messaging') }}"
+       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-outline-variant text-primary text-sm font-medium hover:bg-surface-container">
+        <span class="material-symbols-outlined text-[18px]">forum</span>
+        Messaging
+    </a>
+</header>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <section class="lg:col-span-7 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-ph-soft">
+        <form method="POST" action="{{ url_for('main.sms_send') }}" id="smsForm" class="space-y-5">
+            {% if csrf_token is defined %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% endif %}
+
+            <div>
+                <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Target segment</label>
+                <select name="segment" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                    {% for s in segments %}
+                    <option value="{{ s.id }}">{{ s.label }}</option>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-on-surface-variant mt-1">{{ with_phone_count }} clients have phone numbers on file.</p>
+            </div>
+
+            <div>
+                <div class="flex justify-between items-center mb-1.5">
+                    <label class="text-xs font-medium text-on-surface-variant uppercase tracking-wide">Message</label>
+                    <span id="charCount" class="text-xs text-on-surface-variant">0 / 160</span>
+                </div>
+                <textarea name="message" id="msg" rows="5" required maxlength="500"
+                          placeholder="Exclusive off-market listing available this week…"
+                          class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Extra phones (optional)</label>
+                <input type="text" name="manual_phones" placeholder="+98912…, 0912…"
+                       class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Provider</label>
+                <select name="provider" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                    <option value="log" selected>log (dev / safe)</option>
+                    <option value="melipayamak">melipayamak</option>
+                </select>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-outline-variant">
+                <p class="text-xs text-on-surface-variant flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">verified_user</span>
+                    Messages are queued; delivery depends on provider credentials.
+                </p>
+                <button type="submit"
+                        class="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary text-on-primary text-sm font-semibold hover:opacity-90">
+                    <span class="material-symbols-outlined text-[18px]">send</span>
+                    Queue broadcast
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <section class="lg:col-span-5 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-ph-soft">
+        <h2 class="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[22px]">history</span>
+            Recent queue
+        </h2>
+        {% if history %}
+        <ul class="space-y-3 max-h-[28rem] overflow-y-auto">
+            {% for m in history %}
+            <li class="rounded-lg border border-outline-variant p-3 text-sm">
+                <div class="flex justify-between gap-2 mb-1">
+                    <span class="font-medium text-primary tabular-nums">{{ m.recipient }}</span>
+                    <span class="text-xs capitalize px-2 py-0.5 rounded-full
+                        {% if m.status == 'sent' %}bg-[#dcfce7] text-[#15803d]
+                        {% elif m.status == 'failed' %}bg-[#fee2e2] text-[#991b1b]
+                        {% else %}bg-surface-container text-secondary{% endif %}">
+                        {{ m.status }}
+                    </span>
+                </div>
+                <p class="text-on-surface-variant text-xs line-clamp-2">{{ m.message }}</p>
+                {% if m.created_at %}
+                <p class="text-[10px] text-on-surface-variant mt-1">{{ m.created_at.strftime('%Y-%m-%d %H:%M') }} · {{ m.provider }}</p>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-sm text-on-surface-variant py-8 text-center">No SMS queued yet.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var msg = document.getElementById('msg');
+    var count = document.getElementById('charCount');
+    if (!msg || !count) return;
+    function update() {
+        count.textContent = msg.value.length + ' / 160';
+    }
+    msg.addEventListener('input', update);
+    update();
+})();
+</script>
+{% endblock %}

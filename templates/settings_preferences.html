@@ -1,287 +1,101 @@
-<!DOCTYPE html>
+{% extends 'base.html' %}
 
-<html lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Luxe Estate - Settings</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "surface-container-low": "#edf4ff",
-                        "on-tertiary-fixed-variant": "#47473e",
-                        "surface-variant": "#d8e4f3",
-                        "surface-tint": "#506072",
-                        "tertiary-fixed": "#e5e3d6",
-                        "inverse-surface": "#26313d",
-                        "surface-container": "#e3effe",
-                        "inverse-primary": "#b7c8dd",
-                        "outline-variant": "#c4c6cc",
-                        "tertiary": "#23241c",
-                        "primary-container": "#2a3a4b",
-                        "surface-white": "#FFFFFF",
-                        "tertiary-container": "#393930",
-                        "surface": "#f7f9ff",
-                        "primary-fixed": "#d3e4fa",
-                        "on-secondary-container": "#626363",
-                        "secondary-fixed": "#e3e2e2",
-                        "secondary": "#5d5e5f",
-                        "on-surface": "#111d27",
-                        "on-primary": "#ffffff",
-                        "on-background": "#111d27",
-                        "on-tertiary-container": "#a3a297",
-                        "primary": "#142435",
-                        "secondary-fixed-dim": "#c6c6c6",
-                        "on-primary-fixed": "#0c1d2d",
-                        "tertiary-fixed-dim": "#c8c7bb",
-                        "outline": "#74777d",
-                        "on-error": "#ffffff",
-                        "background": "#f7f9ff",
-                        "on-primary-fixed-variant": "#38485a",
-                        "inverse-on-surface": "#e8f2ff",
-                        "on-tertiary": "#ffffff",
-                        "surface-bright": "#f7f9ff",
-                        "error-container": "#ffdad6",
-                        "on-secondary": "#ffffff",
-                        "on-secondary-fixed": "#1a1c1c",
-                        "error-red": "#BA1A1A",
-                        "surface-container-lowest": "#ffffff",
-                        "on-surface-variant": "#44474c",
-                        "surface-dim": "#d0dbea",
-                        "on-error-container": "#93000a",
-                        "surface-container-high": "#dee9f8",
-                        "surface-container-highest": "#d8e4f3",
-                        "on-primary-container": "#93a4b8",
-                        "error": "#ba1a1a",
-                        "primary-fixed-dim": "#b7c8dd",
-                        "on-tertiary-fixed": "#1c1c14",
-                        "secondary-container": "#e0dfdf",
-                        "on-secondary-fixed-variant": "#464747"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.125rem",
-                        "lg": "0.25rem",
-                        "xl": "0.5rem",
-                        "full": "0.75rem"
-                    },
-                    "spacing": {
-                        "margin-desktop": "64px",
-                        "base": "8px",
-                        "gutter": "24px",
-                        "max-width": "1280px",
-                        "margin-mobile": "16px"
-                    },
-                    "fontFamily": {
-                        "label-sm": ["IBM Plex Sans"],
-                        "headline-lg-mobile": ["IBM Plex Sans"],
-                        "display-lg": ["IBM Plex Sans"],
-                        "headline-md": ["IBM Plex Sans"],
-                        "headline-lg": ["IBM Plex Sans"],
-                        "label-md": ["IBM Plex Sans"],
-                        "body-lg": ["IBM Plex Sans"],
-                        "body-md": ["IBM Plex Sans"]
-                    },
-                    "fontSize": {
-                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
-                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
-                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
-                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
-                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
-                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500" }],
-                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
-                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
-                    }
-                }
-            }
-        }
-    </script>
-<style>
-        body { background-color: #F4F2E5; }
-        .bg-cream { background-color: #F4F2E5; }
-        .text-deep-blue { color: #2A3A4B; }
-        .border-platinum { border-color: #C0C0C0; }
-        .bg-white-lift { background-color: #FFFFFF; }
-        .shadow-hover { box-shadow: 0 8px 30px rgba(27, 38, 49, 0.06); }
-    </style>
-</head>
-<body class="bg-cream text-on-surface font-body-md min-h-screen flex flex-col">
-<!-- Top Navigation Placeholder (Hidden on mobile per rules, using SideNav context) -->
-<header class="bg-surface-white border-b border-platinum fixed w-full top-0 z-50 h-16 flex items-center px-margin-desktop justify-between hidden md:flex">
-<div class="flex items-center gap-4">
-<span class="text-headline-md font-headline-md font-bold text-primary">EstateElite</span>
+{% block title %}Settings · Platinum Heritage{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <header class="mb-8">
+        <p class="text-xs font-medium text-on-surface-variant uppercase tracking-[0.15em] mb-2">Account</p>
+        <h1 class="text-2xl md:text-3xl font-semibold text-primary mb-1">Settings</h1>
+        <p class="text-sm md:text-base text-on-surface-variant">Profile and preferences for Platinum Heritage CRM.</p>
+    </header>
+
+    {% if require_login %}
+    <div class="mb-6 rounded-lg border border-outline-variant bg-surface-container-low px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <p class="text-sm text-on-surface">Sign in to save profile and password changes.</p>
+        <a href="{{ url_for('auth.login') }}"
+           class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90">
+            Log in
+        </a>
+    </div>
+    {% endif %}
+
+    <section class="bg-surface-container-lowest rounded-lg border border-outline-variant p-5 md:p-6 shadow-ph mb-6">
+        <h2 class="text-lg font-semibold text-primary mb-1 border-b border-outline-variant pb-3">Profile</h2>
+        <p class="text-sm text-on-surface-variant mt-3 mb-5">Update how you appear across the workspace.</p>
+
+        <form method="POST" action="{{ url_for('auth.update_profile') }}" class="space-y-5" {% if require_login %}onsubmit="event.preventDefault(); window.location='{{ url_for('auth.login') }}';"{% endif %}>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="fullName" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Full name</label>
+                    <input id="fullName" name="name" type="text"
+                           value="{{ user.name if user is defined and user else '' }}"
+                           class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+                </div>
+                <div>
+                    <label for="email" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Email</label>
+                    <input id="email" name="email" type="email"
+                           value="{{ user.email if user is defined and user else '' }}"
+                           class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+                </div>
+                <div>
+                    <label for="phone" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Phone</label>
+                    <input id="phone" name="phone" type="tel"
+                           value="{{ user.phone if user is defined and user and user.phone is defined else '' }}"
+                           class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Role</label>
+                    <input type="text" readonly
+                           value="{{ user.role if user is defined and user and user.role is defined else 'Agent' }}"
+                           class="w-full px-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg text-sm text-on-surface-variant">
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-outline-variant">
+                <a href="{{ url_for('dashboard') }}" class="inline-flex justify-center px-4 py-2.5 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container">
+                    Cancel
+                </a>
+                <button type="submit" class="inline-flex justify-center items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90">
+                    <span class="material-symbols-outlined text-[18px]">save</span>
+                    Save changes
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <section class="bg-surface-container-lowest rounded-lg border border-outline-variant p-5 md:p-6">
+        <h2 class="text-lg font-semibold text-primary mb-1 border-b border-outline-variant pb-3">Password</h2>
+        <p class="text-sm text-on-surface-variant mt-3 mb-5">Change your sign-in password.</p>
+        <form method="POST" action="{{ url_for('auth.change_password') }}" class="space-y-4" id="password-form">
+            {% if csrf_token is defined %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% endif %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Current password</label>
+                    <input type="password" name="current_password" autocomplete="current-password"
+                           class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">New password</label>
+                    <input type="password" name="new_password" autocomplete="new-password"
+                           class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Confirm new password</label>
+                    <input type="password" name="confirm_password" autocomplete="new-password"
+                           class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+                </div>
+            </div>
+            <div class="flex justify-end pt-2">
+                <button type="submit" class="inline-flex px-5 py-2.5 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90">
+                    Update password
+                </button>
+            </div>
+        </form>
+    </section>
 </div>
-<div class="flex items-center gap-6 text-primary">
-<span class="text-label-md font-label-md cursor-pointer hover:text-primary-container transition-colors">Properties</span>
-<span class="text-label-md font-label-md cursor-pointer hover:text-primary-container transition-colors">Clients</span>
-<span class="text-label-md font-label-md cursor-pointer hover:text-primary-container transition-colors">Analytics</span>
-</div>
-<div class="flex items-center gap-4">
-<button class="material-symbols-outlined text-primary hover:text-primary-container transition-colors" data-icon="notifications">notifications</button>
-<button class="material-symbols-outlined text-primary hover:text-primary-container transition-colors" data-icon="settings">settings</button>
-<img alt="User profile avatar" class="w-8 h-8 rounded-full object-cover border border-platinum" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJwQb01eYR32Sr3Ao1-5wA_maBs35A_98F0IMinJNo-TDH76wV-saXdZ7qRL-awqROBXvf84QYRJsv8tUpwjdWA14Rq9phU1Y8FI1eWI8xmFhdmzgK0HYDWy4cZ3fLfwiz8fr4odD-pqoE74KqSjhmjhFvonPtAsh1EjRSejn6def1ko3zaj4L5eYx6p1T62IOOo1RHWg6JnQDotisoelVHXEDyn2T3-u05NPoAtMziYmE4JpUv_A"/>
-</div>
-</header>
-<div class="flex flex-1 pt-16 h-full">
-<!-- Side Navigation Component -->
-<aside class="bg-surface-container-low dark:bg-surface-container-lowest border-r border-outline-variant dark:border-outline docked left-0 h-full w-64 fixed left-0 top-16 h-[calc(100vh-64px)] flex flex-col p-4 gap-2 hidden md:flex z-40">
-<div class="mb-8 px-4">
-<div class="flex items-center gap-3 mb-2">
-<img alt="Manager profile" class="w-12 h-12 rounded-full object-cover border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZiuQsvJh-H_sHzidhIeoJQkxiJnnmNzEgx_75dd9g8DEAm84RvYfVBSk5DXc17mJGb1dN-cwOzA2P-zOSL__6mhLFcLOLSxuE9ujca8IBFOpMfLbQL64x3Ge5tjflO9FpypTEcMMAiui6NthB1chKCF6NdF42BH1sPQ-irTZA63VIs2NZs3lT_CmVYQ5SL9CqLjNn6igEGA4XbewAbznRT_trf44gj8rY9vt8USM_zkQdlWh3K8M"/>
-<div>
-<h2 class="text-label-md font-label-md text-on-surface font-bold">Alex Sterling</h2>
-<p class="text-label-sm font-label-sm text-secondary">Senior Administrator</p>
-</div>
-</div>
-</div>
-<nav class="flex flex-col gap-1 flex-1">
-<a class="flex items-center gap-3 px-4 py-3 text-primary dark:text-primary-fixed font-bold bg-white dark:bg-surface-variant rounded-lg scale-[0.98] transition-transform" href="#">
-<span class="material-symbols-outlined" data-icon="person">person</span>
-<span class="text-label-md font-label-md">Profile</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim hover:bg-surface-variant dark:hover:bg-primary-container transition-all rounded-lg" href="#">
-<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
-<span class="text-label-md font-label-md">Notifications</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim hover:bg-surface-variant dark:hover:bg-primary-container transition-all rounded-lg" href="#">
-<span class="material-symbols-outlined" data-icon="shield">shield</span>
-<span class="text-label-md font-label-md">Security</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim hover:bg-surface-variant dark:hover:bg-primary-container transition-all rounded-lg" href="#">
-<span class="material-symbols-outlined" data-icon="payments">payments</span>
-<span class="text-label-md font-label-md">Billing</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim hover:bg-surface-variant dark:hover:bg-primary-container transition-all rounded-lg" href="#">
-<span class="material-symbols-outlined" data-icon="extension">extension</span>
-<span class="text-label-md font-label-md">Integrations</span>
-</a>
-</nav>
-<div class="mt-auto px-4 pb-4">
-<button class="w-full bg-primary text-on-primary py-2 rounded-lg text-label-md font-label-md hover:bg-primary-container transition-colors">Upgrade Plan</button>
-</div>
-</aside>
-<!-- Main Content Area -->
-<main class="flex-1 md:ml-64 p-margin-mobile md:p-margin-desktop bg-cream min-h-[calc(100vh-64px)] overflow-y-auto">
-<!-- Header Section -->
-<div class="max-w-4xl mx-auto mb-12">
-<h1 class="text-headline-lg font-headline-lg text-deep-blue mb-2">Settings</h1>
-<p class="text-body-md font-body-md text-secondary">Customize experience and manage preferences.</p>
-</div>
-<!-- Content Container -->
-<div class="max-w-4xl mx-auto bg-white-lift rounded-lg border border-platinum p-8 shadow-hover mb-24">
-<h2 class="text-headline-md font-headline-md text-deep-blue mb-8 border-b border-platinum pb-4">General / Profile Settings</h2>
-<!-- Form Layout -->
-<form class="space-y-10">
-<!-- Personal Info Section -->
-<section class="grid grid-cols-1 md:grid-cols-3 gap-8">
-<div class="md:col-span-1">
-<h3 class="text-label-md font-label-md text-on-surface font-bold mb-2">Personal Information</h3>
-<p class="text-label-sm font-label-sm text-secondary">Update your basic profile details.</p>
-</div>
-<div class="md:col-span-2 space-y-6">
-<!-- Profile Picture -->
-<div class="flex items-center gap-6">
-<img alt="Current profile picture of Alexander Sterling" class="w-20 h-20 rounded-full object-cover border border-platinum" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-oe2W-TrdC2ztQyXWSxka424tHstf01_DRHTcbwcU1eQjgeNS7_0NKM2Ti0RaIUI6i72TN7WMd359puZGuNndKxRBWYrXJchu1c_DCa8_X04h5arFZeLa0S4dX6CPUmLrghMKnxQstH-fmXR0b6MYECqvnJJUhMRl6_XhgXPXCrOcR5EYU8039fH3XsbzOkE_Ow6C6H2Ds9GglRV2liC3sVm6NErJkL6wrs0HcIGUNtXQnBCH0n0"/>
-<div>
-<button class="px-4 py-2 bg-surface-white border border-platinum text-deep-blue text-label-md font-label-md rounded hover:bg-surface-variant transition-colors mb-2 block" type="button">Change Picture</button>
-<span class="text-label-sm font-label-sm text-secondary">JPG, GIF or PNG. Max size of 800K</span>
-</div>
-</div>
-<!-- Inputs -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-<div class="flex flex-col">
-<label class="text-label-md font-label-md text-deep-blue mb-2" for="fullName">Full Name</label>
-<input class="border border-platinum rounded px-4 py-2 text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors bg-transparent" id="fullName" type="text" value="Alexander Sterling"/>
-</div>
-<div class="flex flex-col">
-<label class="text-label-md font-label-md text-deep-blue mb-2" for="title">Title</label>
-<input class="border border-platinum rounded px-4 py-2 text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors bg-transparent text-secondary" id="title" readonly="" type="text" value="Senior Associate"/>
-</div>
-<div class="flex flex-col">
-<label class="text-label-md font-label-md text-deep-blue mb-2" for="email">Email Address</label>
-<input class="border border-platinum rounded px-4 py-2 text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors bg-transparent" id="email" type="email" value="alex.sterling@luxeestate.com"/>
-</div>
-<div class="flex flex-col">
-<label class="text-label-md font-label-md text-deep-blue mb-2" for="phone">Phone Number</label>
-<input class="border border-platinum rounded px-4 py-2 text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors bg-transparent" id="phone" type="tel" value="+1 (555) 123-4567"/>
-</div>
-</div>
-</div>
-</section>
-<hr class="border-platinum"/>
-<!-- Contact Preferences Section -->
-<section class="grid grid-cols-1 md:grid-cols-3 gap-8">
-<div class="md:col-span-1">
-<h3 class="text-label-md font-label-md text-on-surface font-bold mb-2">Contact Preferences</h3>
-<p class="text-label-sm font-label-sm text-secondary">Manage how we communicate with you.</p>
-</div>
-<div class="md:col-span-2 space-y-4">
-<label class="flex items-center gap-3 cursor-pointer group">
-<input checked="" class="form-checkbox h-5 w-5 text-primary border-platinum rounded focus:ring-primary" type="checkbox"/>
-<span class="text-body-md font-body-md text-on-surface group-hover:text-primary transition-colors">Email Notifications</span>
-</label>
-<label class="flex items-center gap-3 cursor-pointer group">
-<input class="form-checkbox h-5 w-5 text-primary border-platinum rounded focus:ring-primary" type="checkbox"/>
-<span class="text-body-md font-body-md text-on-surface group-hover:text-primary transition-colors">SMS Alerts</span>
-</label>
-<label class="flex items-center gap-3 cursor-pointer group">
-<input checked="" class="form-checkbox h-5 w-5 text-primary border-platinum rounded focus:ring-primary" type="checkbox"/>
-<span class="text-body-md font-body-md text-on-surface group-hover:text-primary transition-colors">Weekly Digest Reports</span>
-</label>
-</div>
-</section>
-<hr class="border-platinum"/>
-<!-- Regional Preferences Section -->
-<section class="grid grid-cols-1 md:grid-cols-3 gap-8">
-<div class="md:col-span-1">
-<h3 class="text-label-md font-label-md text-on-surface font-bold mb-2">Regional Settings</h3>
-<p class="text-label-sm font-label-sm text-secondary">Set your timezone and date formatting.</p>
-</div>
-<div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-<div class="flex flex-col">
-<label class="text-label-md font-label-md text-deep-blue mb-2" for="timezone">Timezone</label>
-<select class="border border-platinum rounded px-4 py-2 text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors bg-transparent appearance-none" id="timezone">
-<option>Eastern Time (ET)</option>
-<option>Central Time (CT)</option>
-<option>Mountain Time (MT)</option>
-<option>Pacific Time (PT)</option>
-</select>
-</div>
-<div class="flex flex-col">
-<label class="text-label-md font-label-md text-deep-blue mb-2" for="dateformat">Date Format</label>
-<select class="border border-platinum rounded px-4 py-2 text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors bg-transparent appearance-none" id="dateformat">
-<option>MM/DD/YYYY</option>
-<option>DD/MM/YYYY</option>
-<option>YYYY-MM-DD</option>
-</select>
-</div>
-</div>
-</section>
-</form>
-</div>
-</main>
-</div>
-<!-- Persistent Action Button -->
-<div class="fixed bottom-8 right-8 z-50 hidden md:block">
-<button class="bg-primary text-surface-white px-8 py-3 rounded text-label-md font-label-md hover:bg-primary-container hover:shadow-hover transition-all flex items-center gap-2">
-<span class="material-symbols-outlined" data-icon="save">save</span>
-            Save Changes
-        </button>
-</div>
-<!-- Mobile Bottom Nav (Visible only on mobile) -->
-<nav class="md:hidden fixed bottom-0 left-0 w-full bg-surface-white border-t border-platinum flex justify-around items-center h-16 z-50">
-<button class="flex flex-col items-center justify-center w-full h-full text-primary border-t-2 border-primary">
-<span class="material-symbols-outlined" data-icon="person">person</span>
-<span class="text-[10px] font-label-sm mt-1">Profile</span>
-</button>
-<button class="flex flex-col items-center justify-center w-full h-full text-secondary">
-<span class="material-symbols-outlined" data-icon="settings">settings</span>
-<span class="text-[10px] font-label-sm mt-1">Settings</span>
-</button>
-</nav>
-</body></html>
+{% endblock %}

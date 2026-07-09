@@ -1,379 +1,212 @@
-<!-- Property View Modal -->
-<div class="modal fade" id="propertyViewModal" tabindex="-1" aria-labelledby="propertyViewModalLabel" aria-hidden="true"
-    aria-describedby="propertyViewModalDescription" role="dialog">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content" role="document">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="propertyViewModalLabel">
-                    <i class="fas fa-home me-2" aria-hidden="true"></i>
-                    <span id="property-title">Property Details</span>
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                    aria-label="Close property details dialog" title="Close dialog"></button>
-            </div>
+<!-- Property View Modal — Platinum Heritage (IDs preserved for property-view-modal.js) -->
+<div id="propertyViewModal"
+     class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]"
+     data-modal
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="propertyViewModalLabel"
+     aria-describedby="propertyViewModalDescription"
+     aria-hidden="true">
+    <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-5xl max-h-[90vh] flex flex-col"
+         role="document"
+         onclick="event.stopPropagation()">
 
-            <!-- Screen reader description -->
-            <div id="propertyViewModalDescription" class="visually-hidden">
-                Detailed view of property information including pricing, features, and specifications
-            </div>
+        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant bg-primary text-on-primary rounded-t-lg shrink-0">
+            <h2 id="propertyViewModalLabel" class="text-lg font-semibold flex items-center gap-2 min-w-0">
+                <span class="material-symbols-outlined text-[20px]">home</span>
+                <span id="property-title" class="truncate">Property details</span>
+            </h2>
+            <button type="button"
+                    data-modal-close
+                    data-bs-dismiss="modal"
+                    onclick="document.getElementById('propertyViewModal').classList.add('hidden'); document.body.style.overflow=''"
+                    class="p-2 rounded-lg hover:bg-white/10"
+                    aria-label="Close">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
 
-            <!-- Loading State -->
-            <div class="text-center py-5" id="propertyViewModal_loading" role="status" aria-live="polite"
-                aria-label="Loading property details">
-                <div class="spinner-border text-primary mb-3" role="status" aria-hidden="true">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <div class="text-muted">
-                    <i class="fas fa-search me-2"></i>
-                    Loading property details...
-                </div>
-            </div>
+        <div id="propertyViewModalDescription" class="sr-only">
+            Detailed view of property information including pricing, features, and specifications
+        </div>
 
-            <!-- Main Content -->
-            <div id="propertyViewModal_content" style="display: none;" role="main" aria-live="polite">
-                <div class="modal-body p-0">
-                    <!-- Property Header Section -->
-                    <div class="bg-light border-bottom p-4">
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <div class="d-flex align-items-center mb-2">
-                                    <span class="badge bg-primary me-2" id="property-type">House</span>
-                                    <span class="badge bg-secondary me-2" id="property-category">Residential</span>
-                                    <span class="badge bg-info" id="property-condition">Excellent</span>
-                                </div>
-                                <h6 class="text-muted mb-1">
-                                    <i class="fas fa-map-marker-alt me-1"></i>
-                                    <span id="property-address">Property Address</span>
-                                </h6>
-                                <div class="text-muted small">
-                                    <i class="fas fa-user me-1"></i>
-                                    Listed by: <span id="property-agent">Agent Name</span>
-                                </div>
-                            </div>
-                            <div class="col-md-4 text-md-end">
-                                <div class="property-price-display">
-                                    <!-- Sale Price Display -->
-                                    <div id="sale-price-display" style="display: none;">
-                                        <div class="h4 text-success mb-1" id="sale-price">$0</div>
-                                        <div class="text-muted small" id="sale-price-per-meter">$0/m²</div>
-                                    </div>
+        <div class="text-center py-12" id="propertyViewModal_loading" role="status">
+            <div class="inline-block h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p class="text-sm text-on-surface-variant">Loading property details…</p>
+        </div>
 
-                                    <!-- Rental Price Display (Iranian System) -->
-                                    <div id="rental-price-display" style="display: none;">
-                                        <div class="row text-center">
-                                            <div class="col-6">
-                                                <div class="text-success fw-bold" id="rahn-price">0 تومان</div>
-                                                <div class="text-muted small">رهن (Rahn)</div>
-                                            </div>
-                                            <div class="col-6">
-                                                <div class="text-info fw-bold" id="ejare-price">0 تومان</div>
-                                                <div class="text-muted small">اجاره (Ejare)</div>
-                                            </div>
-                                        </div>
-                                        <div class="text-muted small mt-1">
-                                            <div id="rahn-per-meter">0 تومان/m²</div>
-                                            <div id="ejare-per-meter">0 تومان/m²</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+        <div id="propertyViewModal_content" class="hidden flex flex-col min-h-0 flex-1 overflow-hidden" role="main">
+            <div class="px-5 py-4 border-b border-outline-variant bg-surface-container-low shrink-0">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="min-w-0">
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-primary text-on-primary" id="property-type">House</span>
+                            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-surface-container-highest text-on-surface" id="property-category">Residential</span>
+                            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium border border-outline-variant text-on-surface-variant" id="property-condition">Excellent</span>
                         </div>
+                        <p class="text-sm text-on-surface-variant flex items-start gap-1">
+                            <span class="material-symbols-outlined text-[16px] mt-0.5">location_on</span>
+                            <span id="property-address">Property address</span>
+                        </p>
+                        <p class="text-xs text-on-surface-variant mt-1">Listed by <span id="property-agent">Agent</span></p>
                     </div>
-
-                    <!-- Property Details Tabs -->
-                    <div class="container-fluid p-4">
-                        <ul class="nav nav-tabs mb-4" id="propertyDetailsTabs" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab"
-                                    data-bs-target="#overview" type="button" role="tab" aria-controls="overview"
-                                    aria-selected="true">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Overview
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="specifications-tab" data-bs-toggle="tab"
-                                    data-bs-target="#specifications" type="button" role="tab"
-                                    aria-controls="specifications" aria-selected="false">
-                                    <i class="fas fa-list-ul me-1"></i>
-                                    Specifications
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="features-tab" data-bs-toggle="tab"
-                                    data-bs-target="#features" type="button" role="tab" aria-controls="features"
-                                    aria-selected="false">
-                                    <i class="fas fa-star me-1"></i>
-                                    Features
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="location-tab" data-bs-toggle="tab"
-                                    data-bs-target="#location" type="button" role="tab" aria-controls="location"
-                                    aria-selected="false">
-                                    <i class="fas fa-map me-1"></i>
-                                    Location
-                                </button>
-                            </li>
-                        </ul>
-
-                        <div class="tab-content" id="propertyDetailsTabContent">
-                            <!-- Overview Tab -->
-                            <div class="tab-pane fade show active" id="overview" role="tabpanel"
-                                aria-labelledby="overview-tab" tabindex="0">
-                                <div class="row">
-                                    <div class="col-md-8">
-                                        <h6 class="text-primary mb-3">
-                                            <i class="fas fa-file-alt me-2"></i>
-                                            Description
-                                        </h6>
-                                        <div class="mb-4" id="property-description">
-                                            <p class="text-muted">Property description will be loaded here...</p>
-                                        </div>
-
-                                        <!-- Key Metrics -->
-                                        <h6 class="text-primary mb-3">
-                                            <i class="fas fa-chart-bar me-2"></i>
-                                            Key Metrics
-                                        </h6>
-                                        <div class="row g-3">
-                                            <div class="col-sm-6 col-lg-3">
-                                                <div class="card bg-light">
-                                                    <div class="card-body text-center py-3">
-                                                        <i class="fas fa-expand-arrows-alt text-primary fs-4 mb-2"></i>
-                                                        <div class="fw-bold" id="property-size">0</div>
-                                                        <small class="text-muted">Square Meters</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-sm-6 col-lg-3">
-                                                <div class="card bg-light">
-                                                    <div class="card-body text-center py-3">
-                                                        <i class="fas fa-bed text-success fs-4 mb-2"></i>
-                                                        <div class="fw-bold" id="property-bedrooms">0</div>
-                                                        <small class="text-muted">Bedrooms</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-sm-6 col-lg-3">
-                                                <div class="card bg-light">
-                                                    <div class="card-body text-center py-3">
-                                                        <i class="fas fa-bath text-info fs-4 mb-2"></i>
-                                                        <div class="fw-bold" id="property-bathrooms">0</div>
-                                                        <small class="text-muted">Bathrooms</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-sm-6 col-lg-3">
-                                                <div class="card bg-light">
-                                                    <div class="card-body text-center py-3">
-                                                        <i class="fas fa-car text-warning fs-4 mb-2"></i>
-                                                        <div class="fw-bold" id="property-parking">0</div>
-                                                        <small class="text-muted">Parking Spaces</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-4">
-                                        <!-- Property Image Placeholder -->
-                                        <div class="card">
-                                            <div class="card-header bg-secondary text-white">
-                                                <h6 class="card-title mb-0">
-                                                    <i class="fas fa-images me-2"></i>
-                                                    Property Images
-                                                </h6>
-                                            </div>
-                                            <div class="card-body text-center py-5">
-                                                <i class="fas fa-image text-muted fs-1 mb-3"></i>
-                                                <p class="text-muted">No images available</p>
-                                                <small class="text-muted">Images will be displayed here when
-                                                    available</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Specifications Tab -->
-                            <div class="tab-pane fade" id="specifications" role="tabpanel"
-                                aria-labelledby="specifications-tab" tabindex="0">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <h6 class="text-primary mb-3">
-                                            <i class="fas fa-building me-2"></i>
-                                            Building Details
-                                        </h6>
-                                        <table class="table table-borderless">
-                                            <tbody>
-                                                <tr>
-                                                    <td class="text-muted">Property Type:</td>
-                                                    <td class="fw-bold" id="spec-property-type">-</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted">Category:</td>
-                                                    <td class="fw-bold" id="spec-category">-</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted">Condition:</td>
-                                                    <td class="fw-bold" id="spec-condition">-</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted">Year Built:</td>
-                                                    <td class="fw-bold" id="spec-year-built">-</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted">Total Floors:</td>
-                                                    <td class="fw-bold" id="spec-floors">-</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted">Units:</td>
-                                                    <td class="fw-bold" id="spec-units">-</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <h6 class="text-primary mb-3">
-                                            <i class="fas fa-home me-2"></i>
-                                            Interior Details
-                                        </h6>
-                                        <table class="table table-borderless">
-                                            <tbody>
-                                                <tr>
-                                                    <td class="text-muted">Square Meters:</td>
-                                                    <td class="fw-bold" id="spec-size">-</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted">Bedrooms:</td>
-                                                    <td class="fw-bold" id="spec-bedrooms">-</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted">Bathrooms:</td>
-                                                    <td class="fw-bold" id="spec-bathrooms">-</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted">Parking Spaces:</td>
-                                                    <td class="fw-bold" id="spec-parking">-</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted">Neighborhood:</td>
-                                                    <td class="fw-bold" id="spec-neighborhood">-</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted">Listing Type:</td>
-                                                    <td class="fw-bold" id="spec-listing-type">-</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Features Tab -->
-                            <div class="tab-pane fade" id="features" role="tabpanel" aria-labelledby="features-tab"
-                                tabindex="0">
-                                <h6 class="text-primary mb-3">
-                                    <i class="fas fa-star me-2"></i>
-                                    Property Features
-                                </h6>
-                                <div id="property-features-list">
-                                    <div class="text-muted text-center py-4">
-                                        <i class="fas fa-list text-muted fs-1 mb-3"></i>
-                                        <p>No features listed for this property</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Location Tab -->
-                            <div class="tab-pane fade" id="location" role="tabpanel" aria-labelledby="location-tab"
-                                tabindex="0">
-                                <h6 class="text-primary mb-3">
-                                    <i class="fas fa-map-marker-alt me-2"></i>
-                                    Location Information
-                                </h6>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="card">
-                                            <div class="card-body">
-                                                <h6 class="card-title">
-                                                    <i class="fas fa-map me-2 text-primary"></i>
-                                                    Address Details
-                                                </h6>
-                                                <div class="mb-2">
-                                                    <strong>Full Address:</strong>
-                                                    <div class="text-muted" id="location-address">-</div>
-                                                </div>
-                                                <div class="mb-2">
-                                                    <strong>Neighborhood:</strong>
-                                                    <div class="text-muted" id="location-neighborhood">-</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="card">
-                                            <div class="card-body text-center py-5">
-                                                <i class="fas fa-map text-muted fs-1 mb-3"></i>
-                                                <p class="text-muted">Map integration coming soon</p>
-                                                <small class="text-muted">Interactive map will be displayed here</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="text-left md:text-right shrink-0">
+                        <div id="sale-price-display" class="hidden">
+                            <div class="text-2xl font-semibold text-primary tabular-nums" id="sale-price">$0</div>
+                            <div class="text-xs text-on-surface-variant" id="sale-price-per-meter">$0/m²</div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Modal Footer with Actions -->
-                <div class="modal-footer bg-light">
-                    <div class="d-flex justify-content-between w-100 align-items-center">
-                        <div class="text-muted small">
-                            <i class="fas fa-clock me-1"></i>
-                            Last updated: <span id="property-updated">-</span>
-                        </div>
-                        <div class="btn-group" role="group" aria-label="Property actions">
-                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"
-                                aria-label="Close dialog">
-                                <i class="fas fa-times me-1"></i>
-                                Close
-                            </button>
-                            <button type="button" class="btn btn-outline-primary" onclick="openPropertyFullDetails()"
-                                id="view-full-details-btn" title="Open full details page in new tab">
-                                <i class="fas fa-external-link-alt me-1"></i>
-                                Full Details
-                            </button>
-                            <button type="button" class="btn btn-outline-success" onclick="editPropertyFromModal()"
-                                id="edit-property-btn" title="Edit this property">
-                                <i class="fas fa-edit me-1"></i>
-                                Edit
-                            </button>
-                            <button type="button" class="btn btn-outline-info" onclick="sharePropertyFromModal()"
-                                id="share-property-btn" title="Share this property">
-                                <i class="fas fa-share-alt me-1"></i>
-                                Share
-                            </button>
+                        <div id="rental-price-display" class="hidden">
+                            <div class="grid grid-cols-2 gap-3 text-center">
+                                <div>
+                                    <div class="font-semibold text-primary" id="rahn-price">0</div>
+                                    <div class="text-xs text-on-surface-variant">Rahn</div>
+                                </div>
+                                <div>
+                                    <div class="font-semibold text-primary" id="ejare-price">0</div>
+                                    <div class="text-xs text-on-surface-variant">Ejare</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-on-surface-variant mt-1">
+                                <div id="rahn-per-meter">0 /m²</div>
+                                <div id="ejare-per-meter">0 /m²</div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Error State -->
-            <div id="propertyViewModal_error" class="alert alert-danger m-4 d-none" role="alert" aria-live="assertive"
-                aria-atomic="true">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <span id="propertyViewModal_error_message">Failed to load property details</span>
-                <div class="mt-2">
-                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="retryLoadProperty()"
-                        id="retry-load-btn">
-                        <i class="fas fa-redo me-1"></i>
-                        Retry
+            <div class="px-5 py-4 overflow-y-auto flex-1 min-h-0">
+                <ul class="flex flex-wrap gap-2 mb-4 border-b border-outline-variant pb-2" id="propertyDetailsTabs" role="tablist">
+                    <li role="presentation">
+                        <button type="button" class="ph-pv-tab px-3 py-1.5 rounded-lg text-sm font-medium bg-primary text-on-primary" id="overview-tab" data-pane="overview" aria-selected="true">Overview</button>
+                    </li>
+                    <li role="presentation">
+                        <button type="button" class="ph-pv-tab px-3 py-1.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container" id="specifications-tab" data-pane="specifications" aria-selected="false">Specs</button>
+                    </li>
+                    <li role="presentation">
+                        <button type="button" class="ph-pv-tab px-3 py-1.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container" id="features-tab" data-pane="features" aria-selected="false">Features</button>
+                    </li>
+                    <li role="presentation">
+                        <button type="button" class="ph-pv-tab px-3 py-1.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container" id="location-tab" data-pane="location" aria-selected="false">Location</button>
+                    </li>
+                </ul>
+
+                <div id="propertyDetailsTabContent">
+                    <div class="ph-pv-pane block" id="overview" role="tabpanel">
+                        <h3 class="text-sm font-semibold text-primary mb-2">Description</h3>
+                        <div class="mb-5 text-sm text-on-surface" id="property-description">
+                            <p class="text-on-surface-variant">Property description will load here…</p>
+                        </div>
+                        <h3 class="text-sm font-semibold text-primary mb-3">Key metrics</h3>
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div class="rounded-lg border border-outline-variant bg-background p-3 text-center">
+                                <div class="font-semibold text-primary tabular-nums" id="property-size">0</div>
+                                <div class="text-xs text-on-surface-variant mt-1">m²</div>
+                            </div>
+                            <div class="rounded-lg border border-outline-variant bg-background p-3 text-center">
+                                <div class="font-semibold text-primary tabular-nums" id="property-bedrooms">0</div>
+                                <div class="text-xs text-on-surface-variant mt-1">Beds</div>
+                            </div>
+                            <div class="rounded-lg border border-outline-variant bg-background p-3 text-center">
+                                <div class="font-semibold text-primary tabular-nums" id="property-bathrooms">0</div>
+                                <div class="text-xs text-on-surface-variant mt-1">Baths</div>
+                            </div>
+                            <div class="rounded-lg border border-outline-variant bg-background p-3 text-center">
+                                <div class="font-semibold text-primary tabular-nums" id="property-parking">0</div>
+                                <div class="text-xs text-on-surface-variant mt-1">Parking</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ph-pv-pane hidden" id="specifications" role="tabpanel">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                            <dl class="space-y-2">
+                                <div class="flex justify-between gap-3 border-b border-outline-variant/60 py-1.5"><dt class="text-on-surface-variant">Type</dt><dd class="font-medium" id="spec-property-type">—</dd></div>
+                                <div class="flex justify-between gap-3 border-b border-outline-variant/60 py-1.5"><dt class="text-on-surface-variant">Category</dt><dd class="font-medium" id="spec-category">—</dd></div>
+                                <div class="flex justify-between gap-3 border-b border-outline-variant/60 py-1.5"><dt class="text-on-surface-variant">Condition</dt><dd class="font-medium" id="spec-condition">—</dd></div>
+                                <div class="flex justify-between gap-3 border-b border-outline-variant/60 py-1.5"><dt class="text-on-surface-variant">Year built</dt><dd class="font-medium" id="spec-year-built">—</dd></div>
+                                <div class="flex justify-between gap-3 border-b border-outline-variant/60 py-1.5"><dt class="text-on-surface-variant">Floors</dt><dd class="font-medium" id="spec-floors">—</dd></div>
+                                <div class="flex justify-between gap-3 border-b border-outline-variant/60 py-1.5"><dt class="text-on-surface-variant">Units</dt><dd class="font-medium" id="spec-units">—</dd></div>
+                            </dl>
+                            <dl class="space-y-2">
+                                <div class="flex justify-between gap-3 border-b border-outline-variant/60 py-1.5"><dt class="text-on-surface-variant">Listing</dt><dd class="font-medium" id="spec-listing-type">—</dd></div>
+                                <div class="flex justify-between gap-3 border-b border-outline-variant/60 py-1.5"><dt class="text-on-surface-variant">Size</dt><dd class="font-medium" id="spec-size">—</dd></div>
+                                <div class="flex justify-between gap-3 border-b border-outline-variant/60 py-1.5"><dt class="text-on-surface-variant">Beds</dt><dd class="font-medium" id="spec-bedrooms">—</dd></div>
+                                <div class="flex justify-between gap-3 border-b border-outline-variant/60 py-1.5"><dt class="text-on-surface-variant">Baths</dt><dd class="font-medium" id="spec-bathrooms">—</dd></div>
+                                <div class="flex justify-between gap-3 border-b border-outline-variant/60 py-1.5"><dt class="text-on-surface-variant">Parking</dt><dd class="font-medium" id="spec-parking">—</dd></div>
+                                <div class="flex justify-between gap-3 border-b border-outline-variant/60 py-1.5"><dt class="text-on-surface-variant">Neighborhood</dt><dd class="font-medium" id="spec-neighborhood">—</dd></div>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="ph-pv-pane hidden" id="features" role="tabpanel">
+                        <div id="property-features-list" class="flex flex-wrap gap-2 text-sm text-on-surface-variant">
+                            Features will load here…
+                        </div>
+                    </div>
+
+                    <div class="ph-pv-pane hidden" id="location" role="tabpanel">
+                        <dl class="space-y-3 text-sm max-w-lg">
+                            <div>
+                                <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Address</dt>
+                                <dd class="font-medium mt-0.5" id="location-address">—</dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Neighborhood</dt>
+                                <dd class="font-medium mt-0.5" id="location-neighborhood">—</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-5 py-3 border-t border-outline-variant flex flex-wrap items-center justify-between gap-3 shrink-0 bg-surface-container-low/40">
+                <p class="text-xs text-on-surface-variant">Updated <span id="property-updated">—</span></p>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" id="share-property-btn"
+                            class="px-3 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container inline-flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[16px]">share</span> Share
                     </button>
+                    <button type="button" id="edit-property-btn"
+                            class="px-3 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container inline-flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[16px]">edit</span> Edit
+                    </button>
+                    <a href="#" id="view-full-details-btn"
+                       class="px-3 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90 inline-flex items-center gap-1">
+                        Full page
+                    </a>
                 </div>
             </div>
         </div>
+
+        <div id="propertyViewModal_error" class="hidden m-5 p-4 rounded-lg bg-error-container text-on-error-container text-sm" role="alert">
+            <span id="propertyViewModal_error_message">Failed to load property details</span>
+            <button type="button" id="retry-load-btn" class="ml-3 underline font-medium">Retry</button>
+        </div>
     </div>
 </div>
+
+<script>
+(function () {
+  const tabs = document.querySelectorAll('#propertyViewModal .ph-pv-tab');
+  const panes = document.querySelectorAll('#propertyViewModal .ph-pv-pane');
+  if (!tabs.length) return;
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-pane');
+      tabs.forEach(t => {
+        t.classList.remove('bg-primary', 'text-on-primary');
+        t.classList.add('text-on-surface-variant');
+        t.setAttribute('aria-selected', 'false');
+      });
+      btn.classList.add('bg-primary', 'text-on-primary');
+      btn.classList.remove('text-on-surface-variant');
+      btn.setAttribute('aria-selected', 'true');
+      panes.forEach(p => {
+        p.classList.toggle('hidden', p.id !== id);
+        p.classList.toggle('block', p.id === id);
+      });
+    });
+  });
+})();
+</script>

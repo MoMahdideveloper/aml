@@ -1,399 +1,411 @@
-{% extends get_template_variant('base.html') %}
+{% extends 'base.html' %}
 
-{% block title %}Agents - Stitch KPI{% endblock %}
-{% block page_title %}Agent Management{% endblock %}
+{% block title %}Agent Management - Platinum Heritage{% endblock %}
 
-{% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
-<li class="breadcrumb-item active" aria-current="page">Agents</li>
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        font-family: 'Material Symbols Outlined';
+    }
+    .card-hover { transition: all 0.3s ease; }
+    .card-hover:hover {
+        box-shadow: 0 8px 30px rgba(27, 38, 49, 0.06);
+        transform: translateY(-2px);
+    }
+    .agent-menu { display: none; }
+    .agent-menu.open { display: block; }
+</style>
 {% endblock %}
 
 {% block content %}
-<!-- Header Section -->
-<div class="bg-surface-white rounded-lg shadow-sm p-6">
-    <div class="border-l-4 border-primary/20 pl-4 mb-4">
-        <div class="flex items-center justify-between mb-4">
-            <div>
-                <h3 class="font-semibold text-on-surface">Agent Management</h3>
-                <p class="text-label-sm text-on-surface-variant">Manage your real estate agents and their performance</p>
-            </div>
-            <button onclick="document.getElementById('addAgentModal').classList.remove('hidden')"
-                    class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium">
-                <i class="fas fa-user-plus"></i>
-                <span>Add Agent</span>
-            </button>
-        </div>
+{% set agent_list = agents or [] %}
+{% set total_active = agent_list|sum(attribute='active_listings') %}
+{% set total_deals = agent_list|sum(attribute='total_deals') %}
+{% set total_pending = agent_list|sum(attribute='pending_deals') %}
+{% set total_tasks = agent_list|sum(attribute='pending_tasks') %}
+
+<!-- Header -->
+<header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
+    <div>
+        <p class="text-xs font-medium text-on-surface-variant uppercase tracking-[0.15em] mb-2">Team</p>
+        <h1 class="text-2xl md:text-3xl font-semibold text-primary mb-2">Agent management</h1>
+        <p class="text-sm md:text-base text-on-surface-variant">
+            Manage your real estate team, performance, and contact details.
+        </p>
     </div>
+    <button type="button" data-open-modal="addAgentModal"
+            class="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-lg text-sm font-medium hover:opacity-90 shadow-sm">
+        <span class="material-symbols-outlined text-[20px]">add</span>
+        Add new agent
+    </button>
+</header>
 
-    <!-- Agents Grid -->
-    <div class="grid gap-6">
-        {% if agents %}
-            {% for agent in agents %}
-            <div class="bg-surface-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow group">
-                <div class="flex flex-col items-center text-center">
-                    <!-- Agent Avatar -->
-                    <div class="flex h-12 w-12 items-center justify-center bg-primary/10 text-primary rounded-lg mb-4">
-                        {{ agent.name.split()[0][0] }}{{ agent.name.split()[-1][0] if agent.name.split()|length > 1 else '' }}
-                    </div>
+<!-- Team KPIs -->
+<section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wider mb-1">Agents</p>
+        <p class="text-2xl font-semibold text-primary tabular-nums">{{ agent_list|length }}</p>
+    </div>
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wider mb-1">Active listings</p>
+        <p class="text-2xl font-semibold text-primary tabular-nums">{{ total_active }}</p>
+    </div>
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wider mb-1">Open deals</p>
+        <p class="text-2xl font-semibold text-primary tabular-nums">{{ total_pending }}</p>
+        <p class="text-[11px] text-on-surface-variant mt-1">{{ total_deals }} total deals</p>
+    </div>
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+        <p class="text-xs text-on-surface-variant uppercase tracking-wider mb-1">Pending tasks</p>
+        <p class="text-2xl font-semibold text-primary tabular-nums">{{ total_tasks }}</p>
+    </div>
+</section>
 
-                    <!-- Agent Info -->
-                    <h3 class="font-medium text-on-surface mb-2">{{ agent.name }}</h3>
-                    <p class="text-label-sm text-on-surface-variant">{{ agent.specialization or "Real Estate Agent" }}</p>
+<!-- Search -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 mb-8 shadow-sm">
+    <div class="flex flex-col md:flex-row gap-3">
+        <div class="relative flex-1">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+            <input type="search" id="agentSearch" placeholder="Search by name, email, phone, or specialization…"
+                   class="w-full pl-10 pr-4 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary outline-none"
+                   autocomplete="off">
+        </div>
+        <select id="agentSort"
+                class="md:w-48 px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+            <option value="name">Sort: Name</option>
+            <option value="listings">Sort: Active listings</option>
+            <option value="deals">Sort: Deals</option>
+            <option value="tasks">Sort: Pending tasks</option>
+        </select>
+    </div>
+    <p id="agentFilterEmpty" class="hidden text-sm text-on-surface-variant text-center py-6">No agents match your search.</p>
+</section>
 
-                    <!-- Contact Info -->
-                    <div class="mt-4 text-left w-full">
-                        <div class="flex items-center mb-2">
-                            <i class="fas fa-envelope text-primary w-5"></i>
-                            <span class="text-on-surface-variant">{{ agent.email }}</span>
-                        </div>
-                        <div class="flex items-center mb-2">
-                            <i class="fas fa-phone text-primary w-5"></i>
-                            <span class="text-on-surface-variant">{{ agent.phone }}</span>
-                        </div>
-                    </div>
-
-                    <!-- Performance Metrics -->
-                    <div class="mt-6 grid grid-cols-3 gap-4 text-center w-full">
-                        <div>
-                            <p class="text-label-sm text-on-surface-variant">Active Listings</p>
-                            <p class="text-headline-md text-success font-bold">{{ agent.active_listings }}</p>
-                        </div>
-                        <div>
-                            <p class="text-label-sm text-on-surface-variant">Total Deals</p>
-                            <p class="text-headline-md text-warning font-bold">{{ agent.total_deals }}</p>
-                        </div>
-                        <div>
-                            <p class="text-label-sm text-on-surface-variant">Pending Tasks</p>
-                            <p class="text-headline-md text-info font-bold">{{ agent.pending_tasks }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Bio -->
-                    {% if agent.bio %}
-                    <div class="mt-6 text-left w-full">
-                        <p class="text-label-sm text-on-surface-variant">{{ agent.bio[:100] }}{% if agent.bio|length > 100 %}...{% endif %}</p>
-                    </div>
-                    {% endif %}
-
-                    <!-- Action Buttons -->
-                    <div class="mt-6 flex flex-col sm:flex-row sm:space-x-3 w-full">
-                        <button onclick="viewAgentDetails({{ agent.id }})"
-                                class="flex w-full sm:w-auto items-center justify-center gap-2 px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg transition-colors font-medium">
-                            <i class="fas fa-eye"></i>
-                            <span>View</span>
-                        </button>
-                        <button onclick="editAgent({{ agent.id }})"
-                                class="flex w-full sm:w-auto items-center justify-center gap-2 px-4 py-2 bg-success/10 text-success hover:bg-success/20 rounded-lg transition-colors font-medium">
-                            <i class="fas fa-edit"></i>
-                            <span>Edit</span>
-                        </button>
-                        <div class="relative w-full">
-                            <button id="agentActionsMenu{{ agent.id }}" class="flex w-full items-center justify-center gap-2 px-4 py-2 bg-secondary/10 text-on-surface-variant hover:bg-secondary/20 rounded-lg transition-colors font-medium" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-ellipsis-h"></i>
-                                <span>More Actions</span>
-                            </button>
-                            <div class="absolute right-0 mt-2 w-48 origin-top-right border-divider bg-surface-white shadow-lg rounded-md py-1 z-20 hidden" id="agentActionsMenuContent{{ agent.id }}">
-                                <div class="px-4 py-2 text-sm text-on-surface" role="none">
-                                    <a href="#" onclick="viewAgentListings({{ agent.id }})" class="block w-full text-left px-4 py-2">
-                                        <i class="fas fa-building me-2 text-primary"></i>View Listings
-                                    </a>
-                                </div>
-                                <div class="px-4 py-2 text-sm text-on-surface" role="none">
-                                    <a href="#" onclick="viewAgentDeals({{ agent.id }})" class="block w-full text-left px-4 py-2">
-                                        <i class="fas fa-handshake me-2 text-success"></i>View Deals
-                                    </a>
-                                </div>
-                                <div class="px-4 py-2 text-sm text-on-surface" role="none">
-                                    <a href="#" onclick="viewAgentTasks({{ agent.id }})" class="block w-full text-left px-4 py-2">
-                                        <i class="fas fa-tasks me-2 text-info"></i>View Tasks
-                                    </a>
-                                </div>
-                                <hr class="my-1 border-outline/20" role="none">
-                                <div class="px-4 py-2 text-sm text-on-surface" role="none">
-                                    <button onclick="confirmDeleteAgent({{ agent.id }})" class="block w-full text-left text-error px-4 py-2">
-                                        <i class="fas fa-trash me-2"></i>Delete
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+<!-- Agents Grid -->
+<div id="agentGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    {% for agent in agent_list %}
+    <article class="agent-card bg-surface-container-lowest border border-outline-variant rounded-xl p-6 card-hover flex flex-col"
+             data-name="{{ agent.name|lower }}"
+             data-email="{{ (agent.email or '')|lower }}"
+             data-phone="{{ agent.phone or '' }}"
+             data-spec="{{ (agent.specialization or '')|lower }}"
+             data-listings="{{ agent.active_listings or 0 }}"
+             data-deals="{{ agent.total_deals or 0 }}"
+             data-tasks="{{ agent.pending_tasks or 0 }}">
+        <div class="flex items-start justify-between mb-5 gap-2">
+            <div class="flex items-center gap-4 min-w-0">
+                <div class="w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center text-lg font-semibold flex-shrink-0 select-none">
+                    {{ agent.name.split()[0][0] }}{{ agent.name.split()[-1][0] if agent.name.split()|length > 1 else '' }}
+                </div>
+                <div class="min-w-0">
+                    <h2 class="text-lg font-semibold text-primary mb-1 truncate">
+                        <a href="{{ url_for('agents.agent_dashboard', agent_id=agent.id) }}" class="hover:underline">
+                            {{ agent.name }}
+                        </a>
+                    </h2>
+                    <span class="inline-block border border-outline-variant text-secondary text-xs px-2.5 py-0.5 rounded-full">
+                        {{ agent.specialization or 'Real estate agent' }}
+                    </span>
                 </div>
             </div>
-            {% endfor %}
-        {% else %}
-            <div class="flex flex-col items-center justify-center py-12 text-center">
-                <i class="fas fa-users text-primary/20 text-8xl"></i>
-                <p class="text-label-md text-on-surface-variant">No Agents Found</p>
-                <p class="text-label-sm text-on-surface-variant">Start building your team by adding your first agent.</p>
-                <button onclick="document.getElementById('addAgentModal').classList.remove('hidden')"
-                        class="flex items-center justify-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium gap-2">
-                    <i class="fas fa-user-plus"></i>
-                    <span>Add Your First Agent</span>
+            <div class="relative flex-shrink-0">
+                <button type="button"
+                        class="agent-menu-btn p-1.5 rounded-lg text-secondary hover:text-primary hover:bg-surface-container transition-colors"
+                        aria-label="More options for {{ agent.name }}"
+                        aria-expanded="false"
+                        data-menu="agent-menu-{{ agent.id }}">
+                    <span class="material-symbols-outlined">more_vert</span>
                 </button>
+                <div id="agent-menu-{{ agent.id }}"
+                     class="agent-menu absolute right-0 top-full mt-1 z-20 w-44 rounded-lg border border-outline-variant bg-surface-container-lowest shadow-ph py-1">
+                    <a href="{{ url_for('agents.agent_dashboard', agent_id=agent.id) }}"
+                       class="flex items-center gap-2 px-3 py-2 text-sm text-on-surface hover:bg-surface-container">
+                        <span class="material-symbols-outlined text-[18px]">dashboard</span> Dashboard
+                    </a>
+                    <button type="button" onclick="openAgentEdit({{ agent.id }}); closeAllAgentMenus();"
+                            class="w-full flex items-center gap-2 px-3 py-2 text-sm text-on-surface hover:bg-surface-container text-left">
+                        <span class="material-symbols-outlined text-[18px]">edit</span> Edit profile
+                    </button>
+                    <a href="mailto:{{ agent.email }}"
+                       class="flex items-center gap-2 px-3 py-2 text-sm text-on-surface hover:bg-surface-container">
+                        <span class="material-symbols-outlined text-[18px]">mail</span> Email
+                    </a>
+                    <a href="tel:{{ agent.phone }}"
+                       class="flex items-center gap-2 px-3 py-2 text-sm text-on-surface hover:bg-surface-container">
+                        <span class="material-symbols-outlined text-[18px]">call</span> Call
+                    </a>
+                    <form method="POST" action="{{ url_for('agents.delete_agent', agent_id=agent.id) }}"
+                          onsubmit="return confirm('Delete agent {{ agent.name|e }}? This cannot be undone if they have no deals/tasks.');">
+                        {% if csrf_token is defined %}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% endif %}
+                        <button type="submit"
+                                class="w-full flex items-center gap-2 px-3 py-2 text-sm text-error hover:bg-error/5 text-left">
+                            <span class="material-symbols-outlined text-[18px]">delete</span> Delete
+                        </button>
+                    </form>
+                </div>
             </div>
-        {% endif %}
+        </div>
+
+        <!-- Contact -->
+        <div class="space-y-1.5 mb-5 text-sm text-on-surface-variant">
+            <a href="mailto:{{ agent.email }}" class="flex items-center gap-2 hover:text-primary truncate">
+                <span class="material-symbols-outlined text-[16px] flex-shrink-0">mail</span>
+                <span class="truncate">{{ agent.email }}</span>
+            </a>
+            <a href="tel:{{ agent.phone }}" class="flex items-center gap-2 hover:text-primary">
+                <span class="material-symbols-outlined text-[16px] flex-shrink-0">call</span>
+                {{ agent.phone or '—' }}
+            </a>
+            {% if agent.bio %}
+            <p class="text-xs text-on-surface-variant line-clamp-2 pt-1">{{ agent.bio }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-2 border-t border-b border-outline-variant py-4 mb-5 mt-auto">
+            <div class="text-center px-1">
+                <p class="text-xl font-semibold text-primary tabular-nums">{{ agent.active_listings or 0 }}</p>
+                <p class="text-[10px] text-secondary uppercase tracking-wider">Active</p>
+            </div>
+            <div class="text-center px-1 border-x border-outline-variant">
+                <p class="text-xl font-semibold text-primary tabular-nums">{{ agent.total_deals or 0 }}</p>
+                <p class="text-[10px] text-secondary uppercase tracking-wider">Deals</p>
+            </div>
+            <div class="text-center px-1">
+                <p class="text-xl font-semibold text-primary tabular-nums">{{ agent.pending_tasks or 0 }}</p>
+                <p class="text-[10px] text-secondary uppercase tracking-wider">Tasks</p>
+            </div>
+        </div>
+        <p class="text-[11px] text-on-surface-variant mb-4 text-center">
+            {{ agent.pending_deals or 0 }} open deal{{ 's' if (agent.pending_deals or 0) != 1 }}
+        </p>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-between gap-3">
+            <a href="{{ url_for('agents.agent_dashboard', agent_id=agent.id) }}"
+               class="text-primary text-sm font-medium hover:underline">
+                View dashboard
+            </a>
+            <div class="flex gap-2">
+                <button type="button" onclick="openAgentEdit({{ agent.id }})"
+                        class="p-2 text-secondary hover:text-primary transition-colors border border-outline-variant rounded-lg"
+                        title="Edit agent">
+                    <span class="material-symbols-outlined text-[20px]">edit</span>
+                </button>
+                <form method="POST" action="{{ url_for('agents.delete_agent', agent_id=agent.id) }}" class="inline"
+                      onsubmit="return confirm('Delete agent {{ agent.name|e }}?');">
+                    {% if csrf_token is defined %}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% endif %}
+                    <button type="submit"
+                            class="p-2 text-secondary hover:text-error transition-colors border border-outline-variant rounded-lg"
+                            title="Delete agent">
+                        <span class="material-symbols-outlined text-[20px]">delete</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </article>
+    {% else %}
+    <div class="md:col-span-2 xl:col-span-3 flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-outline-variant rounded-xl">
+        <span class="material-symbols-outlined text-5xl text-outline mb-4">badge</span>
+        <p class="text-lg text-secondary mb-2">No agents yet</p>
+        <p class="text-sm text-on-surface-variant mb-6 max-w-sm">Add your first agent to assign listings, deals, and tasks.</p>
+        <button type="button" data-open-modal="addAgentModal"
+                class="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-2.5 rounded-lg text-sm font-medium hover:opacity-90">
+            <span class="material-symbols-outlined text-[18px]">add</span>
+            Add new agent
+        </button>
     </div>
+    {% endfor %}
 </div>
 
 <!-- Add Agent Modal -->
-<div id="addAgentModal" class="fixed inset-0 z-50 flex pointer-events-none">
-    <div class="w-full max-w-[600px] mx-auto mt-16 space-y-6 pointer-auto bg-surface-white rounded-lg shadow-xl p-6">
-        <div class="flex justify-between items-start mb-4">
-            <div class="flex items-center">
-                <i class="fas fa-user-plus text-primary text-2xl mr-3"></i>
-                <div>
-                    <h3 class="font-semibold text-on-surface">Add New Agent</h3>
-                    <p class="text-label-sm text-on-surface-variant">Complete the form below to add a new agent</p>
-                </div>
-            </div>
-            <button onclick="document.getElementById('addAgentModal').classList.add('hidden')"
-                    class="text-on-surface-variant hover:text-on-surface/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-primary/50">
-                <i class="fas fa-times"></i>
+<div id="addAgentModal"
+     class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]"
+     data-modal role="dialog" aria-modal="true" aria-labelledby="addAgentTitle">
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-ph w-full max-w-lg max-h-[90vh] flex flex-col"
+         onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
+            <h2 id="addAgentTitle" class="text-lg font-semibold text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined text-[20px]">person_add</span>
+                Add new agent
+            </h2>
+            <button type="button" data-modal-close
+                    onclick="window.PHModal ? PHModal.hide('addAgentModal') : document.getElementById('addAgentModal').classList.add('hidden')"
+                    class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" aria-label="Close">
+                <span class="material-symbols-outlined text-[20px]">close</span>
             </button>
         </div>
-
-        <form method="POST" action="{{ url_for('add_agent') }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
-
-            <!-- Basic Information -->
-            <div class="border-l-4 border-primary/20 pl-4 mb-6">
-                <div class="flex items-center mb-3">
-                    <i class="fas fa-user-contract text-primary text-xl mr-3"></i>
-                    <div>
-                        <p class="font-medium text-on-surface">Agent Information</p>
-                        <p class="text-label-sm text-on-surface-variant">Enter agent details</p>
-                    </div>
+        <form method="POST" action="{{ url_for('add_agent') }}" class="flex flex-col flex-1 min-h-0">
+            {% if csrf_token is defined %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% endif %}
+            <div class="px-5 py-4 space-y-4 overflow-y-auto">
+                <div>
+                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Full name *</label>
+                    <input type="text" name="name" required
+                           class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none"
+                           placeholder="e.g. Sarah Jenkins">
                 </div>
-                <div class="grid gap-4">
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Full Name *</label>
-                        <input type="text" id="name" name="name" required
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    </div>
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Specialization</label>
-                        <select id="specialization" name="specialization"
-                                class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                            <option value="">Select Specialization</option>
-                            <option value="Residential Properties">Residential Properties</option>
-                            <option value="Commercial Properties">Commercial Properties</option>
-                            <option value="Luxury Homes">Luxury Homes</option>
-                            <option value="First-Time Buyers">First-Time Buyers</option>
-                            <option value="Investment Properties">Investment Properties</option>
-                            <option value="New Construction">New Construction</option>
-                            <option value="Relocation Services">Relocation Services</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Email Address *</label>
-                        <input type="email" id="email" name="email" required
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    </div>
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Phone Number *</label>
-                        <input type="tel" id="phone" name="phone" required
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                               placeholder="e.g. (555) 123-4567">
-                    </div>
+                <div>
+                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Specialization</label>
+                    <input type="text" name="specialization"
+                           class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none"
+                           placeholder="e.g. Luxury residential">
                 </div>
-            </div>
-
-            <!-- Bio -->
-            <div class="border-l-4 border-success/20 pl-4 mb-6">
-                <div class="flex items-center mb-3">
-                    <i class="fas fa-align-left text-success text-xl mr-3"></i>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <p class="font-medium text-on-surface">Bio / Description</p>
-                        <p class="text-label-sm text-on-surface-variant">Tell us about the agent's experience and expertise</p>
+                        <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Email *</label>
+                        <input type="email" name="email" required
+                               class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none"
+                               placeholder="agent@example.com">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Phone *</label>
+                        <input type="tel" name="phone" required
+                               class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none"
+                               placeholder="+1 (555) 000-0000">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Bio</label>
-                    <textarea id="bio" name="bio" rows="4"
-                              class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                              placeholder="Tell us about the agent's experience, achievements, and expertise..."></textarea>
+                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Bio</label>
+                    <textarea name="bio" rows="3"
+                              class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none"
+                              placeholder="Short professional bio (optional)"></textarea>
                 </div>
             </div>
-
-            <div class="mt-6 pt-4 border-t border-outline/20">
-                <div class="flex justify-end">
-                    <button type="button" onclick="document.getElementById('addAgentModal').classList.add('hidden')"
-                            class="mr-4 px-4 py-2 bg-surface border border-outline/20 rounded-lg hover:bg-surface/50 transition-colors font-medium">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium flex-items-center justify-center gap-2">
-                        <i class="fas fa-save me-2"></i>
-                        Add Agent
-                    </button>
-                </div>
+            <div class="px-5 py-4 border-t border-outline-variant flex gap-3">
+                <button type="button" data-modal-close
+                        onclick="window.PHModal ? PHModal.hide('addAgentModal') : document.getElementById('addAgentModal').classList.add('hidden')"
+                        class="flex-1 border border-outline-variant text-primary rounded-lg py-2.5 text-sm font-medium hover:bg-surface-container">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="flex-1 bg-primary text-on-primary rounded-lg py-2.5 text-sm font-medium hover:opacity-90">
+                    Add agent
+                </button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Agent Details Modal -->
-<div id="agentDetailsModal" class="fixed inset-0 z-50 hidden pointer-events-none">
-    <div class="w-full max-w-[600px] mx-auto mt-16 space-y-6 pointer-auto bg-surface-white rounded-lg shadow-xl p-6">
-        <div class="flex justify-between items-start mb-4">
-            <div class="flex items-center">
-                <i class="fas fa-user text-primary text-2xl mr-3"></i>
-                <div>
-                    <h3 class="font-semibold text-on-surface">Agent Details</h3>
-                    <p class="text-label-sm text-on-surface-variant">View detailed agent information</p>
-                </div>
-            </div>
-            <button onclick="document.getElementById('agentDetailsModal').classList.add('hidden')"
-                    class="text-on-surface-variant hover:text-on-surface/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-primary/50">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
+{% include 'modals/agent_edit_modal.html' %}
+{% endblock %}
 
-        <div id="agentDetailsContent">
-            <!-- Content will be loaded dynamically -->
-            <div class="flex flex-col items-center justify-center py-8">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-                <p class="text-label-sm text-on-surface-variant">Loading agent details...</p>
-            </div>
-        </div>
-
-        <div class="mt-6 pt-4 border-t border-outline/20">
-            <div class="flex justify-end">
-                <button onclick="document.getElementById('agentDetailsModal').classList.add('hidden')"
-                        class="mr-4 px-4 py-2 bg-surface border border-outline/20 rounded-lg hover:bg-surface/50 transition-colors font-medium">
-                    Close
-                </button>
-                <button onclick="editAgentFromDetails()"
-                        class="ml-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium flex-items-center justify-center gap-2">
-                    <i class="fas fa-edit me-2"></i>
-                    Edit Agent
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
+{% block extra_js %}
 <script>
-// Agent Management Functions
-document.addEventListener('DOMContentLoaded', function() {
-    // Format phone number input
-    const phoneInput = document.getElementById('phone');
-    if (phoneInput) {
-        phoneInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length >= 6) {
-                value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
-            } else if (value.length >= 3) {
-                value = value.replace(/(\d{3})(\d{0,3})/, '($1) $2');
-            }
-            e.target.value = value;
-        });
-    }
+function closeEditModal() {
+  var modal = document.getElementById('agentEditModal');
+  if (!modal) return;
+  if (window.PHModal) PHModal.hide(modal);
+  else {
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+}
 
-    // Agent actions dropdowns
-    document.querySelectorAll('[id^="agentActionsMenu"]').forEach(button => {
-        button.addEventListener('click', function() {
-            const menuId = this.id.replace('agentActionsMenu', 'agentActionsMenuContent');
-            const menu = document.getElementById(menuId);
+function closeAllAgentMenus() {
+  document.querySelectorAll('.agent-menu').forEach(function (m) { m.classList.remove('open'); });
+  document.querySelectorAll('.agent-menu-btn').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
+}
 
-            // Close all other menus
-            document.querySelectorAll('[id^="agentActionsMenuContent"]').forEach(m => {
-                if (m.id !== menuId) {
-                    m.classList.add('hidden');
-                }
-            });
-
-            // Toggle this menu
-            menu.classList.toggle('hidden');
-        });
+async function openAgentEdit(agentId) {
+  var modal = document.getElementById('agentEditModal');
+  var form = document.getElementById('agentEditForm');
+  var loading = document.getElementById('agentEditModal_loading');
+  var err = document.getElementById('agentEditModal_error');
+  if (!modal || !form) return;
+  if (err) err.classList.add('hidden');
+  if (loading) loading.classList.remove('hidden');
+  if (window.PHModal) PHModal.show(modal);
+  else { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+  try {
+    var res = await fetch('/api/agents/' + agentId, {
+      headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
     });
-
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('[id^="agentActionsMenu"]')) {
-            document.querySelectorAll('[id^="agentActionsMenuContent"]').forEach(menu => {
-                menu.classList.add('hidden');
-            });
-        }
-    });
-});
-
-// Agent Functions
-function viewAgentDetails(agentId) {
-    // Show loading state
-    document.getElementById('agentDetailsContent').innerHTML = `
-        <div class="flex flex-col items-center justify-center py-8">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-            <p class="text-label-sm text-on-surface-variant">Loading agent details...</p>
-        </div>
-    `;
-    document.getElementById('agentDetailsModal').classList.remove('hidden');
-
-    // Simulate loading (in real app, this would be an AJAX call)
-    setTimeout(() => {
-        document.getElementById('agentDetailsContent').innerHTML = `
-            <div class="space-y-6">
-                <div class="flex flex-col items-center">
-                    <div class="flex h-16 w-16 items-center justify-center bg-primary/10 text-primary rounded-lg mb-4">
-                        AB
-                    </div>
-                    <h3 class="font-medium text-on-surface">Agent Name</h3>
-                    <p class="text-label-sm text-on-surface-variant">Real Estate Agent</p>
-                </div>
-
-                <div class="grid gap-4">
-                    <div class="border-l-4 border-primary/20 pl-4">
-                        <p class="text-label-sm text-on-surface-variant font-medium">Contact Information</p>
-                        <p class="text-on-surface-variant">agent@example.com</p>
-                        <p class="text-on-surface-variant">(555) 123-4567</p>
-                    </div>
-                    <div class="border-l-4 border-success/20 pl-4">
-                        <p class="text-label-sm text-on-surface-variant font-medium">Performance Metrics</p>
-                        <p class="text-on-surface-variant"><span class="font-medium">12</span> Active Listings</p>
-                        <p class="text-on-surface-variant"><span class="font-medium">45</span> Total Deals</p>
-                        <p class="text-on-surface-variant"><span class="font-medium">3</span> Pending Tasks</p>
-                    </div>
-                </div>
-
-                <div class="border-l-4 border-info/20 pl-4">
-                    <p class="text-label-sm text-on-surface-variant font-medium">Bio</p>
-                    <p class="text-on-surface-variant">Experienced real estate agent specializing in residential properties with a track record of successful transactions and satisfied clients.</p>
-                </div>
-            </div>
-        `;
-    }, 1500);
-}
-
-function editAgent(agentId) {
-    alert('Edit agent functionality would be implemented here for agent ID: ' + agentId);
-    // In a real app, this would populate the edit form with agent data
-}
-
-function editAgentFromDetails() {
-    document.getElementById('agentDetailsModal').classList.add('hidden');
-    // Would typically open edit form with current agent data
-    alert('Edit agent functionality would be implemented here');
-}
-
-function confirmDeleteAgent(agentId) {
-    if (confirm('Are you sure you want to delete this agent? This action cannot be undone.')) {
-        // In a real app, this would make a DELETE request
-        alert('Delete agent functionality would be implemented here for agent ID: ' + agentId);
+    if (!res.ok) throw new Error('Failed to load agent');
+    var data = await res.json();
+    form.action = '/agents/' + agentId + '/edit';
+    var set = function (id, val) {
+      var el = document.getElementById(id);
+      if (el) el.value = val != null ? val : '';
+    };
+    set('edit_agent_id', data.id);
+    set('edit_agent_name', data.name);
+    set('edit_agent_email', data.email);
+    set('edit_agent_phone', data.phone || '');
+    set('edit_agent_specialization', data.specialization);
+    set('edit_agent_bio', data.bio);
+    var phoneEl = document.getElementById('edit_agent_phone');
+    if (phoneEl && !phoneEl.value) phoneEl.value = 'n/a';
+  } catch (e) {
+    if (err) {
+      err.classList.remove('hidden');
+      var msg = document.getElementById('agentEditModal_error_message');
+      if (msg) msg.textContent = e.message || 'Error loading agent';
     }
+  } finally {
+    if (loading) loading.classList.add('hidden');
+  }
 }
 
-function viewAgentListings(agentId) {
-    alert('View agent listings functionality would be implemented here for agent ID: ' + agentId);
-    document.getElementById('agentActionsMenuContent' + agentId).classList.add('hidden');
-}
+(function () {
+  // Card menus
+  document.querySelectorAll('.agent-menu-btn').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var id = btn.getAttribute('data-menu');
+      var menu = document.getElementById(id);
+      var wasOpen = menu && menu.classList.contains('open');
+      closeAllAgentMenus();
+      if (menu && !wasOpen) {
+        menu.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+  document.addEventListener('click', closeAllAgentMenus);
 
-function viewAgentDeals(agentId) {
-    alert('View agent deals functionality would be implemented here for agent ID: ' + agentId);
-    document.getElementById('agentActionsMenuContent' + agentId).classList.add('hidden');
-}
+  // Search + sort
+  var search = document.getElementById('agentSearch');
+  var sort = document.getElementById('agentSort');
+  var grid = document.getElementById('agentGrid');
+  var empty = document.getElementById('agentFilterEmpty');
+  if (!grid) return;
 
-function viewAgentTasks(agentId) {
-    alert('View agent tasks functionality would be implemented here for agent ID: ' + agentId);
-    document.getElementById('agentActionsMenuContent' + agentId).classList.add('hidden');
-}
+  function applyFilterSort() {
+    var q = (search && search.value || '').toLowerCase().trim();
+    var cards = Array.prototype.slice.call(grid.querySelectorAll('.agent-card'));
+    var visible = 0;
+    cards.forEach(function (card) {
+      var hay = [card.dataset.name, card.dataset.email, card.dataset.phone, card.dataset.spec].join(' ');
+      var show = !q || hay.indexOf(q) !== -1;
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    if (empty) empty.classList.toggle('hidden', visible > 0 || !cards.length);
+
+    var key = sort ? sort.value : 'name';
+    var sorted = cards.slice().sort(function (a, b) {
+      if (key === 'name') return (a.dataset.name || '').localeCompare(b.dataset.name || '');
+      var av = parseInt(a.dataset[key] || '0', 10);
+      var bv = parseInt(b.dataset[key] || '0', 10);
+      return bv - av;
+    });
+    sorted.forEach(function (c) { grid.appendChild(c); });
+  }
+  if (search) search.addEventListener('input', applyFilterSort);
+  if (sort) sort.addEventListener('change', applyFilterSort);
+
+  // Deep link: /agents#edit-3
+  var hash = window.location.hash || '';
+  var m = hash.match(/^#edit-(\d+)$/);
+  if (m) openAgentEdit(parseInt(m[1], 10));
+})();
 </script>
 {% endblock %}

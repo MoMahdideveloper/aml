@@ -1,42 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Register</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Register · Platinum Heritage</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#142435",
+              "on-primary": "#ffffff",
+              "primary-container": "#2a3a4b",
+              background: "#f7f9ff",
+              "on-surface": "#111d27",
+              "on-surface-variant": "#44474c",
+              "outline-variant": "#c4c6cc",
+              "surface-white": "#FFFFFF",
+              "surface-container": "#e3effe",
+              error: "#ba1a1a",
+              "error-container": "#ffdad6",
+              "on-error-container": "#93000a"
+            },
+            fontFamily: { sans: ["IBM Plex Sans", "sans-serif"] },
+            boxShadow: { ph: "0 8px 30px rgba(27, 38, 49, 0.06)" }
+          }
+        }
+      };
+    </script>
 </head>
-<body class="bg-gray-100 flex h-screen items-center justify-center">
-    <div class="bg-white p-8 rounded shadow-md w-96">
-        <h2 class="text-2xl font-bold mb-6 text-center">Register</h2>
+<body class="min-h-screen flex items-center justify-center bg-background text-on-surface font-sans p-4">
+    <div class="w-full max-w-md p-6 md:p-8 bg-surface-white rounded-lg shadow-ph border border-outline-variant">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-semibold text-primary">Platinum Heritage</h1>
+            <p class="text-sm text-on-surface-variant mt-1">Create your account</p>
+        </div>
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, message in messages %}
-              <div class="mb-4 p-3 rounded {{ 'bg-green-100 text-green-800' if category=='success' else 'bg-red-100 text-red-800' }}">{{ message }}</div>
+              <div class="mb-4 p-3 rounded-lg text-sm {{ 'bg-error-container text-on-error-container' if category=='error' else 'bg-surface-container text-primary' }}">{{ message }}</div>
             {% endfor %}
           {% endif %}
         {% endwith %}
-        <form method="POST">
-            <div class="mb-4">
-                <label class="block text-gray-700 mb-2">Username</label>
-                <input type="text" name="username" required class="w-full px-3 py-2 border border-gray-300 rounded">
+        <form method="POST" action="{{ url_for('auth.register') }}" class="space-y-4">
+            {% if csrf_token is defined %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% endif %}
+            <div>
+                <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Username</label>
+                <input type="text" name="username" required
+                       class="w-full px-3 py-2.5 border border-outline-variant rounded-lg bg-background text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
             </div>
-            <div class="mb-4">
-                <label class="block text-gray-700 mb-2">Email</label>
-                <input type="email" name="email" required class="w-full px-3 py-2 border border-gray-300 rounded">
+            <div>
+                <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Email</label>
+                <input type="email" name="email" required
+                       class="w-full px-3 py-2.5 border border-outline-variant rounded-lg bg-background text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
             </div>
-            <div class="mb-4">
-                <label class="block text-gray-700 mb-2">Password</label>
-                <input type="password" name="password" required class="w-full px-3 py-2 border border-gray-300 rounded">
+            <div>
+                <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Password</label>
+                <input type="password" name="password" required
+                       class="w-full px-3 py-2.5 border border-outline-variant rounded-lg bg-background text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
             </div>
-            <div class="mb-4">
-                <label class="block text-gray-700 mb-2">Confirm Password</label>
-                <input type="password" name="confirm_password" required class="w-full px-3 py-2 border border-gray-300 rounded">
+            <div>
+                <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Confirm password</label>
+                <input type="password" name="confirm_password" required
+                       class="w-full px-3 py-2.5 border border-outline-variant rounded-lg bg-background text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
             </div>
-            <button type="submit" class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 rounded hover:bg-blue-600">
+            <button type="submit"
+                    class="w-full bg-primary text-on-primary px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
                 Register
             </button>
-            <p class="mt-4 text-center text-sm text-gray-500">
-                Already have an account? <a href="{{ url_for('auth.login') }}" class="text-blue-500 hover:underline">Login</a>
+            <p class="mt-2 text-center text-sm text-on-surface-variant">
+                Already have an account?
+                <a href="{{ url_for('auth.login') }}" class="text-primary font-medium hover:underline">Sign in</a>
             </p>
         </form>
     </div>

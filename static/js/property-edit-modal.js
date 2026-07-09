@@ -441,11 +441,16 @@ class PropertyEditModal {
                 
                 // Close modal after delay
                 setTimeout(() => {
-                    const modalInstance = bootstrap.Modal.getInstance(this.modal);
-                    if (modalInstance) {
-                        modalInstance.hide();
+                    if (this.modal) {
+                        this.modal.classList.add('hidden');
+                        this.modal.setAttribute('aria-hidden', 'true');
+                        document.body.style.overflow = '';
+                        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                            const modalInstance = bootstrap.Modal.getInstance(this.modal);
+                            if (modalInstance) modalInstance.hide();
+                        }
                     }
-                    
+
                     // Reload page to show updated data
                     setTimeout(() => {
                         window.location.reload();

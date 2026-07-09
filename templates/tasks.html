@@ -1,468 +1,299 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Tasks - Real Estate CRM{% endblock %}
-{% block page_title %}Task Management{% endblock %}
+{% block title %}Tasks - Platinum Heritage{% endblock %}
 
-{% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
-<li class="breadcrumb-item active" aria-current="page">Tasks</li>
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        font-family: 'Material Symbols Outlined';
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #c4c6cc; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #74777d; }
+</style>
 {% endblock %}
 
 {% block content %}
-<!-- Header Section -->
-<div class="d-flex justify-content-between align-items-center mb-4">
+<!-- Page Header -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
     <div>
-        <h4 class="mb-1">Task Management</h4>
-        <p class="text-muted mb-0">Manage and track agent tasks and activities</p>
+        <h1 class="font-display-lg text-display-lg text-primary">Tasks</h1>
+        <p class="font-body-md text-body-md text-on-surface-variant mt-2">Manage follow-ups, appointments, and action items</p>
     </div>
-    <div class="d-flex gap-2">
-        <button class="btn btn-outline-info" onclick="showTaskAnalytics()">
-            <i class="fas fa-chart-line me-2"></i>
-            Task Analytics
+    <button type="button" data-open-modal="taskModal"
+            class="bg-primary text-on-primary font-label-md text-label-md px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-inverse-surface transition-colors shadow-sm w-full md:w-auto justify-center">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+        Add New Task
+    </button>
+</section>
+
+<!-- Controls Toolbar -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6">
+    <!-- View Toggles -->
+    <div class="flex bg-surface-container p-1 rounded-lg">
+        <button class="px-4 py-2 rounded-lg bg-surface-container-lowest shadow-sm border border-outline-variant font-label-md text-label-md text-primary flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">format_list_bulleted</span>
+            List
         </button>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
-            <i class="fas fa-plus me-2"></i>
-            Add Task
+        <button class="px-4 py-2 rounded-lg font-label-md text-label-md text-secondary hover:text-primary transition-colors flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">calendar_month</span>
+            Calendar
+        </button>
+        <button class="px-4 py-2 rounded-lg font-label-md text-label-md text-secondary hover:text-primary transition-colors flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">view_kanban</span>
+            Board
         </button>
     </div>
-</div>
 
-<!-- Task Filters -->
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-3">
-                <label for="agentFilter" class="form-label">Filter by Agent</label>
-                <select class="form-select" id="agentFilter" onchange="filterTasks()">
-                    <option value="">All Agents</option>
-                    {% for agent in agents %}
-                    <option value="{{ agent.id }}" {{ 'selected' if request.args.get('agent') == agent.id|string }}>
-                        {{ agent.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="statusFilter" class="form-label">Filter by Status</label>
-                <select class="form-select" id="statusFilter" onchange="filterTasks()">
-                    <option value="">All Statuses</option>
-                    <option value="pending" {{ 'selected' if request.args.get('status') == 'pending' }}>Pending</option>
-                    <option value="completed" {{ 'selected' if request.args.get('status') == 'completed' }}>Completed</option>
-                    <option value="overdue" {{ 'selected' if request.args.get('status') == 'overdue' }}>Overdue</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="priorityFilter" class="form-label">Filter by Priority</label>
-                <select class="form-select" id="priorityFilter" onchange="filterTasks()">
-                    <option value="">All Priorities</option>
-                    <option value="high">High Priority</option>
-                    <option value="medium">Medium Priority</option>
-                    <option value="low">Low Priority</option>
-                </select>
-            </div>
-            <div class="col-md-3 d-flex align-items-end">
-                <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
-                    <i class="fas fa-times me-1"></i>
-                    Clear Filters
-                </button>
-            </div>
+    <!-- Filters & Search -->
+    <form method="GET" action="{{ url_for('tasks') }}" class="flex flex-wrap items-center gap-3 w-full xl:w-auto" id="taskFilterForm">
+        <div class="relative flex-1 xl:w-64">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[20px]">search</span>
+            <input type="text" name="search" value="{{ search or '' }}"
+                   class="w-full pl-10 pr-4 py-2 bg-surface rounded-lg border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface transition-colors"
+                   placeholder="Search tasks...">
         </div>
-    </div>
-</div>
+        <select name="date_filter"
+                class="py-2 pl-3 pr-8 bg-surface border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface appearance-none outline-none focus:border-primary cursor-pointer"
+                onchange="this.form.submit()">
+            <option value="">All Dates</option>
+            <option value="today" {{ 'selected' if date_filter == 'today' }}>Today</option>
+            <option value="week" {{ 'selected' if date_filter == 'week' }}>This Week</option>
+        </select>
+        <select name="priority"
+                class="py-2 pl-3 pr-8 bg-surface border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface appearance-none outline-none focus:border-primary cursor-pointer"
+                onchange="this.form.submit()">
+            <option value="">All Priorities</option>
+            <option value="urgent" {{ 'selected' if priority == 'urgent' }}>Urgent</option>
+            <option value="high" {{ 'selected' if priority == 'high' }}>High</option>
+            <option value="medium" {{ 'selected' if priority == 'medium' }}>Medium</option>
+            <option value="low" {{ 'selected' if priority == 'low' }}>Low</option>
+        </select>
+        <select name="status"
+                class="py-2 pl-3 pr-8 bg-surface border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface appearance-none outline-none focus:border-primary cursor-pointer"
+                onchange="this.form.submit()">
+            <option value="">All Statuses</option>
+            <option value="pending" {{ 'selected' if status == 'pending' }}>Pending</option>
+            <option value="in_progress" {{ 'selected' if status == 'in_progress' }}>In Progress</option>
+            <option value="completed" {{ 'selected' if status == 'completed' }}>Completed</option>
+        </select>
+    </form>
+</section>
 
-<!-- Task Status Overview -->
-<div class="row mb-4">
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="card bg-warning text-white">
-            <div class="card-body text-center">
-                <h4>{{ tasks | selectattr("status", "equalto", "pending") | list | length }}</h4>
-                <p class="mb-0">Pending Tasks</p>
-            </div>
+<!-- Task List -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-[0_8px_30px_rgba(27,38,49,0.02)]">
+    <!-- Column Headers (Desktop) -->
+    <div class="hidden lg:grid grid-cols-[40px_minmax(250px,1fr)_180px_140px_100px_120px_100px_40px] gap-4 p-4 border-b border-outline-variant bg-surface-container-low font-label-sm text-label-sm text-secondary uppercase tracking-wider">
+        <div class="flex items-center justify-center">
+            <span class="material-symbols-outlined text-[18px]">done_all</span>
         </div>
+        <div>Task Name</div>
+        <div>Related To</div>
+        <div>Due Date</div>
+        <div>Priority</div>
+        <div>Status</div>
+        <div>Assignee</div>
+        <div class="text-right">Actions</div>
     </div>
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="card bg-success text-white">
-            <div class="card-body text-center">
-                <h4>{{ tasks | selectattr("status", "equalto", "completed") | list | length }}</h4>
-                <p class="mb-0">Completed Tasks</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="card bg-danger text-white">
-            <div class="card-body text-center">
-                <h4>{{ tasks | selectattr("priority", "equalto", "high") | list | length }}</h4>
-                <p class="mb-0">High Priority</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="card bg-info text-white">
-            <div class="card-body text-center">
-                <h4>{{ tasks | length }}</h4>
-                <p class="mb-0">Total Tasks</p>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Tasks Grid -->
-<div class="row" id="tasksGrid">
-    {% if tasks %}
+    <!-- Task Rows -->
+    <div class="flex flex-col divide-y divide-outline-variant">
         {% for task in tasks %}
-        <div class="col-xl-4 col-lg-6 mb-4 task-card" 
-             data-agent="{{ task.agent_id }}" 
-             data-status="{{ task.status }}" 
-             data-priority="{{ task.priority }}">
-            <div class="card h-100 task-item">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div class="d-flex gap-2">
-                        <span class="badge bg-{{ 'danger' if task.priority == 'high' else 'warning' if task.priority == 'medium' else 'secondary' }}">
-                            {{ task.priority.title() }} Priority
-                        </span>
-                        <span class="badge bg-{{ 'success' if task.status == 'completed' else 'warning' if task.status == 'pending' else 'danger' }}">
-                            {{ task.status.title() }}
-                        </span>
-                    </div>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                            <i class="fas fa-ellipsis-h"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" onclick="editTask({{ task.id }})">
-                                <i class="fas fa-edit me-2"></i>Edit Task
-                            </a></li>
-                            {% if task.status == 'pending' %}
-                            <li><a class="dropdown-item" href="#" onclick="completeTask({{ task.id }})">
-                                <i class="fas fa-check-circle me-2"></i>Mark Complete
-                            </a></li>
-                            {% endif %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask({{ task.id }})">
-                                <i class="fas fa-trash me-2"></i>Delete
-                            </a></li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="card-body">
-                    <h5 class="card-title">{{ task.title }}</h5>
-                    <p class="card-text text-muted">{{ task.description }}</p>
-                    
-                    <!-- Assigned Agent -->
-                    <div class="mb-3">
-                        <div class="d-flex align-items-center">
-                            <div class="agent-avatar me-2">
-                                <div class="avatar-circle bg-primary text-white small-avatar">
-                                    {% if task.agent_obj %}
-                                    {{ task.agent_obj.name.split()[0][0] }}{{ task.agent_obj.name.split()[-1][0] if task.agent_obj.name.split()|length > 1 else '' }}
-                                    {% else %}
-                                    ?
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div>
-                                <div class="fw-semibold small">
-                                    {{ task.agent_obj.name if task.agent_obj else "Unassigned" }}
-                                </div>
-                                {% if task.agent_obj %}
-                                <small class="text-muted">{{ task.agent_obj.specialization or "Agent" }}</small>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Due Date -->
-                    {% if task.due_date %}
-                    <div class="mb-3">
-                        <small class="text-muted">
-                            <i class="fas fa-calendar-alt me-1"></i>
-                            Due: {{ task.due_date.strftime('%m/%d/%Y at %I:%M %p') }}
-                        </small>
-                        {% set days_until_due = (task.due_date.date() - current_date.date()).days %}
-                        {% if days_until_due < 0 %}
-                        <div class="small text-danger">
-                            <i class="fas fa-exclamation-triangle me-1"></i>
-                            Overdue by {{ -days_until_due }} day{{ 's' if -days_until_due != 1 }}
-                        </div>
-                        {% elif days_until_due == 0 %}
-                        <div class="small text-warning">
-                            <i class="fas fa-clock me-1"></i>
-                            Due today
-                        </div>
-                        {% elif days_until_due <= 3 %}
-                        <div class="small text-warning">
-                            <i class="fas fa-clock me-1"></i>
-                            Due in {{ days_until_due }} day{{ 's' if days_until_due != 1 }}
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-                    
-                    <!-- Creation Date -->
-                    <div class="mb-3">
-                        <small class="text-muted">
-                            <i class="fas fa-clock me-1"></i>
-                            Created: {{ task.created_at.strftime('%m/%d/%Y') }}
-                        </small>
-                    </div>
-                </div>
-                
-                <div class="card-footer bg-transparent">
-                    <div class="d-flex gap-2">
-                        {% if task.status == 'pending' %}
-                        <form method="POST" action="{{ url_for('complete_task', task_id=task.id) }}" class="flex-fill">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
-                            <button type="submit" class="btn btn-success btn-sm w-100">
-                                <i class="fas fa-check me-1"></i>
-                                Complete
-                            </button>
-                        </form>
-                        {% else %}
-                        <button class="btn btn-outline-success btn-sm flex-fill" disabled>
-                            <i class="fas fa-check-circle me-1"></i>
-                            Completed
-                        </button>
-                        {% endif %}
-                        <button class="btn btn-outline-primary btn-sm" onclick="viewTaskDetails({{ task.id }})">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
+        {% set is_overdue = task.due_date and task.due_date < now and task.status != 'completed' %}
+        {% set priority_badge = {
+            'urgent': 'bg-error-container text-error border-error/20',
+            'high':   'bg-primary text-on-primary border-transparent',
+            'medium': 'bg-surface-container-highest text-on-surface border-outline-variant',
+            'low':    'bg-surface text-secondary border-outline-variant',
+        } %}
+        {% set status_badge = {
+            'pending':     'bg-surface text-secondary border-outline-variant',
+            'in_progress': 'bg-surface-container-highest text-on-surface border-outline-variant',
+            'completed':   'bg-surface-container text-primary border-primary/20',
+        } %}
+        {% set p_cls = priority_badge.get(task.priority, priority_badge['low']) %}
+        {% set s_cls = status_badge.get(task.status, status_badge['pending']) %}
+
+        <div class="group flex flex-col lg:grid lg:grid-cols-[40px_minmax(250px,1fr)_180px_140px_100px_120px_100px_40px] gap-3 lg:gap-4 p-4 hover:bg-surface-container-low transition-colors items-start lg:items-center relative {{ 'opacity-60' if task.status == 'completed' }}">
+            <!-- Checkbox -->
+            <div class="absolute lg:relative top-4 lg:top-auto left-4 lg:left-auto flex items-center justify-center">
+                <form method="POST" action="{{ url_for('complete_task', task_id=task.id) }}" class="inline">
+                    <input type="checkbox"
+                           class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary cursor-pointer bg-surface transition-all"
+                           {{ 'checked' if task.status == 'completed' }}
+                           onchange="this.form.submit()">
+                </form>
             </div>
+
+            <!-- Task Name -->
+            <div class="pl-8 lg:pl-0">
+                <p class="font-body-md text-body-md text-on-surface font-medium group-hover:text-primary transition-colors cursor-pointer {{ 'line-through text-secondary' if task.status == 'completed' }}">
+                    {{ task.title }}
+                </p>
+                {% if task.description %}
+                <p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5 truncate max-w-xs">{{ task.description[:80] }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Related To -->
+            <div class="pl-8 lg:pl-0 flex items-center">
+                {% if task.property or task.customer %}
+                <span class="inline-flex items-center gap-1.5 px-2 py-1 bg-surface-container rounded-md font-label-sm text-label-sm text-on-surface-variant border border-outline-variant/50">
+                    <span class="material-symbols-outlined text-[14px]">{{ 'home' if task.property else 'person' }}</span>
+                    {{ (task.property.title if task.property else task.customer.name) | truncate(20, True, '…') }}
+                </span>
+                {% else %}
+                <span class="text-on-surface-variant font-label-sm text-label-sm">—</span>
+                {% endif %}
+            </div>
+
+            <!-- Due Date -->
+            <div class="pl-8 lg:pl-0 font-body-md text-body-md {{ 'text-error flex items-center gap-1' if is_overdue else 'text-on-surface-variant' }}">
+                {% if is_overdue %}
+                <span class="material-symbols-outlined text-[16px]">warning</span>
+                {% endif %}
+                {% if task.due_date %}
+                {{ task.due_date.strftime('%b %d, %Y') }}
+                {% else %}
+                <span class="text-on-surface-variant">—</span>
+                {% endif %}
+            </div>
+
+            <!-- Priority Badge -->
+            <div class="pl-8 lg:pl-0">
+                <span class="inline-block px-2 py-1 rounded-md font-label-sm text-label-sm border {{ p_cls }}">
+                    {{ task.priority.title() if task.priority else 'Low' }}
+                </span>
+            </div>
+
+            <!-- Status Badge -->
+            <div class="pl-8 lg:pl-0">
+                <span class="inline-block px-2 py-1 rounded-md font-label-sm text-label-sm border {{ s_cls }}">
+                    {{ task.status.replace('_', ' ').title() if task.status else 'Pending' }}
+                </span>
+            </div>
+
+            <!-- Assignee -->
+            <div class="pl-8 lg:pl-0 flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-label-sm text-label-sm border border-outline-variant flex-shrink-0">
+                    {{ task.agent.name.split()[0][0] ~ task.agent.name.split()[-1][0] if task.agent and task.agent.name.split()|length > 1 else (task.agent.name[0] if task.agent else '?') }}
+                </div>
+                <span class="hidden lg:inline-block font-body-md text-label-sm text-on-surface-variant truncate max-w-[80px]">
+                    {{ task.agent.name.split()[0] if task.agent else 'Unassigned' }}
+                </span>
+            </div>
+
+            <!-- Actions -->
+            <div class="absolute lg:relative top-4 lg:top-auto right-4 lg:right-auto flex items-center gap-1">
+                {% if task.status != 'completed' %}
+                <form method="POST" action="{{ url_for('complete_task', task_id=task.id) }}" class="inline" title="Mark complete">
+                    <button type="submit" class="p-1.5 text-secondary hover:text-primary transition-colors rounded border border-transparent hover:border-outline-variant">
+                        <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                    </button>
+                </form>
+                {% endif %}
+                <form method="POST" action="{{ url_for('tasks.delete_task', task_id=task.id) }}" class="inline"
+                      onsubmit="return confirm('Delete this task?');" title="Delete task">
+                    {% if csrf_token is defined %}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% endif %}
+                    <button type="submit" class="p-1.5 text-secondary hover:text-error transition-colors rounded border border-transparent hover:border-outline-variant">
+                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="flex flex-col items-center justify-center py-20 text-center">
+            <span class="material-symbols-outlined text-5xl text-outline mb-4">task_alt</span>
+            <p class="font-body-lg text-body-lg text-secondary mb-2">No tasks found</p>
+            <p class="font-body-md text-body-md text-on-surface-variant mb-6">
+                {% if search or priority or status %}Adjust your filters or {% endif %}add your first task
+            </p>
+            <button type="button" data-open-modal="taskModal"
+                    class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity">
+                Add New Task
+            </button>
         </div>
         {% endfor %}
-    {% else %}
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body text-center py-5">
-                    <i class="fas fa-tasks fa-4x text-muted mb-3"></i>
-                    <h5 class="text-muted">No Tasks Found</h5>
-                    <p class="text-muted">Create your first task to start managing agent activities.</p>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
-                        <i class="fas fa-plus me-2"></i>
-                        Create Your First Task
-                    </button>
-                </div>
-            </div>
-        </div>
-    {% endif %}
-</div>
+    </div>
+</section>
 
 <!-- Add Task Modal -->
-<div class="modal fade" id="addTaskModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">
-                    <i class="fas fa-plus me-2"></i>
-                    Add New Task
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST" action="{{ url_for('add_task') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Task Title *</label>
-                        <input type="text" class="form-control" id="title" name="title" required
-                               placeholder="e.g., Follow up with John Smith about property viewing">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description *</label>
-                        <textarea class="form-control" id="description" name="description" rows="3" required
-                                  placeholder="Provide detailed description of the task..."></textarea>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="agent_id" class="form-label">Assign to Agent *</label>
-                            <select class="form-select" id="agent_id" name="agent_id" required>
-                                <option value="">Select Agent</option>
-                                {% for agent in agents %}
-                                <option value="{{ agent.id }}">
-                                    {{ agent.name }} - {{ agent.specialization or "Agent" }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="priority" class="form-label">Priority</label>
-                            <select class="form-select" id="priority" name="priority">
-                                <option value="low">Low Priority</option>
-                                <option value="medium" selected>Medium Priority</option>
-                                <option value="high">High Priority</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="due_date" class="form-label">Due Date (Optional)</label>
-                        <input type="datetime-local" class="form-control" id="due_date" name="due_date">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-1"></i>
-                        Create Task
-                    </button>
-                </div>
-            </form>
+<div class="hidden fixed inset-0 z-[60] bg-on-surface/40 backdrop-blur-sm flex items-center justify-center px-margin-mobile" id="taskModal" data-modal>
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant w-full max-w-lg shadow-[0_8px_30px_rgba(27,38,49,0.06)] flex flex-col max-h-[90vh]">
+        <div class="flex justify-between items-center p-6 border-b border-outline-variant">
+            <h2 class="font-headline-md text-headline-md text-primary">Create New Task</h2>
+            <button data-modal-close
+                    data-modal-close onclick="window.PHModal ? PHModal.hide('taskModal') : document.getElementById('taskModal').classList.add('hidden')"
+                    class="text-secondary hover:text-primary transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
+
+        <form method="POST" action="{{ url_for('add_task') }}" class="p-6 overflow-y-auto flex flex-col gap-5" data-loading>
+            <div class="flex flex-col gap-2">
+                <label class="font-label-md text-label-md text-on-surface">Task Title *</label>
+                <input type="text" name="title" required
+                       class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                       placeholder="e.g. Schedule photography session">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label class="font-label-md text-label-md text-on-surface">Due Date</label>
+                    <input type="date" name="due_date"
+                           class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors text-secondary">
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="font-label-md text-label-md text-on-surface">Priority</label>
+                    <select name="priority"
+                            class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors appearance-none">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="font-label-md text-label-md text-on-surface">Assign To *</label>
+                <select name="agent_id" required
+                        class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors appearance-none">
+                    <option value="" disabled {% if not agents %}selected{% endif %}>Select agent…</option>
+                    {% for agent in agents %}
+                    <option value="{{ agent.id }}" {% if loop.first %}selected{% endif %}>{{ agent.name }}</option>
+                    {% endfor %}
+                </select>
+                {% if not agents %}
+                <p class="text-xs text-error">Add an agent before creating tasks.</p>
+                {% endif %}
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="font-label-md text-label-md text-on-surface">Description (Optional)</label>
+                <textarea name="description" rows="3"
+                          class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-none"
+                          placeholder="Add additional details..."></textarea>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2 border-t border-outline-variant mt-2">
+                <button type="button"
+                        data-modal-close onclick="window.PHModal ? PHModal.hide('taskModal') : document.getElementById('taskModal').classList.add('hidden')"
+                        class="px-6 py-2 border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container transition-colors">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-6 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-inverse-surface transition-colors shadow-sm">
+                    Save Task
+                </button>
+            </div>
+        </form>
     </div>
 </div>
-
-<!-- Task Analytics Modal -->
-<div class="modal fade" id="taskAnalyticsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title">
-                    <i class="fas fa-chart-line me-2"></i>
-                    Task Analytics
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="taskAnalyticsContent">
-                    <!-- Content will be loaded dynamically -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-function filterTasks() {
-    const agentFilter = document.getElementById('agentFilter').value;
-    const statusFilter = document.getElementById('statusFilter').value;
-    const priorityFilter = document.getElementById('priorityFilter').value;
-    
-    const taskCards = document.querySelectorAll('.task-card');
-    
-    taskCards.forEach(card => {
-        let show = true;
-        
-        if (agentFilter && card.dataset.agent !== agentFilter) {
-            show = false;
-        }
-        
-        if (statusFilter && card.dataset.status !== statusFilter) {
-            show = false;
-        }
-        
-        if (priorityFilter && card.dataset.priority !== priorityFilter) {
-            show = false;
-        }
-        
-        card.style.display = show ? '' : 'none';
-    });
-}
-
-function clearFilters() {
-    document.getElementById('agentFilter').value = '';
-    document.getElementById('statusFilter').value = '';
-    document.getElementById('priorityFilter').value = '';
-    filterTasks();
-}
-
-function completeTask(taskId) {
-    if (confirm('Mark this task as completed?')) {
-        // The form submission will handle this
-        document.querySelector(`form[action*="${taskId}"]`).submit();
-    }
-}
-
-function editTask(taskId) {
-    alert(`Edit task functionality would be implemented here for task ID: ${taskId}`);
-}
-
-function deleteTask(taskId) {
-    if (confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
-        alert(`Delete task functionality would be implemented here for task ID: ${taskId}`);
-    }
-}
-
-function viewTaskDetails(taskId) {
-    alert(`View task details functionality would be implemented here for task ID: ${taskId}`);
-}
-
-function showTaskAnalytics() {
-    const modal = new bootstrap.Modal(document.getElementById('taskAnalyticsModal'));
-    document.getElementById('taskAnalyticsContent').innerHTML = `
-        <div class="text-center">
-            <div class="spinner-border text-info" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2">Generating task analytics...</p>
-        </div>
-    `;
-    modal.show();
-    
-    // Simulate loading analytics
-    setTimeout(() => {
-        const totalTasks = {{ tasks|length }};
-        const completedTasks = {{ tasks | selectattr("status", "equalto", "completed") | list | length }};
-        const pendingTasks = {{ tasks | selectattr("status", "equalto", "pending") | list | length }};
-        const highPriorityTasks = {{ tasks | selectattr("priority", "equalto", "high") | list | length }};
-        const completionRate = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(1) : 0;
-        
-        document.getElementById('taskAnalyticsContent').innerHTML = `
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card bg-primary text-white">
-                        <div class="card-body text-center">
-                            <h3>${totalTasks}</h3>
-                            <p class="mb-0">Total Tasks</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-success text-white">
-                        <div class="card-body text-center">
-                            <h3>${completedTasks}</h3>
-                            <p class="mb-0">Completed</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-warning text-white">
-                        <div class="card-body text-center">
-                            <h3>${pendingTasks}</h3>
-                            <p class="mb-0">Pending</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-info text-white">
-                        <div class="card-body text-center">
-                            <h3>${completionRate}%</h3>
-                            <p class="mb-0">Completion Rate</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-3">
-                <h6>Task Performance Summary:</h6>
-                <ul class="list-unstyled">
-                    <li><i class="fas fa-check-circle text-success me-2"></i>Task completion rate: ${completionRate}%</li>
-                    <li><i class="fas fa-exclamation-triangle text-danger me-2"></i>High priority tasks: ${highPriorityTasks}</li>
-                    <li><i class="fas fa-clock text-warning me-2"></i>Pending tasks: ${pendingTasks}</li>
-                    <li><i class="fas fa-users text-info me-2"></i>Active agents: {{ agents|length }}</li>
-                </ul>
-            </div>
-        `;
-    }, 1500);
-}
-
-// Set minimum date for due date to current datetime
-document.getElementById('due_date').min = new Date().toISOString().slice(0, 16);
-</script>
 {% endblock %}

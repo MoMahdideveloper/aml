@@ -1,230 +1,95 @@
-<!-- Agent Edit Modal (Tailwind Version) -->
-<div id="agentEditModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-labelledby="agentEditModalLabel"
-    aria-describedby="agentEditModalDescription" aria-hidden="true" aria-modal="true">
-    <!-- Backdrop -->
-    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeEditModal()"></div>
+<!-- Agent Edit Modal — Platinum Heritage -->
+<div id="agentEditModal"
+     class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]"
+     data-modal
+     role="dialog"
+     aria-labelledby="agentEditModalLabel"
+     aria-describedby="agentEditModalDescription"
+     aria-hidden="true"
+     aria-modal="true">
+    <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-2xl max-h-[90vh] flex flex-col"
+         onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
+            <h2 id="agentEditModalLabel" class="text-lg font-semibold text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined text-[20px]">edit_square</span>
+                Edit agent
+            </h2>
+            <button type="button" onclick="typeof closeEditModal==='function'?closeEditModal():document.getElementById('agentEditModal').classList.add('hidden')"
+                    class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" aria-label="Close">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
 
-    <!-- Modal Panel -->
-    <div class="fixed inset-0 z-10 overflow-y-auto">
-        <div class="flex min-h-full items-center justify-center p-4">
-            <div
-                class="relative w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white dark:bg-[#1a2632] shadow-2xl transition-all">
+        <div class="px-5 py-4 overflow-y-auto flex-1">
+            <p id="agentEditModalDescription" class="sr-only">Update agent contact and specialization.</p>
 
-                <!-- Header -->
-                <div
-                    class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 px-6 py-4">
-                    <h5 class="text-lg font-bold text-[#111418] dark:text-white flex items-center gap-2"
-                        id="agentEditModalLabel">
-                        <span class="material-symbols-outlined text-primary">edit_square</span>
-                        Edit Agent
-                    </h5>
-                    <button onclick="closeEditModal()" data-bs-dismiss="modal"
-                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                        aria-label="Close edit agent modal">
-                        <span class="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-
-                <!-- Body -->
-                <div class="p-6">
-                    <p id="agentEditModalDescription" class="sr-only">Update agent details including contact information
-                        and specialization.</p>
-                    <!-- Loading State -->
-                    <div id="agentEditModal_loading" class="hidden flex-col items-center justify-center py-8">
-                        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-                        <p class="mt-4 text-sm text-gray-500">Loading agent data...</p>
-                    </div>
-
-                    <!-- Error State -->
-                    <div id="agentEditModal_error"
-                        class="hidden mb-6 bg-red-50 text-red-600 p-4 rounded-lg flex items-center gap-2">
-                        <span class="material-symbols-outlined">error</span>
-                        <span id="agentEditModal_error_message"></span>
-                    </div>
-
-                    <!-- Form -->
-                    <form id="agentEditForm" method="POST" class="space-y-6">
-                        <input type="hidden" name="csrf_token"
-                            value="{{ csrf_token() if csrf_token is defined else '' }}">
-                        <!-- Note: Method spoofing might be needed if backend strictly expects PUT, but typically POST works for updates in web forms if Flask route allows it or we use _method field -->
-                        <!-- Flask often uses a hidden _method input for PUT if not using AJAX with actual PUT method layout -->
-
-                        <!-- Actual JS below sends POST or PUT via fetch, so we are good. ensuring we send PUT in fetch options. -->
-
-                        <fieldset class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="space-y-1">
-                                <label for="edit_name"
-                                    class="text-xs font-bold text-[#617589] uppercase tracking-wider">Full Name
-                                    *</label>
-                                <input type="text" id="edit_name" name="name" required
-                                    class="w-full bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
-                                <p class="text-xs text-red-500 hidden mt-1" id="error_edit_name"></p>
-                            </div>
-
-                            <div class="space-y-1">
-                                <label for="edit_specialization"
-                                    class="text-xs font-bold text-[#617589] uppercase tracking-wider">Specialization</label>
-                                <select id="edit_specialization" name="specialization"
-                                    class="w-full bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
-                                    <option value="">Select Specialization</option>
-                                    <option value="Residential Properties">Residential Properties</option>
-                                    <option value="Commercial Properties">Commercial Properties</option>
-                                    <option value="Luxury Homes">Luxury Homes</option>
-                                    <option value="First-Time Buyers">First-Time Buyers</option>
-                                    <option value="Investment Properties">Investment Properties</option>
-                                    <option value="New Construction">New Construction</option>
-                                    <option value="Relocation Services">Relocation Services</option>
-                                </select>
-                            </div>
-
-                            <div class="space-y-1">
-                                <label for="edit_email"
-                                    class="text-xs font-bold text-[#617589] uppercase tracking-wider">Email Address
-                                    *</label>
-                                <input type="email" id="edit_email" name="email" required
-                                    class="w-full bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
-                                <p class="text-xs text-red-500 hidden mt-1" id="error_edit_email"></p>
-                            </div>
-
-                            <div class="space-y-1">
-                                <label for="edit_phone"
-                                    class="text-xs font-bold text-[#617589] uppercase tracking-wider">Phone Number
-                                    *</label>
-                                <input type="tel" id="edit_phone" name="phone" required
-                                    class="w-full bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
-                                <p class="text-xs text-red-500 hidden mt-1" id="error_edit_phone"></p>
-                            </div>
-                        </fieldset>
-
-                        <div class="space-y-1">
-                            <label for="edit_bio" class="text-xs font-bold text-[#617589] uppercase tracking-wider">Bio
-                                / Description</label>
-                            <textarea id="edit_bio" name="bio" rows="4"
-                                class="w-full bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                placeholder="Tell us about the agent's experience..."></textarea>
-                            <div class="flex justify-end mt-1">
-                                <span class="text-xs text-gray-400"><span id="edit_bio_count">0</span>/1000</span>
-                            </div>
-                        </div>
-
-                        <!-- Footer -->
-                        <div class="flex gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
-                            <button type="button" onclick="closeEditModal()" data-bs-dismiss="modal"
-                                class="flex-1 px-4 py-3 rounded-lg font-bold bg-gray-100 dark:bg-gray-800 text-[#111418] dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                                Cancel
-                            </button>
-                            <button type="submit" id="agentEditForm_submit"
-                                class="flex-1 px-4 py-3 rounded-lg font-bold bg-primary text-white shadow-lg shadow-primary/25 hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
-                                <span class="material-symbols-outlined text-lg">save</span>
-                                Save Changes
-                            </button>
-                        </div>
-                    </form>
-                </div>
+            <div id="agentEditModal_loading" class="hidden flex-col items-center justify-center py-8">
+                <div class="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <p class="mt-3 text-sm text-on-surface-variant">Loading agent…</p>
             </div>
+
+            <div id="agentEditModal_error" class="hidden mb-4 p-3 rounded-lg bg-error-container text-on-error-container text-sm flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">error</span>
+                <span id="agentEditModal_error_message"></span>
+            </div>
+
+            <form id="agentEditForm" method="POST" action="#" class="space-y-4">
+                {% if csrf_token is defined %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% endif %}
+                <input type="hidden" name="agent_id" id="edit_agent_id" value="">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit_agent_name" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Name *</label>
+                        <input type="text" id="edit_agent_name" name="name" required
+                               class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+                    </div>
+                    <div>
+                        <label for="edit_agent_email" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Email *</label>
+                        <input type="email" id="edit_agent_email" name="email" required
+                               class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                    </div>
+                    <div>
+                        <label for="edit_agent_phone" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Phone *</label>
+                        <input type="tel" id="edit_agent_phone" name="phone" required
+                               class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                    </div>
+                    <div>
+                        <label for="edit_agent_specialization" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Specialization</label>
+                        <input type="text" id="edit_agent_specialization" name="specialization"
+                               class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="edit_agent_bio" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Bio</label>
+                        <textarea id="edit_agent_bio" name="bio" rows="3"
+                                  class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none"
+                                  placeholder="Short bio (optional)"></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="px-5 py-4 border-t border-outline-variant flex justify-end gap-2">
+            <button type="button" onclick="typeof closeEditModal==='function'?closeEditModal():document.getElementById('agentEditModal').classList.add('hidden')"
+                    class="px-4 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container">
+                Cancel
+            </button>
+            <button type="submit" form="agentEditForm"
+                    class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90">
+                Save agent
+            </button>
         </div>
     </div>
 </div>
 
 <script>
-    // Global functions for modal control
-    window.closeEditModal = function () {
-        document.getElementById('agentEditModal').classList.add('hidden');
+window.closeEditModal = function () {
+    const modal = document.getElementById('agentEditModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
     }
-
-    window.editAgent = function (agentId) {
-        const modal = document.getElementById('agentEditModal');
-        const form = document.getElementById('agentEditForm');
-        const loadingEl = document.getElementById('agentEditModal_loading');
-        const errorEl = document.getElementById('agentEditModal_error');
-        const inputs = form.querySelectorAll('input, select, textarea');
-
-        // Show modal
-        modal.classList.remove('hidden');
-
-        // Reset state
-        form.reset();
-        form.dataset.agentId = agentId; // Store ID for submit
-        loadingEl.classList.remove('hidden');
-        form.style.opacity = '0.5';
-        form.style.pointerEvents = 'none';
-        errorEl.classList.add('hidden');
-
-        // Load data
-        fetch(`/agents/${agentId}/edit`, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-        })
-            .then(res => {
-                if (!res.ok) throw new Error('Failed to load agent');
-                return res.json();
-            })
-            .then(data => {
-                loadingEl.classList.add('hidden');
-                form.style.opacity = '1';
-                form.style.pointerEvents = 'auto';
-
-                const agent = data.agent;
-                document.getElementById('edit_name').value = agent.name || '';
-                document.getElementById('edit_email').value = agent.email || '';
-                document.getElementById('edit_phone').value = agent.phone || '';
-                document.getElementById('edit_specialization').value = agent.specialization || '';
-                document.getElementById('edit_bio').value = agent.bio || '';
-
-                // Trigger char count
-                document.getElementById('edit_bio').dispatchEvent(new Event('input'));
-            })
-            .catch(err => {
-                loadingEl.classList.add('hidden');
-                document.getElementById('agentEditModal_error_message').textContent = err.message;
-                errorEl.classList.remove('hidden');
-            });
-    }
-
-    // Form Submission
-    document.getElementById('agentEditForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        const form = e.target;
-        const agentId = form.dataset.agentId;
-        const submitBtn = document.getElementById('agentEditForm_submit');
-        const defaultBtnText = submitBtn.innerHTML;
-
-        // Loading state
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Saving...';
-
-        const formData = new FormData(form);
-
-        fetch(`/agents/${agentId}`, {
-            method: 'POST', // or PUT if your backend route requires it, usually Flask route handles POST for updates if configured
-            body: formData,
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-        })
-            .then(res => res.json().then(data => ({ status: res.status, body: data })))
-            .then(response => {
-                if (response.status >= 400) {
-                    // Error handling
-                    if (response.body.errors) {
-                        // Show field errors (simplified for this implementation)
-                        alert('Please check the form for errors.');
-                    } else {
-                        throw new Error(response.body.message || 'Update failed');
-                    }
-                } else {
-                    // Success
-                    window.location.reload();
-                }
-            })
-            .catch(err => {
-                alert(err.message);
-            })
-            .finally(() => {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = defaultBtnText;
-            });
-    });
-
-    // Bio Char Count
-    document.getElementById('edit_bio').addEventListener('input', function (e) {
-        document.getElementById('edit_bio_count').textContent = e.target.value.length;
-    });
+};
 </script>

@@ -6,10 +6,16 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:crud": "jest tests/test_crud_utils.js"
+    "test:crud": "jest tests/test_crud_utils.js",
+    "build:css": "tailwindcss -i ./static/css/tailwind-input.css -o ./static/css/tailwind-ph.css --minify",
+    "rebuild:css": "npm run build:css",
+    "watch:css": "tailwindcss -i ./static/css/tailwind-input.css -o ./static/css/tailwind-ph.css --watch",
+    "ci:css": "npm run build:css && node -e \"const fs=require('fs');const n=fs.statSync('static/css/tailwind-ph.css').size; if(n<10000) process.exit(1); console.log('css ok', n)\""
   },
   "devDependencies": {
-    "jest": "^29.0.0"
+    "@tailwindcss/forms": "^0.5.9",
+    "jest": "^29.0.0",
+    "tailwindcss": "^3.4.17"
   },
   "jest": {
     "testEnvironment": "node",

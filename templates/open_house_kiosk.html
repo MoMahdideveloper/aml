@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Open House · {{ property.title if property else 'Kiosk' }} · Platinum Heritage</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#142435",
+                        "on-primary": "#ffffff",
+                        secondary: "#5d5e5f",
+                        background: "#f7f9ff",
+                        surface: "#ffffff",
+                        "on-surface": "#111d27",
+                        "on-surface-variant": "#44474c",
+                        "outline-variant": "#c4c6cc",
+                        "surface-container-low": "#edf4ff",
+                    },
+                    fontFamily: { sans: ['"IBM Plex Sans"', "sans-serif"] },
+                },
+            },
+        };
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-family: 'Material Symbols Outlined';
+        }
+        .pref-pill.active {
+            background: #142435;
+            color: #fff;
+            border-color: #142435;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen font-sans antialiased">
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
+    {% for category, message in messages %}
+    <div class="rounded-lg border border-outline-variant bg-surface px-4 py-3 text-sm shadow-lg
+                {{ 'border-green-300' if category == 'success' else '' }}">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<div class="min-h-screen flex flex-col lg:flex-row">
+    {# Left: property showcase #}
+    <div class="relative lg:w-1/2 min-h-[40vh] lg:min-h-screen flex flex-col justify-end p-8 md:p-12 overflow-hidden bg-primary">
+        {% if property and property.image_filename %}
+        <div class="absolute inset-0 bg-cover bg-center opacity-60"
+             style="background-image: url('{{ url_for('static', filename='uploads/' + property.image_filename) }}')"></div>
+        {% else %}
+        <div class="absolute inset-0 bg-gradient-to-br from-primary via-primary to-[#2a3a4b]"></div>
+        {% endif %}
+        <div class="absolute inset-0 bg-gradient-to-t from-primary/95 via-primary/50 to-transparent"></div>
+        <div class="relative z-10 text-on-primary">
+            <span class="inline-block px-3 py-1 rounded-full border border-white/30 text-xs uppercase tracking-widest mb-4">
+                Welcome to open house
+            </span>
+            {% if property %}
+            <h1 class="text-3xl md:text-4xl font-bold leading-tight mb-2">{{ property.title }}</h1>
+            <p class="text-white/80 text-sm md:text-base mb-4">{{ property.address or '' }}</p>
+            <div class="flex flex-wrap items-center gap-3 text-sm md:text-base text-white/90">
+                {% if property.price %}
+                <span class="font-semibold text-lg">${{ "{:,.0f}".format(property.price) }}</span>
+                {% endif %}
+                {% if property.bedrooms %}<span>{{ property.bedrooms }} bed</span>{% endif %}
+                {% if property.bathrooms %}<span>{{ property.bathrooms }} bath</span>{% endif %}
+                {% if property.square_feet %}<span>{{ "{:,.0f}".format(property.square_feet) }} sqft</span>{% endif %}
+            </div>
+            {% else %}
+            <h1 class="text-3xl md:text-4xl font-bold mb-2">Open house check-in</h1>
+            <p class="text-white/80">Select a property to start guest registration.</p>
+            {% endif %}
+            <p class="mt-8 text-xs text-white/50">Platinum Heritage</p>
+        </div>
+    </div>
+
+    {# Right: form #}
+    <div class="lg:w-1/2 flex items-center justify-center p-6 md:p-12 bg-background">
+        <div class="w-full max-w-md bg-surface rounded-xl border border-outline-variant shadow-lg p-6 md:p-8">
+            {% if not property %}
+            <h2 class="text-xl font-semibold text-primary mb-2">Choose a listing</h2>
+            <p class="text-sm text-on-surface-variant mb-6">Open house kiosk for guest check-in.</p>
+            <form method="GET" action="{{ url_for('main.open_house_kiosk') }}" class="space-y-4">
+                <select name="property_id" required
+                        class="w-full h-12 px-4 border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                    <option value="">Select property…</option>
+                    {% for p in properties %}
+                    <option value="{{ p.id }}">{{ p.title }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="w-full h-12 bg-primary text-on-primary rounded-lg font-semibold hover:opacity-90">
+                    Continue
+                </button>
+            </form>
+            <a href="{{ url_for('dashboard') }}" class="block text-center text-xs text-on-surface-variant mt-6 hover:text-primary">← Back to CRM</a>
+            {% else %}
+            <h2 class="text-xl font-semibold text-primary mb-1">Guest check-in</h2>
+            <p class="text-sm text-on-surface-variant mb-6">
+                Sign in to receive floor plans and disclosures for this open house.
+            </p>
+            <form method="POST" action="{{ url_for('main.open_house_checkin', property_id=property.id) }}" class="space-y-4" id="kioskForm">
+                {% if csrf_token is defined %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% endif %}
+                <input type="hidden" name="status_tags" id="statusTags" value="">
+                <div>
+                    <label class="block text-xs font-medium text-on-surface-variant mb-1" for="fullName">Full name *</label>
+                    <input id="fullName" name="name" required type="text" placeholder="Jane Doe"
+                           class="w-full h-12 px-4 border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-on-surface-variant mb-1" for="phoneNumber">Mobile phone *</label>
+                    <input id="phoneNumber" name="phone" required type="tel" placeholder="(555) 123-4567"
+                           class="w-full h-12 px-4 border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-on-surface-variant mb-1" for="emailAddress">Email *</label>
+                    <input id="emailAddress" name="email" required type="email" placeholder="jane@example.com"
+                           class="w-full h-12 px-4 border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-on-surface-variant mb-2">Current status</label>
+                    <div class="flex flex-wrap gap-2" id="preference-pills">
+                        <button type="button" class="pref-pill px-3 py-1.5 rounded-full border border-outline-variant text-xs text-secondary hover:bg-surface-container-low" data-value="Actively looking to buy">Actively looking to buy</button>
+                        <button type="button" class="pref-pill px-3 py-1.5 rounded-full border border-outline-variant text-xs text-secondary hover:bg-surface-container-low" data-value="Working with an agent">Working with an agent</button>
+                        <button type="button" class="pref-pill px-3 py-1.5 rounded-full border border-outline-variant text-xs text-secondary hover:bg-surface-container-low" data-value="Just exploring">Just exploring</button>
+                    </div>
+                </div>
+                <button type="submit"
+                        class="w-full h-14 mt-2 bg-primary text-on-primary font-semibold rounded-lg hover:opacity-90 flex items-center justify-center gap-2">
+                    Complete check-in
+                    <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+                </button>
+            </form>
+            <div class="flex items-start gap-2 pt-5 mt-5 border-t border-outline-variant">
+                <span class="material-symbols-outlined text-secondary text-[16px]">shield</span>
+                <p class="text-xs text-on-surface-variant">Your information is saved to the Platinum Heritage CRM for the listing agent.</p>
+            </div>
+            <div class="mt-4 flex justify-between text-xs">
+                <a href="{{ url_for('main.open_house_kiosk') }}" class="text-on-surface-variant hover:text-primary">Change listing</a>
+                <a href="{{ url_for('properties.property_detail', property_id=property.id) }}" class="text-on-surface-variant hover:text-primary">Agent view</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<script>
+(function () {
+    var tags = [];
+    document.querySelectorAll('.pref-pill').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var v = btn.getAttribute('data-value');
+            var i = tags.indexOf(v);
+            if (i >= 0) { tags.splice(i, 1); btn.classList.remove('active'); }
+            else { tags.push(v); btn.classList.add('active'); }
+            var input = document.getElementById('statusTags');
+            if (input) input.value = tags.join('|');
+        });
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,48 +1,129 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Real Estate CRM{% endblock %}</title>
+    <meta name="theme-color" content="#142435">
+    <title>{% block title %}Platinum Heritage{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+    {% if csrf_token is defined %}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    {% endif %}
 
-    <!-- Stitch Design System CSS -->
     <link href="{{ url_for('static', filename='css/stitch.css') }}" rel="stylesheet">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
 
-    <!-- Tailwind CSS CDN -->
+    {# Production: prebuilt Tailwind (npm run build:css). Dev can force CDN with USE_TAILWIND_CDN=1. #}
+    {% if config.get('USE_TAILWIND_CDN') %}
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error-red": "#BA1A1A",
+              "on-primary-container": "#93a4b8",
+              "on-primary-fixed-variant": "#38485a",
+              "on-tertiary-fixed": "#1c1c14",
+              "outline": "#74777d",
+              "primary-fixed": "#d3e4fa",
+              "surface-container": "#e3effe",
+              "primary-fixed-dim": "#b7c8dd",
+              "surface-white": "#FFFFFF",
+              "tertiary-fixed": "#e5e3d6",
+              "tertiary-fixed-dim": "#c8c7bb",
+              "on-primary-fixed": "#0c1d2d",
+              "primary": "#142435",
+              "tertiary-container": "#393930",
+              "secondary-container": "#e0dfdf",
+              "inverse-primary": "#b7c8dd",
+              "surface-variant": "#d8e4f3",
+              "tertiary": "#23241c",
+              "on-secondary-fixed": "#1a1c1c",
+              "on-background": "#111d27",
+              "error": "#ba1a1a",
+              "on-primary": "#ffffff",
+              "surface-container-highest": "#d8e4f3",
+              "background": "#f7f9ff",
+              "on-secondary": "#ffffff",
+              "surface-container-low": "#edf4ff",
+              "secondary-fixed-dim": "#c6c6c6",
+              "on-secondary-container": "#626363",
+              "surface-dim": "#d0dbea",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-high": "#dee9f8",
+              "error-container": "#ffdad6",
+              "on-tertiary-fixed-variant": "#47473e",
+              "inverse-on-surface": "#e8f2ff",
+              "on-error-container": "#93000a",
+              "inverse-surface": "#26313d",
+              "secondary-fixed": "#e3e2e2",
+              "on-surface-variant": "#44474c",
+              "on-surface": "#111d27",
+              "primary-container": "#2a3a4b",
+              "outline-variant": "#c4c6cc",
+              "on-tertiary": "#ffffff",
+              "secondary": "#5d5e5f",
+              "on-error": "#ffffff",
+              "surface-tint": "#506072",
+              "on-tertiary-container": "#a3a297",
+              "on-secondary-fixed-variant": "#464747",
+              "surface-bright": "#f7f9ff",
+              "surface": "#f7f9ff"
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px"
+            },
+            fontFamily: {
+              headline: ["IBM Plex Sans", "sans-serif"],
+              body: ["IBM Plex Sans", "sans-serif"],
+              label: ["IBM Plex Sans", "sans-serif"]
+            },
+            boxShadow: {
+              ph: "0 8px 30px rgba(27, 38, 49, 0.06)"
+            }
+          }
+        }
+      };
+    </script>
+    {% else %}
+    <link href="{{ url_for('static', filename='css/tailwind-ph.css') }}" rel="stylesheet">
+    {% endif %}
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+        font-family: "Material Symbols Outlined", sans-serif;
+        vertical-align: middle;
+      }
+      body { font-family: "IBM Plex Sans", sans-serif; }
+    </style>
 
     {% block extra_css %}{% endblock %}
 </head>
-<body class="flex min-h-screen flex-col bg-[var(--background)]">
-    <!-- Flash Messages Component -->
+<body class="flex min-h-screen flex-col bg-background text-on-surface">
     {% include 'components/_flash_messages.html' %}
 
-    <!-- Main Layout -->
-    <div class="flex flex-1 overflow-hidden bg-[var(--background)]">
-        <!-- Sidebar Component (Desktop) -->
+    <div class="flex flex-1 overflow-hidden bg-background min-h-0">
         {% include 'components/_sidebar.html' %}
 
-        <!-- Main Content Area -->
         <main class="flex-1 min-w-0 flex flex-col overflow-hidden">
-            <!-- Mobile Header Component -->
             {% include 'components/_mobile_header.html' %}
 
-            <!-- Page Content -->
             <div class="flex-1 overflow-y-auto">
-                <div class="p-4 lg:p-6">
+                <div class="p-4 lg:p-6 max-w-[1280px] mx-auto w-full">
                     {% block content %}{% endblock %}
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- JavaScript -->
     <script src="{{ url_for('static', filename='js/app-core.js') }}"></script>
     {% block scripts %}{% endblock %}
     {% block extra_js %}{% endblock %}

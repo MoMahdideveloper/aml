@@ -77,6 +77,9 @@ celerybeat-schedule
 
 # Environments
 .env
+.env.local
+.env.*.local
+!.env.example
 .venv
 env/
 venv/
@@ -127,6 +130,16 @@ chroma_db/
 # Runtime / local process artifacts
 *.pid
 *.out
+*.err
+celerybeat-schedule.*
+celery_broker.db
+celery_results.db
+
+# Local agent / tooling noise
+.playwright-mcp/
+audit-*.png
+tmp/
+%CLAUDE_CODE_TMPDIR%/
 *.err
 .env.backup
 nul

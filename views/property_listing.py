@@ -310,33 +310,27 @@ def properties():
     )
 
 
-@bp.route("/properties/map")
 def map_view():
-    """Interactive map view of all properties with location data"""
+    """Interactive map view of all properties with location data.
+
+    Uses stored lat/lng when present; otherwise stable approximate pins
+    derived from address/neighborhood (see services.geo_service).
+    """
     import json as _json
+    from services.geo_service import serialize_for_map
+
     all_properties = Property.query.filter(Property.is_deleted.is_(False)).all()
-    properties_json = _json.dumps([
-        {
-            "id": p.id,
-            "title": p.title,
-            "address": p.address,
-            "price": p.price,
-            "property_type": p.property_type,
-            "listing_type": p.listing_type,
-            "rahn": p.rahn,
-            "ejare": p.ejare,
-            "bedrooms": p.bedrooms,
-            "square_feet": p.square_feet,
-            "latitude": p.latitude,
-            "longitude": p.longitude,
-            "file_code": p.file_code,
-            "has_elevator": p.has_elevator,
-            "has_storage": p.has_storage,
-            "image_filename": p.image_filename,
-        }
-        for p in all_properties
-    ])
-    return render_template("map_view.html", properties_json=properties_json)
+    payload = [serialize_for_map(p) for p in all_properties]
+    exact = sum(1 for p in payload if not p.get("approx"))
+    approx = sum(1 for p in payload if p.get("approx"))
+    properties_json = _json.dumps(payload, ensure_ascii=False)
+    return render_template(
+        "map_view.html",
+        properties_json=properties_json,
+        map_exact_count=exact,
+        map_approx_count=approx,
+        map_total=len(payload),
+    )
 
 
 @bp.route("/api/properties/smart-search")

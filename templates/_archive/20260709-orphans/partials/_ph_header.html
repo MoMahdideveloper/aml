@@ -1,0 +1,46 @@
+{## Platinum Heritage Shared Header ##}
+{# This component contains the top navigation bar pattern used across Platinum Heritage screens #}
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-desktop h-20 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline flat no shadows">
+    <div class="flex items-center gap-12">
+        <!-- Brand/Logo -->
+        <div class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed tracking-tight">
+            LUXE ESTATE
+        </div>
+        
+        <!-- Desktop Navigation Links -->
+        <nav class="hidden md:flex gap-8">
+            <!-- These links will be overridden by individual pages using the 'active-link' class -->
+            <a href="{{ url_for('dashboard') }}" class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md dashboard-nav-link">Dashboard</a>
+            <a href="{{ url_for('properties') }}" class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md properties-nav-link">Properties</a>
+            <a href="{{ url_for('deals') }}" class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md deals-nav-link">Deals</a>
+            <a href="{{ url_for('customers') }}" class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md customers-nav-link">Customers</a>
+            <a href="{{ url_for('recommendations') }}" class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md recommendations-nav-link">AI Recommendations</a>
+            <a href="{{ url_for('analytics') }}" class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md analytics-nav-link">Analytics</a>
+        </nav>
+    </div>
+    
+    <div class="flex items-center gap-6">
+        <!-- Action Buttons -->
+        <button class="bg-primary-container text-on-primary-container px-6 py-2 rounded font-label-md text-label-md hover:opacity-90 transition-opacity">
+            List Property
+        </button>
+        
+        <!-- User Actions (Notifications, Settings, Profile) -->
+        <div class="flex items-center gap-4 text-primary dark:text-primary-fixed">
+            <!-- Notifications -->
+            <button aria-label="notifications" class="hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200">
+                <span class="material-symbols-outlined">notifications</span>
+            </button>
+            
+            <!-- Settings -->
+            <button aria-label="settings" class="hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200">
+                <span class="material-symbols-outlined">settings</span>
+            </button>
+            
+            <!-- User Profile -->
+            <img alt="Executive Profile" class="w-10 h-10 rounded-full border border-outline-variant object-cover" 
+                 data-alt="A professional headshot of a corporate executive in a modern office setting. The lighting is bright and clear, reflecting a sophisticated corporate environment. The image is framed as a circular profile avatar, conveying trust and authority in a high-end real estate context."
+                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuCly13v5haFsj6WT-1KzFpOCtUGz6mOeQE_Ne6qiLukGhrnyyIs8s2baCKdpDAnoryCh3Iz1xTWJq8rQ9iFm_lwPCaqER5Nj8joRKr8zW2X2QIzWh1Upj5y0C1UwCaMAn33GB0RNoA6kKfwr0VwegT5KxDwX3OjOpSRu5_8TCXiwtoSFOYq7zAzML505R0M2m1ztg6Jk0eBWEIc6vnzvp96PC-x_nZhmzu5k_2-fy-7UuZIw7iudkb4HGFOYPuoiTgtcbe1KuWTtQ"/>
+        </div>
+    </div>
+</header>

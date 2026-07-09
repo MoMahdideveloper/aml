@@ -12,7 +12,7 @@ from sqlalchemy.orm import selectinload
 
 from database import db
 from repositories import CustomerRepository, PropertyRepository, DashboardStatisticsRepository
-from sqlalchemy_models import Agent, Customer, Deal, Property, Task, PropertyAIHistory
+from sqlalchemy_models import Agent, Customer, Deal, Property, Task, PropertyAIHistory, User, PropertyActivityLog
 from database_transaction_manager import with_transaction, safe_database_operation, database_transaction
 from utils.execution_tracer import log_execution
 
@@ -322,14 +322,35 @@ class DatabaseService:
     
     @log_execution
     def validate_property_access(self, property_id: int, user_id: Optional[int] = None) -> bool:
-        """Validate if user has access to the property (placeholder for future user system)"""
-        # For now, all properties are accessible
-        # TODO: Implement user-based access control when user system is ready
+        """Validate if user has access to the property based on their role and relationship to the property."""
         try:
+            # If no user ID provided, deny access
+            if user_id is None:
+                return False
+
+            # Get the user
+            user = db.session.get(User, user_id)
+            if not user:
+                return False
+
+            # Get the property
             property_obj = self.get_property(property_id)
-            return property_obj is not None
+            if not property_obj:
+                return False
+
+            # Admin can access any property
+            if user.role == "admin":
+                return True
+
+            # Agent can access only properties they are assigned to
+            if user.role == "agent":
+                return property_obj.agent_id == user_id
+
+            # For other roles (e.g., viewer), we might allow viewing active properties only
+            # For now, we'll deny access to non-admin/non-agent users
+            return False
         except Exception as e:
-            self.logger.error(f"Error validating property access for {property_id}: {str(e)}")
+            self.logger.error(f"Error validating property access for property {property_id} and user {user_id}: {str(e)}")
             return False
 
     @log_execution
@@ -473,14 +494,36 @@ class DatabaseService:
         # Check for AI extraction flag and save history if present
         is_ai_extracted = kwargs.get('is_ai_extracted')
         ai_raw_data = kwargs.get('ai_raw_data')
-        
+
         if str(is_ai_extracted).lower() == 'true' and ai_raw_data:
             property_obj.source = "autofill"
             try:
                 self.add_ai_history(property_obj.id, ai_raw_data, user_note="Initial AI Extraction")
             except Exception as e:
                 self.logger.error(f"Failed to save initial AI history for property {property_obj.id}: {e}")
-                
+
+        # Log property creation to activity log
+        try:
+            activity_log = PropertyActivityLog(
+                property_id=property_obj.id,
+                action='created',
+                description=f"Property '{property_obj.title}' created",
+                new_value=str({
+                    'title': property_obj.title,
+                    'address': property_obj.address,
+                    'price': property_obj.price,
+                    'property_type': property_obj.property_type,
+                    'listing_type': property_obj.listing_type,
+                    'status': property_obj.status
+                }),
+                change_source='manual',
+                changed_by=kwargs.get('changed_by', 'system')
+            )
+            db.session.add(activity_log)
+            db.session.flush()
+        except Exception as e:
+            self.logger.error(f"Failed to log property creation activity for property {property_obj.id}: {e}")
+
         return property_obj
     
     @with_transaction()
@@ -541,7 +584,46 @@ class DatabaseService:
             property_obj.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
             self.logger.info(f"Updated property {property_id}: {', '.join(changes_made)}")
             self._invalidate_property_caches(property_id)
-        
+
+            # Log property update to activity log
+            try:
+                # Determine specific action based on what changed
+                price_changed = any('price:' in change for change in changes_made)
+                status_changed = any('status:' in change for change in changes_made)
+
+                if price_changed:
+                    action = 'price_changed'
+                    description = f"Price changed for property '{property_obj.title}'"
+                elif status_changed:
+                    action = 'status_changed'
+                    description = f"Status changed for property '{property_obj.title}'"
+                else:
+                    action = 'updated'
+                    description = f"Property '{property_obj.title}' updated"
+
+                # Get old and new values for specific fields if they changed
+                old_values_dict = {}
+                new_values_dict = {}
+
+                for key, value in kwargs.items():
+                    if hasattr(property_obj, key) and key in original_values:
+                        old_values_dict[key] = original_values[key]
+                        new_values_dict[key] = getattr(property_obj, key)
+
+                activity_log = PropertyActivityLog(
+                    property_id=property_obj.id,
+                    action=action,
+                    description=description,
+                    old_value=str(old_values_dict) if old_values_dict else None,
+                    new_value=str(new_values_dict) if new_values_dict else None,
+                    change_source='manual',
+                    changed_by=kwargs.get('changed_by', 'system')
+                )
+                db.session.add(activity_log)
+                db.session.flush()
+            except Exception as e:
+                self.logger.error(f"Failed to log property update activity for property {property_id}: {e}")
+
         return property_obj
     
     @with_transaction()
@@ -575,7 +657,29 @@ class DatabaseService:
             # Legacy fallback used by non-mapped test doubles.
             db.session.delete(property_obj)
         self._invalidate_property_caches(property_id)
-        
+
+        # Log property deletion to activity log
+        try:
+            activity_log = PropertyActivityLog(
+                property_id=property_obj.id,
+                action='deleted',
+                description=f"Property '{property_title}' deleted",
+                old_value=str({
+                    'title': property_obj.title,
+                    'address': property_obj.address,
+                    'price': property_obj.price,
+                    'property_type': property_obj.property_type,
+                    'listing_type': property_obj.listing_type,
+                    'status': property_obj.status
+                }) if hasattr(property_obj, 'title') else None,
+                change_source='manual',
+                changed_by='system'  # Since delete method doesn't have changed_by parameter
+            )
+            db.session.add(activity_log)
+            db.session.flush()
+        except Exception as e:
+            self.logger.error(f"Failed to log property deletion activity for property {property_id}: {e}")
+
         self.logger.info(f"Deleted property {property_id}: {property_title}")
         return True
     
@@ -810,31 +914,34 @@ class DatabaseService:
     
     @log_execution
     def get_property_history(self, property_id: int) -> List[Dict]:
-        """Get property change history (placeholder for future audit system)"""
-        # TODO: Implement property audit trail when audit system is ready
+        """Get property change history from audit log"""
         try:
+            # Verify property exists
             property_obj = self.get_property(property_id)
             if not property_obj:
                 return []
-            
-            # For now, return basic creation/update info
+
+            # Query the PropertyActivityLog for this property
+            activity_logs = PropertyActivityLog.query.filter_by(
+                property_id=property_id
+            ).order_by(desc(PropertyActivityLog.created_at)).all()
+
+            # Convert to dict format for compatibility
             history = []
-            
-            if property_obj.created_at:
+            for log in activity_logs:
                 history.append({
-                    'action': 'created',
-                    'timestamp': property_obj.created_at,
-                    'details': f"Property '{property_obj.title}' created"
+                    'id': log.id,
+                    'action': log.action,
+                    'description': log.description,
+                    'timestamp': log.created_at,
+                    'old_value': log.old_value,
+                    'new_value': log.new_value,
+                    'change_source': log.change_source,
+                    'changed_by': log.changed_by,
+                    'sync_version': log.sync_version
                 })
-            
-            if hasattr(property_obj, 'updated_at') and property_obj.updated_at:
-                history.append({
-                    'action': 'updated',
-                    'timestamp': property_obj.updated_at,
-                    'details': f"Property '{property_obj.title}' updated"
-                })
-            
-            return sorted(history, key=lambda x: x['timestamp'], reverse=True)
+
+            return history
         except Exception as e:
             self.logger.error(f"Error fetching property history for {property_id}: {str(e)}")
             return []

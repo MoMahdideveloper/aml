@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}ROI Calculator · Platinum Heritage{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        font-family: 'Material Symbols Outlined';
+    }
+    .shadow-ph-soft { box-shadow: 0 8px 30px rgba(27, 38, 49, 0.06); }
+    input[type=range] { accent-color: #142435; }
+</style>
+{% endblock %}
+
+{% block content %}
+<header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+    <div>
+        <p class="text-xs font-medium text-on-surface-variant uppercase tracking-[0.15em] mb-2">Analytics</p>
+        <h1 class="text-2xl md:text-3xl font-semibold text-primary mb-2">Investment ROI calculator</h1>
+        <p class="text-sm md:text-base text-on-surface-variant max-w-2xl">
+            Cap rate, mortgage, and cash-on-cash modeling for Platinum Heritage listings.
+        </p>
+        {% if prefill.title %}
+        <p class="mt-2 text-sm text-primary font-medium">
+            Prefill: {{ prefill.title }}
+            {% if prefill.property_id %}
+            · <a href="{{ url_for('properties.property_detail', property_id=prefill.property_id) }}" class="underline">View listing</a>
+            {% endif %}
+        </p>
+        {% endif %}
+    </div>
+    <div class="flex flex-wrap gap-3">
+        <a href="{{ url_for('main.market_analysis') }}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-outline-variant text-primary text-sm font-medium hover:bg-surface-container">
+            <span class="material-symbols-outlined text-[18px]">analytics</span>
+            Market analysis
+        </a>
+        <a href="{{ url_for('properties') }}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-outline-variant text-primary text-sm font-medium hover:bg-surface-container">
+            <span class="material-symbols-outlined text-[18px]">domain</span>
+            Inventory
+        </a>
+    </div>
+</header>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+    <section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-ph-soft flex flex-col gap-5">
+        <h2 class="text-lg font-semibold text-primary border-b border-outline-variant pb-3">Financial inputs</h2>
+
+        <div>
+            <label for="price" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Purchase price ($)</label>
+            <input type="number" id="price" value="{{ prefill.price }}" min="0" step="1000"
+                   class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm font-semibold text-primary focus:border-primary outline-none">
+        </div>
+
+        <div>
+            <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Down payment (%)</label>
+            <input type="range" id="down" min="5" max="60" value="{{ prefill.down }}" class="w-full">
+            <div class="flex justify-between text-xs font-medium text-primary mt-1">
+                <span>5%</span>
+                <span id="down_val">{{ prefill.down }}%</span>
+                <span>60%</span>
+            </div>
+        </div>
+
+        <div>
+            <label for="rate" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Interest rate (%)</label>
+            <input type="number" id="rate" step="0.05" value="{{ prefill.rate }}" min="0" max="30"
+                   class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm font-semibold text-primary focus:border-primary outline-none">
+        </div>
+
+        <div>
+            <label for="term" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Loan term (years)</label>
+            <input type="number" id="term" value="30" min="5" max="40" step="1"
+                   class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm font-semibold text-primary focus:border-primary outline-none">
+        </div>
+
+        <div>
+            <label for="rent" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Est. monthly rental income ($)</label>
+            <input type="number" id="rent" value="{{ prefill.rent }}" min="0" step="50"
+                   class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm font-semibold text-primary focus:border-primary outline-none">
+        </div>
+
+        <div>
+            <label for="expense" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">OpEx as % of rent (taxes, maint., vacancy)</label>
+            <input type="number" id="expense" value="25" min="0" max="80" step="1"
+                   class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm font-semibold text-primary focus:border-primary outline-none">
+        </div>
+    </section>
+
+    <section class="bg-primary text-on-primary rounded-xl p-6 md:p-8 shadow-ph-soft flex flex-col">
+        <div>
+            <span class="text-xs tracking-widest uppercase opacity-70 font-semibold">Projected returns</span>
+            <h2 class="text-4xl font-bold mt-2 tabular-nums" id="cap_rate">—</h2>
+            <p class="text-sm opacity-80 mt-1">Estimated net cap rate</p>
+        </div>
+
+        <div class="space-y-4 my-8 border-y border-white/20 py-6 flex-1">
+            <div class="flex justify-between gap-4">
+                <span class="opacity-80">Down payment</span>
+                <span class="font-semibold tabular-nums" id="down_amt">—</span>
+            </div>
+            <div class="flex justify-between gap-4">
+                <span class="opacity-80">Loan amount</span>
+                <span class="font-semibold tabular-nums" id="loan_amt">—</span>
+            </div>
+            <div class="flex justify-between gap-4">
+                <span class="opacity-80">Monthly mortgage (P&amp;I)</span>
+                <span class="font-semibold tabular-nums" id="monthly_mortgage">—</span>
+            </div>
+            <div class="flex justify-between gap-4">
+                <span class="opacity-80">Monthly net cash flow</span>
+                <span class="font-semibold tabular-nums" id="monthly_flow">—</span>
+            </div>
+            <div class="flex justify-between gap-4">
+                <span class="opacity-80">Annual cash-on-cash</span>
+                <span class="font-semibold tabular-nums" id="coc">—</span>
+            </div>
+            <div class="flex justify-between gap-4">
+                <span class="opacity-80">Gross yield (rent / price)</span>
+                <span class="font-semibold tabular-nums" id="gross_yield">—</span>
+            </div>
+        </div>
+
+        <p class="text-xs opacity-60 mb-4">
+            Illustrative model only — not investment advice. OpEx reduces NOI for cap rate; cash flow uses mortgage + OpEx.
+        </p>
+        <button type="button" onclick="window.print()"
+                class="w-full py-3 bg-white text-primary rounded-lg font-semibold hover:bg-surface-container transition-colors">
+            Save / print model
+        </button>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    function money(n) {
+        if (!isFinite(n)) return '—';
+        return '$' + Math.round(n).toLocaleString();
+    }
+    function pct(n) {
+        if (!isFinite(n)) return '—';
+        return n.toFixed(2) + '%';
+    }
+    function compute() {
+        var price = parseFloat(document.getElementById('price').value) || 0;
+        var downPct = parseFloat(document.getElementById('down').value) || 0;
+        var rate = parseFloat(document.getElementById('rate').value) || 0;
+        var termYears = parseFloat(document.getElementById('term').value) || 30;
+        var rent = parseFloat(document.getElementById('rent').value) || 0;
+        var expensePct = parseFloat(document.getElementById('expense').value) || 0;
+
+        var downAmt = price * (downPct / 100);
+        var loan = Math.max(0, price - downAmt);
+        document.getElementById('down_val').textContent = downPct + '% (' + money(downAmt) + ')';
+        document.getElementById('down_amt').textContent = money(downAmt);
+        document.getElementById('loan_amt').textContent = money(loan);
+
+        var r = (rate / 100) / 12;
+        var n = termYears * 12;
+        var mortgage = 0;
+        if (loan > 0 && r > 0 && n > 0) {
+            mortgage = loan * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+        } else if (loan > 0 && n > 0) {
+            mortgage = loan / n;
+        }
+
+        var opex = rent * (expensePct / 100);
+        var noiMonthly = rent - opex;
+        var netMonthly = noiMonthly - mortgage;
+        var annualNet = netMonthly * 12;
+        var coc = downAmt > 0 ? (annualNet / downAmt) * 100 : 0;
+        var cap = price > 0 ? ((noiMonthly * 12) / price) * 100 : 0;
+        var gross = price > 0 ? ((rent * 12) / price) * 100 : 0;
+
+        document.getElementById('monthly_mortgage').textContent = money(mortgage);
+        var flowEl = document.getElementById('monthly_flow');
+        flowEl.textContent = (netMonthly >= 0 ? '+' : '') + money(netMonthly);
+        document.getElementById('coc').textContent = pct(coc);
+        document.getElementById('cap_rate').textContent = pct(cap);
+        document.getElementById('gross_yield').textContent = pct(gross);
+    }
+
+    document.querySelectorAll('#price, #down, #rate, #term, #rent, #expense').forEach(function (el) {
+        el.addEventListener('input', compute);
+    });
+    compute();
+})();
+</script>
+{% endblock %}

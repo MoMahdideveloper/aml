@@ -1,19 +1,70 @@
-version: '3.8'
-
 # Profiles:
+#   prod     — Postgres + Flask CRM (gunicorn) production-style stack
 #   crm      — Redis for Flask Celery/cache (product path)
 #   matching — Neo4j + Redis + ingestor/matcher/api/chatbot (experimental)
 #
 # Examples:
+#   docker compose --profile prod up -d --build
 #   docker compose --profile crm up -d
 #   docker compose --profile matching up -d --build
-#   docker compose --profile matching down
+#   docker compose --profile prod down
 
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: gptvli-db
+    profiles: ["prod"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-gptvli}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gptvli_change_me}
+      POSTGRES_DB: ${POSTGRES_DB:-gptvli}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gptvli} -d ${POSTGRES_DB:-gptvli}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gptvli-web
+    profiles: ["prod"]
+    ports:
+      - "${WEB_PORT:-8000}:8000"
+    environment:
+      FLASK_ENV: production
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gptvli}:${POSTGRES_PASSWORD:-gptvli_change_me}@db:5432/${POSTGRES_DB:-gptvli}
+      USE_TAILWIND_CDN: "0"
+      ENABLE_CSRF: ${ENABLE_CSRF:-1}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-1}
+      SMS_PROVIDER: ${SMS_PROVIDER:-log}
+      GEOCODE_PROVIDER: ${GEOCODE_PROVIDER:-auto}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    volumes:
+      - uploads_data:/app/static/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+
   redis:
     image: redis:7-alpine
     container_name: redis
-    profiles: ["crm", "matching"]
+    profiles: ["crm", "matching", "prod"]
     ports:
       - "6379:6379"
     command: ["redis-server", "--appendonly", "yes", "--maxmemory", "2gb", "--maxmemory-policy", "allkeys-lru"]
@@ -163,3 +214,5 @@ volumes:
   neo4j_data:
   neo4j_logs:
   redis_data:
+  postgres_data:
+  uploads_data:

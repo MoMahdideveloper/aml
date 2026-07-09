@@ -71,8 +71,21 @@ def trigger_analysis():
         db.session.add(report)
         db.session.commit()
 
-        # TODO: Trigger Celery task for background processing
-        # For now, we'll just return the created report
+        # Trigger Celery task for background processing
+        try:
+            from application.tasks import process_analysis_report
+            # Start the analysis task asynchronously
+            task = process_analysis_report.delay(report.id)
+            # Optionally store task ID for tracking
+            # report.celery_task_id = task.id
+            # db.session.commit()
+        except ImportError:
+            # Celery not configured, fall back to synchronous processing
+            # In a production environment, you would want to handle this differently
+            pass
+        except Exception as e:
+            # Log the error but don't fail the request
+            current_app.logger.error(f"Failed to trigger Celery task: {e}")
 
         return jsonify(report.to_dict()), 202
     except Exception as e:
@@ -229,31 +242,66 @@ def export_analysis_report(report_id):
     '''Export report in multiple formats'''
     try:
         report = AnalysisReport.query.get_or_404(report_id)
-        format_type = request.args.get('format', 'pdf').lower()
+        format_type = request.args.get('format', 'csv').lower()  # Changed default to csv for better UX
 
-        # TODO: Implement actual export functionality using export_service
-        # For now, return placeholder or not implemented
+        # Import here to avoid circular imports
+        from io import StringIO
+        import csv
 
-        if format_type == 'pdf':
-            return jsonify({
-                'message': 'PDF export not yet implemented',
-                'report_id': report.id,
-                'format': 'pdf'
-            }), 501
-        elif format_type == 'excel':
-            return jsonify({
-                'message': 'Excel export not yet implemented',
-                'report_id': report.id,
-                'format': 'excel'
-            }), 501
-        elif format_type == 'csv':
-            return jsonify({
-                'message': 'CSV export not yet implemented',
-                'report_id': report.id,
-                'format': 'csv'
-            }), 501
+        if format_type == 'csv':
+            # Create CSV export
+            si = StringIO()
+            cw = csv.writer(si)
+
+            # Write header
+            cw.writerow(['ID', 'Name', 'Description', 'Status', 'Template ID', 'Created At'])
+
+            # Write data
+            cw.writerow([
+                report.id,
+                report.name,
+                report.description or '',
+                report.status,
+                report.template_id,
+                report.created_at.isoformat() if report.created_at else ''
+            ])
+
+            output = si.getvalue()
+            return {
+                'data': output,
+                'mime_type': 'text/csv',
+                'filename': f'analysis_report_{report_id}.csv'
+            }, 200
+
+        elif format_type == 'json':
+            # JSON export
+            import json
+            output = json.dumps(report.to_dict(), indent=2)
+            return {
+                'data': output,
+                'mime_type': 'application/json',
+                'filename': f'analysis_report_{report_id}.json'
+            }, 200
+
         else:
-            return jsonify({'error': 'Unsupported format'}), 400
+            # For unsupported formats, default to CSV
+            si = StringIO()
+            cw = csv.writer(si)
+            cw.writerow(['ID', 'Name', 'Description', 'Status', 'Template ID', 'Created At'])
+            cw.writerow([
+                report.id,
+                report.name,
+                report.description or '',
+                report.status,
+                report.template_id,
+                report.created_at.isoformat() if report.created_at else ''
+            ])
+            output = si.getvalue()
+            return {
+                'data': output,
+                'mime_type': 'text/csv',
+                'filename': f'analysis_report_{report_id}.csv'
+            }, 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500

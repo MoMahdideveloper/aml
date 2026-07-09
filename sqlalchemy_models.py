@@ -1028,6 +1028,65 @@ class PublicPropertySubmission(db.Model):
         }
 
 
+class OpenHouseCheckin(db.Model):
+    """Guest registration captured at open-house kiosk mode."""
+    __tablename__ = "open_house_checkins"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    property_id: Mapped[int] = mapped_column(Integer, ForeignKey("properties.id"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    email: Mapped[str] = mapped_column(String(255), nullable=False)
+    phone: Mapped[str] = mapped_column(String(40), nullable=False)
+    status_tags: Mapped[str] = mapped_column(String(255), default="")  # pipe-separated preferences
+    customer_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("customers.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+    property = relationship("Property", backref="open_house_checkins")
+    customer = relationship("Customer", backref="open_house_checkins")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "property_id": self.property_id,
+            "name": self.name,
+            "email": self.email,
+            "phone": self.phone,
+            "status_tags": self.status_tags,
+            "customer_id": self.customer_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class ClientMessage(db.Model):
+    """In-app CRM messages between agents and clients (messaging portal)."""
+    __tablename__ = "client_messages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    customer_id: Mapped[int] = mapped_column(Integer, ForeignKey("customers.id"), nullable=False, index=True)
+    agent_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("agents.id"), nullable=True)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    # outbound = agent → client, inbound = client → agent (logged notes / replies)
+    direction: Mapped[str] = mapped_column(String(20), default="outbound")
+    channel: Mapped[str] = mapped_column(String(20), default="app")  # app, sms, email
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+    customer = relationship("Customer", backref="messages")
+    agent = relationship("Agent", backref="client_messages")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "customer_id": self.customer_id,
+            "agent_id": self.agent_id,
+            "body": self.body,
+            "direction": self.direction,
+            "channel": self.channel,
+            "is_read": self.is_read,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
 class SmsOutboundMessage(db.Model):
     """Queued outbound SMS message for asynchronous provider delivery."""
     __tablename__ = "sms_outbound_messages"
@@ -1196,4 +1255,44 @@ class SyncState(db.Model):
             "error_message": self.error_message,
             "duration_seconds": self.duration_seconds,
             "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class DashboardStatSnapshot(db.Model):
+    """Stores daily snapshots of dashboard metrics for trend calculations."""
+    __tablename__ = "dashboard_stat_snapshots"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Core dashboard metrics
+    total_properties: Mapped[int] = mapped_column(Integer, default=0)
+    active_properties: Mapped[int] = mapped_column(Integer, default=0)
+    total_agents: Mapped[int] = mapped_column(Integer, default=0)
+    total_customers: Mapped[int] = mapped_column(Integer, default=0)
+    total_deals: Mapped[int] = mapped_column(Integer, default=0)
+    active_deals: Mapped[int] = mapped_column(Integer, default=0)
+    total_deal_value: Mapped[int] = mapped_column(BigInteger, default=0)
+    active_deal_value: Mapped[int] = mapped_column(BigInteger, default=0)
+    avg_property_price: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Optional: counts for recent activities (may be useful for debugging)
+    recent_properties_count: Mapped[int] = mapped_column(Integer, default=0)
+    recent_deals_count: Mapped[int] = mapped_column(Integer, default=0)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
+            "total_properties": self.total_properties,
+            "active_properties": self.active_properties,
+            "total_agents": self.total_agents,
+            "total_customers": self.total_customers,
+            "total_deals": self.total_deals,
+            "active_deals": self.active_deals,
+            "total_deal_value": self.total_deal_value,
+            "active_deal_value": self.active_deal_value,
+            "avg_property_price": self.avg_property_price,
+            "recent_properties_count": self.recent_properties_count,
+            "recent_deals_count": self.recent_deals_count,
         }

@@ -1,41 +1,40 @@
-{# Mobile Header Component - Compatible with existing CSS variables #}
-<header class="lg:hidden bg-[var(--surface-white)] border-b border-[var(--outline)]/20 shrink-0">
-    <div class="flex items-center justify-between px-4 py-4">
-        <!-- Hamburger Menu Button -->
+{# Mobile header — Platinum Heritage #}
+<header class="lg:hidden bg-surface-white border-b border-outline-variant shrink-0 sticky top-0 z-30">
+    <div class="flex items-center justify-between px-4 py-3">
         <button id="mobile-menu-toggle"
-                class="text-[var(--on-surface)] hover:text-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 rounded-lg p-2 transition-colors"
+                type="button"
+                class="text-on-surface hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 rounded p-2 transition-colors"
                 aria-label="Toggle menu"
-                aria-expanded="false">
+                aria-expanded="false"
+                aria-controls="sidebar">
             <i class="fas fa-bars text-xl"></i>
         </button>
 
-        <!-- App Title -->
-        <div class="flex-1 text-center">
-            <h1 class="text-lg text-[var(--on-surface)] font-semibold">Real Estate CRM</h1>
+        <div class="flex-1 text-center min-w-0 px-2">
+            <h1 class="text-base text-on-surface font-semibold tracking-tight truncate">Platinum Heritage</h1>
+            <p class="text-[10px] text-on-surface-variant uppercase tracking-[0.12em]">CRM</p>
         </div>
 
-        <!-- User Menu Button -->
         <div class="relative">
             <button type="button"
                     data-dropdown-toggle
-                    class="text-[var(--on-surface)] hover:text-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 rounded-lg p-2 transition-colors"
+                    class="text-on-surface hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 rounded p-2 transition-colors"
                     aria-expanded="false"
                     aria-haspopup="true">
                 <i class="fas fa-user-circle text-xl"></i>
             </button>
 
-            <!-- Dropdown Menu -->
             <div data-dropdown-menu
-                 class="hidden absolute right-0 mt-2 w-48 bg-[var(--surface-white)] border border-[var(--outline)]/20 shadow-lg rounded-lg py-1 z-50"
+                 class="hidden absolute right-0 mt-2 w-48 bg-surface-white border border-outline-variant shadow-ph rounded-lg py-1 z-50"
                  role="menu">
-                <a href="#" class="block px-4 py-2 text-sm text-[var(--on-surface)] hover:bg-[var(--surface-container)]">
+                <a href="{{ url_for('auth.profile') }}" class="block px-4 py-2 text-sm text-on-surface hover:bg-surface-container" role="menuitem">
                     <i class="fas fa-user mr-2"></i>Profile
                 </a>
-                <a href="#" class="block px-4 py-2 text-sm text-[var(--on-surface)] hover:bg-[var(--surface-container)]">
+                <a href="{{ url_for('auth.profile') }}" class="block px-4 py-2 text-sm text-on-surface hover:bg-surface-container" role="menuitem">
                     <i class="fas fa-cog mr-2"></i>Settings
                 </a>
-                <hr class="my-1 border-[var(--outline)]/20">
-                <a href="#" class="block px-4 py-2 text-sm text-[var(--error)] hover:bg-[var(--error-container)]">
+                <hr class="my-1 border-outline-variant">
+                <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm text-error hover:bg-error-container" role="menuitem">
                     <i class="fas fa-sign-out-alt mr-2"></i>Sign out
                 </a>
             </div>

@@ -175,9 +175,14 @@
       if (detailsEl) detailsEl.textContent = details || "";
       if (detailsWrap) detailsWrap.style.display = details ? "block" : "none";
 
-      if (globalObj.bootstrap && typeof globalObj.bootstrap.Modal === "function") {
+      if (globalObj.PHModal) {
+        globalObj.PHModal.show(modalEl);
+      } else if (globalObj.bootstrap && typeof globalObj.bootstrap.Modal === "function") {
         const modal = new globalObj.bootstrap.Modal(modalEl);
         modal.show();
+      } else {
+        modalEl.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
       }
     }
   }
@@ -293,9 +298,16 @@
         populatePropertyViewModalFallback(property);
       }
 
-      if (modalEl && globalObj.bootstrap && typeof globalObj.bootstrap.Modal === "function") {
-        const modal = new globalObj.bootstrap.Modal(modalEl);
-        modal.show();
+      if (modalEl) {
+        if (globalObj.PHModal) {
+          globalObj.PHModal.show(modalEl);
+        } else if (globalObj.bootstrap && typeof globalObj.bootstrap.Modal === "function") {
+          const modal = new globalObj.bootstrap.Modal(modalEl);
+          modal.show();
+        } else {
+          modalEl.classList.remove("hidden");
+          document.body.style.overflow = "hidden";
+        }
       }
     } catch (error) {
       const errorMessage = error && error.message ? error.message : "Failed to load property details";

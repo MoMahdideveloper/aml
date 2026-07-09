@@ -88,10 +88,32 @@ class CRUDUtils {
         const previouslyFocusedElement = document.activeElement;
         modal.setAttribute('data-previous-focus', previouslyFocusedElement?.id || '');
 
-        const modalInstance = new bootstrap.Modal(modal, {
-            backdrop: options.backdrop !== false ? 'static' : false,
-            keyboard: options.keyboard !== false
-        });
+        // Platinum Heritage Tailwind overlay (data-modal) — no Bootstrap required
+        const isPhOverlay = modal.hasAttribute('data-modal') || modal.classList.contains('fixed');
+
+        let modalInstance = null;
+        if (isPhOverlay || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+            modal.classList.remove('hidden');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+            modalInstance = {
+                show: () => {
+                    modal.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                },
+                hide: () => {
+                    modal.classList.add('hidden');
+                    modal.setAttribute('aria-hidden', 'true');
+                    document.body.style.overflow = '';
+                },
+            };
+        } else {
+            modalInstance = new bootstrap.Modal(modal, {
+                backdrop: options.backdrop !== false ? 'static' : false,
+                keyboard: options.keyboard !== false
+            });
+            modalInstance.show();
+        }
 
         // Store modal instance for later reference
         this.activeModals.set(modalId, modalInstance);
@@ -104,9 +126,6 @@ class CRUDUtils {
             this.loadModalContent(modalId, options.contentUrl, options.loadOptions);
         }
 
-        // Show modal
-        modalInstance.show();
-
         // Bind form submission if form exists
         const form = modal.querySelector('form');
         if (form && !form.hasAttribute('data-crud-bound')) {
@@ -115,7 +134,8 @@ class CRUDUtils {
         }
 
         // Announce modal opening to screen readers
-        this.announceToScreenReader(`${modal.querySelector('.modal-title')?.textContent || 'Dialog'} opened`);
+        const titleEl = modal.querySelector('.modal-title, [id$="Label"], h2');
+        this.announceToScreenReader(`${titleEl?.textContent || 'Dialog'} opened`);
 
         return modalInstance;
     }
@@ -395,24 +415,21 @@ class CRUDUtils {
      */
     createDynamicModal(modalId, title) {
         const modalHtml = `
-            <div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">${title}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="text-center p-4">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <div class="mt-2">Loading...</div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        </div>
+            <div id="${modalId}" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]" data-modal role="dialog" aria-modal="true" aria-hidden="true">
+                <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-3xl max-h-[90vh] flex flex-col" onclick="event.stopPropagation()">
+                    <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
+                        <h2 class="modal-title text-lg font-semibold text-primary truncate">${title}</h2>
+                        <button type="button" class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" data-modal-close aria-label="Close"
+                                onclick="this.closest('[data-modal]').classList.add('hidden'); document.body.style.overflow=''">
+                            <span class="material-symbols-outlined text-[20px]">close</span>
+                        </button>
+                    </div>
+                    <div class="modal-body px-5 py-4 overflow-y-auto flex-1">
+                        <div class="text-center p-4 text-sm text-on-surface-variant">Loading…</div>
+                    </div>
+                    <div class="px-5 py-3 border-t border-outline-variant flex justify-end">
+                        <button type="button" class="px-4 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container" data-modal-close
+                                onclick="this.closest('[data-modal]').classList.add('hidden'); document.body.style.overflow=''">Close</button>
                     </div>
                 </div>
             </div>
@@ -420,12 +437,6 @@ class CRUDUtils {
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
         const modal = document.getElementById(modalId);
-
-        // Clean up modal when hidden
-        modal.addEventListener('hidden.bs.modal', () => {
-            modal.remove();
-        });
-
         return modal;
     }
 
@@ -704,30 +715,27 @@ class CRUDUtils {
         const confirmText = options.confirmText || 'Delete';
         const cancelText = options.cancelText || 'Cancel';
         
-        // Create confirmation modal
+        // Create confirmation modal (PH)
         const modalId = `confirmModal_${Date.now()}`;
         const modalHtml = `
-            <div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">
-                                <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                                ${title}
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>${message}</p>
-                            ${options.warning ? `<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>${options.warning}</div>` : ''}
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${cancelText}</button>
-                            <button type="button" class="btn btn-danger" id="${modalId}_confirm">
-                                <i class="fas fa-trash me-1"></i>
-                                ${confirmText}
-                            </button>
-                        </div>
+            <div id="${modalId}" class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]" data-modal role="dialog" aria-modal="true">
+                <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-md" onclick="event.stopPropagation()">
+                    <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
+                        <h2 class="text-lg font-semibold text-primary flex items-center gap-2">
+                            <span class="material-symbols-outlined text-error text-[20px]">warning</span>
+                            ${title}
+                        </h2>
+                        <button type="button" class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" data-confirm-close aria-label="Close">
+                            <span class="material-symbols-outlined text-[20px]">close</span>
+                        </button>
+                    </div>
+                    <div class="px-5 py-4 text-sm text-on-surface">
+                        <p>${message}</p>
+                        ${options.warning ? `<p class="mt-3 p-3 rounded-lg bg-error-container text-on-error-container text-xs">${options.warning}</p>` : ''}
+                    </div>
+                    <div class="px-5 py-4 border-t border-outline-variant flex justify-end gap-2">
+                        <button type="button" class="px-4 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container" data-confirm-close>${cancelText}</button>
+                        <button type="button" class="px-4 py-2 rounded-lg bg-error text-on-error text-sm font-medium hover:opacity-90" id="${modalId}_confirm">${confirmText}</button>
                     </div>
                 </div>
             </div>
@@ -735,24 +743,38 @@ class CRUDUtils {
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
         const modalElement = document.getElementById(modalId);
-        const modal = new bootstrap.Modal(modalElement);
-        
+        const hideConfirm = () => {
+            if (window.PHModal) window.PHModal.hide(modalElement);
+            else {
+                modalElement.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+            modalElement.remove();
+        };
+        if (window.PHModal) window.PHModal.show(modalElement);
+        else {
+            modalElement.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
         // Bind confirm button
         const confirmBtn = document.getElementById(`${modalId}_confirm`);
         confirmBtn.addEventListener('click', () => {
-            modal.hide();
+            hideConfirm();
             if (typeof onConfirm === 'function') {
                 onConfirm();
             }
         });
-
-        // Clean up modal after hiding
-        modalElement.addEventListener('hidden.bs.modal', () => {
-            modalElement.remove();
+        modalElement.querySelectorAll('[data-confirm-close]').forEach(btn => {
+            btn.addEventListener('click', hideConfirm);
         });
 
-        modal.show();
-        return modal;
+        return {
+            hide: hideConfirm,
+            show: () => {
+                if (window.PHModal) window.PHModal.show(modalElement);
+            },
+        };
     }
 
     /**

@@ -1,51 +1,156 @@
-{# Sidebar Navigation Component - Compatible with existing CSS variables #}
-<aside id="sidebar" class="hidden lg:flex lg:flex-col w-64 shrink-0 bg-[var(--surface-white)] border-r border-[var(--outline)]/20 transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0">
-    <!-- Logo/Brand Section -->
-    <div class="flex-shrink-0 flex items-center px-4 py-6 border-b border-[var(--outline)]/20">
-        <div class="flex-shrink-0">
-            <i class="fas fa-building text-[var(--primary)] text-2xl"></i>
+{# Sidebar — Platinum Heritage shell (P0+P1) #}
+{% set ep = request.endpoint or '' %}
+<aside id="sidebar"
+       class="fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-surface-white border-r border-outline-variant
+              transform transition-transform duration-300 ease-in-out -translate-x-full
+              lg:static lg:translate-x-0 lg:z-auto lg:flex shrink-0">
+    <div class="flex-shrink-0 flex items-center px-4 py-6 border-b border-outline-variant">
+        <div class="flex-shrink-0 h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
+            <i class="fas fa-building text-on-primary text-lg"></i>
         </div>
-        <div class="ml-4">
-            <h1 class="text-lg text-[var(--on-surface)] font-semibold">Real Estate CRM</h1>
-            <p class="text-xs text-[var(--on-surface-variant)]">Dashboard</p>
+        <div class="ml-3 min-w-0">
+            <h1 class="text-base text-on-surface font-semibold tracking-tight truncate">Platinum Heritage</h1>
+            <p class="text-xs text-on-surface-variant uppercase tracking-[0.08em]">CRM</p>
         </div>
     </div>
 
-    <!-- Navigation Links -->
-    <nav class="mt-6 space-y-2 px-4 flex-1 overflow-y-auto">
+    <nav class="mt-6 space-y-1 px-3 flex-1 overflow-y-auto" aria-label="Primary">
         {% set nav_items = [
-            ('dashboard', 'Dashboard', 'fa-tachometer-alt'),
-            ('properties', 'Properties', 'fa-building'),
-            ('agents', 'Agents', 'fa-users'),
-            ('customers', 'Customers', 'fa-user-friends'),
-            ('deals', 'Deals', 'fa-handshake'),
-            ('tasks', 'Tasks', 'fa-tasks'),
-            ('recommendations', 'AI Recommendations', 'fa-magic')
+            ('dashboard', ['dashboard', 'main.dashboard'], 'Dashboard', 'fa-tachometer-alt'),
+            ('properties', ['properties', 'properties.properties', 'properties.property_detail'], 'Properties', 'fa-building'),
+            ('agents', ['agents', 'agents.agents'], 'Agents', 'fa-users'),
+            ('customers', ['customers', 'customers.customers'], 'Customers', 'fa-user-friends'),
+            ('deals', ['deals', 'deals.deals'], 'Deals', 'fa-handshake'),
+            ('tasks', ['tasks', 'tasks.tasks'], 'Tasks', 'fa-tasks'),
+            ('recommendations', ['recommendations', 'main.recommendations', 'main.get_customer_recommendations'], 'AI Match', 'fa-magic'),
         ] %}
 
-        {% for endpoint, label, icon in nav_items %}
+        {% for endpoint, active_eps, label, icon in nav_items %}
+        {% set is_active = ep in active_eps or (ep and (ep.startswith(endpoint ~ '.') or ep.startswith('main.' ~ endpoint))) %}
         <a href="{{ url_for(endpoint) }}"
-           class="flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors
-                  {% if request.endpoint == endpoint or request.endpoint.startswith(endpoint + '.') %}
-                      bg-[var(--primary)]/10 text-[var(--primary)]
+           class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                  {% if is_active %}
+                      bg-primary text-on-primary
                   {% else %}
-                      text-[var(--on-surface-variant)] hover:bg-[var(--surface-container)] hover:text-[var(--on-surface)]
+                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
                   {% endif %}">
-            <i class="fas {{ icon }} mr-3"></i>
+            <i class="fas {{ icon }} mr-3 w-4 text-center opacity-90"></i>
             <span>{{ label }}</span>
         </a>
         {% endfor %}
+
+        <a href="{{ url_for('properties.map_view') }}"
+           class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                  {% if ep == 'properties.map_view' %}
+                      bg-primary text-on-primary
+                  {% else %}
+                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
+                  {% endif %}">
+            <i class="fas fa-map-marked-alt mr-3 w-4 text-center opacity-90"></i>
+            <span>Map</span>
+        </a>
+
+        <p class="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/70">Insights</p>
+
+        <a href="{{ url_for('main.market_analysis') }}"
+           class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                  {% if ep in ['main.market_analysis', 'market_analysis', 'market'] %}
+                      bg-primary text-on-primary
+                  {% else %}
+                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
+                  {% endif %}">
+            <i class="fas fa-chart-line mr-3 w-4 text-center opacity-90"></i>
+            <span>Market</span>
+        </a>
+        <a href="{{ url_for('main.property_compare') }}"
+           class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                  {% if ep in ['main.property_compare', 'property_compare', 'compare'] %}
+                      bg-primary text-on-primary
+                  {% else %}
+                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
+                  {% endif %}">
+            <i class="fas fa-columns mr-3 w-4 text-center opacity-90"></i>
+            <span>Compare</span>
+        </a>
+        <a href="{{ url_for('main.roi_calculator') }}"
+           class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                  {% if ep in ['main.roi_calculator', 'roi_calculator', 'calculators'] %}
+                      bg-primary text-on-primary
+                  {% else %}
+                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
+                  {% endif %}">
+            <i class="fas fa-calculator mr-3 w-4 text-center opacity-90"></i>
+            <span>ROI</span>
+        </a>
+
+        <p class="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/70">Outreach</p>
+
+        <a href="{{ url_for('main.messaging') }}"
+           class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                  {% if ep and 'messaging' in ep %}
+                      bg-primary text-on-primary
+                  {% else %}
+                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
+                  {% endif %}">
+            <i class="fas fa-comments mr-3 w-4 text-center opacity-90"></i>
+            <span>Messaging</span>
+        </a>
+        <a href="{{ url_for('main.sms_broadcast') }}"
+           class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                  {% if ep and 'sms' in ep %}
+                      bg-primary text-on-primary
+                  {% else %}
+                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
+                  {% endif %}">
+            <i class="fas fa-sms mr-3 w-4 text-center opacity-90"></i>
+            <span>SMS</span>
+        </a>
+        <a href="{{ url_for('main.smart_contract') }}"
+           class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                  {% if ep and 'contract' in ep %}
+                      bg-primary text-on-primary
+                  {% else %}
+                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
+                  {% endif %}">
+            <i class="fas fa-file-contract mr-3 w-4 text-center opacity-90"></i>
+            <span>Contracts</span>
+        </a>
+        <a href="{{ url_for('main.open_house_kiosk') }}"
+           class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                  {% if ep and ('kiosk' in ep or 'open_house' in ep) %}
+                      bg-primary text-on-primary
+                  {% else %}
+                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
+                  {% endif %}">
+            <i class="fas fa-tablet-alt mr-3 w-4 text-center opacity-90"></i>
+            <span>Open house</span>
+        </a>
     </nav>
 
-    <!-- User Profile Section -->
-    <div class="mt-auto border-t border-[var(--outline)]/20">
-        <div class="flex items-center px-4 py-4 space-x-3">
-            <div class="flex-shrink-0 h-8 w-8 bg-[var(--primary)]/10 rounded-lg flex items-center justify-center">
-                <i class="fas fa-user-circle text-[var(--primary)] text-xl"></i>
+    <div class="mt-auto border-t border-outline-variant px-3 py-3 space-y-1">
+        <a href="/settings"
+           class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                  {% if ep and (ep.startswith('auth.') or ep == 'settings') %}
+                      bg-primary/10 text-primary
+                  {% else %}
+                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
+                  {% endif %}">
+            <i class="fas fa-cog mr-3 w-4 text-center"></i>
+            <span>Settings</span>
+        </a>
+        <div class="flex items-center px-3 py-2 space-x-3">
+            <div class="flex-shrink-0 h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                <i class="fas fa-user-circle text-primary text-xl"></i>
             </div>
             <div class="flex-1 min-w-0">
-                <p class="text-[var(--on-surface)] font-medium text-sm truncate">Admin User</p>
-                <p class="text-xs text-[var(--on-surface-variant)] truncate">Administrator</p>
+                <p class="text-on-surface font-medium text-sm truncate">
+                    {% if current_user is defined and current_user.is_authenticated %}
+                        {{ current_user.name if current_user.name is defined else 'Agent' }}
+                    {% else %}
+                        Agent
+                    {% endif %}
+                </p>
+                <p class="text-xs text-on-surface-variant truncate">Platinum Heritage</p>
             </div>
         </div>
     </div>

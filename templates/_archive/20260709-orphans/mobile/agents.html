@@ -1,0 +1,294 @@
+{% extends "mobile/base.html" %}
+
+{% block title %}Agents - Luxe Estate CRM{% endblock %}
+
+{% block header_right %}
+    <!-- Agents-specific header actions can go here -->
+{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="bg-[var(--luxury-card-bg)] rounded-lg shadow-sm p-4">
+    <div class="border-l-4 border-[var(--luxury-primary)]/20 pl-3 mb-3">
+        <div class="flex items-center justify-between mb-3">
+            <div>
+                <h2 class="font-bold text-[var(--luxury-text-primary)]">Agent Management</h2>
+                <p class="text-[var(--luxury-muted)] text-xs">Manage your real estate agents and their performance</p>
+            </div>
+            <button onclick="document.getElementById('addAgentModal').classList.remove('hidden')"
+                    class="flex items-center gap-1 px-3 py-1.5 bg-[var(--luxury-primary)] text-white rounded-lg hover:bg-[var(--luxury-primary)]/90 transition-colors text-sm">
+                <i class="fas fa-user-plus"></i>
+                <span>Add Agent</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Agents List -->
+<div class="space-y-3">
+    {% if agents %}
+        {% for agent in agents %}
+        <div class="bg-[var(--luxury-card-bg)] rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
+            <div class="flex items-center space-x-3">
+                <!-- Agent Avatar -->
+                <div class="flex h-10 w-10 items-center justify-center bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-lg shrink-0">
+                    {{ agent.name.split()[0][0] }}{{ agent.name.split()[-1][0] if agent.name.split()|length > 1 else '' }}
+                </div>
+
+                <!-- Agent Info -->
+                <div class="flex-1">
+                    <h3 class="font-semibold text-[var(--luxury-text-primary)] truncate">{{ agent.name }}</h3>
+                    <p class="text-[var(--luxury-muted)] text-sm truncate">{{ agent.specialization or "Real Estate Agent" }}</p>
+                </div>
+
+                <!-- Performance Metrics -->
+                    <div class="flex items-center space-x-4 text-xs">
+                        <div class="flex flex-col items-center">
+                            <p class="text-[var(--luxury-muted)] text-xs">Listings</p>
+                            <p class="font-bold text-[var(--luxury-success)]">{{ agent.active_listings }}</p>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <p class="text-[var(--luxury-muted)] text-xs">Deals</p>
+                            <p class="font-bold text-[var(--luxury-warning)]">{{ agent.total_deals }}</p>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <p class="text-[var(--luxury-muted)] text-xs">Tasks</p>
+                            <p class="font-bold text-[var(--luxury-primary)]">{{ agent.pending_tasks }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Action Button -->
+                    <div class="flex-shrink-0">
+                        <button onclick="viewAgentDetailsMobile({{ agent.id }})"
+                                class="flex items-center gap-1 px-2.5 py-1 bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] hover:bg-[var(--luxury-primary)]/20 rounded-lg text-xs">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="flex flex-col items-center justify-center py-8">
+            <i class="fas fa-users text-[var(--luxury-primary)]/20 text-6xl"></i>
+            <p class="text-[var(--luxury-muted)] text-lg">No Agents Found</p>
+            <p class="text-[var(--luxury-muted)] text-sm text-center">Start building your team by adding your first agent.</p>
+            <button onclick="document.getElementById('addAgentModal').classList.remove('hidden')"
+                    class="mt-4 w-full max-w-xs px-4 py-2 bg-[var(--luxury-primary)] text-white rounded-lg hover:bg-[var(--luxury-primary)]/90 transition-colors font-medium flex items-center justify-center gap-2">
+                <i class="fas fa-user-plus"></i>
+                <span>Add Your First Agent</span>
+            </button>
+        </div>
+    {% endif %}
+</div>
+</div>
+
+<!-- Add Agent Modal -->
+<div id="addAgentModal" class="fixed inset-0 z-50 flex pointer-events-none">
+    <div class="w-full max-w-[500px] mx-auto mt-16 space-y-4 pointer-auto bg-[var(--luxury-card-bg)] rounded-lg shadow-xl p-4">
+        <div class="flex justify-between items-start mb-3">
+            <div class="flex items-center">
+                <i class="fas fa-user-plus text-[var(--luxury-primary)] text-xl mr-2"></i>
+                <div>
+                    <h2 class="font-bold text-[var(--luxury-text-primary)]">Add New Agent</h2>
+                    <p class="text-[var(--luxury-muted)] text-xs">Complete the form below to add a new agent</p>
+                </div>
+            </div>
+            <button onclick="document.getElementById('addAgentModal').classList.add('hidden')"
+                    class="text-[var(--luxury-muted)] hover:text-[var(--luxury-text-primary)]/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--luxury-card-bg)] focus:ring-[var(--luxury-primary)]/50">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ url_for('add_agent') }}" id="addAgentForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+            <!-- Basic Information -->
+            <div class="border-l-4 border-[var(--luxury-primary)]/20 pl-3 mb-3">
+                <div class="flex items-center mb-2">
+                    <i class="fas fa-user-contract text-[var(--luxury-primary)] text-lg mr-2"></i>
+                    <div>
+                        <p class="font-medium text-[var(--luxury-text-primary)]">Agent Information</p>
+                        <p class="text-[var(--luxury-muted)] text-xs">Enter agent details</p>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-[var(--luxury-muted)] text-xs mb-0.5 font-medium">Full Name *</label>
+                        <input type="text" id="name" name="name" required
+                               class="w-full px-3 py-1.5 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[var(--luxury-muted)] text-xs mb-0.5 font-medium">Specialization</label>
+                        <select id="specialization" name="specialization"
+                                class="w-full px-3 py-1.5 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 text-sm">
+                            <option value="">Select Specialization</option>
+                            <option value="Residential Properties">Residential Properties</option>
+                            <option value="Commercial Properties">Commercial Properties</option>
+                            <option value="Luxury Homes">Luxury Homes</option>
+                            <option value="First-Time Buyers">First-Time Buyers</option>
+                            <option value="Investment Properties">Investment Properties</option>
+                            <option value="New Construction">New Construction
+</option>
+                            <option value="Relocation Services">Relocation Services</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[var(--luxury-muted)] text-xs mb-0.5 font-medium">Email Address *</label>
+                        <input type="email" id="email" name="email" required
+                               class="w-full px-3 py-1.5 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[var(--luxury-muted)] text-xs mb-0.5 font-medium">Phone Number *</label>
+                        <input type="tel" id="phone" name="phone" required
+                               class="w-full px-3 py-1.5 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 text-sm"
+                               placeholder="(555) 123-4567">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bio -->
+            <div class="border-l-4 border-[var(--luxury-success)]/20 pl-3 mb-3">
+                <div class="flex items-center mb-2">
+                    <i class="fas fa-align-left text-[var(--luxury-success)] text-lg mr-2"></i>
+                    <div>
+                        <p class="font-medium text-[var(--luxury-text-primary)]">Bio / Description</p>
+                        <p class="text-[var(--luxury-muted)] text-xs">Tell us about the agent's experience and expertise</p>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[var(--luxury-muted)] text-xs mb-0.5 font-medium">Bio</label>
+                    <textarea id="bio" name="bio" rows="3"
+                              class="w-full px-3 py-1.5 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 text-sm"
+                              placeholder="Tell us about the agent's experience, achievements, and expertise..."></textarea>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-[var(--luxury-border)]/20">
+                <div class="flex justify-end">
+                    <button type="button" onclick="document.getElementById('addAgentModal').classList.add('hidden')"
+                            class="mr-3 px-3 py-1.5 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg hover:bg-[var(--luxury-card-bg)]/50 transition-colors text-sm">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-[var(--luxury-primary)] text-white rounded-lg hover:bg-[var(--luxury-primary)]/90 transition-colors flex items-center justify-center gap-1 text-sm">
+                        <i class="fas fa-save me-1"></i>
+                        Add Agent
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Agent Details Modal -->
+<div id="agentDetailsModal" class="fixed inset-0 z-50 hidden pointer-events-none">
+    <div class="w-full max-w-[500px] mx-auto mt-16 space-y-4 pointer-auto bg-[var(--luxury-card-bg)] rounded-lg shadow-xl p-4">
+        <div class="flex justify-between items-start mb-3">
+            <div class="flex items-center">
+                <i class="fas fa-user text-[var(--luxury-primary)] text-xl mr-2"></i>
+                <div>
+                    <h2 class="font-bold text-[var(--luxury-text-primary)]">Agent Details</h2>
+                    <p class="text-[var(--luxury-muted)] text-xs">View detailed agent information</p>
+                </div>
+            </div>
+            <button onclick="document.getElementById('agentDetailsModal').classList.add('hidden')"
+                    class="text-[var(--luxury-muted)] hover:text-[var(--luxury-text-primary)]/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--luxury-card-bg)] focus:ring-[var(--luxury-primary)]/50">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div id="agentDetailsContent">
+            <!-- Content will be loaded dynamically -->
+            <div class="flex flex-col items-center justify-center py-6">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--luxury-primary)] mb-2"></div>
+                <p class="text-[var(--luxury-muted)] text-sm">Loading agent details...</p>
+            </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-[var(--luxury-border)]/20">
+            <div class="flex justify-end">
+                <button onclick="document.getElementById('agentDetailsModal').classList.add('hidden')"
+                        class="mr-3 px-3 py-1.5 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg hover:bg-[var(--luxury-card-bg)]/50 transition-colors text-sm">
+                    Close
+                </button>
+                <button onclick="editAgentFromDetails()"
+                        class="ml-3 px-3 py-1.5 bg-[var(--luxury-primary)] text-white rounded-lg hover:bg-[var(--luxury-primary)]/90 transition-colors flex items-center justify-center gap-1 text-sm">
+                    <i class="fas fa-edit me-1"></i>
+                    Edit Agent
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mobile-specific agent functions
+document.addEventListener('DOMContentLoaded', function() {
+    // Format phone number input
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 6) {
+                value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+            } else if (value.length >= 3) {
+                value = value.replace(/(\d{3})(\d{0,3})/, '($1) $2');
+            }
+            e.target.value = value;
+        });
+    }
+});
+
+// Agent Functions
+function viewAgentDetailsMobile(agentId) {
+    // Show loading state
+    document.getElementById('agentDetailsContent').innerHTML = `
+        <div class="flex flex-col items-center justify-center py-6">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--luxury-primary)] mb-2"></div>
+            <p class="text-[var(--luxury-muted)] text-sm">Loading agent details...</p>
+        </div>
+    `;
+    document.getElementById('agentDetailsModal').classList.remove('hidden');
+
+    // Simulate loading (in real app, this would be an AJAX call)
+    setTimeout(() => {
+        document.getElementById('agentDetailsContent').innerHTML = `
+            <div class="space-y-4">
+                <div class="flex flex-col items-center">
+                    <div class="flex h-12 w-12 items-center justify-center bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-lg mb-3">
+                        AB
+                    </div>
+                    <h2 class="font-bold text-[var(--luxury-text-primary)]">Agent Name</h2>
+                    <p class="text-[var(--luxury-muted)] text-sm">Real Estate Agent</p>
+                </div>
+
+                <div class="grid gap-3">
+                    <div class="border-l-4 border-[var(--luxury-primary)]/20 pl-3">
+                        <p class="text-[var(--luxury-muted)] text-xs font-medium">Contact Information</p>
+                        <p class="text-[var(--luxury-muted)] text-xs)] text-xs">agent@example.com</p>
+                        <p class="text-[var(--luxury-muted)] text-xs">(555) 123-4567</p>
+                    </div>
+                    <div class="border-l-4 border-[var(--luxury-success)]/20 pl-3">
+                        <p class="text-[var(--luxury-muted)] text-xs font-medium">Performance Metrics</p>
+                        <p class="text-[var(--luxury-muted)] text-xs"><span class="font-medium">12</span> Active Listings</p>
+                        <p class="text-[var(--luxury-muted)] text-xs"><span class="font-medium">45</span> Total Deals</p>
+                        <p class="text-[var(--luxury-muted)] text-xs"><span class="font-medium">3</span> Pending Tasks</p>
+                    </div>
+                </div>
+
+                <div class="border-l-4 border-[var(--luxury-primary)]/20 pl-3">
+                    <p class="text-[var(--luxury-muted)] text-xs font-medium">Bio</p>
+                    <p class="text-[var(--luxury-muted)] text-xs">Experienced real estate agent specializing in residential properties with a track record of successful transactions and satisfied clients.</p>
+                </div>
+            </div>
+        `;
+    }, 1000);
+}
+
+function editAgentFromDetails() {
+    document.getElementById('agentDetailsModal').classList.add('hidden');
+    // Would typically open edit form with current agent data
+    alert('Edit agent functionality would be implemented here');
+}
+</script>
+{% endblock %}

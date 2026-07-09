@@ -182,25 +182,23 @@ def inject_current_user():
 
 
 @bp.route("/profile")
+@bp.route("/settings")
 @log_execution
 def profile():
-    """User profile page"""
-    if not session.get("user_id"):
-        flash("Please log in first", "error")
-        return redirect(url_for("auth.login"))
-
+    """User profile / settings page (Platinum Heritage preferences)."""
     from sqlalchemy_models import User
 
-    user = User.query.filter_by(id=session["user_id"]).first()
-    if not user:
-        session.clear()
-        return redirect(url_for("auth.login"))
+    user = None
+    if session.get("user_id"):
+        user = User.query.filter_by(id=session["user_id"]).first()
+        if not user:
+            session.clear()
 
-
-
+    # Allow viewing settings shell without auth; forms still require login to save.
     return render_template(
-        "profile.html",
+        "settings_preferences.html",
         user=user,
+        require_login=user is None,
     )
 
 

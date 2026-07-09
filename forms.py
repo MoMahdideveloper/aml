@@ -66,7 +66,8 @@ class DealForm(BaseNoCSRFForm):
 
 class TaskForm(BaseNoCSRFForm):
     title = StringField("Title", validators=[DataRequired(), Length(max=255)])
-    description = TextAreaField("Description", validators=[DataRequired()])
+    description = TextAreaField("Description", validators=[Optional()])
+    # Task.agent_id is NOT NULL in the ORM
     agent_id = IntegerField("Agent", validators=[DataRequired(), NumberRange(min=1)])
     priority = StringField("Priority", validators=[Optional(), Length(max=20)])
     due_date = StringField("Due Date", validators=[Optional(), Length(max=20)])  # YYYY-MM-DD

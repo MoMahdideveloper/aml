@@ -1,4 +1,4 @@
-{# Action Button Component
+{# Action Button Component — Platinum Heritage
    Usage:
    {% include 'components/_action_button.html' with {
        'url': url_for('properties'),
@@ -9,16 +9,16 @@
    } %}
 #}
 {% set colors_map = {
-    'primary': 'var(--luxury-primary)',
-    'success': 'var(--luxury-success)',
-    'warning': 'var(--luxury-warning)',
-    'danger': 'var(--luxury-danger)'
+    'primary': 'var(--primary)',
+    'success': 'var(--primary)',
+    'warning': 'var(--on-surface-variant)',
+    'danger': 'var(--error)'
 } %}
 {% set color_value = colors_map.get(color, colors_map['primary']) %}
 {% set width_class = 'w-full' if full_width else '' %}
 
 <a href="{{ url }}"
-   class="{{ width_class }} flex items-center justify-center px-4 py-2 bg-[{{ color_value }}]/10 text-[{{ color_value }}] rounded-lg hover:bg-[{{ color_value }}]/20 transition-colors font-medium">
-    <i class="fas {{ icon }} mr-2"></i>
+   class="{{ width_class }} inline-flex items-center justify-center px-4 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-primary hover:bg-surface-container transition-colors font-medium text-sm">
+    <i class="fas {{ icon }} mr-2" style="color: {{ color_value }}"></i>
     <span>{{ text }}</span>
 </a>

@@ -193,13 +193,62 @@ def property_detail(property_id):
         if property_data["ejare"]:
             property_data["ejare_per_sqft"] = round(property_data["ejare"] / square_feet, 0)
 
+    # Gallery images (PropertyImage rows + legacy cover)
+    gallery = []
+    try:
+        from sqlalchemy_models import PropertyImage
+
+        rows = (
+            PropertyImage.query.filter_by(property_id=property_id)
+            .order_by(
+                PropertyImage.is_primary.desc(),
+                PropertyImage.display_order.asc(),
+                PropertyImage.id.asc(),
+            )
+            .all()
+        )
+        for row in rows:
+            gallery.append(
+                {
+                    "id": row.id,
+                    "filename": row.filename,
+                    "caption": row.caption,
+                    "is_primary": row.is_primary,
+                }
+            )
+        cover = property_data.get("image_filename")
+        if cover and not any(g["filename"] == cover for g in gallery):
+            gallery.insert(0, {"id": None, "filename": cover, "caption": None, "is_primary": True})
+        if gallery and not property_data.get("image_filename"):
+            property_data["image_filename"] = gallery[0]["filename"]
+    except Exception as e:
+        logging.warning("Could not load gallery for property %s: %s", property_id, e)
+
     from flask import make_response
+
+    try:
+        agents = database_service.get_agents()
+    except Exception as e:
+        logging.warning("Could not load agents for property detail: %s", e)
+        agents = []
+
+    sharing = {
+        "title": property_data.get("title"),
+        "address": property_data.get("address"),
+        "price": property_data.get("price") or 0,
+        "url": property_data.get("canonical_url")
+        or url_for("properties.property_detail", property_id=property_id, _external=True),
+    }
 
     try:
         rendered_html = render_template(
             "property_details.html",
             property=property_data,
             related_properties=related_properties,
+            agents=agents,
+            sharing=sharing,
+            gallery=gallery,
+            form_action=url_for("properties.schedule_viewing", property_id=property_id),
         )
     except TemplateNotFound:
         if current_app.testing or _wants_json():
@@ -238,3 +287,110 @@ def get_edit_modal_html(property_id):
         if current_app.testing or _wants_json():
             return jsonify({"error": "Template not found"}), 404
         raise
+
+
+def schedule_viewing(property_id, property_obj=None):
+    """GET: property payload for AJAX scheduler. POST: create viewing task."""
+    if property_obj is None:
+        try:
+            property_obj = get_property_with_related_data(property_id)
+        except Exception:
+            property_obj = None
+        if property_obj is None:
+            try:
+                property_obj = database_service.get_property(property_id)
+            except Exception:
+                property_obj = None
+
+    if property_obj is None:
+        if _wants_json() or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"error": "Property not found"}), 404
+        flash("Property not found", "error")
+        return redirect(url_for("properties.properties"))
+
+    title = _safe_attr(property_obj, "title", f"Property #{property_id}")
+    address = _safe_attr(property_obj, "address", "")
+
+    if request.method == "GET":
+        payload = {
+            "property": {
+                "id": _safe_attr(property_obj, "id", property_id),
+                "title": title,
+                "address": address,
+            }
+        }
+        if _wants_json() or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify(payload), 200
+        return redirect(url_for("properties.property_detail", property_id=property_id))
+
+    # POST — create a follow-up task for the viewing
+    viewing_date = (request.form.get("viewing_date") or "").strip()
+    viewing_time = (request.form.get("viewing_time") or "").strip()
+    client_name = (request.form.get("client_name") or "").strip()
+    notes = (request.form.get("notes") or "").strip()
+    agent_id_raw = request.form.get("agent_id")
+
+    agent_id = None
+    try:
+        if agent_id_raw:
+            agent_id = int(agent_id_raw)
+    except (TypeError, ValueError):
+        agent_id = None
+
+    if not agent_id:
+        # Fall back to listing agent, then first available agent
+        agent_id = _safe_attr(property_obj, "agent_id", None)
+        if not agent_id:
+            try:
+                agents = database_service.get_agents()
+                agent_id = agents[0].id if agents else None
+            except Exception:
+                agent_id = None
+
+    if not agent_id:
+        flash("Assign an agent before scheduling a viewing.", "error")
+        return redirect(url_for("properties.property_detail", property_id=property_id))
+
+    due_date = None
+    if viewing_date:
+        try:
+            if viewing_time:
+                due_date = datetime.strptime(f"{viewing_date} {viewing_time}", "%Y-%m-%d %H:%M")
+            else:
+                due_date = datetime.strptime(viewing_date, "%Y-%m-%d")
+        except ValueError:
+            try:
+                due_date = datetime.strptime(viewing_date, "%Y-%m-%d")
+            except ValueError:
+                due_date = None
+
+    task_title = f"Viewing: {title}"
+    if client_name:
+        task_title = f"Viewing with {client_name}: {title}"
+
+    desc_parts = [f"Property: {title}"]
+    if address:
+        desc_parts.append(f"Address: {address}")
+    if client_name:
+        desc_parts.append(f"Client: {client_name}")
+    if viewing_date:
+        desc_parts.append(f"Date: {viewing_date}" + (f" {viewing_time}" if viewing_time else ""))
+    if notes:
+        desc_parts.append(f"Notes: {notes}")
+    desc_parts.append(f"Detail: /properties/{property_id}/detail")
+
+    try:
+        database_service.add_task(
+            task_title,
+            "\n".join(desc_parts),
+            int(agent_id),
+            "high",
+            "pending",
+            due_date,
+        )
+        flash("Viewing scheduled as a task.", "success")
+    except Exception as e:
+        logging.exception("Failed to schedule viewing for property %s", property_id)
+        flash(f"Could not schedule viewing: {e}", "error")
+
+    return redirect(url_for("properties.property_detail", property_id=property_id))

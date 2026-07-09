@@ -1,489 +1,574 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}AI Recommendations - Real Estate CRM{% endblock %}
-{% block page_title %}AI Property Recommendations{% endblock %}
+{% block title %}AI Recommendations - Platinum Heritage{% endblock %}
 
-{% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
-<li class="breadcrumb-item active" aria-current="page">AI Recommendations</li>
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        font-family: 'Material Symbols Outlined';
+    }
+    .shadow-ph-soft { box-shadow: 0 8px 30px rgba(27, 38, 49, 0.06); }
+    .customer-card-selected { border-color: #142435; box-shadow: 0 0 0 1px #142435; }
+</style>
 {% endblock %}
 
 {% block content %}
-<!-- Header Section -->
-<div class="d-flex justify-content-between align-items-center mb-4">
+<header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 w-full mb-8">
     <div>
-        <h4 class="mb-1">AI-Powered Property Recommendations</h4>
-        <p class="text-muted mb-0">Get intelligent property matches for your customers using Google Gemini AI</p>
+        <h1 class="font-display-lg text-2xl sm:text-3xl lg:text-display-lg text-primary mb-2">AI Recommendations</h1>
+        <p class="font-body-lg text-body-lg text-secondary max-w-2xl">
+            Match clients to inventory with hybrid scoring and AI analysis.
+        </p>
     </div>
-    <div class="d-flex gap-2">
-        <button class="btn btn-outline-info" onclick="showRecommendationTips()">
-            <i class="fas fa-lightbulb me-2"></i>
+    <div class="flex gap-3 w-full md:w-auto">
+        <button type="button" onclick="showRecommendationTips()"
+                class="flex-1 md:flex-none border border-outline-variant text-primary rounded-lg px-5 py-3 font-label-md text-label-md hover:bg-surface-container transition-all flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-[20px]">lightbulb</span>
             Tips
         </button>
+        <a href="{{ url_for('customers') }}"
+           class="flex-1 md:flex-none bg-primary text-on-primary rounded-lg px-5 py-3 font-label-md text-label-md hover:opacity-90 transition-all flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-[20px]">person_add</span>
+            Clients
+        </a>
     </div>
-</div>
+</header>
 
-<!-- Customer Selection -->
-<div class="card mb-4">
-    <div class="card-header bg-primary text-white">
-        <h6 class="card-title mb-0">
-            <i class="fas fa-user me-2"></i>
-            Select Customer for Recommendations
-        </h6>
-    </div>
-    <div class="card-body">
+{# ── Client picker ── #}
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 mb-8 shadow-sm">
+    <div class="flex items-center justify-between gap-4 mb-6">
+        <h2 class="font-headline-md text-headline-md text-primary flex items-center gap-2">
+            <span class="material-symbols-outlined text-[22px]">group</span>
+            Select a client
+        </h2>
         {% if customers %}
-        <div class="row">
-            {% for customer in customers %}
-            <div class="col-lg-4 col-md-6 mb-3">
-                <div class="card customer-selection-card h-100 {{ 'border-primary' if selected_customer and selected_customer.id == customer.id }}">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="customer-avatar me-3">
-                                <div class="avatar-circle bg-success text-white">
-                                    {{ customer.name.split()[0][0] }}{{ customer.name.split()[-1][0] if customer.name.split()|length > 1 else '' }}
-                                </div>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="mb-1">{{ customer.name }}</h6>
-                                <small class="text-muted">{{ customer.email }}</small>
-                            </div>
-                        </div>
-                        
-                        <div class="customer-preferences mb-3">
-                            <div class="row text-center">
-                                <div class="col-4">
-                                    <div class="preference-item">
-                                        <i class="fas fa-dollar-sign text-success"></i>
-                                        <div class="small">
-                                            {% if customer.budget_min > 0 and customer.budget_max > 0 %}
-                                            ${{ "{:,.0f}".format(customer.budget_min) }}-{{ "{:,.0f}".format(customer.budget_max) }}
-                                            {% else %}
-                                            Any Budget
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="preference-item">
-                                        <i class="fas fa-bed text-primary"></i>
-                                        <div class="small">
-                                            {{ customer.preferred_bedrooms if customer.preferred_bedrooms > 0 else 'Any' }} Beds
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="preference-item">
-                                        <i class="fas fa-home text-info"></i>
-                                        <div class="small">{{ customer.preferred_type or 'Any Type' }}</div>
-                                    </div>
-                                </div>
-                            </div>
-                            {% if customer.location_preference %}
-                            <div class="text-center mt-2">
-                                <small class="text-muted">
-                                    <i class="fas fa-map-marker-alt me-1"></i>
-                                    {{ customer.location_preference }}
-                                </small>
-                            </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="text-center">
-                            <a href="{{ url_for('get_customer_recommendations', customer_id=customer.id) }}" 
-                               class="btn btn-{{ 'primary' if selected_customer and selected_customer.id == customer.id else 'outline-primary' }} btn-sm">
-                                <i class="fas fa-magic me-1"></i>
-                                Get Recommendations
-                            </a>
-                        </div>
+        <span class="text-label-sm text-secondary">{{ customers|length }} client{{ 's' if customers|length != 1 }}</span>
+        {% endif %}
+    </div>
+
+    {% if customers %}
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {% for customer in customers %}
+        {% set is_selected = selected_customer and selected_customer.id == customer.id %}
+        <div class="rounded-xl border border-outline-variant bg-surface p-5 flex flex-col gap-4 transition-all hover:shadow-ph-soft {{ 'customer-card-selected bg-surface-container-low' if is_selected else '' }}">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-full bg-primary text-on-primary flex items-center justify-center font-semibold text-sm flex-shrink-0">
+                    {{ customer.name.split()[0][0] }}{{ customer.name.split()[-1][0] if customer.name.split()|length > 1 else '' }}
+                </div>
+                <div class="min-w-0">
+                    <h3 class="font-semibold text-primary truncate">{{ customer.name }}</h3>
+                    <p class="text-sm text-secondary truncate">{{ customer.email or 'No email' }}</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="rounded-lg bg-background border border-outline-variant p-2">
+                    <span class="material-symbols-outlined text-primary text-[18px]">payments</span>
+                    <div class="text-[11px] text-secondary mt-1 leading-tight">
+                        {% if customer.budget_min and customer.budget_max %}
+                        ${{ "{:,.0f}".format(customer.budget_min) }}–{{ "{:,.0f}".format(customer.budget_max) }}
+                        {% elif customer.budget_max %}
+                        Up to ${{ "{:,.0f}".format(customer.budget_max) }}
+                        {% else %}
+                        Any budget
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="rounded-lg bg-background border border-outline-variant p-2">
+                    <span class="material-symbols-outlined text-primary text-[18px]">bed</span>
+                    <div class="text-[11px] text-secondary mt-1">
+                        {{ customer.preferred_bedrooms if customer.preferred_bedrooms else 'Any' }} beds
+                    </div>
+                </div>
+                <div class="rounded-lg bg-background border border-outline-variant p-2">
+                    <span class="material-symbols-outlined text-primary text-[18px]">home</span>
+                    <div class="text-[11px] text-secondary mt-1 truncate">
+                        {{ customer.preferred_type or 'Any type' }}
                     </div>
                 </div>
             </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="text-center py-4">
-            <i class="fas fa-users fa-3x text-muted mb-3"></i>
-            <h6 class="text-muted">No Customers Available</h6>
-            <p class="text-muted">Add customers first to get AI-powered property recommendations.</p>
-            <a href="{{ url_for('customers') }}" class="btn btn-primary">
-                <i class="fas fa-user-plus me-2"></i>
-                Add Customer
+
+            {% if customer.location_preference %}
+            <p class="text-xs text-secondary flex items-center gap-1 truncate">
+                <span class="material-symbols-outlined text-[14px]">location_on</span>
+                {{ customer.location_preference }}
+            </p>
+            {% endif %}
+
+            <a href="{{ url_for('get_customer_recommendations', customer_id=customer.id) }}"
+               class="mt-auto w-full text-center rounded-lg py-2.5 font-label-md text-sm transition-all flex items-center justify-center gap-2
+                      {{ 'bg-primary text-on-primary hover:opacity-90' if is_selected else 'border border-outline-variant text-primary hover:bg-surface-container' }}">
+                <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+                {{ 'Refresh matches' if is_selected else 'Get recommendations' }}
             </a>
         </div>
-        {% endif %}
+        {% endfor %}
     </div>
-</div>
+    {% else %}
+    <div class="text-center py-12">
+        <span class="material-symbols-outlined text-5xl text-outline mb-3">group_off</span>
+        <h3 class="font-headline-md text-primary mb-2">No clients yet</h3>
+        <p class="text-secondary mb-6 max-w-md mx-auto">Add clients with preferences to generate property matches.</p>
+        <a href="{{ url_for('customers') }}"
+           class="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-lg font-label-md hover:opacity-90">
+            <span class="material-symbols-outlined">person_add</span>
+            Add client
+        </a>
+    </div>
+    {% endif %}
+</section>
 
-<!-- Recommendations Results -->
+{# ── Results ── #}
 {% if selected_customer %}
-<div class="card">
-    <div class="card-header bg-success text-white">
-        <div class="d-flex justify-content-between align-items-center">
-            <h6 class="card-title mb-0">
-                <i class="fas fa-magic me-2"></i>
-                AI Recommendations for {{ selected_customer.name }}
-            </h6>
-            <div class="d-flex gap-2">
-                <button class="btn btn-light btn-sm" onclick="refreshRecommendations()">
-                    <i class="fas fa-sync-alt me-1"></i>
-                    Refresh
-                </button>
-                <button class="btn btn-light btn-sm" onclick="exportRecommendations()">
-                    <i class="fas fa-download me-1"></i>
-                    Export
-                </button>
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-5 border-b border-outline-variant bg-primary text-on-primary">
+        <div>
+            <h2 class="font-headline-md text-lg font-semibold flex items-center gap-2">
+                <span class="material-symbols-outlined text-[22px]">auto_awesome</span>
+                Matches for {{ selected_customer.name }}
+            </h2>
+            <p class="text-sm text-on-primary/80 mt-1">
+                {% if recommendations %}
+                {{ recommendations|length }} ranked result{{ 's' if recommendations|length != 1 }}
+                {% else %}
+                No matches returned
+                {% endif %}
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="refreshRecommendations()"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors">
+                <span class="material-symbols-outlined text-[18px]">refresh</span>
+                Refresh
+            </button>
+            <button type="button" onclick="exportRecommendations()"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors">
+                <span class="material-symbols-outlined text-[18px]">download</span>
+                Export
+            </button>
+        </div>
+    </div>
+
+    <div class="p-6">
+        {% if recommendations and recommendations|length > 0 %}
+        <div class="mb-6 rounded-lg border border-outline-variant bg-surface-container-low px-4 py-3 flex items-start gap-3 text-sm">
+            <span class="material-symbols-outlined text-primary text-[20px] flex-shrink-0">smart_toy</span>
+            <p class="text-on-surface">
+                <strong class="text-primary">Analysis complete.</strong>
+                Ranked {{ recommendations|length }} properties from preferences and inventory scoring.
+            </p>
+        </div>
+
+        {# Summary strip #}
+        {% set excellent = recommendations | selectattr('match_score', 'ge', 80) | list | length %}
+        {% set avg_score = (recommendations | map(attribute='match_score') | sum / recommendations|length) | round(1) %}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+            <div class="rounded-lg border border-outline-variant bg-surface p-4">
+                <div class="text-label-sm text-secondary uppercase tracking-wider">Results</div>
+                <div class="font-headline-md text-primary tabular-nums">{{ recommendations|length }}</div>
+            </div>
+            <div class="rounded-lg border border-outline-variant bg-surface p-4">
+                <div class="text-label-sm text-secondary uppercase tracking-wider">Excellent (80+)</div>
+                <div class="font-headline-md text-primary tabular-nums">{{ excellent }}</div>
+            </div>
+            <div class="rounded-lg border border-outline-variant bg-surface p-4">
+                <div class="text-label-sm text-secondary uppercase tracking-wider">Avg score</div>
+                <div class="font-headline-md text-primary tabular-nums">{{ avg_score }}%</div>
+            </div>
+            <div class="rounded-lg border border-outline-variant bg-surface p-4">
+                <div class="text-label-sm text-secondary uppercase tracking-wider">Best match</div>
+                <div class="font-headline-md text-primary tabular-nums">{{ recommendations[0].match_score }}%</div>
             </div>
         </div>
-    </div>
-    <div class="card-body">
-        {% if recommendations %}
-        <div class="alert alert-info">
-            <i class="fas fa-robot me-2"></i>
-            <strong>AI Analysis Complete:</strong> Found {{ recommendations|length }} property matches based on customer preferences and market analysis.
-        </div>
-        
-        <div class="row">
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {% for recommendation in recommendations %}
-            <div class="col-lg-6 mb-4">
-                <div class="card recommendation-card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="badge bg-primary">Match Score: {{ recommendation.match_score }}/100</span>
-                            <span class="badge bg-{{ 'success' if recommendation.match_score >= 80 else 'warning' if recommendation.match_score >= 60 else 'secondary' }}">
-                                {% if recommendation.match_score >= 80 %}Excellent Match{% elif recommendation.match_score >= 60 %}Good Match{% else %}Fair Match{% endif %}
-                            </span>
-                        </div>
-                        <span class="badge bg-light text-dark">{{ recommendation.property.property_type }}</span>
+            {% set prop = recommendation.property %}
+            {% set score = recommendation.match_score|int %}
+            {% if score >= 80 %}
+                {% set score_label = 'Excellent' %}
+                {% set score_class = 'bg-[#dcfce7] text-[#15803d]' %}
+            {% elif score >= 60 %}
+                {% set score_label = 'Good' %}
+                {% set score_class = 'bg-[#fef9c3] text-[#854d0e]' %}
+            {% else %}
+                {% set score_label = 'Fair' %}
+                {% set score_class = 'bg-surface-container text-secondary' %}
+            {% endif %}
+
+            <article class="recommendation-card rounded-xl border border-outline-variant bg-surface flex flex-col overflow-hidden hover:shadow-ph-soft transition-shadow">
+                <div class="flex items-center justify-between gap-2 px-5 py-3 border-b border-outline-variant bg-surface-container-low">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-primary text-on-primary text-xs font-semibold tabular-nums">
+                            {{ score }}% match
+                        </span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ score_class }}">
+                            {{ score_label }}
+                        </span>
                     </div>
-                    
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <a href="{{ url_for('properties.property_detail', property_id=recommendation.property.id) }}"
-                               class="text-decoration-none">
-                                {{ recommendation.property.title }}
-                            </a>
-                        </h5>
-                        <p class="text-muted mb-2">
-                            <i class="fas fa-map-marker-alt me-1"></i>
-                            {{ recommendation.property.address }}
+                    {% if prop.property_type %}
+                    <span class="text-xs text-secondary border border-outline-variant rounded-full px-2.5 py-0.5">
+                        {{ prop.property_type }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="p-5 flex flex-col flex-1 gap-4">
+                    <div>
+                        <h3 class="font-headline-md text-lg text-primary leading-snug">
+                            <a href="{{ url_for('properties.property_detail', property_id=prop.id) }}"
+                               class="hover:underline">{{ prop.title }}</a>
+                        </h3>
+                        <p class="text-sm text-secondary flex items-start gap-1 mt-1">
+                            <span class="material-symbols-outlined text-[16px] mt-0.5 flex-shrink-0">location_on</span>
+                            <span>{{ prop.address or prop.neighborhood or 'Location not set' }}</span>
                         </p>
-                        
-                        <div class="property-details mb-3">
-                            <div class="row text-center">
-                                <div class="col-3">
-                                    <div class="detail-item">
-                                        <i class="fas fa-dollar-sign text-success"></i>
-                                        <div class="small fw-bold">${{ "{:,.0f}".format(recommendation.property.price) }}</div>
-                                    </div>
-                                </div>
-                                <div class="col-3">
-                                    <div class="detail-item">
-                                        <i class="fas fa-bed text-primary"></i>
-                                        <div class="small">{{ recommendation.property.bedrooms }} Beds</div>
-                                    </div>
-                                </div>
-                                <div class="col-3">
-                                    <div class="detail-item">
-                                        <i class="fas fa-bath text-primary"></i>
-                                        <div class="small">{{ recommendation.property.bathrooms }} Baths</div>
-                                    </div>
-                                </div>
-                                <div class="col-3">
-                                    <div class="detail-item">
-                                        <i class="fas fa-ruler-combined text-info"></i>
-                                        <div class="small">{{ "{:,}".format(recommendation.property.square_feet) }} sqft</div>
-                                    </div>
-                                </div>
+                    </div>
+
+                    <div class="grid grid-cols-4 gap-2 text-center">
+                        <div class="rounded-lg bg-background border border-outline-variant p-2">
+                            <span class="material-symbols-outlined text-primary text-[18px]">payments</span>
+                            <div class="text-xs font-semibold text-primary tabular-nums mt-0.5">
+                                ${{ "{:,.0f}".format(prop.price or 0) }}
                             </div>
                         </div>
-                        
-                        <div class="ai-analysis">
-                            <h6 class="text-primary">
-                                <i class="fas fa-robot me-1"></i>
-                                AI Analysis
-                            </h6>
-                            <div class="analysis-text">
-                                {{ recommendation.analysis[:200] }}{% if recommendation.analysis|length > 200 %}...{% endif %}
+                        <div class="rounded-lg bg-background border border-outline-variant p-2">
+                            <span class="material-symbols-outlined text-primary text-[18px]">bed</span>
+                            <div class="text-xs text-secondary mt-0.5">{{ prop.bedrooms or '—' }} bd</div>
+                        </div>
+                        <div class="rounded-lg bg-background border border-outline-variant p-2">
+                            <span class="material-symbols-outlined text-primary text-[18px]">bathtub</span>
+                            <div class="text-xs text-secondary mt-0.5">{{ prop.bathrooms or '—' }} ba</div>
+                        </div>
+                        <div class="rounded-lg bg-background border border-outline-variant p-2">
+                            <span class="material-symbols-outlined text-primary text-[18px]">square_foot</span>
+                            <div class="text-xs text-secondary mt-0.5">
+                                {% if prop.square_feet %}{{ "{:,.0f}".format(prop.square_feet) }}{% else %}—{% endif %}
                             </div>
-                            {% if recommendation.analysis|length > 200 %}
-                            <button class="btn btn-link btn-sm p-0" onclick="toggleAnalysis(this)">
-                                <small>Show more</small>
-                            </button>
-                            <div class="full-analysis" style="display: none;">
-                                {{ recommendation.analysis[200:] }}
-                            </div>
-                            {% endif %}
                         </div>
                     </div>
-                    
-                    <div class="card-footer bg-transparent">
-                        <div class="d-flex gap-2 flex-wrap">
-                            <a href="{{ url_for('properties.property_detail', property_id=recommendation.property.id) }}"
-                               class="btn btn-outline-primary btn-sm flex-fill">
-                                <i class="fas fa-home me-1"></i>
-                                View Property
-                            </a>
-                            <button class="btn btn-primary btn-sm flex-fill" onclick="createDeal({{ recommendation.property.id }}, {{ selected_customer.id }})">
-                                <i class="fas fa-handshake me-1"></i>
-                                Create Deal
-                            </button>
-                            <button class="btn btn-outline-success btn-sm flex-fill" onclick="scheduleViewing({{ recommendation.property.id }})">
-                                <i class="fas fa-calendar me-1"></i>
-                                Schedule Viewing
-                            </button>
-                            <button class="btn btn-outline-info btn-sm" onclick="shareProperty({{ recommendation.property.id }})">
-                                <i class="fas fa-share"></i>
-                            </button>
-                        </div>
+
+                    {% if recommendation.reasons %}
+                    <div class="flex flex-wrap gap-1.5">
+                        {% for reason in recommendation.reasons[:4] %}
+                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary">{{ reason }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if recommendation.analysis %}
+                    <div class="ai-analysis rounded-lg border border-outline-variant bg-background p-3">
+                        <h4 class="text-xs font-semibold text-primary uppercase tracking-wider mb-2 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[16px]">smart_toy</span>
+                            AI analysis
+                        </h4>
+                        <p class="analysis-preview text-sm text-on-surface leading-relaxed">
+                            {{ recommendation.analysis[:220] }}{% if recommendation.analysis|length > 220 %}…{% endif %}
+                        </p>
+                        {% if recommendation.analysis|length > 220 %}
+                        <button type="button" class="text-xs text-primary font-medium mt-2 hover:underline" onclick="toggleAnalysis(this)">
+                            Show more
+                        </button>
+                        <p class="full-analysis hidden text-sm text-on-surface leading-relaxed mt-2">
+                            {{ recommendation.analysis }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="flex flex-wrap gap-2 mt-auto pt-2 border-t border-outline-variant">
+                        <a href="{{ url_for('properties.property_detail', property_id=prop.id) }}"
+                           class="flex-1 min-w-[7rem] text-center border border-outline-variant text-primary rounded-lg py-2 text-sm font-medium hover:bg-surface-container-low transition-colors inline-flex items-center justify-center gap-1">
+                            <span class="material-symbols-outlined text-[16px]">home</span>
+                            View
+                        </a>
+                        <button type="button"
+                                onclick="createDeal({{ prop.id }}, {{ selected_customer.id }})"
+                                class="flex-1 min-w-[7rem] text-center bg-primary text-on-primary rounded-lg py-2 text-sm font-medium hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-1">
+                            <span class="material-symbols-outlined text-[16px]">handshake</span>
+                            Create deal
+                        </button>
+                        <a href="{{ url_for('properties.property_detail', property_id=prop.id) }}#schedule"
+                           class="p-2 border border-outline-variant text-secondary hover:text-primary rounded-lg transition-colors inline-flex"
+                           title="Schedule viewing">
+                            <span class="material-symbols-outlined text-[18px]">event</span>
+                        </a>
+                        <button type="button"
+                                onclick="shareProperty({{ prop.id }})"
+                                class="p-2 border border-outline-variant text-secondary hover:text-primary rounded-lg transition-colors"
+                                title="Share">
+                            <span class="material-symbols-outlined text-[18px]">share</span>
+                        </button>
                     </div>
                 </div>
-            </div>
+            </article>
             {% endfor %}
         </div>
-        
-        <!-- Recommendation Summary -->
-        <div class="mt-4 p-3 bg-light rounded">
-            <h6 class="text-primary mb-2">
-                <i class="fas fa-chart-pie me-1"></i>
-                Recommendation Summary
-            </h6>
-            <div class="row">
-                <div class="col-md-3">
-                    <small class="text-muted">Total Properties Analyzed:</small>
-                    <div class="fw-bold">{{ recommendations|length }}</div>
-                </div>
-                <div class="col-md-3">
-                    <small class="text-muted">Excellent Matches (80%+):</small>
-                    <div class="fw-bold text-success">{{ recommendations | selectattr("match_score", "ge", 80) | list | length }}</div>
-                </div>
-                <div class="col-md-3">
-                    <small class="text-muted">Average Match Score:</small>
-                    <div class="fw-bold text-primary">{{ (recommendations | map(attribute='match_score') | sum / recommendations|length) | round(1) }}%</div>
-                </div>
-                <div class="col-md-3">
-                    <small class="text-muted">Best Match:</small>
-                    <div class="fw-bold text-warning">{{ recommendations[0].match_score if recommendations else 0 }}%</div>
-                </div>
-            </div>
-        </div>
-        
+
         {% else %}
-        <div class="text-center py-5">
-            <div class="spinner-border text-primary mb-3" role="status">
-                <span class="visually-hidden">Loading...</span>
+        <div class="text-center py-14" id="recsEmptyState">
+            <span class="material-symbols-outlined text-5xl text-outline mb-3">search_off</span>
+            <h3 class="font-headline-md text-primary mb-2">No matches found</h3>
+            <p class="text-secondary max-w-md mx-auto mb-6">
+                No properties ranked for this client. Try updating preferences or adding inventory.
+            </p>
+            <div class="flex flex-wrap justify-center gap-3">
+                <button type="button" onclick="refreshRecommendations()"
+                        class="inline-flex items-center gap-2 border border-outline-variant text-primary px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-surface-container">
+                    <span class="material-symbols-outlined text-[18px]">refresh</span>
+                    Try again
+                </button>
+                <a href="{{ url_for('properties') }}"
+                   class="inline-flex items-center gap-2 bg-primary text-on-primary px-5 py-2.5 rounded-lg text-sm font-medium hover:opacity-90">
+                    <span class="material-symbols-outlined text-[18px]">domain</span>
+                    Browse properties
+                </a>
             </div>
-            <h5 class="text-muted">Generating AI Recommendations...</h5>
-            <p class="text-muted">Our AI is analyzing properties and customer preferences to find the best matches.</p>
-            <div class="alert alert-warning mt-3">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <strong>Note:</strong> If recommendations are taking too long to load, please check your Google Gemini API configuration.
-            </div>
+            {% if error_message %}
+            <p class="mt-6 text-sm text-error max-w-lg mx-auto">{{ error_message }}</p>
+            {% endif %}
         </div>
         {% endif %}
     </div>
-</div>
+</section>
 {% endif %}
 
-<!-- AI Tips Modal -->
-<div class="modal fade" id="recommendationTipsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title">
-                    <i class="fas fa-lightbulb me-2"></i>
-                    AI Recommendation Tips
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6 class="text-primary">How AI Recommendations Work</h6>
-                        <ul class="list-unstyled">
-                            <li class="mb-2">
-                                <i class="fas fa-check-circle text-success me-2"></i>
-                                Analyzes customer budget, preferences, and location
-                            </li>
-                            <li class="mb-2">
-                                <i class="fas fa-check-circle text-success me-2"></i>
-                                Compares against available property features
-                            </li>
-                            <li class="mb-2">
-                                <i class="fas fa-check-circle text-success me-2"></i>
-                                Uses AI to identify best matches and potential concerns
-                            </li>
-                            <li class="mb-2">
-                                <i class="fas fa-check-circle text-success me-2"></i>
-                                Provides detailed analysis for each recommendation
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="text-primary">Best Practices</h6>
-                        <ul class="list-unstyled">
-                            <li class="mb-2">
-                                <i class="fas fa-star text-warning me-2"></i>
-                                Ensure customer preferences are complete and accurate
-                            </li>
-                            <li class="mb-2">
-                                <i class="fas fa-star text-warning me-2"></i>
-                                Review AI analysis before presenting to customers
-                            </li>
-                            <li class="mb-2">
-                                <i class="fas fa-star text-warning me-2"></i>
-                                Use recommendations as a starting point for discussions
-                            </li>
-                            <li class="mb-2">
-                                <i class="fas fa-star text-warning me-2"></i>
-                                Create deals directly from high-match properties
-                            </li>
-                        </ul>
-                    </div>
+{# Tips modal #}
+<div id="recommendationTipsModal"
+     class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]"
+     data-modal role="dialog" aria-modal="true" aria-labelledby="recommendationTipsTitle">
+    <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-2xl max-h-[90vh] flex flex-col"
+         onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
+            <h2 id="recommendationTipsTitle" class="text-lg font-semibold text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined text-[20px]">lightbulb</span>
+                AI match tips
+            </h2>
+            <button type="button" onclick="closeModal('recommendationTipsModal')"
+                    class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" aria-label="Close">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+        <div class="px-5 py-5 overflow-y-auto space-y-5 text-sm">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                    <h3 class="font-semibold text-primary mb-2">How matching works</h3>
+                    <ul class="space-y-2 text-on-surface">
+                        <li class="flex gap-2"><span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>Budget, beds, and location preferences</li>
+                        <li class="flex gap-2"><span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>Property features and listing type</li>
+                        <li class="flex gap-2"><span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>AI notes on fit and trade-offs</li>
+                    </ul>
                 </div>
-                
-                <div class="alert alert-info mt-3">
-                    <h6 class="alert-heading">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Understanding Match Scores
-                    </h6>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <span class="badge bg-success">80-100%</span>
-                            <small class="d-block">Excellent Match - High probability of interest</small>
-                        </div>
-                        <div class="col-md-4">
-                            <span class="badge bg-warning">60-79%</span>
-                            <small class="d-block">Good Match - Worth considering with customer</small>
-                        </div>
-                        <div class="col-md-4">
-                            <span class="badge bg-secondary">Below 60%</span>
-                            <small class="d-block">Fair Match - May require compromises</small>
-                        </div>
-                    </div>
+                <div>
+                    <h3 class="font-semibold text-primary mb-2">Best practices</h3>
+                    <ul class="space-y-2 text-on-surface">
+                        <li class="flex gap-2"><span class="material-symbols-outlined text-primary text-[18px]">star</span>Keep client prefs complete</li>
+                        <li class="flex gap-2"><span class="material-symbols-outlined text-primary text-[18px]">star</span>Review analysis before client share</li>
+                        <li class="flex gap-2"><span class="material-symbols-outlined text-primary text-[18px]">star</span>Open deals from strong matches</li>
+                    </ul>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <div class="rounded-lg border border-outline-variant bg-surface-container-low p-4">
+                <h3 class="font-semibold text-primary mb-3">Match scores</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div><span class="inline-block px-2 py-0.5 rounded bg-primary text-on-primary mb-1">80–100%</span><p class="text-on-surface-variant">Excellent fit</p></div>
+                    <div><span class="inline-block px-2 py-0.5 rounded bg-primary-container text-on-primary mb-1">60–79%</span><p class="text-on-surface-variant">Good fit</p></div>
+                    <div><span class="inline-block px-2 py-0.5 rounded border border-outline-variant text-on-surface mb-1">&lt;60%</span><p class="text-on-surface-variant">Needs compromise</p></div>
+                </div>
             </div>
+        </div>
+        <div class="px-5 py-4 border-t border-outline-variant flex justify-end">
+            <button type="button" onclick="closeModal('recommendationTipsModal')"
+                    class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90">
+                Got it
+            </button>
         </div>
     </div>
 </div>
 
-<!-- Create Deal Modal -->
-<div class="modal fade" id="createDealModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">
-                    <i class="fas fa-handshake me-2"></i>
-                    Create Deal from Recommendation
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="createDealForm" method="POST" action="{{ url_for('add_deal') }}">
-                <input type="hidden" id="deal_property_id" name="property_id">
-                <input type="hidden" id="deal_customer_id" name="customer_id">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="deal_agent_id" class="form-label">Assigned Agent *</label>
-                        <select class="form-select" id="deal_agent_id" name="agent_id" required>
-                            <option value="">Select Agent</option>
-                            {% for agent in agents if agents %}
-                            <option value="{{ agent.id }}">{{ agent.name }} - {{ agent.specialization or "Agent" }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="deal_status" class="form-label">Initial Status</label>
-                        <select class="form-select" id="deal_status" name="status">
-                            <option value="qualified">Qualified (Recommended)</option>
-                            <option value="prospecting">Prospecting</option>
-                            <option value="proposal">Proposal</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-handshake me-1"></i>
-                        Create Deal
-                    </button>
-                </div>
-            </form>
+{# Create deal modal #}
+<div id="createDealModal"
+     class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]"
+     data-modal role="dialog" aria-modal="true" aria-labelledby="createDealTitle">
+    <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-md flex flex-col"
+         onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
+            <h2 id="createDealTitle" class="text-lg font-semibold text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined text-[20px]">handshake</span>
+                Create deal
+            </h2>
+            <button type="button" onclick="closeModal('createDealModal')"
+                    class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" aria-label="Close">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
         </div>
+        <form id="createDealForm" method="POST" action="{{ url_for('add_deal') }}" class="flex flex-col">
+            {% if csrf_token is defined %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% endif %}
+            <input type="hidden" id="deal_property_id" name="property_id">
+            <input type="hidden" id="deal_customer_id" name="customer_id">
+            <div class="px-5 py-4 space-y-4">
+                <div>
+                    <label for="deal_agent_id" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Agent *</label>
+                    <select id="deal_agent_id" name="agent_id" required
+                            class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                        <option value="">Select agent</option>
+                        {% for agent in agents|default([]) %}
+                        <option value="{{ agent.id }}" {% if loop.first %}selected{% endif %}>
+                            {{ agent.name }}{% if agent.specialization %} · {{ agent.specialization }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if not agents %}
+                    <p class="text-xs text-error mt-1">No agents available. Add an agent first.</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="deal_offer_amount" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Offer amount ($)</label>
+                    <input type="number" id="deal_offer_amount" name="offer_amount" min="0" step="1"
+                           class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none"
+                           placeholder="0">
+                </div>
+                <div>
+                    <label for="deal_status" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Initial status</label>
+                    <select id="deal_status" name="status"
+                            class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                        <option value="prospecting">Prospecting</option>
+                        <option value="contact_made">Contact made</option>
+                        <option value="property_shown">Property shown</option>
+                        <option value="offer_submitted">Offer submitted</option>
+                    </select>
+                </div>
+            </div>
+            <div class="px-5 py-4 border-t border-outline-variant flex justify-end gap-2">
+                <button type="button" onclick="closeModal('createDealModal')"
+                        class="px-4 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90"
+                        {% if not agents %}disabled{% endif %}>
+                    Create deal
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+function openModal(id) {
+    var modal = document.getElementById(id);
+    if (!modal) return;
+    if (window.PHModal && typeof PHModal.show === 'function') {
+        PHModal.show(id);
+        return;
+    }
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal(id) {
+    var modal = document.getElementById(id);
+    if (!modal) return;
+    if (window.PHModal && typeof PHModal.hide === 'function') {
+        PHModal.hide(id);
+        return;
+    }
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+}
+
 function toggleAnalysis(button) {
-    const card = button.closest('.recommendation-card');
-    const fullAnalysis = card.querySelector('.full-analysis');
-    const isHidden = fullAnalysis.style.display === 'none';
-    
-    fullAnalysis.style.display = isHidden ? 'block' : 'none';
-    button.innerHTML = isHidden ? '<small>Show less</small>' : '<small>Show more</small>';
+    var card = button.closest('.recommendation-card');
+    if (!card) return;
+    var full = card.querySelector('.full-analysis');
+    var preview = card.querySelector('.analysis-preview');
+    if (!full) return;
+    var open = !full.classList.contains('hidden');
+    if (open) {
+        full.classList.add('hidden');
+        if (preview) preview.classList.remove('hidden');
+        button.textContent = 'Show more';
+    } else {
+        full.classList.remove('hidden');
+        if (preview) preview.classList.add('hidden');
+        button.textContent = 'Show less';
+    }
 }
 
 function refreshRecommendations() {
     {% if selected_customer %}
-    window.location.href = "{{ url_for('get_customer_recommendations', customer_id=selected_customer.id) }}";
+    window.location.href = {{ url_for('get_customer_recommendations', customer_id=selected_customer.id)|tojson }};
     {% endif %}
 }
 
 function exportRecommendations() {
-    alert('Export functionality would be implemented here to generate PDF/Excel reports');
+    {% if selected_customer and recommendations %}
+    var lines = [
+        'AI Recommendations for {{ selected_customer.name|e }}',
+        'Generated: ' + new Date().toISOString(),
+        ''
+    ];
+    {% for recommendation in recommendations %}
+    lines.push(
+        '{{ loop.index }}. {{ recommendation.property.title|e }} — {{ recommendation.match_score }}% match'
+        + ' | ${{ "{:,.0f}".format(recommendation.property.price or 0) }}'
+        + ' | {{ (recommendation.property.address or "")|e }}'
+    );
+    {% endfor %}
+    var blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'recommendations-{{ selected_customer.id }}.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    {% elif selected_customer %}
+    alert('No recommendations to export for this client yet.');
+    {% else %}
+    alert('Select a client first to export recommendations.');
+    {% endif %}
 }
 
 function createDeal(propertyId, customerId) {
-    document.getElementById('deal_property_id').value = propertyId;
-    document.getElementById('deal_customer_id').value = customerId;
-    
-    const modal = new bootstrap.Modal(document.getElementById('createDealModal'));
-    modal.show();
-}
-
-function scheduleViewing(propertyId) {
-    alert(`Schedule viewing functionality would be implemented here for property ID: ${propertyId}`);
+    var propEl = document.getElementById('deal_property_id');
+    var custEl = document.getElementById('deal_customer_id');
+    if (propEl) propEl.value = propertyId;
+    if (custEl) custEl.value = customerId;
+    openModal('createDealModal');
 }
 
 function shareProperty(propertyId) {
+    var url = window.location.origin + '/properties/' + propertyId + '/detail';
     if (navigator.share) {
-        navigator.share({
-            title: 'Property Recommendation',
-            text: 'Check out this property recommendation',
-            url: window.location.href
+        navigator.share({ title: 'Property recommendation', text: 'Check out this property', url: url }).catch(function () {});
+        return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () {
+            alert('Property link copied to clipboard');
         });
     } else {
-        // Fallback - copy to clipboard
-        navigator.clipboard.writeText(window.location.href).then(() => {
-            alert('Link copied to clipboard!');
-        });
+        prompt('Copy this link:', url);
     }
 }
 
 function showRecommendationTips() {
-    const modal = new bootstrap.Modal(document.getElementById('recommendationTipsModal'));
-    modal.show();
+    openModal('recommendationTipsModal');
 }
 
-// Auto-refresh recommendations if taking too long
-{% if selected_customer and not recommendations %}
-setTimeout(() => {
-    if (!document.querySelector('.recommendation-card')) {
-        const alertDiv = document.querySelector('.alert-warning');
-        if (alertDiv) {
-            alertDiv.innerHTML = `
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <strong>Timeout:</strong> Recommendations are taking longer than expected. 
-                <a href="javascript:refreshRecommendations()" class="alert-link">Click here to try again</a> 
-                or check your API configuration.
-            `;
-        }
-    }
-}, 10000); // 10 seconds timeout
-{% endif %}
+// Backdrop click to close
+document.querySelectorAll('[data-modal]').forEach(function (modal) {
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeModal(modal.id);
+    });
+});
 </script>
 {% endblock %}

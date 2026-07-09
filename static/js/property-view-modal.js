@@ -276,9 +276,17 @@ function showModalContent() {
     const contentElement = document.getElementById('propertyViewModal_content');
     const errorElement = document.getElementById('propertyViewModal_error');
 
-    if (loadingElement) loadingElement.style.display = 'none';
-    if (errorElement) errorElement.classList.add('d-none');
-    if (contentElement) contentElement.style.display = 'block';
+    if (loadingElement) {
+        loadingElement.style.display = 'none';
+        loadingElement.classList.add('hidden');
+    }
+    if (errorElement) {
+        errorElement.classList.add('d-none', 'hidden');
+    }
+    if (contentElement) {
+        contentElement.style.display = 'flex';
+        contentElement.classList.remove('hidden');
+    }
 }
 
 /**
@@ -291,9 +299,17 @@ function showModalError(message) {
     const errorElement = document.getElementById('propertyViewModal_error');
     const errorMessageElement = document.getElementById('propertyViewModal_error_message');
 
-    if (loadingElement) loadingElement.style.display = 'none';
-    if (contentElement) contentElement.style.display = 'none';
-    if (errorElement) errorElement.classList.remove('d-none');
+    if (loadingElement) {
+        loadingElement.style.display = 'none';
+        loadingElement.classList.add('hidden');
+    }
+    if (contentElement) {
+        contentElement.style.display = 'none';
+        contentElement.classList.add('hidden');
+    }
+    if (errorElement) {
+        errorElement.classList.remove('d-none', 'hidden');
+    }
     if (errorMessageElement) errorMessageElement.textContent = message;
 
     // Announce error to screen readers
@@ -308,9 +324,17 @@ function showModalLoading() {
     const contentElement = document.getElementById('propertyViewModal_content');
     const errorElement = document.getElementById('propertyViewModal_error');
 
-    if (loadingElement) loadingElement.style.display = 'block';
-    if (contentElement) contentElement.style.display = 'none';
-    if (errorElement) errorElement.classList.add('d-none');
+    if (loadingElement) {
+        loadingElement.style.display = 'block';
+        loadingElement.classList.remove('hidden');
+    }
+    if (contentElement) {
+        contentElement.style.display = 'none';
+        contentElement.classList.add('hidden');
+    }
+    if (errorElement) {
+        errorElement.classList.add('d-none', 'hidden');
+    }
 }
 
 /**
@@ -347,12 +371,18 @@ function openPropertyFullDetails() {
  */
 function editPropertyFromModal() {
     if (currentPropertyId && typeof editProperty === 'function') {
-        // Close the view modal first
-        const modal = bootstrap.Modal.getInstance(document.getElementById('propertyViewModal'));
+        // Close the view modal first (PH Tailwind overlay or Bootstrap)
+        const modal = document.getElementById('propertyViewModal');
         if (modal) {
-            modal.hide();
+            modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                const inst = bootstrap.Modal.getInstance(modal);
+                if (inst) inst.hide();
+            }
         }
-        
+
         // Open edit modal
         setTimeout(() => {
             editProperty(currentPropertyId);

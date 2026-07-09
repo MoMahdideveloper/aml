@@ -1,257 +1,97 @@
-<!-- Meeting Schedule Modal -->
-<div class="modal fade" id="meetingScheduleModal" tabindex="-1" aria-labelledby="meetingScheduleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title" id="meetingScheduleModalLabel">
-                    <i class="fas fa-calendar-plus me-2"></i>
-                    Schedule Meeting - Deal #{{ deal.id if deal else '' }}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" data-close-modal="dynamic-modal" aria-label="Close"></button>
-            </div>
-            
-            <form id="meetingScheduleForm" method="POST" action="/deals/{{ deal.id if deal else '' }}/schedule-meeting">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
-                
-                <div class="modal-body">
-                    {% if deal %}
-                    <!-- Deal Summary -->
-                    <div class="alert alert-info mb-4">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <strong>Property:</strong> {{ deal.property.title if deal.property else 'N/A' }}<br>
-                                <strong>Customer:</strong> {{ deal.customer.name if deal.customer else 'N/A' }}
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Agent:</strong> {{ deal.agent.name if deal.agent else 'N/A' }}<br>
-                                <strong>Status:</strong> <span class="badge bg-secondary">{{ deal.status.replace('_', ' ').title() }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="meeting_title" class="form-label">Meeting Title *</label>
-                            <input type="text" class="form-control" id="meeting_title" name="meeting_title" 
-                                   value="Property Viewing - {{ deal.property.title if deal.property else 'Deal #' + deal.id|string }}" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="meeting_type" class="form-label">Meeting Type *</label>
-                            <select class="form-select" id="meeting_type" name="meeting_type" required>
-                                <option value="">Select meeting type</option>
-                                <option value="property_viewing">Property Viewing</option>
-                                <option value="consultation">Consultation</option>
-                                <option value="negotiation">Negotiation Meeting</option>
-                                <option value="contract_signing">Contract Signing</option>
-                                <option value="inspection">Property Inspection</option>
-                                <option value="closing">Closing Meeting</option>
-                                <option value="follow_up">Follow-up Meeting</option>
-                                <option value="other">Other</option>
-                            </select>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="meeting_date" class="form-label">Meeting Date *</label>
-                            <input type="date" class="form-control" id="meeting_date" name="meeting_date" 
-                                   min="{{ (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d') if datetime and timedelta else '' }}" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="meeting_time" class="form-label">Meeting Time *</label>
-                            <input type="time" class="form-control" id="meeting_time" name="meeting_time" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="duration" class="form-label">Duration (minutes)</label>
-                            <select class="form-select" id="duration" name="duration">
-                                <option value="30">30 minutes</option>
-                                <option value="60" selected>1 hour</option>
-                                <option value="90">1.5 hours</option>
-                                <option value="120">2 hours</option>
-                                <option value="180">3 hours</option>
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="location" class="form-label">Meeting Location</label>
-                            <input type="text" class="form-control" id="location" name="location" 
-                                   value="{{ deal.property.address if deal.property else '' }}"
-                                   placeholder="Enter meeting location">
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="attendees" class="form-label">Attendees</label>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="attendee_customer" name="attendees" 
-                                           value="customer" checked>
-                                    <label class="form-check-label" for="attendee_customer">
-                                        Customer: {{ deal.customer.name if deal.customer else 'N/A' }}
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="attendee_agent" name="attendees" 
-                                           value="agent" checked>
-                                    <label class="form-check-label" for="attendee_agent">
-                                        Agent: {{ deal.agent.name if deal.agent else 'N/A' }}
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="attendee_other" name="attendees" 
-                                           value="other">
-                                    <label class="form-check-label" for="attendee_other">
-                                        Other Attendees
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3" id="other_attendees_group" style="display: none;">
-                        <label for="other_attendees" class="form-label">Other Attendees (Email addresses, comma-separated)</label>
-                        <input type="email" class="form-control" id="other_attendees" name="other_attendees" 
-                               multiple placeholder="email1@example.com, email2@example.com">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="meeting_agenda" class="form-label">Meeting Agenda/Notes</label>
-                        <textarea class="form-control" id="meeting_agenda" name="meeting_agenda" rows="4" 
-                                  placeholder="Enter meeting agenda, discussion points, or special notes..."></textarea>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="send_calendar_invite" name="send_calendar_invite" checked>
-                                <label class="form-check-label" for="send_calendar_invite">
-                                    Send calendar invitations to attendees
-                                </label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="send_reminder" name="send_reminder" checked>
-                                <label class="form-check-label" for="send_reminder">
-                                    Send reminder 24 hours before meeting
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {% else %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
-                        <h5>Deal Not Found</h5>
-                        <p class="text-muted">Cannot schedule meeting for an invalid deal.</p>
-                    </div>
-                    {% endif %}
-                </div>
-                
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-close-modal="dynamic-modal">
-                        <i class="fas fa-times me-1"></i>
-                        Cancel
-                    </button>
-                    {% if deal %}
-                    <button type="submit" class="btn btn-info" id="scheduleMeetingBtn">
-                        <span class="spinner-border spinner-border-sm d-none me-2" role="status"></span>
-                        <i class="fas fa-calendar-plus me-1"></i>
-                        Schedule Meeting
-                    </button>
-                    {% endif %}
-                </div>
-            </form>
+<!-- Meeting Schedule Modal — Platinum Heritage -->
+<div id="meetingScheduleModal"
+     class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]"
+     data-modal
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="meetingScheduleModalLabel"
+     aria-hidden="true">
+    <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-2xl max-h-[90vh] flex flex-col"
+         onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
+            <h2 id="meetingScheduleModalLabel" class="text-lg font-semibold text-primary flex items-center gap-2 min-w-0">
+                <span class="material-symbols-outlined text-[20px]">calendar_add_on</span>
+                <span class="truncate">Schedule meeting{% if deal %} · Deal #{{ deal.id }}{% endif %}</span>
+            </h2>
+            <button type="button" data-modal-close data-close-modal="dynamic-modal"
+                    onclick="document.getElementById('meetingScheduleModal').classList.add('hidden'); document.body.style.overflow=''"
+                    class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" aria-label="Close">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
         </div>
+
+        <form id="meetingScheduleForm" method="POST"
+              action="{% if deal %}/deals/{{ deal.id }}/schedule-meeting{% else %}#{% endif %}"
+              class="flex flex-col flex-1 min-h-0">
+            {% if csrf_token is defined %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% endif %}
+
+            <div class="px-5 py-4 overflow-y-auto space-y-4 flex-1">
+                {% if deal %}
+                <div class="rounded-lg border border-outline-variant bg-surface-container-low p-3 text-sm">
+                    <span class="font-medium text-primary">{{ deal.property.title if deal.property else 'Property' }}</span>
+                    · {{ deal.customer.name if deal.customer else 'Client' }}
+                    · <span class="capitalize">{{ deal.status.replace('_',' ') if deal.status else '' }}</span>
+                </div>
+                {% endif %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="meeting_title" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Title *</label>
+                        <input type="text" id="meeting_title" name="meeting_title" required
+                               value="Property viewing{% if deal and deal.property %} — {{ deal.property.title }}{% endif %}"
+                               class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+                    </div>
+                    <div>
+                        <label for="meeting_type" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Type *</label>
+                        <select id="meeting_type" name="meeting_type" required
+                                class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                            <option value="property_viewing">Property viewing</option>
+                            <option value="consultation">Consultation</option>
+                            <option value="negotiation">Negotiation</option>
+                            <option value="contract_signing">Contract signing</option>
+                            <option value="inspection">Inspection</option>
+                            <option value="closing">Closing</option>
+                            <option value="follow_up">Follow-up</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="meeting_date" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Date *</label>
+                        <input type="date" id="meeting_date" name="meeting_date" required
+                               class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                    </div>
+                    <div>
+                        <label for="meeting_time" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Time *</label>
+                        <input type="time" id="meeting_time" name="meeting_time" required
+                               class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="meeting_location" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Location</label>
+                        <input type="text" id="meeting_location" name="meeting_location"
+                               value="{{ deal.property.address if deal and deal.property and deal.property.address is defined else '' }}"
+                               class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none"
+                               placeholder="Address or video link">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="meeting_notes" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Notes</label>
+                        <textarea id="meeting_notes" name="meeting_notes" rows="3"
+                                  class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none"
+                                  placeholder="Agenda, attendees, access notes…"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-5 py-4 border-t border-outline-variant flex justify-end gap-2">
+                <button type="button" data-modal-close
+                        onclick="document.getElementById('meetingScheduleModal').classList.add('hidden'); document.body.style.overflow=''"
+                        class="px-4 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90">
+                    Schedule meeting
+                </button>
+            </div>
+        </form>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Show/hide other attendees field
-    const otherAttendeesCheckbox = document.getElementById('attendee_other');
-    const otherAttendeesGroup = document.getElementById('other_attendees_group');
-    
-    if (otherAttendeesCheckbox) {
-        otherAttendeesCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                otherAttendeesGroup.style.display = 'block';
-            } else {
-                otherAttendeesGroup.style.display = 'none';
-                document.getElementById('other_attendees').value = '';
-            }
-        });
-    }
-    
-    // Set minimum date to tomorrow
-    const meetingDateInput = document.getElementById('meeting_date');
-    if (meetingDateInput) {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        meetingDateInput.min = tomorrow.toISOString().split('T')[0];
-    }
-    
-    // Set default time to next business hour
-    const meetingTimeInput = document.getElementById('meeting_time');
-    if (meetingTimeInput && !meetingTimeInput.value) {
-        const now = new Date();
-        const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
-        nextHour.setMinutes(0);
-        meetingTimeInput.value = nextHour.toTimeString().slice(0, 5);
-    }
-    
-    // Handle form submission
-    const form = document.getElementById('meetingScheduleForm');
-    if (form) {
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const submitBtn = document.getElementById('scheduleMeetingBtn');
-            const spinner = submitBtn.querySelector('.spinner-border');
-
-            try {
-                // Show loading state
-                submitBtn.disabled = true;
-                spinner.classList.remove('d-none');
-
-                // Simulate API call (replace with actual implementation)
-                await new Promise(resolve => setTimeout(resolve, 1500));
-
-                // Show success message
-                if (window.CRUDUtils) {
-                    window.CRUDUtils.showToast('Meeting scheduled successfully!', 'success');
-                } else {
-                    console.log('Meeting scheduled successfully!');
-                }
-
-
-            } catch (error) {
-                // Show error message
-                if (window.CRUDUtils) {
-                    window.CRUDUtils.showToast('Error scheduling meeting: ' + error.message, 'error');
-                } else {
-                    console.error('Error scheduling meeting: ' + error.message);
-                }
-            } finally {
-                // Reset loading state
-                submitBtn.disabled = false;
-                spinner.classList.add('d-none');
-            }
-        });
-    }
-});
-</script>

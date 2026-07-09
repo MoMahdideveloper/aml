@@ -1,311 +1,488 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ property.title }} - Real Estate CRM{% endblock %}
+{% block title %}{{ property.title }} - Platinum Heritage{% endblock %}
 
-{% block header_right %}
-    <!-- Property-specific header actions can go here -->
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        font-family: 'Material Symbols Outlined';
+    }
+    .shadow-ph-soft { box-shadow: 0 8px 30px rgba(27, 38, 49, 0.06); }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="bg-[var(--surface-container-lowest)] border-l-4 border-[var(--primary)]/20 p-6 rounded-lg hover:shadow-md transition-shadow">
-    <!-- Property Header -->
-    <div class="flex flex-col md:flex-row items-center md:items-start gap-6 p-6">
-        <!-- Property Images -->
-        <div class="w-full md:w-1/2">
-            {% if property.image_filename %}
-            <div class="aspect-w-16 aspect-h-9 w-full rounded-lg overflow-hidden shadow-lg bg-[var(--outline-variant)]/20">
-                <img src="{{ url_for('static', filename='uploads/' + property.image_filename) }}"
+{% set status_key = (property.status or 'unknown')|lower %}
+{% set status_styles = {
+    'active': 'bg-[#dcfce7] text-[#15803d]',
+    'pending': 'bg-[#fef9c3] text-[#854d0e]',
+    'sold': 'bg-[#fee2e2] text-[#991b1b]',
+    'rented': 'bg-[#fee2e2] text-[#991b1b]',
+    'off_market': 'bg-surface-container text-secondary',
+} %}
+{% set status_class = status_styles.get(status_key, 'bg-surface-container text-secondary') %}
+{% set is_rental = property.listing_type in ['rental', 'rent', 'lease'] %}
+
+{# Breadcrumb #}
+<nav class="flex flex-wrap items-center gap-2 text-label-md text-secondary mb-6" aria-label="Breadcrumb">
+    <a href="{{ url_for('properties') }}" class="hover:text-primary transition-colors">Properties</a>
+    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+    {% if property.neighborhood %}
+    <span class="truncate max-w-[10rem] sm:max-w-none">{{ property.neighborhood }}</span>
+    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+    {% endif %}
+    <span class="text-primary font-medium truncate">{{ property.title }}</span>
+</nav>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+    {# ── Left column ── #}
+    <div class="lg:col-span-8 flex flex-col gap-8">
+        {# Hero image + gallery #}
+        {% set gallery = gallery|default([]) %}
+        {% set hero_src = property.image_filename or (gallery[0].filename if gallery else none) %}
+        <section class="flex flex-col gap-4">
+            <div class="relative w-full aspect-video rounded-xl overflow-hidden border border-outline-variant bg-surface-container-high">
+                {% if hero_src %}
+                <img id="heroGalleryImg"
+                     src="{{ url_for('static', filename='uploads/' + hero_src) }}"
                      alt="{{ property.title }}"
                      class="w-full h-full object-cover">
-            </div>
-            {% else %}
-            <div class="aspect-w-16 aspect-h-9 w-full flex items-center justify-content-center rounded-lg bg-[var(--outline-variant)]/20">
-                <i class="fas fa-image text-[var(--primary)] text-5xl opacity-50"></i>
-                <span class="ml-2 text-[var(--on-surface-variant)]">No Image Available</span>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- Property Details -->
-        <div class="w-full md:w-1/2 space-y-4">
-            <h1 class="font-headline-lg text-[var(--on-surface)] font-bold">{{ property.title }}</h1>
-
-            <!-- Price Section -->
-            <div class="space-y-2">
-                {% if property.listing_type == 'rental' %}
-                <!-- Iranian Rental Pricing System -->
-                {% if property.rahn %}
-                <div class="flex flex-col">
-                    <span class="text-[var(--on-surface-variant)] text-xs">رهن (Rahn/Deposit)</span>
-                    <span class="text-3xl font-bold text-[var(--primary)]">{{ "{:,.0f}".format(property.rahn) }} تومان</span>
-                </div>
-                {% endif %}
-
-                {% if property.ejare %}
-                <div class="flex flex-col">
-                    <span class="text-[var(--on-surface-variant)] text-xs">اجاره (Ejare/Monthly Rent)</span>
-                    <span class="text-3xl font-bold text-[var(--primary)]">{{ "{:,.0f}".format(property.ejare) }} تومان</span>
-                </div>
-                {% endif %}
                 {% else %}
-                <!-- Sale Pricing -->
-                <div class="flex flex-col">
-                    <span class="text-[var(--on-surface-variant)] text-xs">Sale Price</span>
-                    <span class="text-4xl font-bold text-[var(--primary)]">${{ "{:,.0f}".format(property.price) }}</span>
+                <div class="w-full h-full flex flex-col items-center justify-center gap-2 text-secondary">
+                    <span class="material-symbols-outlined text-5xl opacity-50">domain</span>
+                    <span class="text-sm">No image available</span>
                 </div>
                 {% endif %}
-            </div>
-
-            <!-- Property Stats -->
-            <div class="gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div class="flex flex-col items-center text-center p-3 bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-lg">
-                    <i class="fas fa-bed text-[var(--primary)] text-xl mb-2"></i>
-                    <span class="font-medium text-[var(--on-surface)]">{{ property.bedrooms }}</span>
-                    <span class="text-[var(--on-surface-variant)] text-xs">Beds</span>
-                </div>
-                <div class="flex flex-col items-center text-center p-3 bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-lg">
-                    <i class="fas fa-bath text-[var(--primary)] text-xl mb-2"></i>
-                    <span class="font-medium text-[var(--on-surface)]">{{ property.bathrooms }}</span>
-                    <span class="text-[var(--on-surface-variant)] text-xs">Baths</span>
-                </div>
-                <div class="flex flex-col items-center text-center p-3 bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-lg">
-                    <i class="fas fa-ruler-combined text-[var(--primary)] text-xl mb-2"></i>
-                    <span class="font-medium text-[var(--on-surface)]">{{ "{:,}".format(property.square_feet) }}</span>
-                    <span class="text-[var(--on-surface-variant)] text-xs">sqft</span>
-                </div>
-                {% if property.parking_spaces %}
-                <div class="flex flex-col items-center text-center p-3 bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-lg">
-                    <i class="fas fa-car text-[var(--primary)] text-xl mb-2"></i>
-                    <span class="font-medium text-[var(--on-surface)]">{{ property.parking_spaces }}</span>
-                    <span class="text-[var(--on-surface-variant)] text-xs">Parking</span>
-                </div>
-                {% endif %}
-                {% if property.year_built %}
-                <div class="flex flex-col items-center text-center p-3 bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-lg">
-                    <i class="fas fa-calendar text-[var(--primary)] text-xl mb-2"></i>
-                    <span class="font-medium text-[var(--on-surface)]">{{ property.year_built }}</span>
-                    <span class="text-[var(--on-surface-variant)] text-xs">Built</span>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Location and Status -->
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-4 pt-3 border-t border-[var(--outline-variant)]/20">
-                <div class="flex items-center space-x-2 mb-2 sm:mb-0">
-                    <i class="fas fa-map-marker-alt text-[var(--primary)]"></i>
-                    <span class="text-[var(--on-surface)]">{{ property.neighborhood or 'Location not specified' }}</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="px-2 py-1 text-[var(--on-surface-variant)] rounded-full
-                        {% if property.status == 'active' %}bg-[var(--primary)]/10 text-[var(--primary)]
-                        {% elif property.status == 'pending' %}bg-[var(--error)]/10 text-[var(--error)]
-                        {% elif property.status == 'sold' or property.status == 'rented' %}bg-[var(--on-surface-variant)]/10 text-[var(--on-surface-variant)]
-                        {% else %}bg-[var(--surface-container-lowest)]/10 text-[var(--on-surface)]
-                        {% endif %}">
-                        {{ property.status.title() }}
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Property Description -->
-    {% if property.description and property.description != 'No description available' %}
-    <div class="p-6 border-t border-[var(--outline-variant)]/20">
-        <h2 class="font-headline-md text-[var(--on-surface)] font-bold mb-4">Property Description</h2>
-        <p class="text-[var(--on-surface)]/80 leading-relaxed">{{ property.description }}</p>
-    </div>
-    {% endif %}
-
-    <!-- Property Features -->
-    {% if property.property_features %}
-    <div class="p-6 border-t border-[var(--outline-variant)]/20">
-        <h2 class="font-headline-md text-[var(--on-surface)] font-bold mb-4">Property Features</h2>
-        <div class="flex flex-wrap gap-2">
-            {% if property.property_features is string %}
-                {% set feature_list = property.property_features.split(',') %}
-            {% else %}
-                {% set feature_list = property.property_features %}
-            {% endif %}
-            {% for feature in feature_list %}
-            <span class="inline-flex items-center px-3 py-1 bg-[var(--primary)]/10 text-[var(--primary)] text-xs font-medium rounded-full
-                       {% if loop.last %}mr-0{% endif %}">
-                {{ feature.strip() if feature is string else feature }}
-            </span>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Additional Details -->
-    <div class="p-6 border-t border-[var(--outline-variant)]/20">
-        <h2 class="font-headline-md text-[var(--on-surface)] font-bold mb-4">Additional Details</h2>
-        <div class="gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div class="flex flex-col space-y-1">
-                <span class="text-[var(--on-surface-variant)] text-xs">Property Type</span>
-                <span class="font-medium text-[var(--on-surface)]">{{ property.property_type }}</span>
-            </div>
-            <div class="flex flex-col space-y-1">
-                <span class="text-[var(--on-surface-variant)] text-xs">Property Category</span>
-                <span class="font-medium text-[var(--on-surface)]">{{ (property.property_category or 'N/A')|string|title }}</span>
-            </div>
-            <div class="flex flex-col space-y-1">
-                <span class="text-[var(--on-surface-variant)] text-xs">Listing Type</span>
-                <span class="font-medium
-                    {% if property.listing_type == 'rental' %}text-[var(--primary)]
-                    {% else %}text-[var(--primary)]
-                    {% endif %}">
-                    {{ property.listing_type.title() }}
+                <span class="absolute top-4 left-4 {{ status_class }} font-label-sm text-label-sm px-3 py-1 rounded-full uppercase tracking-wider">
+                    {{ (property.status or 'unknown')|replace('_', ' ')|title }}
                 </span>
-            </div>
-            <div class="flex flex-col space-y-1">
-                <span class="text-[var(--on-surface-variant)] text-xs">Floors</span>
-                <span class="font-medium text-[var(--on-surface)]">{{ property.floors }}</span>
-            </div>
-            <div class="flex flex-col space-y-1">
-                <span class="text-[var(--on-surface-variant)] text-xs">Units</span>
-                <span class="font-medium text-[var(--on-surface)]">{{ property.units }}</span>
-            </div>
-            <div class="flex flex-col space-y-1">
-                <span class="text-[var(--on-surface-variant)] text-xs">Condition</span>
-                <span class="font-medium
-                    {% if property.property_condition == 'excellent' %}text-[var(--primary)]
-                    {% elif property.property_condition == 'good' %}text-[var(--primary)]
-                    {% elif property.property_condition == 'fair' %}text-[var(--error)]
-                    {% else %}text-[var(--on-surface-variant)]
-                    {% endif %}">
-                    {{ property.property_type.replace('_', ' ').title() }}
-                </span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Agent Information -->
-    {% if property.has_agent %}
-    <div class="p-6 border-t border-[var(--outline-variant)]/20">
-        <h2 class="font-headline-md text-[var(--on-surface)] font-bold mb-4">Listing Agent</h2>
-        <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
-            <div class="flex-shrink-0">
-                <img src="{{ url_for('static', filename='agents/default-agent.png') }}"
-                     alt="{{ property.agent_name }}"
-                     class="w-16 h-16 rounded-full border-2 border-[var(--primary)]/20">
-            </div>
-            <div class="flex-1">
-                <h3 class="font-semibold text-[var(--on-surface)]">{{ property.agent_name }}</h3>
-                <p class="text-[var(--on-surface-variant)] text-xs">Real Estate Agent</p>
-                {% if property.agent_email %}
-                <p class="flex items-center space-x-2 text-[var(--on-surface-variant)] text-xs mt-1">
-                    <i class="fas fa-envelope"></i>
-                    <span>{{ property.agent_email }}</span>
-                </p>
-                {% endif %}
-                {% if property.agent_phone %}
-                <p class="flex items-center space-x-2 text-[var(--on-surface-variant)] text-xs mt-1">
-                    <i class="fas fa-phone"></i>
-                    <span>{{ property.agent_phone }}</span>
-                </p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Related Properties -->
-    {% if related_properties and related_properties|length > 0 %}
-    <div class="p-6 border-t border-[var(--outline-variant)]/20">
-        <h2 class="font-headline-md text-[var(--on-surface)] font-bold mb-4">Similar Properties</h2>
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {% for prop in related_properties %}
-            <div class="bg-[var(--surface-container-lowest)] rounded-lg shadow-sm overflow-hidden hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow duration-300">
-                <a href="{{ url_for('properties.property_detail', property_id=prop.id) }}" class="block">
-                    {% if prop.image_filename %}
-                    <div class="aspect-w-16 aspect-h-9 w-full rounded-t-lg overflow-hidden bg-[var(--outline-variant)]/20">
-                        <img src="{{ url_for('static', filename='uploads/' + prop.image_filename) }}"
-                             alt="{{ prop.title }}"
-                             class="w-full h-full object-cover">
-                    </div>
-                    {% else %}
-                    <div class="aspect-w-16 aspect-h-9 w-full flex items-center justify-content-center rounded-t-lg bg-[var(--outline-variant)]/20">
-                        <i class="fas fa-image text-[var(--primary)] text-3xl opacity-50"></i>
-                    </div>
-                    {% endif %}
-                    <div class="p-4">
-                        <h3 class="font-medium text-[var(--on-surface)] line-clamp-2">{{ prop.title }}</h3>
-                        <p class="text-[var(--on-surface-variant)] text-xs line-clamp-2 mt-1">{{ prop.address }}</p>
-                        <div class="mt-3 flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0 sm:space-x-4">
-                            <div class="text-[var(--on-surface-variant)] text-xs">
-                                <i class="fas fa-bed mr-1"></i>{{ prop.bedrooms }}bd
-                                <span class="mx-2">|</span>
-                                <i class="fas fa-bath mr-1"></i>{{ prop.bathrooms }}ba
-                                <span class="mx-2">|</span>
-                                <i class="fas fa-ruler-combined mr-1"></i>{{ "{:,}".format(prop.square_feet) }}sqft
-                            </div>
-                            {% if prop.listing_type == 'rental' %}
-                            {% if prop.rahn %}
-                            <span class="block text-[var(--on-surface-variant)] text-xs">رهن: {{ "{:,.0f}".format(prop.rahn) }} تومان</span>
-                            {% endif %}
-                            {% if prop.ejare %}
-                            <span class="block text-[var(--on-surface-variant)] text-xs">اجاره: {{ "{:,.0f}".format(prop.ejare) }} تومان</span>
-                            {% endif %}
-                            {% else %}
-                            <span class="block text-3xl font-bold text-[var(--primary)]">${{ "{:,.0f}".format(prop.price) }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
+                <a href="{{ url_for('properties.property_media', property_id=property.id) }}"
+                   class="absolute bottom-4 right-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-lowest/95 border border-outline-variant text-primary text-xs font-medium hover:bg-surface-container-lowest shadow-sm">
+                    <span class="material-symbols-outlined text-[16px]">photo_library</span>
+                    {% if gallery %}{{ gallery|length }} photo{{ 's' if gallery|length != 1 }} · Manage{% else %}Add photos{% endif %}
                 </a>
             </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
+            {% if gallery and gallery|length > 1 %}
+            <div class="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                {% for img in gallery[:12] %}
+                <button type="button"
+                        class="gallery-thumb aspect-video rounded-lg overflow-hidden border border-outline-variant hover:border-primary focus:border-primary outline-none {{ 'ring-2 ring-primary' if loop.first }}"
+                        data-src="{{ url_for('static', filename='uploads/' + img.filename) }}"
+                        aria-label="View photo {{ loop.index }}">
+                    <img src="{{ url_for('static', filename='uploads/' + img.filename) }}"
+                         alt="" class="w-full h-full object-cover" loading="lazy">
+                </button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
 
-    <!-- Action Buttons -->
-    <div class="p-6 border-t border-[var(--outline-variant)]/20 flex flex-col sm:flex-row sm:justify-end space-y-4 sm:space-y-0 sm:space-x-3">
-        <a href="{{ url_for('properties.properties') }}"
-           class="flex items-center px-4 py-2 bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-lg hover:bg-[var(--surface-container-lowest)]/50 transition-colors font-medium text-[var(--on-surface-variant)]">
-            <i class="fas fa-arrow-left mr-2"></i>
-            Back to Properties
-        </a>
-        <button onclick="window.print()"
-                class="flex items-center px-4 py-2 bg-[var(--primary)] text-white rounded-lg hover:bg-[var(--primary)]/90 transition-colors font-medium">
-            <i class="fas fa-print mr-2"></i>
-            Print Property Details
-        </button>
-        <a href="#"
-           class="flex items-center px-4 py-2 bg-[var(--primary)]/10 text-[var(--primary)] rounded-lg hover:bg-[var(--primary)]/20 transition-colors font-medium"
-           id="sharePropertyBtn">
-            <i class="fas fa-share-alt mr-2"></i>
-            Share Property
-        </a>
+        {# Title, price, stats #}
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 md:p-8 shadow-ph-soft flex flex-col gap-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-outline-variant pb-6">
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-3 mb-2">
+                        {% if property.file_code %}
+                        <span class="text-label-md text-secondary">File: {{ property.file_code }}</span>
+                        {% endif %}
+                        {% if property.property_type %}
+                        <span class="px-3 py-1 border border-outline-variant text-secondary rounded-full text-label-sm">
+                            {{ property.property_type }}
+                        </span>
+                        {% endif %}
+                        {% if property.listing_type %}
+                        <span class="px-3 py-1 border border-outline-variant text-secondary rounded-full text-label-sm capitalize">
+                            {{ property.listing_type|replace('_', ' ') }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <h1 class="font-display-lg text-2xl sm:text-3xl lg:text-display-lg text-primary mb-2 break-words">
+                        {{ property.title }}
+                    </h1>
+                    <div class="flex items-start gap-2 text-secondary font-body-md">
+                        <span class="material-symbols-outlined text-[18px] mt-0.5 flex-shrink-0">location_on</span>
+                        <span>{{ property.address or 'Address not available' }}{% if property.neighborhood %} · {{ property.neighborhood }}{% endif %}</span>
+                    </div>
+                </div>
+                <div class="md:text-right flex-shrink-0">
+                    {% if is_rental %}
+                        {% if property.rahn %}
+                        <div class="mb-1">
+                            <div class="text-label-sm text-secondary uppercase tracking-wider">Rahn (deposit)</div>
+                            <div class="font-headline-md text-headline-md text-primary tabular-nums">{{ "{:,.0f}".format(property.rahn) }} <span class="text-sm font-normal">تومان</span></div>
+                        </div>
+                        {% endif %}
+                        {% if property.ejare %}
+                        <div>
+                            <div class="text-label-sm text-secondary uppercase tracking-wider">Ejare (monthly)</div>
+                            <div class="font-headline-md text-headline-md text-primary tabular-nums">{{ "{:,.0f}".format(property.ejare) }} <span class="text-sm font-normal">تومان</span></div>
+                        </div>
+                        {% endif %}
+                        {% if not property.rahn and not property.ejare %}
+                        <div class="font-display-lg text-2xl sm:text-3xl text-primary tabular-nums">${{ "{:,.0f}".format(property.price or 0) }}</div>
+                        <div class="text-label-md text-secondary">Listed rent / price</div>
+                        {% endif %}
+                    {% else %}
+                        <div class="font-display-lg text-2xl sm:text-3xl lg:text-display-lg text-primary tabular-nums">${{ "{:,.0f}".format(property.price or 0) }}</div>
+                        {% if property.price_per_sqft %}
+                        <div class="text-label-md text-secondary">${{ "{:,.2f}".format(property.price_per_sqft) }} / sqft</div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Key stats #}
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6">
+                <div class="flex flex-col gap-1 border-l-2 border-outline-variant pl-4">
+                    <span class="text-label-md text-secondary uppercase tracking-wider">Bedrooms</span>
+                    <span class="font-headline-md text-headline-md text-primary tabular-nums">{{ property.bedrooms if property.bedrooms is not none else '—' }}</span>
+                </div>
+                <div class="flex flex-col gap-1 border-l-2 border-outline-variant pl-4">
+                    <span class="text-label-md text-secondary uppercase tracking-wider">Bathrooms</span>
+                    <span class="font-headline-md text-headline-md text-primary tabular-nums">{{ property.bathrooms if property.bathrooms is not none else '—' }}</span>
+                </div>
+                <div class="flex flex-col gap-1 border-l-2 border-outline-variant pl-4">
+                    <span class="text-label-md text-secondary uppercase tracking-wider">Area</span>
+                    <span class="font-headline-md text-headline-md text-primary tabular-nums">
+                        {{ "{:,.0f}".format(property.square_feet) if property.square_feet else '—' }}
+                        {% if property.square_feet %}<span class="text-body-md font-normal text-secondary"> sqft</span>{% endif %}
+                    </span>
+                </div>
+                <div class="flex flex-col gap-1 border-l-2 border-outline-variant pl-4">
+                    <span class="text-label-md text-secondary uppercase tracking-wider">Year built</span>
+                    <span class="font-headline-md text-headline-md text-primary tabular-nums">{{ property.year_built or '—' }}</span>
+                </div>
+            </div>
+
+            {# Structured details #}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-1 pt-2 border-t border-outline-variant">
+                {% set detail_rows = [
+                    ('Property type', property.property_type),
+                    ('Category', (property.property_category or '')|string|title if property.property_category else none),
+                    ('Listing type', (property.listing_type or '')|replace('_', ' ')|title if property.listing_type else none),
+                    ('Condition', (property.property_condition or '')|replace('_', ' ')|title if property.property_condition and property.property_condition != 'unknown' else none),
+                    ('Floors', property.floors),
+                    ('Floor #', property.floor_number),
+                    ('Units', property.units),
+                    ('Parking', property.parking_spaces),
+                    ('Heating', property.heating_type),
+                    ('Cooling', property.cooling_type),
+                    ('Built area', property.built_area),
+                    ('Land area', property.land_area),
+                    ('Document', property.document_type),
+                    ('Direction', property.property_direction),
+                    ('Facade', property.facade_type),
+                    ('Floor covering', property.floor_covering),
+                    ('Cabinet', property.cabinet_type),
+                    ('Usage', property.usage_type),
+                    ('Commercial', property.commercial_status),
+                    ('Price / m²', property.price_per_meter),
+                    ('Source', property.source),
+                ] %}
+                {% for label, value in detail_rows %}
+                    {% if value is not none and value != '' and value != 'unknown' %}
+                    <div class="flex justify-between items-center py-2.5 border-b border-surface-variant gap-4">
+                        <span class="text-secondary font-body-md">{{ label }}</span>
+                        <span class="text-primary font-medium text-right capitalize">{{ value }}</span>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                {% if property.is_exchangeable %}
+                <div class="flex justify-between items-center py-2.5 border-b border-surface-variant gap-4">
+                    <span class="text-secondary font-body-md">Exchangeable</span>
+                    <span class="text-primary font-medium">Yes</span>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        {# Description #}
+        {% if property.description and property.description != 'No description available' %}
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 md:p-8 shadow-ph-soft">
+            <h2 class="font-headline-md text-headline-md text-primary mb-4">Description</h2>
+            <p class="text-on-surface/90 leading-relaxed whitespace-pre-line font-body-md">{{ property.description }}</p>
+        </section>
+        {% endif %}
+
+        {# Features #}
+        {% if property.property_features %}
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 md:p-8 shadow-ph-soft">
+            <h2 class="font-headline-md text-headline-md text-primary mb-6">Features & amenities</h2>
+            <div class="flex flex-wrap gap-3">
+                {% if property.property_features is string %}
+                    {% set feature_list = property.property_features.split(',') %}
+                {% else %}
+                    {% set feature_list = property.property_features %}
+                {% endif %}
+                {% for feature in feature_list %}
+                    {% set feat = feature.strip() if feature is string else feature %}
+                    {% if feat %}
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded-full text-label-md text-secondary">
+                        <span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+                        {{ feat }}
+                    </span>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {# Similar properties #}
+        {% if related_properties and related_properties|length > 0 %}
+        <section>
+            <h2 class="font-headline-md text-headline-md text-primary mb-4">Similar properties</h2>
+            <div class="grid gap-4 sm:grid-cols-2">
+                {% for prop in related_properties %}
+                <a href="{{ url_for('properties.property_detail', property_id=prop.id) }}"
+                   class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden hover:shadow-ph-soft transition-shadow flex flex-col">
+                    <div class="aspect-video bg-surface-container-high flex items-center justify-center overflow-hidden">
+                        {% if prop.image_filename %}
+                        <img src="{{ url_for('static', filename='uploads/' + prop.image_filename) }}"
+                             alt="{{ prop.title }}" class="w-full h-full object-cover" loading="lazy">
+                        {% else %}
+                        <span class="material-symbols-outlined text-3xl text-outline">domain</span>
+                        {% endif %}
+                    </div>
+                    <div class="p-4 flex flex-col gap-2 flex-1">
+                        <h3 class="font-medium text-primary line-clamp-2">{{ prop.title }}</h3>
+                        <p class="text-secondary text-sm line-clamp-1">{{ prop.address or prop.neighborhood or '' }}</p>
+                        <div class="flex flex-wrap items-center gap-3 text-secondary text-xs mt-auto">
+                            {% if prop.bedrooms %}<span class="inline-flex items-center gap-0.5"><span class="material-symbols-outlined text-[14px]">bed</span>{{ prop.bedrooms }}</span>{% endif %}
+                            {% if prop.bathrooms %}<span class="inline-flex items-center gap-0.5"><span class="material-symbols-outlined text-[14px]">bathtub</span>{{ prop.bathrooms }}</span>{% endif %}
+                            {% if prop.square_feet %}<span class="inline-flex items-center gap-0.5"><span class="material-symbols-outlined text-[14px]">square_foot</span>{{ "{:,.0f}".format(prop.square_feet) }}</span>{% endif %}
+                        </div>
+                        <p class="font-headline-md text-primary tabular-nums mt-1">
+                            {% if prop.listing_type in ['rental', 'rent'] and (prop.rahn or prop.ejare) %}
+                                {% if prop.ejare %}{{ "{:,.0f}".format(prop.ejare) }} / mo{% elif prop.rahn %}Rahn {{ "{:,.0f}".format(prop.rahn) }}{% endif %}
+                            {% else %}
+                                ${{ "{:,.0f}".format(prop.price or 0) }}
+                            {% endif %}
+                        </p>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </div>
+
+    {# ── Right column ── #}
+    <div class="lg:col-span-4 flex flex-col gap-6">
+        {# Actions #}
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 shadow-ph-soft lg:sticky lg:top-24 z-10">
+            <h3 class="font-headline-md text-headline-md text-primary mb-4">Interested in this property?</h3>
+            <div class="flex flex-col gap-3">
+                <button type="button" id="scheduleViewingBtn"
+                        data-open-modal="viewingScheduleModal"
+                        class="w-full bg-primary text-on-primary font-label-md py-3 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">calendar_today</span>
+                    Schedule viewing
+                </button>
+                {% if property.agent_email %}
+                <a href="mailto:{{ property.agent_email }}?subject={{ ('Inquiry: ' ~ property.title)|urlencode }}&body={{ ('I am interested in ' ~ property.title ~ ' at ' ~ (property.address or '') ~ '.%0A%0A' ~ (sharing.url if sharing is defined else request.url))|urlencode }}"
+                   class="w-full border border-outline-variant text-primary font-label-md py-3 rounded-lg hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">mail</span>
+                    Contact agent
+                </a>
+                {% elif property.agent_phone %}
+                <a href="tel:{{ property.agent_phone }}"
+                   class="w-full border border-outline-variant text-primary font-label-md py-3 rounded-lg hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">call</span>
+                    Call agent
+                </a>
+                {% else %}
+                <a href="{{ url_for('agents') }}"
+                   class="w-full border border-outline-variant text-primary font-label-md py-3 rounded-lg hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">support_agent</span>
+                    Find an agent
+                </a>
+                {% endif %}
+                <button type="button" id="sharePropertyBtn"
+                        data-open-modal="propertyShareModal"
+                        class="w-full border border-outline-variant text-primary font-label-md py-3 rounded-lg hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">share</span>
+                    Share property
+                </button>
+                <button type="button" id="editPropertyBtn"
+                        onclick="if (typeof editProperty==='function') { editProperty({{ property.id }}); } else { window.location='{{ url_for('properties') }}?edit={{ property.id }}'; }"
+                        class="w-full border border-outline-variant text-primary font-label-md py-3 rounded-lg hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">edit</span>
+                    Edit listing
+                </button>
+                <a href="{{ url_for('deals') }}"
+                   class="w-full border border-outline-variant text-primary font-label-md py-3 rounded-lg hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">handshake</span>
+                    Open deals pipeline
+                </a>
+                <a href="{{ url_for('main.roi_calculator', property_id=property.id) }}"
+                   class="w-full border border-outline-variant text-primary font-label-md py-3 rounded-lg hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">calculate</span>
+                    ROI calculator
+                </a>
+                <a href="{{ url_for('main.property_compare', ids=property.id) }}"
+                   class="w-full border border-outline-variant text-primary font-label-md py-3 rounded-lg hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">compare_arrows</span>
+                    Add to compare
+                </a>
+                <a href="{{ url_for('properties.property_media', property_id=property.id) }}"
+                   class="w-full border border-outline-variant text-primary font-label-md py-3 rounded-lg hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">photo_library</span>
+                    Manage media
+                </a>
+                <a href="{{ url_for('main.smart_contract', property_id=property.id) }}"
+                   class="w-full border border-outline-variant text-primary font-label-md py-3 rounded-lg hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">description</span>
+                    Draft contract
+                </a>
+                <a href="{{ url_for('main.open_house_kiosk_property', property_id=property.id) }}"
+                   class="w-full border border-outline-variant text-primary font-label-md py-3 rounded-lg hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">tablet_mac</span>
+                    Open house kiosk
+                </a>
+                <button type="button" onclick="window.print()"
+                        class="w-full border border-outline-variant text-primary font-label-md py-3 rounded-lg hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">print</span>
+                    Print details
+                </button>
+                <a href="{{ url_for('properties') }}"
+                   class="w-full text-secondary font-label-md py-2 rounded-lg hover:text-primary transition-colors flex items-center justify-center gap-2 text-sm">
+                    <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                    Back to inventory
+                </a>
+            </div>
+
+            {# Deal activity summary #}
+            {% if property.total_deals is defined and property.total_deals %}
+            <div class="mt-6 pt-6 border-t border-outline-variant grid grid-cols-2 gap-4">
+                <div>
+                    <div class="text-label-sm text-secondary uppercase tracking-wider">Total deals</div>
+                    <div class="font-headline-md text-primary tabular-nums">{{ property.total_deals }}</div>
+                </div>
+                <div>
+                    <div class="text-label-sm text-secondary uppercase tracking-wider">Active deals</div>
+                    <div class="font-headline-md text-primary tabular-nums">{{ property.active_deals or 0 }}</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Agent card #}
+        {% if property.has_agent %}
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 shadow-ph-soft">
+            <h3 class="font-headline-md text-headline-md text-primary mb-4">Listing agent</h3>
+            <div class="flex items-start gap-4">
+                <div class="w-14 h-14 rounded-full bg-primary-container text-on-primary flex items-center justify-center flex-shrink-0 text-lg font-semibold">
+                    {{ (property.agent_name or 'A')[0]|upper }}
+                </div>
+                <div class="min-w-0">
+                    <h4 class="font-semibold text-primary">{{ property.agent_name }}</h4>
+                    <p class="text-secondary text-sm mb-2">Real estate agent</p>
+                    {% if property.agent_email %}
+                    <a href="mailto:{{ property.agent_email }}" class="flex items-center gap-2 text-sm text-secondary hover:text-primary truncate">
+                        <span class="material-symbols-outlined text-[16px]">mail</span>
+                        {{ property.agent_email }}
+                    </a>
+                    {% endif %}
+                    {% if property.agent_phone %}
+                    <a href="tel:{{ property.agent_phone }}" class="flex items-center gap-2 text-sm text-secondary hover:text-primary mt-1">
+                        <span class="material-symbols-outlined text-[16px]">call</span>
+                        {{ property.agent_phone }}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        {# Meta #}
+        <section class="bg-surface-container-low rounded-xl border border-outline-variant p-5 text-sm text-secondary space-y-2">
+            {% if property.created_at %}
+            <div class="flex justify-between gap-2"><span>Listed</span><span class="text-primary">{{ property.created_at }}</span></div>
+            {% endif %}
+            {% if property.updated_at %}
+            <div class="flex justify-between gap-2"><span>Updated</span><span class="text-primary">{{ property.updated_at }}</span></div>
+            {% endif %}
+            <div class="flex justify-between gap-2"><span>Property ID</span><span class="text-primary tabular-nums">#{{ property.id }}</span></div>
+        </section>
     </div>
 </div>
+
+{# Modals — Stitch Tier A #}
+{% set form_action = url_for('properties.schedule_viewing', property_id=property.id) %}
+{% include 'modals/viewing_schedule_modal.html' %}
+{% include 'modals/property_share_modal.html' %}
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/property-edit-modal.js') }}"></script>
 <script>
-// Share functionality
-document.getElementById('sharePropertyBtn').addEventListener('click', function(e) {
-    e.preventDefault();
-    if (navigator.share) {
-        navigator.share({
-            title: {{ property.title|tojson }},
-            text: {{ ("Check out this property: " ~ property.title ~ " - " ~ (property.address or ""))|tojson }},
-            url: window.location.href
-        }).then(() => {
-            console.log('Thanks for sharing!');
-        })
-        .catch(console.error);
-    } else {
-        // Fallback for browsers that don't support Web Share API
-        navigator.clipboard.writeText(window.location.href).then(() => {
-            // Show temporary tooltip
-            const originalText = this.innerHTML;
-            this.innerHTML = '<i class="fas fa-check mr-2"></i>Copied!';
-            setTimeout(() => {
-                this.innerHTML = originalText;
-            }, 2000);
+(function () {
+    var shareData = {
+        title: {{ property.title|tojson }},
+        address: {{ (property.address or '')|tojson }},
+        price: {{ (property.price or 0)|tojson }},
+        url: {{ (sharing.url if sharing is defined else request.url)|tojson }}
+    };
+
+    function openModal(id) {
+        if (window.PHModal && typeof PHModal.show === 'function') {
+            PHModal.show(id);
+            return;
+        }
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove('hidden');
+        el.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Share button opens PH share sheet
+    var shareBtn = document.getElementById('sharePropertyBtn');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', function () {
+            if (typeof initializePropertyShare === 'function') {
+                initializePropertyShare(shareData);
+            }
+            var link = document.getElementById('propertyLink');
+            if (link && shareData.url) link.value = shareData.url;
+            openModal('propertyShareModal');
         });
     }
-});
+
+    // Schedule viewing
+    var scheduleBtn = document.getElementById('scheduleViewingBtn');
+    if (scheduleBtn) {
+        scheduleBtn.addEventListener('click', function () {
+            openModal('viewingScheduleModal');
+        });
+    }
+
+    // Deep-link: /detail#schedule opens viewing modal
+    if (window.location.hash === '#schedule') {
+        setTimeout(function () { openModal('viewingScheduleModal'); }, 200);
+    }
+
+    // Fallback editProperty if edit modal JS is not fully wired
+    if (typeof window.editProperty !== 'function') {
+        window.editProperty = function (id) {
+            window.location.href = '/properties/' + id + '/edit';
+        };
+    }
+
+    // Gallery thumbnails swap hero image
+    var hero = document.getElementById('heroGalleryImg');
+    document.querySelectorAll('.gallery-thumb').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var src = btn.getAttribute('data-src');
+            if (hero && src) hero.src = src;
+            document.querySelectorAll('.gallery-thumb').forEach(function (b) {
+                b.classList.remove('ring-2', 'ring-primary');
+            });
+            btn.classList.add('ring-2', 'ring-primary');
+        });
+    });
+})();
 </script>
 {% endblock %}

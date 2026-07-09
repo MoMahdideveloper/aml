@@ -1,208 +1,108 @@
-<!-- Customer View Modal Content -->
-<div class="row">
-    <!-- Basic Information -->
-    <div class="col-md-6">
-        <h6 class="fw-semibold text-primary mb-3">
-            <i class="fas fa-user me-2"></i>
-            Basic Information
-        </h6>
-        <div class="mb-3">
-            <label class="form-label text-muted">Full Name</label>
-            <div class="fw-semibold">{{ customer.name }}</div>
-        </div>
-        <div class="mb-3">
-            <label class="form-label text-muted">Email Address</label>
-            <div class="fw-semibold">
-                <i class="fas fa-envelope text-primary me-2"></i>
-                <a href="mailto:{{ customer.email }}" class="text-decoration-none">{{ customer.email }}</a>
-            </div>
-        </div>
-        <div class="mb-3">
-            <label class="form-label text-muted">Phone Number</label>
-            <div class="fw-semibold">
-                <i class="fas fa-phone text-primary me-2"></i>
-                <a href="tel:{{ customer.phone }}" class="text-decoration-none">{{ customer.phone }}</a>
-            </div>
-        </div>
-        <div class="mb-3">
-            <label class="form-label text-muted">Status</label>
-            <div>
-                <span class="badge bg-{{ 'success' if customer.status == 'active' else 'secondary' }} fs-6">
-                    {{ customer.status.title() }}
-                </span>
-            </div>
-        </div>
-        <div class="mb-3">
-            <label class="form-label text-muted">Customer Since</label>
-            <div class="fw-semibold">{{ customer.created_at }}</div>
-        </div>
-    </div>
-
-    <!-- Budget & Preferences -->
-    <div class="col-md-6">
-        <h6 class="fw-semibold text-success mb-3">
-            <i class="fas fa-dollar-sign me-2"></i>
-            Budget & Preferences
-        </h6>
-        
-        {% if customer.budget_min > 0 or customer.budget_max > 0 %}
-        <div class="mb-3">
-            <label class="form-label text-muted">Budget Range</label>
-            <div class="fw-semibold text-success">
-                ${{ "{:,.0f}".format(customer.budget_min) }} - ${{ "{:,.0f}".format(customer.budget_max) }}
-            </div>
-        </div>
-        {% endif %}
-        
-        <div class="row">
-            {% if customer.preferred_bedrooms > 0 %}
-            <div class="col-6 mb-3">
-                <label class="form-label text-muted">Preferred Bedrooms</label>
-                <div class="fw-semibold">{{ customer.preferred_bedrooms }} Bedroom{{ 's' if customer.preferred_bedrooms != 1 else '' }}</div>
-            </div>
-            {% endif %}
-            
-            {% if customer.preferred_bathrooms > 0 %}
-            <div class="col-6 mb-3">
-                <label class="form-label text-muted">Preferred Bathrooms</label>
-                <div class="fw-semibold">{{ customer.preferred_bathrooms }} Bathroom{{ 's' if customer.preferred_bathrooms != 1 else '' }}</div>
-            </div>
-            {% endif %}
-        </div>
-        
-        {% if customer.preferred_type %}
-        <div class="mb-3">
-            <label class="form-label text-muted">Property Type</label>
-            <div class="fw-semibold">{{ customer.preferred_type }}</div>
-        </div>
-        {% endif %}
-        
-        {% if customer.location_preference %}
-        <div class="mb-3">
-            <label class="form-label text-muted">Location Preference</label>
-            <div class="fw-semibold">
-                <i class="fas fa-map-marker-alt text-primary me-2"></i>
-                {{ customer.location_preference }}
-            </div>
-        </div>
-        {% endif %}
-    </div>
-</div>
-
-<hr class="my-4">
-
-<!-- Deal Statistics -->
-<div class="row">
-    <div class="col-md-12">
-        <h6 class="fw-semibold text-info mb-3">
-            <i class="fas fa-handshake me-2"></i>
-            Deal Statistics
-        </h6>
-        
-        <div class="row">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body text-center py-3">
-                        <h4 class="mb-1">{{ customer.total_deals }}</h4>
-                        <small>Total Deals</small>
-                    </div>
+<!-- Customer View Modal Content — Platinum Heritage -->
+<div class="space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <section>
+            <h3 class="text-sm font-semibold text-primary uppercase tracking-wide mb-3 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">person</span>
+                Basic information
+            </h3>
+            <dl class="space-y-3 text-sm">
+                <div>
+                    <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Full name</dt>
+                    <dd class="font-medium text-on-surface mt-0.5">{{ customer.name }}</dd>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-success text-white">
-                    <div class="card-body text-center py-3">
-                        <h4 class="mb-1">{{ customer.active_deals }}</h4>
-                        <small>Active Deals</small>
-                    </div>
+                <div>
+                    <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Email</dt>
+                    <dd class="mt-0.5">
+                        <a href="mailto:{{ customer.email }}" class="text-primary hover:underline">{{ customer.email }}</a>
+                    </dd>
                 </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card bg-info text-white">
-                    <div class="card-body text-center py-3">
-                        <h4 class="mb-1">${{ "{:,.0f}".format(customer.total_deal_value) }}</h4>
-                        <small>Total Deal Value</small>
-                    </div>
+                <div>
+                    <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Phone</dt>
+                    <dd class="mt-0.5">
+                        <a href="tel:{{ customer.phone }}" class="text-primary hover:underline">{{ customer.phone or '—' }}</a>
+                    </dd>
                 </div>
+                <div>
+                    <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Status</dt>
+                    <dd class="mt-1">
+                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium
+                            {% if customer.status == 'active' %}bg-primary text-on-primary{% else %}bg-surface-container text-on-surface-variant{% endif %}">
+                            {{ customer.status|default('active')|title }}
+                        </span>
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Customer since</dt>
+                    <dd class="font-medium text-on-surface mt-0.5">
+                        {% if customer.created_at and customer.created_at.strftime is defined %}
+                            {{ customer.created_at.strftime('%b %d, %Y') }}
+                        {% else %}
+                            {{ customer.created_at or '—' }}
+                        {% endif %}
+                    </dd>
+                </div>
+            </dl>
+        </section>
+
+        <section>
+            <h3 class="text-sm font-semibold text-primary uppercase tracking-wide mb-3 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">payments</span>
+                Budget & preferences
+            </h3>
+            <dl class="space-y-3 text-sm">
+                {% if (customer.budget_min or 0) > 0 or (customer.budget_max or 0) > 0 %}
+                <div>
+                    <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Budget range</dt>
+                    <dd class="font-semibold text-primary mt-0.5 tabular-nums">
+                        ${{ "{:,.0f}".format(customer.budget_min or 0) }} – ${{ "{:,.0f}".format(customer.budget_max or 0) }}
+                    </dd>
+                </div>
+                {% endif %}
+                <div class="grid grid-cols-2 gap-3">
+                    {% if (customer.preferred_bedrooms or 0) > 0 %}
+                    <div>
+                        <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Beds</dt>
+                        <dd class="font-medium mt-0.5">{{ customer.preferred_bedrooms }}</dd>
+                    </div>
+                    {% endif %}
+                    {% if (customer.preferred_bathrooms or 0) > 0 %}
+                    <div>
+                        <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Baths</dt>
+                        <dd class="font-medium mt-0.5">{{ customer.preferred_bathrooms }}</dd>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if customer.preferred_type %}
+                <div>
+                    <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Property type</dt>
+                    <dd class="font-medium mt-0.5">{{ customer.preferred_type }}</dd>
+                </div>
+                {% endif %}
+                {% if customer.location_preference %}
+                <div>
+                    <dt class="text-xs text-on-surface-variant uppercase tracking-wide">Location</dt>
+                    <dd class="font-medium mt-0.5">{{ customer.location_preference }}</dd>
+                </div>
+                {% endif %}
+            </dl>
+        </section>
+    </div>
+
+    <section class="border-t border-outline-variant pt-5">
+        <h3 class="text-sm font-semibold text-primary uppercase tracking-wide mb-3 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">handshake</span>
+            Deal activity
+        </h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div class="rounded-lg border border-outline-variant bg-background p-3 text-center">
+                <div class="text-xl font-semibold text-primary tabular-nums">{{ customer.total_deals|default(customer.deals|length if customer.deals is defined else 0) }}</div>
+                <div class="text-xs text-on-surface-variant mt-1">Total deals</div>
+            </div>
+            <div class="rounded-lg border border-outline-variant bg-background p-3 text-center">
+                <div class="text-xl font-semibold text-primary tabular-nums">{{ customer.active_deals|default(0) }}</div>
+                <div class="text-xs text-on-surface-variant mt-1">Active</div>
             </div>
         </div>
-    </div>
-</div>
-
-{% if customer.deals %}
-<hr class="my-4">
-
-<!-- Recent Deals -->
-<div class="row">
-    <div class="col-md-12">
-        <h6 class="fw-semibold text-warning mb-3">
-            <i class="fas fa-history me-2"></i>
-            Recent Deals
-        </h6>
-        
-        <div class="table-responsive">
-            <table class="table table-sm">
-                <thead class="table-light">
-                    <tr>
-                        <th>Property</th>
-                        <th>Status</th>
-                        <th>Offer Amount</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for deal in customer.deals[:5] %}
-                    <tr>
-                        <td>{{ deal.property_title }}</td>
-                        <td>
-                            <span class="badge bg-{{ 'success' if deal.status == 'closed' else 'primary' if deal.status in ['qualified', 'proposal'] else 'secondary' }}">
-                                {{ deal.status.replace('_', ' ').title() }}
-                            </span>
-                        </td>
-                        <td>${{ "{:,.0f}".format(deal.offer_amount) if deal.offer_amount else 'N/A' }}</td>
-                        <td>
-                            <a href="{{ url_for('deals.deals') }}?deal={{ deal.id }}" class="btn btn-outline-primary btn-sm">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        
-        {% if customer.deals|length > 5 %}
-        <div class="text-center mt-2">
-            <a href="{{ url_for('deals.deals') }}?customer={{ customer.id }}" class="btn btn-outline-primary btn-sm">
-                <i class="fas fa-list me-1"></i>
-                View All {{ customer.total_deals }} Deals
-            </a>
-        </div>
-        {% endif %}
-    </div>
-</div>
-{% endif %}
-
-<!-- Action Buttons -->
-<hr class="my-4">
-<div class="row">
-    <div class="col-md-12">
-        <div class="d-flex gap-2 justify-content-center">
-            <button class="btn btn-success" onclick="editCustomer({{ customer.id }})">
-                <i class="fas fa-edit me-1"></i>
-                Edit Customer
-            </button>
-            <a href="{{ url_for('recommendations') }}?customer={{ customer.id }}" class="btn btn-info">
-                <i class="fas fa-magic me-1"></i>
-                AI Recommendations
-            </a>
-            <a href="{{ url_for('deals.deals') }}?customer={{ customer.id }}" class="btn btn-primary">
-                <i class="fas fa-handshake me-1"></i>
-                View Deals
-            </a>
-            <button class="btn btn-outline-secondary" onclick="sendEmail({{ customer.id }})">
-                <i class="fas fa-envelope me-1"></i>
-                Send Email
-            </button>
-        </div>
-    </div>
+    </section>
 </div>

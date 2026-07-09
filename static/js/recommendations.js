@@ -66,117 +66,99 @@ class RecommendationsManager {
 
     showExportOptions(customerId) {
         const exportModal = `
-            <div class="modal fade" id="exportOptionsModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title">
-                                <i class="fas fa-download me-2"></i>
-                                Export Recommendations
-                            </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>Choose the format for your recommendations report:</p>
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-outline-danger" onclick="window.recommendationsManager.exportReport(${customerId}, 'pdf')">
-                                    <i class="fas fa-file-pdf me-2"></i>
-                                    Export as PDF
-                                </button>
-                                <button class="btn btn-outline-success" onclick="window.recommendationsManager.exportReport(${customerId}, 'excel')">
-                                    <i class="fas fa-file-excel me-2"></i>
-                                    Export as Excel
-                                </button>
-                                <button class="btn btn-outline-info" onclick="window.recommendationsManager.exportReport(${customerId}, 'json')">
-                                    <i class="fas fa-file-code me-2"></i>
-                                    Export as JSON
-                                </button>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        </div>
+            <div id="exportOptionsModal" class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]" data-modal role="dialog" aria-modal="true">
+                <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-md" onclick="event.stopPropagation()">
+                    <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
+                        <h2 class="text-lg font-semibold text-primary flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[20px]">download</span>
+                            Export recommendations
+                        </h2>
+                        <button type="button" class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" data-export-close aria-label="Close">
+                            <span class="material-symbols-outlined text-[20px]">close</span>
+                        </button>
+                    </div>
+                    <div class="px-5 py-4 space-y-2">
+                        <p class="text-sm text-on-surface-variant mb-3">Choose a report format:</p>
+                        <button type="button" class="w-full px-4 py-2.5 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container text-left"
+                                onclick="window.recommendationsManager.exportReport(${customerId}, 'pdf')">PDF report</button>
+                        <button type="button" class="w-full px-4 py-2.5 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container text-left"
+                                onclick="window.recommendationsManager.exportReport(${customerId}, 'excel')">Excel spreadsheet</button>
+                        <button type="button" class="w-full px-4 py-2.5 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container text-left"
+                                onclick="window.recommendationsManager.exportReport(${customerId}, 'json')">JSON data</button>
+                    </div>
+                    <div class="px-5 py-4 border-t border-outline-variant flex justify-end">
+                        <button type="button" class="px-4 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container" data-export-close>Cancel</button>
                     </div>
                 </div>
             </div>
         `;
 
-        // Remove existing modal if present
         const existingModal = document.getElementById('exportOptionsModal');
-        if (existingModal) {
-            existingModal.remove();
+        if (existingModal) existingModal.remove();
+
+        document.body.insertAdjacentHTML('beforeend', exportModal);
+        const modal = document.getElementById('exportOptionsModal');
+        if (window.PHModal) window.PHModal.show(modal);
+        else {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
         }
 
-        // Add modal to page
-        document.body.insertAdjacentHTML('beforeend', exportModal);
-
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('exportOptionsModal'));
-        modal.show();
-
-        // Clean up when modal is hidden
-        document.getElementById('exportOptionsModal').addEventListener('hidden.bs.modal', function () {
-            this.remove();
+        modal.querySelectorAll('[data-export-close]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (window.PHModal) window.PHModal.hide(modal);
+                else modal.remove();
+                modal.remove();
+            });
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+                document.body.style.overflow = '';
+            }
         });
     }
 
     exportReport(customerId, format) {
-        // Close the export options modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('exportOptionsModal'));
+        const modal = document.getElementById('exportOptionsModal');
         if (modal) {
-            modal.hide();
+            if (window.PHModal) window.PHModal.hide(modal);
+            modal.remove();
         }
 
-        // Show loading toast
         this.showToast(`Generating ${format.toUpperCase()} report...`, 'info');
-
-        // Create download link
         const exportUrl = `/recommendations/export?customer_id=${customerId}&format=${format}`;
-
-        // Trigger download
         window.location.href = exportUrl;
     }
 
     createDeal(propertyId, customerId) {
-        document.getElementById('deal_property_id').value = propertyId;
-        document.getElementById('deal_customer_id').value = customerId;
-
-        const modal = new bootstrap.Modal(document.getElementById('createDealModal'));
-        modal.show();
+        const propEl = document.getElementById('deal_property_id');
+        const custEl = document.getElementById('deal_customer_id');
+        if (propEl) propEl.value = propertyId;
+        if (custEl) custEl.value = customerId;
+        const modal = document.getElementById('createDealModal');
+        if (!modal) return;
+        if (window.PHModal) window.PHModal.show(modal);
+        else {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
     }
 
     async scheduleViewing(propertyId) {
         try {
-            // Show loading state
             this.showToast('Loading viewing schedule...', 'info');
-
-            // Load viewing schedule modal content
-            const response = await fetch(`/properties/${propertyId}/schedule-viewing?ajax=1`);
-
-            if (!response.ok) {
-                throw new Error('Failed to load viewing schedule');
+            const modal = document.getElementById('viewingScheduleModal');
+            if (modal) {
+                if (window.PHModal) window.PHModal.show(modal);
+                else {
+                    modal.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                }
+                return;
             }
-
-            const html = await response.text();
-
-            // Remove existing modal if present
-            const existingModal = document.getElementById('viewingScheduleModal');
-            if (existingModal) {
-                existingModal.remove();
-            }
-
-            // Add modal to page
-            document.body.insertAdjacentHTML('beforeend', html);
-
-            // Show modal
-            const modal = new bootstrap.Modal(document.getElementById('viewingScheduleModal'));
-            modal.show();
-
-            // Clean up when modal is hidden
-            document.getElementById('viewingScheduleModal').addEventListener('hidden.bs.modal', function () {
-                this.remove();
-            });
-
+            // Fallback: navigate to property detail
+            window.location.href = `/properties/${propertyId}/detail`;
         } catch (error) {
             console.error('Error loading viewing schedule:', error);
             this.showToast('Error loading viewing schedule. Please try again.', 'error');
@@ -234,8 +216,13 @@ class RecommendationsManager {
     }
 
     showRecommendationTips() {
-        const modal = new bootstrap.Modal(document.getElementById('recommendationTipsModal'));
-        modal.show();
+        const modal = document.getElementById('recommendationTipsModal');
+        if (!modal) return;
+        if (window.PHModal) window.PHModal.show(modal);
+        else {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
     }
 
     getSelectedCustomerId() {

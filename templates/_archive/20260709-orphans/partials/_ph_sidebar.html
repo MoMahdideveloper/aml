@@ -1,0 +1,76 @@
+{## Platinum Heritage Shared Sidebar ##}
+{# This matches the sidebar structure from the main Flask app base.html #}
+<aside class="hidden lg:block w-64 bg-surface border-r border-outline/20">
+    <div class="flex-shrink-0 flex items-center px-4 py-6 border-b border-outline/20">
+        <div class="flex-shrink-0">
+            <i class="fas fa-chart-line text-primary text-2xl"></i>
+        </div>
+        <div class="ml-4">
+            <h1 class="text-headline-lg-mobile text-on-surface font-semibold">LUXE ESTATE</h1>
+            <p class="text-label-sm text-on-surface-variant">Dashboard</p>
+        </div>
+    </div>
+
+    <nav class="mt-6 space-y-2 px-4">
+        <a href="{{ url_for('dashboard') }}" class="flex items-center px-3 py-3 rounded-lg text-sm font-medium
+            {% if request.endpoint == 'dashboard' %}bg-primary/10 text-primary{% else %}text-on-surface-variant hover:bg-surface/50 hover:text-on-surface{% endif %}"
+            >
+            <i class="fas fa-tachometer-alt mr-3"></i>
+            <span>Dashboard</span>
+        </a>
+
+        <a href="{{ url_for('properties') }}" class="flex items-center px-3 py-3 rounded-lg text-sm font-medium
+            {% if request.endpoint == 'properties' %}bg-primary/10 text-primary{% else %}text-on-surface-variant hover:bg-surface/50 hover:text-on-surface{% endif %}"
+            >
+            <i class="fas fa-building mr-3"></i>
+            <span>Properties</span>
+        </a>
+
+        <a href="{{ url_for('agents') }}" class="flex items-center px-3 py-3 rounded-lg text-sm font-medium
+            {% if request.endpoint == 'agents' %}bg-primary/10 text-primary{% else %}text-on-surface-variant hover:bg-surface/50 hover:text-on-surface{% endif %}"
+            >
+            <i class="fas fa-users mr-3"></i>
+            <span>Agents</span>
+        </a>
+
+        <a href="{{ url_for('customers') }}" class="flex items-center px-3 py-3 rounded-lg text-sm font-medium
+            {% if request.endpoint == 'customers' %}bg-primary/10 text-primary{% else %}text-on-surface-variant hover:bg-surface/50 hover:text-on-surface{% endif %}"
+            >
+            <i class="fas fa-user-friends mr-3"></i>
+            <span>Customers</span>
+        </a>
+
+        <a href="{{ url_for('deals') }}" class="flex items-center px-3 py-3 rounded-lg text-sm font-medium
+            {% if request.endpoint == 'deals' %}bg-primary/10 text-primary{% else %}text-on-surface-variant hover:bg-surface/50 hover:text-on-surface{% endif %}"
+            >
+            <i class="fas fa-handshake mr-3"></i>
+            <span>Deals</span>
+        </a>
+
+        <a href="{{ url_for('tasks') }}" class="flex items-center px-3 py-3 rounded-lg text-sm font-medium
+            {% if request.endpoint == 'tasks' %}bg-primary/10 text-primary{% else %}text-on-surface-variant hover:bg-surface/50 hover:text-on-surface{% endif %}"
+            >
+            <i class="fas fa-tasks mr-3"></i>
+            <span>Tasks</span>
+        </a>
+
+        <a href="{{ url_for('recommendations') }}" class="flex items-center px-3 py-3 rounded-lg text-sm font-medium
+            {% if request.endpoint == 'recommendations' %}bg-primary/10 text-primary{% else %}text-on-surface-variant hover:bg-surface/50 hover:text-on-surface{% endif %}"
+            >
+            <i class="fas fa-magic mr-3"></i>
+            <span>AI Recommendations</span>
+        </a>
+    </nav>
+
+    <div class="mt-auto border-t border-outline/20">
+        <div class="flex items-center px-4 py-4 space-x-3">
+            <div class="flex-shrink-0 h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                <i class="fas fa-user-circle text-primary text-xl"></i>
+            </div>
+            <div>
+                <p class="text-on-surface font-medium">Admin User</p>
+                <p class="text-label-sm text-on-surface-variant">System Administrator</p>
+            </div>
+        </div>
+    </div>
+</aside>

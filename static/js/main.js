@@ -2,43 +2,44 @@
  * Real Estate CRM - Main JavaScript Functions
  */
 
-// Global variables
-let currentDate = new Date();
+(function() {
+    var currentDate = new Date();
 
-// Initialize application when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
-});
+    // Initialize application when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeApp();
+    });
 
-/**
- * Initialize the application
- */
-function initializeApp() {
-    // Initialize tooltips
-    initializeTooltips();
-    
-    // Initialize responsive sidebar
-    initializeSidebar();
-    
-    // Initialize form validation
-    initializeFormValidation();
-    
-    // Initialize data tables
-    initializeDataTables();
-    
-    // Initialize auto-refresh
-    initializeAutoRefresh();
-    
-    // Initialize AI autofill
-    initializeAIAutofill();
-    
-    console.log('Real Estate CRM initialized successfully');
-}
+    /**
+     * Initialize the application
+     */
+    function initializeApp() {
+        // Initialize tooltips
+        initializeTooltips();
+
+        // Initialize responsive sidebar
+        initializeSidebar();
+
+        // Initialize form validation
+        initializeFormValidation();
+
+        // Initialize data tables
+        initializeDataTables();
+
+        // Initialize auto-refresh
+        initializeAutoRefresh();
+
+        // Initialize AI autofill
+        initializeAIAutofill();
+
+        console.log('Real Estate CRM initialized successfully');
+    }
 
 /**
  * Initialize Bootstrap tooltips
  */
 function initializeTooltips() {
+    if (typeof bootstrap === 'undefined') return;
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function(tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
@@ -50,32 +51,33 @@ function initializeTooltips() {
  */
 function initializeSidebar() {
     const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
     const mainContent = document.querySelector('.main-content');
-    
+
     // Mobile sidebar toggle
     if (window.innerWidth <= 768) {
         const sidebarToggle = document.createElement('button');
         sidebarToggle.className = 'btn btn-primary d-lg-none position-fixed';
-        sidebarToggle.style.cssText = 'top: 20px; left: 20px; z-index: 1001;';
+        sidebarToggle.style.cssText = 'top:20px; left:20px; z-index:1001;';
         sidebarToggle.innerHTML = '<i class="fas fa-bars"></i>';
-        
+
         sidebarToggle.addEventListener('click', function() {
-            sidebar.classList.toggle('show');
+            if (sidebar) sidebar.classList.toggle('show');
         });
-        
+
         document.body.appendChild(sidebarToggle);
-        
+
         // Close sidebar when clicking outside
         document.addEventListener('click', function(e) {
-            if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+            if (sidebar && !sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
                 sidebar.classList.remove('show');
             }
         });
     }
-    
+
     // Handle window resize
     window.addEventListener('resize', function() {
-        if (window.innerWidth > 768) {
+        if (sidebar && window.innerWidth > 768) {
             sidebar.classList.remove('show');
         }
     });
@@ -87,7 +89,7 @@ function initializeSidebar() {
 function initializeFormValidation() {
     // Custom validation for all forms
     const forms = document.querySelectorAll('form[data-validate="true"]');
-    
+
     forms.forEach(form => {
         form.addEventListener('submit', function(event) {
             if (!form.checkValidity()) {
@@ -98,19 +100,19 @@ function initializeFormValidation() {
             form.classList.add('was-validated');
         });
     });
-    
+
     // Phone number formatting
     const phoneInputs = document.querySelectorAll('input[type="tel"]');
     phoneInputs.forEach(input => {
         input.addEventListener('input', formatPhoneNumber);
     });
-    
+
     // Currency formatting
     const currencyInputs = document.querySelectorAll('input[data-type="currency"]');
     currencyInputs.forEach(input => {
         input.addEventListener('input', formatCurrency);
     });
-    
+
     // Initialize Iranian property pricing system
     initializePropertyPricing();
 }
@@ -123,7 +125,7 @@ function formatPhoneNumber(e) {
     if (value.length >= 6) {
         value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
     } else if (value.length >= 3) {
-        value = value.replace(/(\d{3})(\d{0,3})/, '($1) $2');
+        value = value.replace(/(\d{3})(\d{0,3})/, '$1 $2');
     }
     e.target.value = value;
 }
@@ -144,7 +146,7 @@ function formatCurrency(e) {
  */
 function initializeDataTables() {
     const tables = document.querySelectorAll('table[data-sortable="true"]');
-    
+
     tables.forEach(table => {
         addTableSorting(table);
     });
@@ -155,11 +157,11 @@ function initializeDataTables() {
  */
 function addTableSorting(table) {
     const headers = table.querySelectorAll('th[data-sortable="true"]');
-    
+
     headers.forEach((header, index) => {
         header.style.cursor = 'pointer';
         header.innerHTML += ' <i class="fas fa-sort text-muted"></i>';
-        
+
         header.addEventListener('click', function() {
             sortTable(table, index);
         });
@@ -173,9 +175,9 @@ function sortTable(table, columnIndex) {
     const tbody = table.querySelector('tbody');
     const rows = Array.from(tbody.querySelectorAll('tr'));
     const header = table.querySelectorAll('th')[columnIndex];
-    
+
     const isAscending = !header.classList.contains('sort-asc');
-    
+
     // Remove all sort classes
     table.querySelectorAll('th').forEach(th => {
         th.classList.remove('sort-asc', 'sort-desc');
@@ -184,33 +186,33 @@ function sortTable(table, columnIndex) {
             icon.className = 'fas fa-sort text-muted';
         }
     });
-    
+
     // Add sort class to current header
     header.classList.add(isAscending ? 'sort-asc' : 'sort-desc');
     const icon = header.querySelector('i');
     if (icon) {
         icon.className = `fas fa-sort-${isAscending ? 'up' : 'down'} text-primary`;
     }
-    
+
     // Sort rows
     rows.sort((a, b) => {
         const aText = a.cells[columnIndex].textContent.trim();
         const bText = b.cells[columnIndex].textContent.trim();
-        
+
         // Try to parse as numbers
         const aNum = parseFloat(aText.replace(/[^\d.-]/g, ''));
         const bNum = parseFloat(bText.replace(/[^\d.-]/g, ''));
-        
+
         if (!isNaN(aNum) && !isNaN(bNum)) {
             return isAscending ? aNum - bNum : bNum - aNum;
         }
-        
+
         // String comparison
-        return isAscending 
-            ? aText.localeCompare(bText) 
+        return isAscending
+            ? aText.localeCompare(bText)
             : bText.localeCompare(aText);
     });
-    
+
     // Reappend sorted rows
     rows.forEach(row => tbody.appendChild(row));
 }
@@ -235,7 +237,7 @@ function initializePropertyPricing() {
     const salePricing = document.getElementById('sale-pricing');
     const rentalPricing = document.getElementById('rental-pricing');
     const squareFootInput = document.getElementById('square_feet');
-    
+
     // Price input fields
     const salePriceInput = document.getElementById('sale_price');
     const rahnInput = document.getElementById('rahn');
@@ -243,17 +245,17 @@ function initializePropertyPricing() {
     const salePricePerMeterInput = document.getElementById('sale_price_per_meter');
     const rahnPerMeterInput = document.getElementById('rahn_per_meter');
     const ejarePerMeterInput = document.getElementById('ejare_per_meter');
-    
+
     if (!listingTypeRadios.length) return; // Only run on pages with property forms
-    
+
     // Toggle pricing sections based on listing type
     function togglePricingSections() {
         const selectedType = document.querySelector('input[name="listing_type"]:checked').value;
-        
+
         if (selectedType === 'sale') {
             salePricing.style.display = 'block';
             rentalPricing.style.display = 'none';
-            
+
             // Make sale price required
             if (salePriceInput) salePriceInput.required = true;
             if (rahnInput) rahnInput.required = false;
@@ -261,21 +263,21 @@ function initializePropertyPricing() {
         } else {
             salePricing.style.display = 'none';
             rentalPricing.style.display = 'block';
-            
+
             // Make rental fields required
             if (salePriceInput) salePriceInput.required = false;
             if (rahnInput) rahnInput.required = true;
             if (ejareInput) ejareInput.required = true;
         }
-        
+
         // Recalculate per-meter prices
         calculatePerMeterPrices();
     }
-    
+
     // Calculate per-meter prices in real-time
     function calculatePerMeterPrices() {
         const squareMeters = parseFloat(squareFootInput?.value) || 0;
-        
+
         if (squareMeters <= 0) {
             // Clear per-meter fields if no valid area
             if (salePricePerMeterInput) salePricePerMeterInput.value = '';
@@ -283,7 +285,7 @@ function initializePropertyPricing() {
             if (ejarePerMeterInput) ejarePerMeterInput.value = '';
             return;
         }
-        
+
         // Calculate sale price per meter
         if (salePriceInput && salePricePerMeterInput) {
             const salePrice = parseFloat(salePriceInput.value) || 0;
@@ -294,7 +296,7 @@ function initializePropertyPricing() {
                 salePricePerMeterInput.value = '';
             }
         }
-        
+
         // Calculate rahn per meter
         if (rahnInput && rahnPerMeterInput) {
             const rahn = parseFloat(rahnInput.value) || 0;
@@ -305,7 +307,7 @@ function initializePropertyPricing() {
                 rahnPerMeterInput.value = '';
             }
         }
-        
+
         // Calculate ejare per meter
         if (ejareInput && ejarePerMeterInput) {
             const ejare = parseFloat(ejareInput.value) || 0;
@@ -317,12 +319,12 @@ function initializePropertyPricing() {
             }
         }
     }
-    
+
     // Add event listeners for listing type change
     listingTypeRadios.forEach(radio => {
         radio.addEventListener('change', togglePricingSections);
     });
-    
+
     // Add event listeners for real-time calculation
     if (salePriceInput) {
         salePriceInput.addEventListener('input', calculatePerMeterPrices);
@@ -336,7 +338,7 @@ function initializePropertyPricing() {
     if (squareFootInput) {
         squareFootInput.addEventListener('input', calculatePerMeterPrices);
     }
-    
+
     // Initialize on page load
     togglePricingSections();
 }
@@ -364,19 +366,19 @@ function showNotification(message, type = 'info', duration = 5000) {
     const notification = document.createElement('div');
     notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
     notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    
-    const icon = type === 'success' ? 'check-circle' : 
-                 type === 'error' ? 'exclamation-triangle' : 
+
+    const icon = type === 'success' ? 'check-circle' :
+                 type === 'error' ? 'exclamation-triangle' :
                  type === 'warning' ? 'exclamation-triangle' : 'info-circle';
-    
+
     notification.innerHTML = `
         <i class="fas fa-${icon} me-2"></i>
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     // Auto-dismiss after duration
     setTimeout(() => {
         if (notification.parentNode) {
@@ -415,7 +417,7 @@ function formatDate(date, options = {}) {
         month: 'short',
         day: 'numeric'
     };
-    
+
     return new Date(date).toLocaleDateString('en-US', {...defaultOptions, ...options});
 }
 
@@ -448,11 +450,11 @@ function debounce(func, wait) {
 function initializeSearch(inputSelector, itemsSelector, searchFields) {
     const searchInput = document.querySelector(inputSelector);
     if (!searchInput) return;
-    
+
     const searchFunction = debounce((query) => {
         const items = document.querySelectorAll(itemsSelector);
         const lowerQuery = query.toLowerCase();
-        
+
         items.forEach(item => {
             let match = false;
             searchFields.forEach(field => {
@@ -461,12 +463,12 @@ function initializeSearch(inputSelector, itemsSelector, searchFields) {
                     match = true;
                 }
             });
-            
+
             item.style.display = match ? '' : 'none';
         });
     }, 300);
-    
-    searchInput.addEventListener('input', (e) => {
+
+    input.addEventListener('input', (e) => {
         searchFunction(e.target.value);
     });
 }
@@ -477,14 +479,14 @@ function initializeSearch(inputSelector, itemsSelector, searchFields) {
 function exportToCSV(data, filename) {
     const csv = convertToCSV(data);
     const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    
+    const url = URL.createObjectURL(blob);
+
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
     link.click();
-    
-    window.URL.revokeObjectURL(url);
+
+    URL.revokeObjectURL(url);
 }
 
 /**
@@ -492,278 +494,30 @@ function exportToCSV(data, filename) {
  */
 function convertToCSV(data) {
     if (!data || data.length === 0) return '';
-    
+
     const headers = Object.keys(data[0]);
     const csvContent = [
         headers.join(','),
-        ...data.map(row => 
-            headers.map(header => {
+        ...data.map(row => {
+            return headers.map(header => {
                 const value = row[header] || '';
                 return `"${String(value).replace(/"/g, '""')}"`;
-            }).join(',')
-        )
+            }).join(',');
+        })
     ].join('\n');
-    
+
     return csvContent;
 }
 
 /**
- * Local storage utilities
+ * Expose utilities globally
  */
-const Storage = {
-    set: function(key, value) {
-        try {
-            localStorage.setItem(key, JSON.stringify(value));
-        } catch (e) {
-            console.warn('Failed to save to localStorage:', e);
-        }
-    },
-    
-    get: function(key, defaultValue = null) {
-        try {
-            const item = localStorage.getItem(key);
-            return item ? JSON.parse(item) : defaultValue;
-        } catch (e) {
-            console.warn('Failed to read from localStorage:', e);
-            return defaultValue;
-        }
-    },
-    
-    remove: function(key) {
-        try {
-            localStorage.removeItem(key);
-        } catch (e) {
-            console.warn('Failed to remove from localStorage:', e);
-        }
-    }
-};
-
-/**
- * API utility functions
- */
-const API = {
-    /**
-     * Make HTTP request
-     */
-    request: async function(url, options = {}) {
-        try {
-            const response = await fetch(url, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    ...options.headers
-                },
-                ...options
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                return await response.json();
-            }
-            
-            return await response.text();
-        } catch (error) {
-            console.error('API request failed:', error);
-            throw error;
-        }
-    },
-    
-    get: function(url, options = {}) {
-        return this.request(url, { ...options, method: 'GET' });
-    },
-    
-    post: function(url, data, options = {}) {
-        return this.request(url, {
-            ...options,
-            method: 'POST',
-            body: JSON.stringify(data)
-        });
-    },
-    
-    put: function(url, data, options = {}) {
-        return this.request(url, {
-            ...options,
-            method: 'PUT',
-            body: JSON.stringify(data)
-        });
-    },
-    
-    delete: function(url, options = {}) {
-        return this.request(url, { ...options, method: 'DELETE' });
-    }
-};
-
-/**
- * Animation utilities
- */
-const Animate = {
-    fadeIn: function(element, duration = 300) {
-        element.style.opacity = '0';
-        element.style.display = 'block';
-        
-        const start = performance.now();
-        const animate = (timestamp) => {
-            const progress = Math.min((timestamp - start) / duration, 1);
-            element.style.opacity = progress;
-            
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            }
-        };
-        
-        requestAnimationFrame(animate);
-    },
-    
-    slideUp: function(element, duration = 300) {
-        const height = element.offsetHeight;
-        element.style.height = height + 'px';
-        element.style.overflow = 'hidden';
-        
-        const start = performance.now();
-        const animate = (timestamp) => {
-            const progress = Math.min((timestamp - start) / duration, 1);
-            element.style.height = (height * (1 - progress)) + 'px';
-            
-            if (progress >= 1) {
-                element.style.display = 'none';
-                element.style.height = '';
-                element.style.overflow = '';
-            } else {
-                requestAnimationFrame(animate);
-            }
-        };
-        
-        requestAnimationFrame(animate);
-    }
-};
-
-/**
- * Initialize AI Autofill functionality
- */
-function initializeAIAutofill() {
-    const btn = document.getElementById('ai_autofill_btn');
-    if (!btn) return;
-
-    btn.addEventListener('click', async () => {
-        const text = document.getElementById('ai_blob').value.trim();
-        const status = document.getElementById('ai_autofill_status');
-        
-        if (!text) { 
-            status.textContent = "Please paste some text."; 
-            status.className = "text-warning small";
-            return; 
-        }
-
-        status.textContent = "Asking AI...";
-        status.className = "text-info small";
-        btn.disabled = true;
-        
-        try {
-            const res = await fetch('/api/ai/parse/property', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text })
-            });
-            
-            const payload = await res.json();
-            if (!res.ok) throw new Error(payload.error || "Request failed");
-
-            // Map JSON to form fields
-            const d = payload.data || {};
-            const fieldMap = {
-                title: 'title',
-                address: 'address', 
-                price: 'sale_price',
-                property_type: 'property_type',
-                bedrooms: 'bedrooms',
-                bathrooms: 'bathrooms',
-                square_feet: 'square_feet',
-                description: 'description',
-                year_built: 'year_built',
-                parking_spaces: 'parking_spaces',
-                floors: 'floors',
-                units: 'units',
-                property_condition: 'property_condition',
-                neighborhood: 'neighborhood',
-                property_category: 'property_category',
-                listing_type: 'listing_type',
-                rahn: 'rahn',
-                ejare: 'ejare'
-            };
-
-            // Fill form fields
-            Object.entries(fieldMap).forEach(([dataKey, fieldName]) => {
-                if (d[dataKey] !== null && d[dataKey] !== undefined && d[dataKey] !== '') {
-                    const element = document.getElementById(fieldName) || document.querySelector(`[name="${fieldName}"]`);
-                    if (!element) return;
-                    
-                    if (Array.isArray(d[dataKey])) {
-                        element.value = d[dataKey].join(', ');
-                    } else {
-                        element.value = d[dataKey];
-                    }
-                    
-                    // Trigger change event for radio buttons and selects
-                    if (element.type === 'radio' && d[dataKey] === element.value) {
-                        element.checked = true;
-                        element.dispatchEvent(new Event('change'));
-                    } else if (element.tagName === 'SELECT') {
-                        element.dispatchEvent(new Event('change'));
-                    }
-                }
-            });
-
-            // Handle listing type switching
-            if (d.listing_type) {
-                const listingTypeRadio = document.querySelector(`input[name="listing_type"][value="${d.listing_type}"]`);
-                if (listingTypeRadio) {
-                    listingTypeRadio.checked = true;
-                    listingTypeRadio.dispatchEvent(new Event('change'));
-                }
-            }
-
-            // Handle property features if it's an array
-            if (d.property_features && Array.isArray(d.property_features)) {
-                const featuresField = document.getElementById('property_features') || document.querySelector('[name="property_features"]');
-                if (featuresField) {
-                    featuresField.value = d.property_features.join(', ');
-                }
-            }
-
-            const confidence = Math.round((payload.confidence || 0) * 100);
-            const missingFields = payload.missing && payload.missing.length > 0 ? payload.missing.join(', ') : 'none';
-            
-            status.innerHTML = `
-                <div class="text-success">
-                    <i class="fas fa-check-circle me-1"></i>
-                    Autofilled (${confidence}% confidence)
-                </div>
-                <div class="text-muted" style="font-size: 0.8em;">
-                    Missing: ${missingFields}
-                </div>
-            `;
-            
-        } catch (e) {
-            status.textContent = "AI autofill failed. Please try again.";
-            status.className = "text-danger small";
-            console.error('AI Autofill error:', e);
-        } finally {
-            btn.disabled = false;
-        }
-    });
-}
-
-// Expose utilities globally
 window.CRM = {
     showNotification,
     confirmAction,
     formatAsCurrency,
     formatDate,
-    daysBetween,
+    datesBetween,
     debounce,
     initializeSearch,
     exportToCSV,
@@ -785,3 +539,4 @@ window.addEventListener('unhandledrejection', function(e) {
 });
 
 console.log('Real Estate CRM JavaScript loaded successfully');
+});

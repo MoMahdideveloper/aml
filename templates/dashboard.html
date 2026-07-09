@@ -1,60 +1,56 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard - Real Estate CRM{% endblock %}
-
-{% block extra_css %}
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<style>
-    .material-symbols-outlined {
-        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        font-family: 'Material Symbols Outlined';
-    }
-</style>
-{% endblock %}
+{% block title %}Dashboard · Platinum Heritage{% endblock %}
 
 {% block content %}
-<section class="mb-10">
-    <p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-[0.2em] mb-3">Performance Overview</p>
-    <h1 class="font-headline-lg text-headline-lg md:text-display-lg text-primary mb-2">Estate intelligence, live portfolio motion.</h1>
-    <p class="font-body-lg text-body-lg text-on-surface-variant max-w-3xl">Track active listings, deal velocity, client demand, and today's highest-value appointments from one dashboard.</p>
+<section class="mb-8 md:mb-10">
+    <p class="text-label-md text-on-surface-variant uppercase tracking-[0.2em] mb-3 font-medium">Performance Overview</p>
+    <h1 class="text-2xl md:text-3xl lg:text-[32px] font-semibold text-primary mb-2 leading-tight">
+        Estate intelligence, live portfolio motion.
+    </h1>
+    <p class="text-base md:text-lg text-on-surface-variant max-w-3xl">
+        Track active listings, deal velocity, client demand, and high-value tasks from one Platinum Heritage dashboard.
+    </p>
 </section>
 
-<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10" aria-label="Dashboard metrics">
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-10" aria-label="Dashboard metrics">
     {% for card in stats %}
     {% set trend_is_down = card.trend_direction == 'down' %}
     {% set metric_value = card.value|default(0) %}
     {% if card.href %}
     <a href="{{ card.href }}"
-       class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant hover:shadow-[0_8px_30px_rgba(27,38,49,0.12)] transition-all duration-300 block no-underline">
+       class="bg-surface-container-lowest rounded-lg p-5 md:p-6 border border-outline-variant hover:shadow-ph transition-all duration-300 block no-underline">
     {% else %}
-    <article class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant hover:shadow-[0_8px_30px_rgba(27,38,49,0.12)] transition-all duration-300">
+    <article class="bg-surface-container-lowest rounded-lg p-5 md:p-6 border border-outline-variant hover:shadow-ph transition-all duration-300">
     {% endif %}
         <div class="flex justify-between items-start mb-4">
-            <span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">{{ card.label }}</span>
-            <span class="material-symbols-outlined text-primary" data-icon="{{ card.icon }}">{{ card.icon }}</span>
+            <span class="text-xs font-medium text-on-surface-variant uppercase tracking-wider">{{ card.label }}</span>
+            <span class="material-symbols-outlined text-primary text-[22px]" aria-hidden="true">{{ card.icon }}</span>
         </div>
-        <div class="font-headline-lg text-headline-lg text-primary mb-2">
+        <div class="text-2xl md:text-[28px] font-semibold text-primary mb-2 tabular-nums">
             {% if 'Revenue' in card.label or 'Value' in card.label %}
                 ${{ "{:,.0f}".format(metric_value|float) }}
             {% else %}
                 {{ "{:,}".format(metric_value|int) }}
             {% endif %}
         </div>
-        <div class="font-label-sm text-label-sm flex items-center {{ 'text-error' if trend_is_down else 'text-primary' }}">
-            <span class="material-symbols-outlined text-[16px] mr-1" data-icon="{{ card.trend_icon }}">{{ card.trend_icon }}</span>
+        <div class="text-xs font-medium flex items-center {{ 'text-error' if trend_is_down else 'text-primary' }}">
+            <span class="material-symbols-outlined text-[16px] mr-1" aria-hidden="true">{{ card.trend_icon }}</span>
             {{ card.trend_sign }}{{ card.trend_percent }}% vs last month
         </div>
     {% if card.href %}</a>{% else %}</article>{% endif %}
+    {% else %}
+    <p class="text-on-surface-variant col-span-full">No metrics available yet.</p>
     {% endfor %}
 </section>
 
-<section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-    <div class="lg:col-span-2 bg-surface-container-lowest rounded-xl p-6 border border-outline-variant">
-        <div class="flex items-center justify-between mb-6 border-b border-outline-variant pb-2">
-            <h2 class="font-headline-md text-headline-md text-primary">Recent Activity</h2>
-            <a href="{{ url_for('properties') }}" class="font-label-sm text-label-sm text-primary hover:underline">View properties</a>
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-10">
+    <div class="lg:col-span-2 bg-surface-container-lowest rounded-lg p-5 md:p-6 border border-outline-variant">
+        <div class="flex items-center justify-between mb-6 border-b border-outline-variant pb-3">
+            <h2 class="text-xl font-semibold text-primary">Recent Activity</h2>
+            <a href="{{ url_for('properties') }}" class="text-xs font-medium text-primary hover:underline">View properties</a>
         </div>
-        <div class="space-y-4">
+        <div class="space-y-3">
             {% for activity in recent_activities %}
             {% if activity.href %}
             <a href="{{ activity.href }}" class="flex items-start gap-4 p-4 rounded-lg border border-outline-variant bg-background hover:border-primary transition-colors no-underline block">
@@ -62,31 +58,31 @@
             <article class="flex items-start gap-4 p-4 rounded-lg border border-outline-variant bg-background">
             {% endif %}
                 <div class="flex items-center justify-center w-10 h-10 rounded-full bg-surface-container-low text-primary shrink-0">
-                    <span class="material-symbols-outlined" data-icon="{{ activity.icon }}">{{ activity.icon }}</span>
+                    <span class="material-symbols-outlined text-[20px]" aria-hidden="true">{{ activity.icon }}</span>
                 </div>
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center justify-between gap-2 mb-1">
-                        <h3 class="font-label-md text-label-md text-primary">{{ activity.type }}</h3>
-                        <time class="font-label-sm text-label-sm text-on-surface-variant shrink-0">{{ activity.time }}</time>
+                        <h3 class="text-sm font-medium text-primary">{{ activity.type }}</h3>
+                        <time class="text-xs text-on-surface-variant shrink-0">{{ activity.time }}</time>
                     </div>
-                    <p class="font-body-md text-body-md text-on-surface">{{ activity.description }}</p>
+                    <p class="text-sm text-on-surface">{{ activity.description }}</p>
                 </div>
             {% if activity.href %}</a>{% else %}</article>{% endif %}
             {% else %}
-            <p class="font-body-md text-on-surface-variant">No recent activity yet.</p>
+            <p class="text-sm text-on-surface-variant">No recent activity yet. Add a property or deal to get started.</p>
             {% endfor %}
         </div>
 
         {% if recent_properties %}
         <div class="mt-8 pt-6 border-t border-outline-variant">
-            <h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide mb-3">Latest listings</h3>
+            <h3 class="text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-3">Latest listings</h3>
             <ul class="space-y-2">
                 {% for prop in recent_properties[:5] %}
                 <li>
                     <a href="{{ url_for('properties.property_detail', property_id=prop.id) }}"
-                       class="flex items-center justify-between gap-3 p-3 rounded-lg border border-outline-variant hover:border-primary transition-colors">
-                        <span class="font-label-md text-label-md text-primary truncate">{{ prop.title }}</span>
-                        <span class="font-label-sm text-label-sm text-on-surface-variant shrink-0">${{ "{:,.0f}".format(prop.price or 0) }}</span>
+                       class="flex items-center justify-between gap-3 p-3 rounded-lg border border-outline-variant hover:border-primary hover:shadow-ph transition-all">
+                        <span class="text-sm font-medium text-primary truncate">{{ prop.title }}</span>
+                        <span class="text-xs text-on-surface-variant shrink-0 tabular-nums">${{ "{:,.0f}".format(prop.price or 0) }}</span>
                     </a>
                 </li>
                 {% endfor %}
@@ -95,40 +91,74 @@
         {% endif %}
     </div>
 
-    <aside class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant flex flex-col">
-        <h2 class="font-headline-md text-headline-md text-primary mb-6 border-b border-outline-variant pb-2">Schedule</h2>
-        <div class="mb-4 flex justify-between items-center">
-            <span class="font-label-md text-label-md text-primary uppercase tracking-wide">{{ currentMonth }}</span>
+    <aside class="bg-surface-container-lowest rounded-lg p-5 md:p-6 border border-outline-variant flex flex-col">
+        <div class="flex items-center justify-between mb-6 border-b border-outline-variant pb-3">
+            <h2 class="text-xl font-semibold text-primary">Priority tasks</h2>
+            <a href="{{ url_for('tasks') }}" class="text-xs font-medium text-primary hover:underline">All tasks</a>
         </div>
-        <div class="flex-grow border-t border-outline-variant pt-4">
-            <h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide mb-3">Today's Schedule</h3>
-            <ul class="space-y-3">
-                {% for item in todays_schedule %}
-                <li class="flex items-start gap-3 p-3 rounded bg-surface-container-low border border-outline-variant">
-                    <span class="material-symbols-outlined text-primary mt-0.5" data-icon="{{ item.icon }}">{{ item.icon }}</span>
-                    <div>
-                        <div class="font-label-md text-label-md text-primary">{{ item.title }}</div>
-                        <div class="font-label-sm text-label-sm text-on-surface-variant">{{ item.time }}</div>
+        <div class="mb-3 flex justify-between items-center">
+            <span class="text-xs font-medium text-primary uppercase tracking-wide">{{ currentMonth }}</span>
+            <span class="text-xs text-on-surface-variant">{{ pending_tasks|length if pending_tasks else 0 }} pending</span>
+        </div>
+        <ul class="space-y-3 flex-1">
+            {% for task in pending_tasks %}
+            <li class="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low border border-outline-variant">
+                <span class="material-symbols-outlined text-primary mt-0.5 text-[20px]" aria-hidden="true">task_alt</span>
+                <div class="min-w-0">
+                    <div class="text-sm font-medium text-primary truncate">{{ task.title or task.description or 'Untitled task' }}</div>
+                    <div class="text-xs text-on-surface-variant mt-0.5">
+                        {% if task.due_date %}Due {{ task.due_date.strftime('%b %d') if task.due_date.strftime is defined else task.due_date }}
+                        {% else %}No due date{% endif %}
+                        · {{ task.agent_name|default('Unassigned') }}
                     </div>
+                </div>
+            </li>
+            {% else %}
+            <li class="text-sm text-on-surface-variant p-3 rounded-lg border border-dashed border-outline-variant">
+                No pending tasks.
+                <a href="{{ url_for('tasks') }}" class="text-primary hover:underline ml-1">Create one</a>
+            </li>
+            {% endfor %}
+        </ul>
+
+        {% if recent_deals %}
+        <div class="mt-6 pt-4 border-t border-outline-variant">
+            <h3 class="text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-3">Recent deals</h3>
+            <ul class="space-y-2">
+                {% for deal in recent_deals[:4] %}
+                <li class="flex justify-between gap-2 text-sm">
+                    <span class="text-on-surface truncate">{{ deal.property_name|default('Property') }}</span>
+                    <span class="text-primary font-medium shrink-0 tabular-nums">${{ "{:,.0f}".format(deal.offer_amount or 0) }}</span>
                 </li>
                 {% endfor %}
             </ul>
+            <a href="{{ url_for('deals') }}" class="inline-block mt-3 text-xs font-medium text-primary hover:underline">Open pipeline</a>
         </div>
+        {% endif %}
     </aside>
 </section>
 
-<section class="bg-primary rounded-xl p-8 md:p-12 text-on-primary relative overflow-hidden shadow-lg">
-    <div class="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
+<section class="bg-primary rounded-lg p-6 md:p-10 text-on-primary relative overflow-hidden">
+    <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-8">
         <div class="max-w-2xl">
-            <h2 class="font-headline-lg text-headline-lg font-bold mb-4">Strategic Insights</h2>
-            <p class="font-body-lg text-body-lg mb-6 border-l-4 border-primary-fixed pl-4 py-1">"{{ insights.quote }}"</p>
-            <p class="font-body-md text-body-md text-on-primary-container">{{ insights.description }}</p>
+            <h2 class="text-xl md:text-2xl font-semibold mb-3">Portfolio snapshot</h2>
+            <p class="text-base md:text-lg mb-3 border-l-4 border-primary-fixed pl-4 py-1 text-on-primary/95">
+                {{ insights.quote }}
+            </p>
+            <p class="text-sm md:text-base text-on-primary-container">{{ insights.description }}</p>
         </div>
-        <a class="shrink-0 bg-surface-container-lowest text-primary border border-outline-variant hover:bg-surface-container-low font-label-md text-label-md px-8 py-3 rounded transition-all shadow-sm flex items-center gap-2"
-           href="{{ url_for('recommendations') }}">
-            <span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
-            View AI recommendations
-        </a>
+        <div class="flex flex-col sm:flex-row gap-3 shrink-0 w-full md:w-auto">
+            <a class="inline-flex items-center justify-center gap-2 bg-surface-container-lowest text-primary border border-outline-variant hover:bg-surface-container-low font-medium text-sm px-6 py-3 rounded transition-all shadow-sm"
+               href="{{ url_for('recommendations') }}">
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">auto_awesome</span>
+                AI Match
+            </a>
+            <a class="inline-flex items-center justify-center gap-2 bg-primary-container text-on-primary border border-primary-fixed/30 hover:opacity-95 font-medium text-sm px-6 py-3 rounded transition-all"
+               href="{{ url_for('properties') }}">
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">domain</span>
+                Inventory
+            </a>
+        </div>
     </div>
 </section>
 {% endblock %}

@@ -1,25 +1,37 @@
-<!-- Property Edit Modal -->
-<div class="modal fade" id="propertyEditModal" tabindex="-1" aria-labelledby="propertyEditModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="propertyEditModalLabel">
-                    <i class="fas fa-edit me-2"></i>
-                    Edit Property
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                    aria-label="Close"></button>
+<!-- Property Edit Modal — Platinum Heritage chrome (keeps form field IDs for JS) -->
+<div id="propertyEditModal"
+     class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]"
+     data-modal
+     tabindex="-1"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="propertyEditModalLabel"
+     aria-hidden="true">
+    <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-5xl max-h-[90vh] flex flex-col"
+         onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant shrink-0">
+                <h2 class="text-lg font-semibold text-primary flex items-center gap-2" id="propertyEditModalLabel">
+                    <span class="material-symbols-outlined text-[20px]">edit</span>
+                    Edit property
+                </h2>
+                <button type="button"
+                        data-modal-close
+                        data-bs-dismiss="modal"
+                        onclick="document.getElementById('propertyEditModal').classList.add('hidden'); document.body.style.overflow=''"
+                        class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container"
+                        aria-label="Close">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
             </div>
 
             <!-- Error Alert Container -->
-            <div id="propertyEditErrorContainer" class="alert alert-danger mx-3 mt-3 d-none" role="alert">
+            <div id="propertyEditErrorContainer" class="hidden mx-5 mt-3 p-3 rounded-lg bg-error-container text-on-error-container text-sm" role="alert">
                 <i class="fas fa-exclamation-triangle me-2"></i>
                 <span id="propertyEditErrorMessage"></span>
             </div>
 
             <!-- Success Alert Container -->
-            <div id="propertyEditSuccessContainer" class="alert alert-success mx-3 mt-3 d-none" role="alert">
+            <div id="propertyEditSuccessContainer" class="hidden mx-5 mt-3 p-3 rounded-lg bg-surface-container text-primary text-sm" role="alert">
                 <i class="fas fa-check-circle me-2"></i>
                 <span id="propertyEditSuccessMessage"></span>
             </div>
@@ -29,36 +41,35 @@
                 <input type="hidden" name="_method" value="PUT">
                 <input type="hidden" name="property_id" value="{{ property.id if property is defined else '' }}">
 
-                <div class="modal-body">
-                    <ul class="nav nav-tabs mb-3" id="editPropertyTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="details-tab" data-bs-toggle="tab"
+                <div class="px-5 py-4 overflow-y-auto flex-1 min-h-0">
+                    <ul class="flex flex-wrap gap-2 mb-4 border-b border-outline-variant pb-2" id="editPropertyTabs" role="tablist">
+                        <li role="presentation">
+                            <button class="px-3 py-1.5 rounded-lg text-sm font-medium bg-primary text-on-primary" id="details-tab" data-bs-toggle="tab"
                                 data-bs-target="#details" type="button" role="tab" aria-controls="details"
                                 aria-selected="true">Details</button>
                         </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history"
-                                type="button" role="tab" aria-controls="history" aria-selected="false">AI
-                                History</button>
+                        <li role="presentation">
+                            <button class="px-3 py-1.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container" id="history-tab" data-bs-toggle="tab" data-bs-target="#history"
+                                type="button" role="tab" aria-controls="history" aria-selected="false">AI History</button>
                         </li>
                     </ul>
                     <div class="tab-content" id="editPropertyTabsContent">
-                        <div class="tab-pane fade show active" id="details" role="tabpanel"
+                        <div class="tab-pane block" id="details" role="tabpanel"
                             aria-labelledby="details-tab">
-                            <div class="row">
-                                <div class="col-md-8 mb-3">
-                                    <label for="edit_title" class="form-label">Property Title *</label>
-                                    <input type="text" class="form-control" id="edit_title" name="title"
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                <div class="md:col-span-8 mb-1">
+                                    <label for="edit_title" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Property Title *</label>
+                                    <input type="text" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_title" name="title"
                                         value="{{ property.title if property is defined else '' }}" required
                                         maxlength="255" data-validate="required">
-                                    <div class="invalid-feedback"></div>
-                                    <div class="valid-feedback">
+                                    <div class="text-xs text-error mt-1"></div>
+                                    <div class="text-xs text-primary mt-1 hidden">
                                         <i class="fas fa-check me-1"></i>Title looks good
                                     </div>
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <label for="edit_property_type" class="form-label">Type *</label>
-                                    <select class="form-select" id="edit_property_type" name="property_type" required>
+                                <div class="md:col-span-4 mb-1">
+                                    <label for="edit_property_type" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Type *</label>
+                                    <select class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_property_type" name="property_type" required>
                                         <option value="">Select Type</option>
                                         {% for key, label in maskan_property_types.items() %}
                                         <option value="{{ key }}" {{ 'selected' if property.property_type==key }}>{{
@@ -66,26 +77,26 @@
                                         </option>
                                         {% endfor %}
                                     </select>
-                                    <div class="invalid-feedback">
+                                    <div class="text-xs text-error mt-1">
                                         Please select a property type.
                                     </div>
-                                    <div class="valid-feedback">
+                                    <div class="text-xs text-primary mt-1 hidden">
                                         <i class="fas fa-check me-1"></i>Property type selected
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="edit_address" class="form-label">Address *</label>
-                                <textarea class="form-control" id="edit_address" name="address" rows="2" required
+                            <div class="mb-4">
+                                <label for="edit_address" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Address *</label>
+                                <textarea class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_address" name="address" rows="2" required
                                     data-validate="required"
                                     maxlength="500">{{ property.address if property is defined else '' }}</textarea>
-                                <div class="invalid-feedback"></div>
-                                <div class="valid-feedback">
+                                <div class="text-xs text-error mt-1"></div>
+                                <div class="text-xs text-primary mt-1 hidden">
                                     <i class="fas fa-check me-1"></i>Address provided
                                 </div>
-                                <div class="form-text">
-                                    <small class="text-muted">
+                                <div class="text-xs text-on-surface-variant mt-1">
+                                    <small class="text-on-surface-variant">
                                         <span id="edit_address_count">0</span>/500 characters
                                     </small>
                                 </div>
@@ -93,31 +104,31 @@
 
                             <!-- Listing Type Selection -->
                             <div class="mb-4">
-                                <label class="form-label">Listing Type *</label>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="listing_type"
+                                <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Listing Type *</label>
+                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                    <div class="md:col-span-6">
+                                        <div class="flex items-center gap-2">
+                                            <input class="rounded border-outline-variant text-primary focus:ring-primary" type="radio" name="listing_type"
                                                 id="edit_listing_sale" value="sale" {{ 'checked' if
                                                 property.listing_type=='sale' else 'checked' if not property }}
                                                 data-validate="required">
-                                            <label class="form-check-label" for="edit_listing_sale">
+                                            <label class="text-sm text-on-surface" for="edit_listing_sale">
                                                 <i class="fas fa-dollar-sign me-1"></i> For Sale
                                             </label>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="listing_type"
+                                    <div class="md:col-span-6">
+                                        <div class="flex items-center gap-2">
+                                            <input class="rounded border-outline-variant text-primary focus:ring-primary" type="radio" name="listing_type"
                                                 id="edit_listing_rental" value="rental" {{ 'checked' if
                                                 property.listing_type=='rental' }} data-validate="required">
-                                            <label class="form-check-label" for="edit_listing_rental">
+                                            <label class="text-sm text-on-surface" for="edit_listing_rental">
                                                 <i class="fas fa-home me-1"></i> For Rent (Iranian System)
                                             </label>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="invalid-feedback d-block" id="listing_type_error"></div>
+                                <div class="text-xs text-error mt-1 block" id="listing_type_error"></div>
                             </div>
 
                             <!-- Dynamic Pricing Section -->
@@ -125,33 +136,33 @@
                                 <!-- Sale Pricing -->
                                 <div id="edit-sale-pricing" class="pricing-option"
                                     style="display: {{ 'block' if property.listing_type == 'sale' else 'none' }};">
-                                    <h6 class="text-primary mb-3">
+                                    <h6 class="text-primary font-semibold text-sm mb-3">
                                         <i class="fas fa-dollar-sign me-2"></i>Sale Pricing
                                     </h6>
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="edit_sale_price" class="form-label">Sale Price *</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">$</span>
-                                                <input type="number" class="form-control" id="edit_sale_price"
+                                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                        <div class="md:col-span-6 mb-1">
+                                            <label for="edit_sale_price" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Sale Price *</label>
+                                            <div class="flex items-stretch">
+                                                <span class="inline-flex items-center px-3 bg-surface-container-low border border-outline-variant border-r-0 rounded-l-lg text-sm text-on-surface-variant">$</span>
+                                                <input type="number" class="flex-1 min-w-0 px-3 py-2.5 bg-background border border-outline-variant rounded-r-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_sale_price"
                                                     name="sale_price" step="1000" min="0"
                                                     value="{{ property.price if property.listing_type == 'sale' else '' }}"
                                                     data-validate="price" data-pricing-type="sale">
-                                                <div class="invalid-feedback"></div>
-                                                <div class="valid-feedback">
+                                                <div class="text-xs text-error mt-1"></div>
+                                                <div class="text-xs text-primary mt-1 hidden">
                                                     <i class="fas fa-check me-1"></i>Valid price
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="edit_sale_price_per_meter" class="form-label">Price per
+                                        <div class="md:col-span-6 mb-1">
+                                            <label for="edit_sale_price_per_meter" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Price per
                                                 Meter
                                                 (Auto)</label>
-                                            <input type="text" class="form-control bg-light"
+                                            <input type="text" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-light"
                                                 id="edit_sale_price_per_meter" readonly
                                                 placeholder="Calculated automatically">
-                                            <div class="form-text">
-                                                <small class="text-muted">Automatically calculated based on
+                                            <div class="text-xs text-on-surface-variant mt-1">
+                                                <small class="text-on-surface-variant">Automatically calculated based on
                                                     square
                                                     meters</small>
                                             </div>
@@ -162,138 +173,138 @@
                                 <!-- Rental Pricing -->
                                 <div id="edit-rental-pricing" class="pricing-option"
                                     style="display: {{ 'block' if property.listing_type == 'rental' else 'none' }};">
-                                    <h6 class="text-primary mb-3">
+                                    <h6 class="text-primary font-semibold text-sm mb-3">
                                         <i class="fas fa-home me-2"></i>Iranian Rental System
                                     </h6>
-                                    <div class="row">
-                                        <div class="col-md-4 mb-3">
-                                            <label for="edit_rahn" class="form-label">رهن (Rahn/Deposit)</label>
-                                            <div class="input-group">
-                                                <input type="number" class="form-control" id="edit_rahn" name="rahn"
+                                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                        <div class="md:col-span-4 mb-1">
+                                            <label for="edit_rahn" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">رهن (Rahn/Deposit)</label>
+                                            <div class="flex items-stretch">
+                                                <input type="number" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_rahn" name="rahn"
                                                     step="1000000" min="0" value="{{ property.rahn or '' }}"
                                                     data-validate="rental-price" data-pricing-type="rental">
-                                                <span class="input-group-text">تومان</span>
-                                                <div class="invalid-feedback"></div>
-                                                <div class="valid-feedback">
+                                                <span class="inline-flex items-center px-3 bg-surface-container-low border border-outline-variant border-r-0 rounded-l-lg text-sm text-on-surface-variant">تومان</span>
+                                                <div class="text-xs text-error mt-1"></div>
+                                                <div class="text-xs text-primary mt-1 hidden">
                                                     <i class="fas fa-check me-1"></i>Valid amount
                                                 </div>
                                             </div>
-                                            <small class="text-muted">Deposit amount in Toman</small>
+                                            <small class="text-on-surface-variant">Deposit amount in Toman</small>
                                         </div>
-                                        <div class="col-md-4 mb-3">
-                                            <label for="edit_ejare" class="form-label">اجاره (Ejare/Monthly
+                                        <div class="md:col-span-4 mb-1">
+                                            <label for="edit_ejare" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">اجاره (Ejare/Monthly
                                                 Rent)</label>
-                                            <div class="input-group">
-                                                <input type="number" class="form-control" id="edit_ejare" name="ejare"
+                                            <div class="flex items-stretch">
+                                                <input type="number" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_ejare" name="ejare"
                                                     step="100000" min="0" value="{{ property.ejare or '' }}"
                                                     data-validate="rental-price" data-pricing-type="rental">
-                                                <span class="input-group-text">تومان</span>
-                                                <div class="invalid-feedback"></div>
-                                                <div class="valid-feedback">
+                                                <span class="inline-flex items-center px-3 bg-surface-container-low border border-outline-variant border-r-0 rounded-l-lg text-sm text-on-surface-variant">تومان</span>
+                                                <div class="text-xs text-error mt-1"></div>
+                                                <div class="text-xs text-primary mt-1 hidden">
                                                     <i class="fas fa-check me-1"></i>Valid amount
                                                 </div>
                                             </div>
-                                            <small class="text-muted">Monthly rent in Toman</small>
+                                            <small class="text-on-surface-variant">Monthly rent in Toman</small>
                                         </div>
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label">Per Meter (Auto)</label>
-                                            <input type="text" class="form-control bg-light" id="edit_rahn_per_meter"
+                                        <div class="md:col-span-4 mb-1">
+                                            <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Per Meter (Auto)</label>
+                                            <input type="text" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-light" id="edit_rahn_per_meter"
                                                 readonly placeholder="Rahn per m²">
-                                            <input type="text" class="form-control bg-light mt-1"
+                                            <input type="text" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-light mt-1"
                                                 id="edit_ejare_per_meter" readonly placeholder="Ejare per m²">
-                                            <div class="form-text">
-                                                <small class="text-muted">Automatically calculated per square
+                                            <div class="text-xs text-on-surface-variant mt-1">
+                                                <small class="text-on-surface-variant">Automatically calculated per square
                                                     meter</small>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="invalid-feedback d-block" id="rental_pricing_error"></div>
+                                    <div class="text-xs text-error mt-1 block" id="rental_pricing_error"></div>
                                 </div>
                             </div>
 
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <label for="edit_square_feet" class="form-label">Square Meters *</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="edit_square_feet"
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                <div class="md:col-span-3 mb-1">
+                                    <label for="edit_square_feet" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Square Meters *</label>
+                                    <div class="flex items-stretch">
+                                        <input type="number" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_square_feet"
                                             name="square_feet" min="1" max="10000"
                                             value="{{ property.square_feet if property is defined else '' }}" required
                                             data-validate="required">
-                                        <span class="input-group-text">m²</span>
-                                        <div class="invalid-feedback"></div>
-                                        <div class="valid-feedback">
+                                        <span class="inline-flex items-center px-3 bg-surface-container-low border border-outline-variant border-r-0 rounded-l-lg text-sm text-on-surface-variant">m²</span>
+                                        <div class="text-xs text-error mt-1"></div>
+                                        <div class="text-xs text-primary mt-1 hidden">
                                             <i class="fas fa-check me-1"></i>Valid size
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="edit_bedrooms" class="form-label">Bedrooms</label>
-                                    <input type="number" class="form-control" id="edit_bedrooms" name="bedrooms" min="0"
+                                <div class="md:col-span-3 mb-1">
+                                    <label for="edit_bedrooms" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Bedrooms</label>
+                                    <input type="number" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_bedrooms" name="bedrooms" min="0"
                                         max="20" value="{{ property.bedrooms if property is defined else '' }}"
                                         data-validate="range" data-min="0" data-max="20">
-                                    <div class="invalid-feedback"></div>
-                                    <div class="valid-feedback">
+                                    <div class="text-xs text-error mt-1"></div>
+                                    <div class="text-xs text-primary mt-1 hidden">
                                         <i class="fas fa-check me-1"></i>Valid count
                                     </div>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="edit_bathrooms" class="form-label">Bathrooms</label>
-                                    <input type="number" class="form-control" id="edit_bathrooms" name="bathrooms"
+                                <div class="md:col-span-3 mb-1">
+                                    <label for="edit_bathrooms" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Bathrooms</label>
+                                    <input type="number" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_bathrooms" name="bathrooms"
                                         min="0" max="20" step="0.5"
                                         value="{{ property.bathrooms if property is defined else '' }}"
                                         data-validate="range" data-min="0" data-max="20">
-                                    <div class="invalid-feedback"></div>
-                                    <div class="valid-feedback">
+                                    <div class="text-xs text-error mt-1"></div>
+                                    <div class="text-xs text-primary mt-1 hidden">
                                         <i class="fas fa-check me-1"></i>Valid count
                                     </div>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="edit_parking_spaces" class="form-label">Parking</label>
-                                    <input type="number" class="form-control" id="edit_parking_spaces"
+                                <div class="md:col-span-3 mb-1">
+                                    <label for="edit_parking_spaces" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Parking</label>
+                                    <input type="number" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_parking_spaces"
                                         name="parking_spaces" min="0" max="10"
                                         value="{{ property.parking_spaces if property is defined else '' }}"
                                         data-validate="range" data-min="0" data-max="10">
-                                    <div class="invalid-feedback"></div>
-                                    <div class="valid-feedback">
+                                    <div class="text-xs text-error mt-1"></div>
+                                    <div class="text-xs text-primary mt-1 hidden">
                                         <i class="fas fa-check me-1"></i>Valid count
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <label for="edit_floors" class="form-label">Floors</label>
-                                    <input type="number" class="form-control" id="edit_floors" name="floors" min="1"
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                <div class="md:col-span-3 mb-1">
+                                    <label for="edit_floors" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Floors</label>
+                                    <input type="number" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_floors" name="floors" min="1"
                                         max="50" value="{{ property.floors if property is defined else '1' }}"
                                         data-validate="range" data-min="1" data-max="50">
-                                    <div class="invalid-feedback"></div>
-                                    <div class="valid-feedback">
+                                    <div class="text-xs text-error mt-1"></div>
+                                    <div class="text-xs text-primary mt-1 hidden">
                                         <i class="fas fa-check me-1"></i>Valid count
                                     </div>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="edit_units" class="form-label">Units</label>
-                                    <input type="number" class="form-control" id="edit_units" name="units" min="1"
+                                <div class="md:col-span-3 mb-1">
+                                    <label for="edit_units" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Units</label>
+                                    <input type="number" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_units" name="units" min="1"
                                         max="100" value="{{ property.units if property is defined else '1' }}"
                                         data-validate="range" data-min="1" data-max="100">
-                                    <div class="invalid-feedback"></div>
-                                    <div class="valid-feedback">
+                                    <div class="text-xs text-error mt-1"></div>
+                                    <div class="text-xs text-primary mt-1 hidden">
                                         <i class="fas fa-check me-1"></i>Valid count
                                     </div>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="edit_year_built" class="form-label">Year Built</label>
-                                    <input type="number" class="form-control" id="edit_year_built" name="year_built"
+                                <div class="md:col-span-3 mb-1">
+                                    <label for="edit_year_built" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Year Built</label>
+                                    <input type="number" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_year_built" name="year_built"
                                         min="1800" max="2030" value="{{ property.year_built or '' }}"
                                         data-validate="year">
-                                    <div class="invalid-feedback"></div>
-                                    <div class="valid-feedback">
+                                    <div class="text-xs text-error mt-1"></div>
+                                    <div class="text-xs text-primary mt-1 hidden">
                                         <i class="fas fa-check me-1"></i>Valid year
                                     </div>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="edit_property_condition" class="form-label">Condition</label>
-                                    <select class="form-select" id="edit_property_condition" name="property_condition">
+                                <div class="md:col-span-3 mb-1">
+                                    <label for="edit_property_condition" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Condition</label>
+                                    <select class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_property_condition" name="property_condition">
                                         <option value="">Select Condition</option>
                                         <option value="excellent" {{ 'selected' if
                                             property.property_condition=='excellent' }}>
@@ -307,27 +318,27 @@
                                             property.property_condition=='needs_renovation' }}>Needs Renovation
                                         </option>
                                     </select>
-                                    <div class="invalid-feedback"></div>
-                                    <div class="valid-feedback">
+                                    <div class="text-xs text-error mt-1"></div>
+                                    <div class="text-xs text-primary mt-1 hidden">
                                         <i class="fas fa-check me-1"></i>Condition selected
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label for="edit_neighborhood" class="form-label">Neighborhood</label>
-                                    <input type="text" class="form-control" id="edit_neighborhood" name="neighborhood"
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                <div class="md:col-span-4 mb-1">
+                                    <label for="edit_neighborhood" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Neighborhood</label>
+                                    <input type="text" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_neighborhood" name="neighborhood"
                                         maxlength="100" value="{{ property.neighborhood or '' }}" data-validate="length"
                                         data-max="100">
-                                    <div class="invalid-feedback"></div>
-                                    <div class="valid-feedback">
+                                    <div class="text-xs text-error mt-1"></div>
+                                    <div class="text-xs text-primary mt-1 hidden">
                                         <i class="fas fa-check me-1"></i>Valid neighborhood
                                     </div>
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <label for="edit_property_category" class="form-label">Category</label>
-                                    <select class="form-select" id="edit_property_category" name="property_category">
+                                <div class="md:col-span-4 mb-1">
+                                    <label for="edit_property_category" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Category</label>
+                                    <select class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_property_category" name="property_category">
                                         <option value="">Select Category</option>
                                         <option value="residential" {{ 'selected' if
                                             property.property_category=='residential' else 'selected' if not property
@@ -339,34 +350,34 @@
                                             property.property_category=='industrial' }}>
                                             Industrial</option>
                                     </select>
-                                    <div class="invalid-feedback"></div>
-                                    <div class="valid-feedback">
+                                    <div class="text-xs text-error mt-1"></div>
+                                    <div class="text-xs text-primary mt-1 hidden">
                                         <i class="fas fa-check me-1"></i>Category selected
                                     </div>
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <label for="edit_agent_id" class="form-label">Assigned Agent</label>
-                                    <select class="form-select" id="edit_agent_id" name="agent_id">
+                                <div class="md:col-span-4 mb-1">
+                                    <label for="edit_agent_id" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Assigned Agent</label>
+                                    <select class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_agent_id" name="agent_id">
                                         <option value="">Unassigned</option>
                                         <!-- Agents will be populated via JavaScript -->
                                     </select>
-                                    <div class="invalid-feedback"></div>
-                                    <div class="valid-feedback">
+                                    <div class="text-xs text-error mt-1"></div>
+                                    <div class="text-xs text-primary mt-1 hidden">
                                         <i class="fas fa-check me-1"></i>Agent assigned
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="edit_latitude" class="form-label">Latitude</label>
-                                    <input type="number" step="any" class="form-control" id="edit_latitude"
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                <div class="md:col-span-6 mb-1">
+                                    <label for="edit_latitude" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Latitude</label>
+                                    <input type="number" step="any" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_latitude"
                                         name="latitude"
                                         value="{{ property.latitude if property.latitude is not none else '' }}">
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="edit_longitude" class="form-label">Longitude</label>
-                                    <input type="number" step="any" class="form-control" id="edit_longitude"
+                                <div class="md:col-span-6 mb-1">
+                                    <label for="edit_longitude" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Longitude</label>
+                                    <input type="number" step="any" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_longitude"
                                         name="longitude"
                                         value="{{ property.longitude if property.longitude is not none else '' }}">
                                 </div>
@@ -377,10 +388,10 @@
                                 Details
                             </h6>
 
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Document Type (سند)</label>
-                                    <select class="form-select" name="document_type">
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Document Type (سند)</label>
+                                    <select class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="document_type">
                                         <option value="">Unknown / نامشخص</option>
                                         {% for key, label in document_types.items() %}
                                         <option value="{{ key }}" {{ 'selected' if property.document_type==key }}>{{
@@ -389,27 +400,27 @@
                                         {% endfor %}
                                     </select>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Floor Number (طبقه)</label>
-                                    <input type="number" class="form-control" name="floor_number"
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Floor Number (طبقه)</label>
+                                    <input type="number" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="floor_number"
                                         value="{{ property.floor_number if property.floor_number is not none else '' }}">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Built Area (زیربنا)</label>
-                                    <input type="number" class="form-control" name="built_area"
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Built Area (زیربنا)</label>
+                                    <input type="number" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="built_area"
                                         value="{{ property.built_area if property.built_area is not none else '' }}">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Land Area (زمین)</label>
-                                    <input type="number" class="form-control" name="land_area"
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Land Area (زمین)</label>
+                                    <input type="number" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="land_area"
                                         value="{{ property.land_area if property.land_area is not none else '' }}">
                                 </div>
                             </div>
 
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Direction (جهت)</label>
-                                    <select class="form-select" name="property_direction">
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Direction (جهت)</label>
+                                    <select class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="property_direction">
                                         <option value="">Unknown / نامشخص</option>
                                         {% for key, label in directions.items() %}
                                         <option value="{{ key }}" {{ 'selected' if property.property_direction==key }}>
@@ -418,9 +429,9 @@
                                         {% endfor %}
                                     </select>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Floor Covering (کفپوش)</label>
-                                    <select class="form-select" name="floor_covering">
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Floor Covering (کفپوش)</label>
+                                    <select class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="floor_covering">
                                         <option value="">Unknown / نامشخص</option>
                                         {% for key, label in flooring_types.items() %}
                                         <option value="{{ key }}" {{ 'selected' if property.floor_covering==key }}>{{
@@ -429,9 +440,9 @@
                                         {% endfor %}
                                     </select>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Facade (نما)</label>
-                                    <select class="form-select" name="facade_type">
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Facade (نما)</label>
+                                    <select class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="facade_type">
                                         <option value="">Unknown / نامشخص</option>
                                         {% for key, label in facade_types.items() %}
                                         <option value="{{ key }}" {{ 'selected' if property.facade_type==key }}>
@@ -441,9 +452,9 @@
                                         {% endfor %}
                                     </select>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Wall Covering (دیوارپوش)</label>
-                                    <select class="form-select" name="wall_covering">
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Wall Covering (دیوارپوش)</label>
+                                    <select class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="wall_covering">
                                         <option value="">Unknown / نامشخص</option>
                                         {% for key, label in wall_coverings.items() %}
                                         <option value="{{ key }}" {{ 'selected' if property.wall_covering==key }}>{{
@@ -454,10 +465,10 @@
                                 </div>
                             </div>
 
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Cabinet (کابینت)</label>
-                                    <select class="form-select" name="cabinet_type">
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Cabinet (کابینت)</label>
+                                    <select class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="cabinet_type">
                                         <option value="">Unknown / نامشخص</option>
                                         {% for key, label in cabinet_types.items() %}
                                         <option value="{{ key }}" {{ 'selected' if property.cabinet_type==key }}>{{
@@ -466,9 +477,9 @@
                                         {% endfor %}
                                     </select>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Cooling (سرمایش)</label>
-                                    <select class="form-select" name="cooling_type">
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Cooling (سرمایش)</label>
+                                    <select class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="cooling_type">
                                         <option value="">Unknown / نامشخص</option>
                                         {% for key, label in cooling_systems.items() %}
                                         <option value="{{ key }}" {{ 'selected' if property.cooling_type==key }}>{{
@@ -477,9 +488,9 @@
                                         {% endfor %}
                                     </select>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Heating (گرمایش)</label>
-                                    <select class="form-select" name="heating_type">
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Heating (گرمایش)</label>
+                                    <select class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="heating_type">
                                         <option value="">Unknown / نامشخص</option>
                                         {% for key, label in heating_systems.items() %}
                                         <option value="{{ key }}" {{ 'selected' if property.heating_type==key }}>{{
@@ -488,9 +499,9 @@
                                         {% endfor %}
                                     </select>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Exchangeable</label>
-                                    <select class="form-select" name="is_exchangeable">
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Exchangeable</label>
+                                    <select class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="is_exchangeable">
                                         <option value="0" {{ 'selected' if not property.is_exchangeable }}>No
                                         </option>
                                         <option value="1" {{ 'selected' if property.is_exchangeable }}>Yes
@@ -499,81 +510,81 @@
                                 </div>
                             </div>
 
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Boundary Width</label>
-                                    <input type="number" step="0.01" class="form-control" name="boundary_width"
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Boundary Width</label>
+                                    <input type="number" step="0.01" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="boundary_width"
                                         value="{{ property.boundary_width if property.boundary_width is not none else '' }}">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Length</label>
-                                    <input type="number" step="0.01" class="form-control" name="property_length"
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Length</label>
+                                    <input type="number" step="0.01" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="property_length"
                                         value="{{ property.property_length if property.property_length is not none else '' }}">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Height</label>
-                                    <input type="number" step="0.01" class="form-control" name="property_height"
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Height</label>
+                                    <input type="number" step="0.01" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="property_height"
                                         value="{{ property.property_height if property.property_height is not none else '' }}">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Density</label>
-                                    <input type="text" class="form-control" name="density"
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Density</label>
+                                    <input type="text" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="density"
                                         value="{{ property.density or '' }}">
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Commercial Status</label>
-                                    <input type="text" class="form-control" name="commercial_status"
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Commercial Status</label>
+                                    <input type="text" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="commercial_status"
                                         value="{{ property.commercial_status or '' }}">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Usage Type</label>
-                                    <input type="text" class="form-control" name="usage_type"
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Usage Type</label>
+                                    <input type="text" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="usage_type"
                                         value="{{ property.usage_type or '' }}">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Ceiling Count</label>
-                                    <input type="number" class="form-control" name="ceiling_count"
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Ceiling Count</label>
+                                    <input type="number" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="ceiling_count"
                                         value="{{ property.ceiling_count if property.ceiling_count is not none else '' }}">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Permit Ceiling</label>
-                                    <input type="text" class="form-control" name="permit_ceiling"
+                                <div class="md:col-span-3 mb-1">
+                                    <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Permit Ceiling</label>
+                                    <input type="text" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" name="permit_ceiling"
                                         value="{{ property.permit_ceiling or '' }}">
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="edit_property_features" class="form-label">Features</label>
-                                <input type="text" class="form-control" id="edit_property_features"
+                            <div class="mb-4">
+                                <label for="edit_property_features" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Features</label>
+                                <input type="text" class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_property_features"
                                     name="property_features" maxlength="500"
                                     value="{{ property.property_features or '' }}"
                                     placeholder="e.g. Swimming Pool, Gym, Parking, Balcony (comma-separated)"
                                     data-validate="length" data-max="500">
-                                <div class="invalid-feedback"></div>
-                                <div class="valid-feedback">
+                                <div class="text-xs text-error mt-1"></div>
+                                <div class="text-xs text-primary mt-1 hidden">
                                     <i class="fas fa-check me-1"></i>Features listed
                                 </div>
-                                <div class="form-text">
-                                    <small class="text-muted">
+                                <div class="text-xs text-on-surface-variant mt-1">
+                                    <small class="text-on-surface-variant">
                                         Separate features with commas. <span id="edit_features_count">0</span>/500
                                         characters
                                     </small>
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="edit_description" class="form-label">Description</label>
-                                <textarea class="form-control" id="edit_description" name="description" rows="4"
+                            <div class="mb-4">
+                                <label for="edit_description" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Description</label>
+                                <textarea class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none" id="edit_description" name="description" rows="4"
                                     maxlength="1000" data-validate="length"
                                     data-max="1000">{{ property.description or '' }}</textarea>
-                                <div class="invalid-feedback"></div>
-                                <div class="valid-feedback">
+                                <div class="text-xs text-error mt-1"></div>
+                                <div class="text-xs text-primary mt-1 hidden">
                                     <i class="fas fa-check me-1"></i>Description provided
                                 </div>
-                                <div class="form-text">
-                                    <small class="text-muted">
+                                <div class="text-xs text-on-surface-variant mt-1">
+                                    <small class="text-on-surface-variant">
                                         <span id="edit_description_count">0</span>/1000 characters
                                     </small>
                                 </div>
@@ -581,7 +592,7 @@
                         </div> <!-- End details tab -->
 
                         <!-- History Tab -->
-                        <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+                        <div class="tab-pane hidden" id="history" role="tabpanel" aria-labelledby="history-tab">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="mb-0">Extraction History</h6>
                                 <span class="badge bg-info text-dark">{{ history|length if history else 0 }}
@@ -597,7 +608,7 @@
                                             <i class="fas fa-robot me-2 text-primary"></i>Extraction #{{
                                             loop.index }}
                                         </h6>
-                                        <small class="text-muted">{{ item.created_at.strftime('%Y-%m-%d %H:%M')
+                                        <small class="text-on-surface-variant">{{ item.created_at.strftime('%Y-%m-%d %H:%M')
                                             }}</small>
                                     </div>
                                     <p class="mb-1 small text-muted">{{ item.user_note or 'Auto-extracted' }}
@@ -637,22 +648,28 @@
                     </div> <!-- End tab-content -->
                 </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cancel
+                <div class="px-5 py-4 border-t border-outline-variant flex flex-wrap justify-end gap-2 bg-surface-container-low/40 shrink-0">
+                    <button type="button"
+                            class="px-4 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container"
+                            data-bs-dismiss="modal"
+                            data-modal-close
+                            onclick="document.getElementById('propertyEditModal').classList.add('hidden'); document.body.style.overflow=''">
+                        Cancel
                     </button>
-                    <button type="button" class="btn btn-outline-primary" id="validateFormBtn">
-                        <i class="fas fa-check-circle me-1"></i>Validate Form
+                    <button type="button"
+                            class="px-4 py-2 rounded-lg border border-primary text-primary text-sm font-medium hover:bg-surface-container"
+                            id="validateFormBtn">
+                        Validate
                     </button>
-                    <button type="submit" class="btn btn-success" id="submitPropertyBtn">
-                        <span class="spinner-border spinner-border-sm d-none me-2" role="status"
-                            aria-hidden="true"></span>
-                        <i class="fas fa-save me-1"></i>
-                        Update Property
+                    <button type="submit"
+                            class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90 inline-flex items-center gap-2"
+                            id="submitPropertyBtn">
+                        <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
+                        <span class="material-symbols-outlined text-[18px]">save</span>
+                        Update property
                     </button>
                 </div>
             </form>
-        </div>
     </div>
 </div>
 
@@ -813,4 +830,36 @@
             alert('Error deleting history item');
         }
     };
+</script>
+
+<script>
+(function() {
+  const detailsTab = document.getElementById('details-tab');
+  const historyTab = document.getElementById('history-tab');
+  const detailsPane = document.getElementById('details');
+  const historyPane = document.getElementById('history');
+  if (!detailsTab || !historyTab || !detailsPane || !historyPane) return;
+
+  function activate(activeBtn, inactiveBtn, showPane, hidePane) {
+    activeBtn.classList.add('bg-primary', 'text-on-primary');
+    activeBtn.classList.remove('text-on-surface-variant', 'hover:bg-surface-container');
+    inactiveBtn.classList.remove('bg-primary', 'text-on-primary');
+    inactiveBtn.classList.add('text-on-surface-variant', 'hover:bg-surface-container');
+    showPane.classList.remove('hidden');
+    showPane.classList.add('block');
+    hidePane.classList.add('hidden');
+    hidePane.classList.remove('block');
+    activeBtn.setAttribute('aria-selected', 'true');
+    inactiveBtn.setAttribute('aria-selected', 'false');
+  }
+
+  detailsTab.addEventListener('click', function(e) {
+    e.preventDefault();
+    activate(detailsTab, historyTab, detailsPane, historyPane);
+  });
+  historyTab.addEventListener('click', function(e) {
+    e.preventDefault();
+    activate(historyTab, detailsTab, historyPane, detailsPane);
+  });
+})();
 </script>

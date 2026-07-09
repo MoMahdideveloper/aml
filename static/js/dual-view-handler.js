@@ -217,20 +217,22 @@ class DualViewHandler {
 
             const html = await response.text();
             
-            // Create or update modal
+            // Create or update modal (Platinum Heritage shell)
             let modal = document.getElementById(modalId);
             if (!modal) {
                 modal = this.createModal(modalId, title);
             }
 
-            const modalBody = modal.querySelector('.modal-body');
+            const modalBody = modal.querySelector('.modal-body, [data-modal-body]');
             if (modalBody) {
                 modalBody.innerHTML = html;
             }
 
-            // Show modal
-            const modalInstance = new bootstrap.Modal(modal);
-            modalInstance.show();
+            if (window.PHModal) window.PHModal.show(modal);
+            else {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
 
         } catch (error) {
             console.error('Modal fallback failed:', error);
@@ -246,20 +248,17 @@ class DualViewHandler {
      */
     createModal(modalId, title) {
         const modalHtml = `
-            <div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">${title}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="text-center p-4">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-                        </div>
+            <div id="${modalId}" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]" data-modal role="dialog" aria-modal="true" aria-hidden="true">
+                <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-3xl max-h-[90vh] flex flex-col" onclick="event.stopPropagation()">
+                    <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
+                        <h2 class="text-lg font-semibold text-primary truncate">${title}</h2>
+                        <button type="button" class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" data-modal-close aria-label="Close"
+                                onclick="this.closest('[data-modal]').classList.add('hidden'); document.body.style.overflow=''">
+                            <span class="material-symbols-outlined text-[20px]">close</span>
+                        </button>
+                    </div>
+                    <div class="modal-body px-5 py-4 overflow-y-auto flex-1" data-modal-body>
+                        <div class="text-center p-4 text-sm text-on-surface-variant">Loading…</div>
                     </div>
                 </div>
             </div>

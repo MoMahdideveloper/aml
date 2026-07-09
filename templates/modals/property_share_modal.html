@@ -1,196 +1,115 @@
-<!-- Property Share Modal -->
-<div class="modal fade" id="propertyShareModal" tabindex="-1" aria-labelledby="propertyShareModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title" id="propertyShareModalLabel">
-                    <i class="fas fa-share-alt me-2"></i>
-                    Share Property
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Property Share Modal — Platinum Heritage -->
+<div id="propertyShareModal"
+     class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]"
+     data-modal
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="propertyShareModalLabel"
+     aria-hidden="true">
+    <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-md max-h-[90vh] flex flex-col"
+         onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
+            <h2 id="propertyShareModalLabel" class="text-lg font-semibold text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined text-[20px]">share</span>
+                Share property
+            </h2>
+            <button type="button" data-modal-close
+                    onclick="document.getElementById('propertyShareModal').classList.add('hidden'); document.body.style.overflow=''"
+                    class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" aria-label="Close">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+
+        <div class="px-5 py-5 overflow-y-auto">
+            <div class="text-center mb-5">
+                <h3 class="text-base font-semibold text-primary">{{ sharing.title if sharing is defined else 'Property' }}</h3>
+                <p class="text-sm text-on-surface-variant mt-1">{{ sharing.address if sharing is defined else '' }}</p>
+                {% if sharing is defined and sharing.price is defined %}
+                <p class="mt-2 inline-flex px-3 py-1 rounded-full bg-primary text-on-primary text-sm font-medium tabular-nums">
+                    ${{ "{:,.0f}".format(sharing.price) }}
+                </p>
+                {% endif %}
             </div>
-            <div class="modal-body">
-                <div class="text-center mb-4">
-                    <h6 class="text-primary">{{ sharing.title }}</h6>
-                    <p class="text-muted small">{{ sharing.address }}</p>
-                    <div class="badge bg-success fs-6">${{ "{:,.0f}".format(sharing.price) }}</div>
-                </div>
-                
-                <!-- Share Options -->
-                <div class="row g-3">
-                    <div class="col-6">
-                        <button type="button" class="btn btn-outline-primary w-100" onclick="shareViaEmail()">
-                            <i class="fas fa-envelope mb-1"></i>
-                            <div class="small">Email</div>
-                        </button>
-                    </div>
-                    <div class="col-6">
-                        <button type="button" class="btn btn-outline-success w-100" onclick="shareViaSMS()">
-                            <i class="fas fa-sms mb-1"></i>
-                            <div class="small">SMS</div>
-                        </button>
-                    </div>
-                    <div class="col-6">
-                        <button type="button" class="btn btn-outline-info w-100" onclick="copyPropertyLink()">
-                            <i class="fas fa-link mb-1"></i>
-                            <div class="small">Copy Link</div>
-                        </button>
-                    </div>
-                    <div class="col-6">
-                        <button type="button" class="btn btn-outline-warning w-100" onclick="shareOnSocial()">
-                            <i class="fas fa-share-nodes mb-1"></i>
-                            <div class="small">Social</div>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Property Link -->
-                <div class="mt-4">
-                    <label for="propertyLink" class="form-label">Property Link</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="propertyLink" value="{{ sharing.url }}" readonly>
-                        <button class="btn btn-outline-secondary" type="button" onclick="copyPropertyLink()">
-                            <i class="fas fa-copy"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- QR Code Section -->
-                <div class="mt-4 text-center">
-                    <h6 class="text-muted">QR Code</h6>
-                    <div id="qrcode" class="d-inline-block p-3 bg-light rounded"></div>
-                    <div class="small text-muted mt-2">Scan to view property details</div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="generatePropertyFlyer()">
-                    <i class="fas fa-file-pdf me-1"></i>
-                    Generate Flyer
+
+            <div class="grid grid-cols-2 gap-3 mb-5">
+                <button type="button" onclick="typeof shareViaEmail==='function'&&shareViaEmail()"
+                        class="flex flex-col items-center gap-1 p-3 rounded-lg border border-outline-variant hover:border-primary hover:bg-surface-container-low transition-colors text-primary">
+                    <span class="material-symbols-outlined">mail</span>
+                    <span class="text-xs font-medium">Email</span>
+                </button>
+                <button type="button" onclick="typeof shareViaSMS==='function'&&shareViaSMS()"
+                        class="flex flex-col items-center gap-1 p-3 rounded-lg border border-outline-variant hover:border-primary hover:bg-surface-container-low transition-colors text-primary">
+                    <span class="material-symbols-outlined">sms</span>
+                    <span class="text-xs font-medium">SMS</span>
+                </button>
+                <button type="button" onclick="typeof copyPropertyLink==='function'&&copyPropertyLink()"
+                        class="flex flex-col items-center gap-1 p-3 rounded-lg border border-outline-variant hover:border-primary hover:bg-surface-container-low transition-colors text-primary">
+                    <span class="material-symbols-outlined">link</span>
+                    <span class="text-xs font-medium">Copy link</span>
+                </button>
+                <button type="button" onclick="typeof shareOnSocial==='function'&&shareOnSocial()"
+                        class="flex flex-col items-center gap-1 p-3 rounded-lg border border-outline-variant hover:border-primary hover:bg-surface-container-low transition-colors text-primary">
+                    <span class="material-symbols-outlined">public</span>
+                    <span class="text-xs font-medium">Social</span>
                 </button>
             </div>
+
+            <label for="propertyLink" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Property link</label>
+            <div class="flex gap-2">
+                <input type="text" id="propertyLink" readonly
+                       value="{{ sharing.url if sharing is defined else '' }}"
+                       class="flex-1 px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm text-on-surface outline-none">
+                <button type="button" onclick="typeof copyPropertyLink==='function'&&copyPropertyLink()"
+                        class="px-3 py-2 rounded-lg border border-outline-variant text-primary hover:bg-surface-container" aria-label="Copy">
+                    <span class="material-symbols-outlined text-[18px]">content_copy</span>
+                </button>
+            </div>
+            <div id="qrcode" class="mt-4 text-center text-xs text-on-surface-variant"></div>
+        </div>
+
+        <div class="px-5 py-4 border-t border-outline-variant flex justify-end gap-2 bg-surface-container-low/40">
+            <button type="button" data-modal-close
+                    onclick="document.getElementById('propertyShareModal').classList.add('hidden'); document.body.style.overflow=''"
+                    class="px-4 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container">
+                Close
+            </button>
+            <button type="button" onclick="typeof generatePropertyFlyer==='function'&&generatePropertyFlyer()"
+                    class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90 inline-flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+                Flyer
+            </button>
         </div>
     </div>
 </div>
 
 <script>
-// Property sharing functionality
 let currentPropertyData = null;
-
 function initializePropertyShare(propertyData) {
-    currentPropertyData = propertyData;
-    
-    // Generate QR code if QR library is available
-    if (typeof QRCode !== 'undefined') {
-        document.getElementById('qrcode').innerHTML = '';
-        new QRCode(document.getElementById('qrcode'), {
-            text: propertyData.url,
-            width: 128,
-            height: 128
-        });
-    } else {
-        document.getElementById('qrcode').innerHTML = '<div class="text-muted small">QR Code unavailable</div>';
-    }
+    currentPropertyData = propertyData || null;
+    const link = document.getElementById('propertyLink');
+    if (link && propertyData && propertyData.url) link.value = propertyData.url;
 }
-
-function shareViaEmail() {
-    if (!currentPropertyData) return;
-    
-    const subject = encodeURIComponent(`Property Listing: ${currentPropertyData.title}`);
-    const body = encodeURIComponent(`Check out this property listing:\n\n${currentPropertyData.description}\n\nView details: ${currentPropertyData.url}`);
-    
-    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
-}
-
-function shareViaSMS() {
-    if (!currentPropertyData) return;
-    
-    const message = encodeURIComponent(`Property: ${currentPropertyData.title} - ${currentPropertyData.url}`);
-    
-    // Try to open SMS app
-    if (navigator.userAgent.match(/iPhone|iPad|iPod/i)) {
-        window.open(`sms:&body=${message}`, '_blank');
-    } else {
-        window.open(`sms:?body=${message}`, '_blank');
-    }
-}
-
 function copyPropertyLink() {
-    const linkInput = document.getElementById('propertyLink');
-    linkInput.select();
-    linkInput.setSelectionRange(0, 99999); // For mobile devices
-    
-    navigator.clipboard.writeText(linkInput.value).then(() => {
-        if (typeof CRUDUtils !== 'undefined') {
-            CRUDUtils.showToast('Property link copied to clipboard!', 'success');
-        } else {
-            console.log('Property link copied to clipboard!');
-        }
-    }).catch(err => {
-        console.error('Failed to copy link: ', err);
-        if (typeof CRUDUtils !== 'undefined') {
-            CRUDUtils.showToast('Failed to copy link', 'error');
-        }
-    });
+    const link = document.getElementById('propertyLink');
+    if (!link) return;
+    link.select();
+    navigator.clipboard?.writeText(link.value).catch(() => document.execCommand('copy'));
 }
-
+function shareViaEmail() {
+    const link = document.getElementById('propertyLink')?.value || '';
+    const title = currentPropertyData?.title || 'Property';
+    window.location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(link)}`;
+}
+function shareViaSMS() {
+    const link = document.getElementById('propertyLink')?.value || '';
+    window.location.href = `sms:?body=${encodeURIComponent(link)}`;
+}
 function shareOnSocial() {
-    if (!currentPropertyData) return;
-    
-    // Check if Web Share API is supported
-    if (navigator.share) {
-        navigator.share({
-            title: currentPropertyData.title,
-            text: currentPropertyData.description,
-            url: currentPropertyData.url
-        }).catch(err => {
-            console.log('Error sharing:', err);
-            fallbackSocialShare();
-        });
-    } else {
-        fallbackSocialShare();
-    }
+    const link = document.getElementById('propertyLink')?.value || '';
+    if (navigator.share) navigator.share({ url: link }).catch(() => {});
+    else copyPropertyLink();
 }
-
-function fallbackSocialShare() {
-    // Create a simple social share menu
-    const shareMenu = `
-        <div class="dropdown-menu show position-static">
-            <a class="dropdown-item" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentPropertyData.url)}" target="_blank">
-                <i class="fab fa-facebook text-primary me-2"></i>Facebook
-            </a>
-            <a class="dropdown-item" href="https://twitter.com/intent/tweet?url=${encodeURIComponent(currentPropertyData.url)}&text=${encodeURIComponent(currentPropertyData.title)}" target="_blank">
-                <i class="fab fa-twitter text-info me-2"></i>Twitter
-            </a>
-            <a class="dropdown-item" href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentPropertyData.url)}" target="_blank">
-                <i class="fab fa-linkedin text-primary me-2"></i>LinkedIn
-            </a>
-        </div>
-    `;
-    
-    if (typeof CRUDUtils !== 'undefined') {
-        CRUDUtils.showToast('Social sharing options opened in new tabs', 'info');
-    }
-    
-    // Open Facebook share as fallback
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentPropertyData.url)}`, '_blank');
-}
-
 function generatePropertyFlyer() {
-    if (!currentPropertyData) return;
-    
-    if (typeof CRUDUtils !== 'undefined') {
-        CRUDUtils.showToast('Property flyer generation started...', 'info');
-    }
-    
-    // This would typically call a backend endpoint to generate a PDF flyer
-    // For now, we'll simulate the functionality
-    setTimeout(() => {
-        if (typeof CRUDUtils !== 'undefined') {
-            CRUDUtils.showToast('Property flyer would be generated here', 'success');
-        } else {
-            console.log('Property flyer generation completed');
-        }
-    }, 1000);
+    window.print();
 }
 </script>

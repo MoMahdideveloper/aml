@@ -1,0 +1,150 @@
+{
+  "projectId": "1843282501813018645",
+  "assetId": "1dee9814aeab494b99629a9fe04852bd",
+  "brand": "Platinum Heritage",
+  "scope": "P0+P1",
+  "screens": {
+    "dashboard_desktop": "37656f6781de479cb7de246abaa7a8fd",
+    "dashboard_mobile": "69a6fa40797d4ffd8e6359483ae47ab9",
+    "properties_desktop": "014e9d15ce3b49adb8fcdb5421a296c7",
+    "properties_mobile": "653abd98d4cf4a01ad49489d7edb0d54",
+    "property_detail_desktop": "3f39f30cb3564ab2ac774a9f37b7dd43",
+    "property_detail_mobile": "389045ac1c144edcbf33c11140630854",
+    "agents_desktop": "c95b5a8d7284468fb1fd4c1929093d0d",
+    "agents_mobile": "a5f634f61667480a86d77c9218f6944d",
+    "customers_desktop": "3a97d783c4b54b7badc0f9276effa878",
+    "customers_mobile": "2cb4425ab74145aab757495829658983",
+    "deals_desktop": "2c42cf6722154f5ea74a6752770553b5",
+    "deals_mobile": "ae2d2a74f5594425ac4964a4cbcca66f",
+    "tasks_desktop": "cd9cb221c3634f26ba57303474441da2",
+    "tasks_mobile": "47f2e1c32a1b4da59c4a867524feb061",
+    "ai_matcher": "157fc6ef6577430c881d17b7139af48d",
+    "map": "e06f44eada4e43c58505c43d4b036b83",
+    "settings_desktop": "95065fea7f934121b9458a7e51732acb",
+    "settings_mobile": "1d590d5359b04afcbf826ddb978430dc",
+    "share_sheet": "dfa6c8eee5814811b9427c0c8df684c8",
+    "deal_dossier": "42ffaaf744854ac2b9370f8ae81c2078",
+    "vip_email": "e54d32c563ca45f7ae1de424d185ac16",
+    "vip_client": "675a212c2065405e91e98ff9dc13a602",
+    "task_modal": "1f1aa066f93d4584853b9d3bad722e3c",
+    "listing_edit": "1a0a8f7d29a54a34926f4a185a9f9177",
+    "viewing_scheduler": "9cefadf6762c40aeaefc14215010c793",
+    "contact_agent": "616f406ab94341118e20f356df11d06e",
+    "notification_settings": "439946d49496477cbc56bc01471f65b1",
+    "system_alerts": "92e1a5c4f387498c9c9910c8b74b48d5"
+  },
+  "instances": [
+    {
+      "id": "014e9d15ce3b49adb8fcdb5421a296c7",
+      "sourceScreen": "projects/1843282501813018645/screens/014e9d15ce3b49adb8fcdb5421a296c7"
+    },
+    {
+      "id": "157fc6ef6577430c881d17b7139af48d",
+      "sourceScreen": "projects/1843282501813018645/screens/157fc6ef6577430c881d17b7139af48d"
+    },
+    {
+      "id": "1a0a8f7d29a54a34926f4a185a9f9177",
+      "sourceScreen": "projects/1843282501813018645/screens/1a0a8f7d29a54a34926f4a185a9f9177"
+    },
+    {
+      "id": "1d590d5359b04afcbf826ddb978430dc",
+      "sourceScreen": "projects/1843282501813018645/screens/1d590d5359b04afcbf826ddb978430dc"
+    },
+    {
+      "id": "1f1aa066f93d4584853b9d3bad722e3c",
+      "sourceScreen": "projects/1843282501813018645/screens/1f1aa066f93d4584853b9d3bad722e3c"
+    },
+    {
+      "id": "2c42cf6722154f5ea74a6752770553b5",
+      "sourceScreen": "projects/1843282501813018645/screens/2c42cf6722154f5ea74a6752770553b5"
+    },
+    {
+      "id": "2cb4425ab74145aab757495829658983",
+      "sourceScreen": "projects/1843282501813018645/screens/2cb4425ab74145aab757495829658983"
+    },
+    {
+      "id": "37656f6781de479cb7de246abaa7a8fd",
+      "sourceScreen": "projects/1843282501813018645/screens/37656f6781de479cb7de246abaa7a8fd"
+    },
+    {
+      "id": "389045ac1c144edcbf33c11140630854",
+      "sourceScreen": "projects/1843282501813018645/screens/389045ac1c144edcbf33c11140630854"
+    },
+    {
+      "id": "3a97d783c4b54b7badc0f9276effa878",
+      "sourceScreen": "projects/1843282501813018645/screens/3a97d783c4b54b7badc0f9276effa878"
+    },
+    {
+      "id": "3f39f30cb3564ab2ac774a9f37b7dd43",
+      "sourceScreen": "projects/1843282501813018645/screens/3f39f30cb3564ab2ac774a9f37b7dd43"
+    },
+    {
+      "id": "42ffaaf744854ac2b9370f8ae81c2078",
+      "sourceScreen": "projects/1843282501813018645/screens/42ffaaf744854ac2b9370f8ae81c2078"
+    },
+    {
+      "id": "439946d49496477cbc56bc01471f65b1",
+      "sourceScreen": "projects/1843282501813018645/screens/439946d49496477cbc56bc01471f65b1"
+    },
+    {
+      "id": "47f2e1c32a1b4da59c4a867524feb061",
+      "sourceScreen": "projects/1843282501813018645/screens/47f2e1c32a1b4da59c4a867524feb061"
+    },
+    {
+      "id": "616f406ab94341118e20f356df11d06e",
+      "sourceScreen": "projects/1843282501813018645/screens/616f406ab94341118e20f356df11d06e"
+    },
+    {
+      "id": "653abd98d4cf4a01ad49489d7edb0d54",
+      "sourceScreen": "projects/1843282501813018645/screens/653abd98d4cf4a01ad49489d7edb0d54"
+    },
+    {
+      "id": "675a212c2065405e91e98ff9dc13a602",
+      "sourceScreen": "projects/1843282501813018645/screens/675a212c2065405e91e98ff9dc13a602"
+    },
+    {
+      "id": "69a6fa40797d4ffd8e6359483ae47ab9",
+      "sourceScreen": "projects/1843282501813018645/screens/69a6fa40797d4ffd8e6359483ae47ab9"
+    },
+    {
+      "id": "92e1a5c4f387498c9c9910c8b74b48d5",
+      "sourceScreen": "projects/1843282501813018645/screens/92e1a5c4f387498c9c9910c8b74b48d5"
+    },
+    {
+      "id": "95065fea7f934121b9458a7e51732acb",
+      "sourceScreen": "projects/1843282501813018645/screens/95065fea7f934121b9458a7e51732acb"
+    },
+    {
+      "id": "9cefadf6762c40aeaefc14215010c793",
+      "sourceScreen": "projects/1843282501813018645/screens/9cefadf6762c40aeaefc14215010c793"
+    },
+    {
+      "id": "a5f634f61667480a86d77c9218f6944d",
+      "sourceScreen": "projects/1843282501813018645/screens/a5f634f61667480a86d77c9218f6944d"
+    },
+    {
+      "id": "ae2d2a74f5594425ac4964a4cbcca66f",
+      "sourceScreen": "projects/1843282501813018645/screens/ae2d2a74f5594425ac4964a4cbcca66f"
+    },
+    {
+      "id": "c95b5a8d7284468fb1fd4c1929093d0d",
+      "sourceScreen": "projects/1843282501813018645/screens/c95b5a8d7284468fb1fd4c1929093d0d"
+    },
+    {
+      "id": "cd9cb221c3634f26ba57303474441da2",
+      "sourceScreen": "projects/1843282501813018645/screens/cd9cb221c3634f26ba57303474441da2"
+    },
+    {
+      "id": "dfa6c8eee5814811b9427c0c8df684c8",
+      "sourceScreen": "projects/1843282501813018645/screens/dfa6c8eee5814811b9427c0c8df684c8"
+    },
+    {
+      "id": "e06f44eada4e43c58505c43d4b036b83",
+      "sourceScreen": "projects/1843282501813018645/screens/e06f44eada4e43c58505c43d4b036b83"
+    },
+    {
+      "id": "e54d32c563ca45f7ae1de424d185ac16",
+      "sourceScreen": "projects/1843282501813018645/screens/e54d32c563ca45f7ae1de424d185ac16"
+    }
+  ]
+}
