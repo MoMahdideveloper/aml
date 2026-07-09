@@ -1,61 +1,165 @@
-version: "3.9"
+version: '3.8'
+
+# Profiles:
+#   crm      — Redis for Flask Celery/cache (product path)
+#   matching — Neo4j + Redis + ingestor/matcher/api/chatbot (experimental)
+#
+# Examples:
+#   docker compose --profile crm up -d
+#   docker compose --profile matching up -d --build
+#   docker compose --profile matching down
 
 services:
-  postgres:
-    image: pgvector/pgvector:pg16
-    container_name: gptvli-postgres
-    environment:
-      POSTGRES_USER: gptvli
-      POSTGRES_PASSWORD: gptvli
-      POSTGRES_DB: gptvli
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gptvli -d gptvli"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-
   redis:
     image: redis:7-alpine
-    container_name: gptvli-redis
+    container_name: redis
+    profiles: ["crm", "matching"]
     ports:
       - "6379:6379"
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "2gb", "--maxmemory-policy", "allkeys-lru"]
     volumes:
       - redis_data:/data
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
-      retries: 20
+      retries: 5
 
-  n8n:
-    image: n8nio/n8n
-    container_name: gptvli-n8n
+  neo4j:
+    image: neo4j:5.13
+    container_name: neo4j
+    profiles: ["matching"]
     ports:
-      - "5678:5678"
+      - "7474:7474"
+      - "7687:7687"
     environment:
-      - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=password
-      - N8N_HOST=localhost
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - VUE_APP_URL_BASE_API=http://host.docker.internal:5000
-      - EXECUTIONS_PROCESS=main
-      - DB_TYPE=sqlite
-      - DB_SQLITE_DB=/data/n8n.sqlite
+      - NEO4J_AUTH=neo4j/changemeplease
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+      - NEO4J_dbms_memory_pagecache_size=2G
+      - NEO4J_dbms_memory_heap_max__size=1G
     volumes:
-      - n8n_data:/data
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - ./neo4j/conf:/conf
+      - ./neo4j/plugins:/plugins
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7474/"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  # Ingestor — experimental matching stack
+  ingestor:
+    build:
+      context: ./ingestor
+      dockerfile: Dockerfile
+    container_name: ingestor
+    profiles: ["matching"]
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=changemeplease
+      - REDIS_URL=redis://redis:6379
+      - ENVIRONMENT=development
+      - LOG_LEVEL=info
     depends_on:
-      - postgres
-      - redis
+      neo4j:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./ingestor:/app
+      - ./ingestor/logs:/app/logs
+    restart: unless-stopped
+
+  # Matcher — experimental matching stack
+  matcher:
+    build:
+      context: ./matcher
+      dockerfile: Dockerfile
+    container_name: matcher
+    profiles: ["matching"]
+    ports:
+      - "8001:8001"
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=changemeplease
+      - REDIS_URL=redis://redis:6379
+      - ENVIRONMENT=development
+      - LOG_LEVEL=info
+      - WORKER_CONCURRENCY=4
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./matcher:/app
+      - ./matcher/logs:/app/logs
+    restart: unless-stopped
+
+  # API — experimental matching stack
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: api
+    profiles: ["matching"]
+    ports:
+      - "3000:3000"
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=changemeplease
+      - REDIS_URL=redis://redis:6379
+      - ENVIRONMENT=development
+      - LOG_LEVEL=info
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+      - ./api/logs:/app/logs
+    restart: unless-stopped
+
+  # Chatbot — experimental matching stack
+  chatbot:
+    build:
+      context: ./chatbot
+      dockerfile: Dockerfile
+    container_name: chatbot
+    profiles: ["matching"]
+    ports:
+      - "8002:8002"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=changemeplease
+      - REDIS_URL=redis://redis:6379
+      - ENVIRONMENT=development
+      - LOG_LEVEL=info
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./chatbot:/app
+      - ./chatbot/logs:/app/logs
+    restart: unless-stopped
 
 volumes:
-  postgres_data:
+  neo4j_data:
+  neo4j_logs:
   redis_data:
-  n8n_data:
-
