@@ -1,0 +1,190 @@
+{% extends "mobile/base.html" %}
+
+{% block title %}Settings & Preferences - Platinum Heritage{% endblock %}
+
+{% block content %}
+<!-- TopAppBar -->
+<header class="bg-background dark:bg-background w-full top-0 sticky border-b border-outline-variant dark:border-outline z-40">
+<div class="flex items-center justify-between px-margin-mobile h-16 w-full max-w-max-width mx-auto">
+<button aria-label="Menu" class="hover:opacity-80 transition-opacity active:scale-95 transition-transform text-primary dark:text-inverse-primary touch-target flex items-center justify-center p-2 -ml-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md-mobile font-semibold text-primary dark:text-inverse-primary">Platinum Heritage</h1>
+<button aria-label="Notifications" class="hover:opacity-80 transition-opacity active:scale-95 transition-transform text-primary dark:text-inverse-primary touch-target flex items-center justify-center p-2 -mr-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="px-margin-mobile py-8 md:hidden max-w-max-width mx-auto">
+<!-- Header -->
+<section class="mb-8">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-[var(--luxury-text-primary)] mb-2">Settings</h2>
+<p class="font-body-md text-body-md text-[var(--luxury-muted)]">Manage your account preferences and personal information.</p>
+</section>
+<!-- Category Navigation (Mobile Replacement for Sidebar) -->
+<section class="mb-8 bg-[var(--luxury-card-bg)] rounded-[var(--borderRadius_lg)] shadow-[0_8px_30px_rgba(27,38,49,0.06)] border border-[var(--luxury-border)] overflow-hidden">
+<ul class="flex flex-col">
+<!-- Active Item -->
+<li class="border-b border-[var(--luxury-border)] last:border-b-0">
+<button class="w-full flex items-center justify-between p-4 touch-target bg-[var(--luxury-primary)]/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[var(--luxury-primary)]" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-md text-label-md text-[var(--luxury-primary)] font-bold">Profile Settings</span>
+</div>
+<span class="material-symbols-outlined text-[var(--luxury-primary)]">chevron_right</span>
+</button>
+</li>
+<!-- Inactive Items -->
+<li class="border-b border-[var(--luxury-border)] last:border-b-0">
+<button class="w-full flex items-center justify-between p-4 touch-target hover:bg-[var(--luxury-card-bg)]/10 active:bg-[var(--luxury-primary)]/10 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[var(--luxury-muted)]" style="font-variation-settings: 'FILL' 0;">notifications_active</span>
+<span class="font-label-md text-label-md text-[var(--luxury-muted)]">Notifications</span>
+</div>
+<span class="material-symbols-outlined text-[var(--luxury-muted)]">chevron_right</span>
+</button>
+</li>
+<li class="border-b border-[var(--luxury-border)] last:border-b-0">
+<button class="w-full flex items-center justify-between p-4 touch-target hover:bg-[var(--luxury-card-bg)]/10 active:bg-[var(--luxury-primary)]/10 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[var(--luxury-muted)]" style="font-variation-settings: 'FILL' 0;">security</span>
+<span class="font-label-md text-label-md text-[var(--luxury-muted)]">Security</span>
+</div>
+<span class="material-symbols-outlined text-[var(--luxury-muted)]">chevron_right</span>
+</button>
+</li>
+<li class="border-b border-[var(--luxury-border)] last:border-b-0">
+<button class="w-full flex items-center justify-between p-4 touch-target hover:bg-[var(--luxury-card-bg)]/10 active:bg-[var(--luxury-primary)]/10 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[var(--luxury-muted)]" style="font-variation-settings: 'FILL' 0;">credit_card</span>
+<span class="font-label-md text-label-md text-[var(--luxury-muted)]">Billing</span>
+</div>
+<span class="material-symbols-outlined text-[var(--luxury-muted)]">chevron_right</span>
+</button>
+</li>
+</ul>
+</section>
+<!-- General / Profile Settings Form Area -->
+<section class="bg-[var(--luxury-card-bg)] rounded-[var(--borderRadius_lg)] shadow-[0_8px_30px_rgba(27,38,49,0.06)] border border-[var(--luxury-border)] p-6 mb-8">
+<h3 class="font-headline-md text-headline-md text-[var(--luxury-text-primary)] border-b border-[var(--luxury-border)] pb-4 mb-6">Profile Settings</h3>
+<!-- Profile Picture -->
+<div class="flex flex-col items-center justify-center mb-8">
+<div class="w-24 h-24 rounded-full bg-[var(--luxury-border)]/20 overflow-hidden border-2 border-[var(--luxury-primary)] mb-4 relative">
+<img alt="A high-end corporate headshot of a real estate professional looking confident. The lighting is soft and flattering, set against a neutral, sophisticated background." class="w-full h-full object-cover" data-alt="A high-end corporate headshot of a real estate professional looking confident. The lighting is soft and flattering, set against a neutral, sophisticated background. Minimalist luxury aesthetic with crisp focus and professional corporate undertones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgvpuMvHU0nZhVN0ODu9zdpWLLRMiQBjUlHfajZ07By10aUicWTVlfzMqBTuuJmRNvSk1844Uf4_RftFdLoN7UT1obJBr-fOuE1OR5qUAbns6IagG0-4UeiX4SfLlFChk7YMbiSV6P_hxZ9mwN9nWeyijbWIQAf8-2TLy-oPeb7Hop5l89ivISf1-EwGcu3S0S3C71nszuR3j5XPdxDViwQXaJ4tSmxFtl1lDWna8k7ApCE-zvKf0"/>
+<div class="absolute inset-0 bg-[var(--luxury-primary)]/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
+<span class="material-symbols-outlined text-[var(--luxury-primary)]" style="font-variation-settings: 'FILL' 0;">photo_camera</span>
+</div>
+</div>
+<button class="touch-target border border-[var(--luxury-border)] text-[var(--luxury-primary)] font-label-md text-label-md px-4 py-2 hover:bg-[var(--luxury-primary)]/10 transition-colors hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)]" type="button">
+                    Change Picture
+                </button>
+</div>
+<!-- Form Fields -->
+<form class="flex flex-col gap-6">
+<!-- Full Name -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-[var(--luxury-text-primary)]" for="fullName">Full Name</label>
+<input class="w-full px-3 py-2 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 font-body-md text-body-md text-[var(--luxury-text-primary)]" id="fullName" type="text" value="Eleanor Vance"/>
+</div>
+<!-- Title -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-[var(--luxury-text-primary)]" for="title">Professional Title</label>
+<input class="w-full px-3 py-2 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 font-body-md text-body-md text-[var(--luxury-text-primary)]" id="title" type="text" value="Senior Portfolio Manager"/>
+</div>
+<!-- Email -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-[var(--luxury-text-primary)]" for="email">Email Address</label>
+<input class="w-full px-3 py-2 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 type="email" value="e.vance@platinumheritage.com"/>
+</div>
+<!-- Phone -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-[var(--luxury-text-primary)]" for="phone">Phone Number</label>
+<input class="w-full px-3 py-2 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 font-body-md text-body-md text-[var(--luxury-text-primary)]" id="phone" type="tel" value="+1 (555) 019-2837"/>
+</div>
+<!-- Divider -->
+<hr class="border-t border-[var(--luxury-border)] my-2"/>
+<!-- Contact Preferences -->
+<div class="flex flex-col gap-3">
+<span class="font-label-md text-label-md text-[var(--luxury-text-primary)] mb-1">Contact Preferences</span>
+<label class="flex items-center gap-3 touch-target cursor-pointer group">
+<input checked="" class="w-[1.15em] h-[1.15em] bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-[0.15em] appearance-none grid place-content-center" type="checkbox"/>
+<span class="font-body-md text-body-md text-[var(--luxury-text-primary)] group-hover:text-[var(--luxury-primary)] transition-colors">Receive marketing updates</span>
+</label>
+<label class="flex items-center gap-3 touch-target cursor-pointer group">
+<input checked="" class="w-[1.15em] h-[1.15em] bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-[0.15em] appearance-none grid place-content-center" type="checkbox"/>
+<span class="font-body-md text-body-md text-[var(--luxury-text-primary)] group-hover:text-[var(--luxury-primary)] transition-colors">SMS notifications for client messages</span>
+</label>
+<label class="flex items-center gap-3 touch-target cursor-pointer group">
+<input class="w-[1.15em] h-[1.15em] bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-[0.15em] appearance-none grid place-content-center" type="checkbox"/>
+<span class="font-body-md text-body-md text-[var(--luxury-text-primary)] group-hover:text-[var(--luxury-primary)] transition-colors">Weekly analytics digest</span>
+</label>
+</div>
+<!-- Divider -->
+<hr class="border-t border-[var(--luxury-border)] my-2"/>
+<!-- Dropdowns -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-[var(--luxury-text-primary)]" for="timezone">Timezone</label>
+<div class="relative">
+<select class="w-full px-3 py-2 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 font-body-md text-body-md text-[var(--luxury-text-primary)] appearance-none pr-10" id="timezone">
+<option>Eastern Time (ET)</option>
+<option>Central Time (CT)</option>
+<option>Mountain Time (MT)</option>
+<option>Pacific Time (PT)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--luxury-muted)]">expand_more</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-[var(--luxury-text-primary)]" for="dateFormat">Date Format</label>
+<div class="relative">
+<select class="w-full px-3 py-2 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 font-body-md text-body-md text-[var(--luxury-text-primary)] appearance-none pr-10" id="dateFormat">
+<option>MM/DD/YYYY</option>
+<option>DD/MM/YYYY</option>
+<option>YYYY-MM-DD</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--luxury-muted)]">expand_more</span>
+</div>
+</div>
+</form>
+</section>
+<!-- Save Button Area -->
+<div class="mt-8 mb-4">
+<button class="w-full touch-target bg-[var(--luxury-primary)] text-white font-label-md text-label-md px-6 py-3 hover:bg-[var(--luxury-primary)]/90 transition-all hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] active:scale-95" type="button">
+                    Save Changes
+                </button>
+</div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+// Mobile-specific settings preferences functions
+document.addEventListener('DOMContentLoaded', function() {
+    // Add touch-friendly enhancements
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(button => {
+        // Ensure minimum touch target size
+        const minHeight = 44; // Apple/HIG recommended minimum
+        const computedStyle = window.getComputedStyle(button);
+        const height = parseInt(computedStyle.height);
+        if (height < minHeight) {
+            button.style.minHeight = minHeight + 'px';
+        }
+    });
+
+    // Custom checkbox styling
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                this.parentElement.style.color = 'var(--luxury-primary)';
+            } else {
+                this.parentElement.style.color = 'var(--luxury-muted)';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

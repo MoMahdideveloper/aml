@@ -1,0 +1,100 @@
+# Dashboard - Real Estate CRM
+
+
+#### Real Estate CRM
+- 
+                    [Dashboard](http://127.0.0.1:5000/)
+                
+- 
+                    [Properties](http://127.0.0.1:5000/properties)
+                
+- 
+                    [Agents](http://127.0.0.1:5000/agents)
+                
+- 
+                    [Customers](http://127.0.0.1:5000/customers)
+                
+- 
+                    [Deals](http://127.0.0.1:5000/deals)
+                
+- 
+                    [Tasks](http://127.0.0.1:5000/tasks)
+                
+- 
+                    [AI Recommendations](http://127.0.0.1:5000/recommendations)
+                
+[Dashboard](http://127.0.0.1:5000/)
+[Properties](http://127.0.0.1:5000/properties)
+[Agents](http://127.0.0.1:5000/agents)
+[Customers](http://127.0.0.1:5000/customers)
+[Deals](http://127.0.0.1:5000/deals)
+[Tasks](http://127.0.0.1:5000/tasks)
+[AI Recommendations](http://127.0.0.1:5000/recommendations)
+
+##### Dashboard
+1. [Home](http://127.0.0.1:5000/)
+2. Dashboard
+[Home](http://127.0.0.1:5000/)
+- [Profile](http://127.0.0.1:5000/)
+- [Preferences](http://127.0.0.1:5000/)
+- 
+- [Logout](http://127.0.0.1:5000/)
+[Profile](http://127.0.0.1:5000/)
+[Preferences](http://127.0.0.1:5000/)
+[Logout](http://127.0.0.1:5000/)
+
+###### Pipeline Value
+
+### $2,260,000
+Total Deal Value in Pipeline
+
+##### 3
+
+##### 3
+
+###### Market Analysis
+Generating AI market analysis...
+
+###### Recent Properties
+
+###### Starter Home
+654 Pine Street, Neighborhood
+
+###### Luxury Waterfront Estate
+789 Lake Drive, Waterfront
+
+###### Urban Loft - Iranian Rental
+321 Industrial Blvd, Arts District
+
+###### Suburban Family Home
+456 Oak Avenue, Suburbia
+
+###### Modern Downtown Condo
+123 Main St, Downtown
+[View All Properties](http://127.0.0.1:5000/properties)
+
+###### Recent Deals
+
+###### Suburban Family Home
+John Smith
+
+###### Luxury Waterfront Estate
+Emma Wilson
+
+###### Modern Downtown Condo
+David Brown
+[View All Deals](http://127.0.0.1:5000/deals)
+
+###### Pending Tasks
+
+###### Schedule property photos
+Book photographer for new downtown listing...
+[View All Tasks](http://127.0.0.1:5000/tasks)
+
+###### Quick Actions
+[Add Property](http://127.0.0.1:5000/properties)
+[Add Customer](http://127.0.0.1:5000/customers)
+[Create Deal](http://127.0.0.1:5000/deals)
+[AI Recommendations](http://127.0.0.1:5000/recommendations)
+
+##### Notifications

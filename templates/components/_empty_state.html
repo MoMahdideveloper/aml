@@ -1,0 +1,27 @@
+{# Empty State Component
+   Usage:
+   {% include 'components/_empty_state.html' with {
+       'icon': 'fa-building',
+       'message': 'No properties available',
+       'color': 'primary'
+   } %}
+#}
+{% set colors_map = {
+    'primary': 'var(--luxury-primary)',
+    'success': 'var(--luxury-success)',
+    'warning': 'var(--luxury-warning)',
+    'danger': 'var(--luxury-danger)'
+} %}
+{% set color_value = colors_map.get(color, colors_map['primary']) %}
+
+<div class="flex flex-col items-center justify-center py-8 text-center">
+    <i class="fas {{ icon }} text-[{{ color_value }}]/20 text-4xl mb-4"></i>
+    <p class="text-[var(--luxury-muted)] text-sm">{{ message }}</p>
+    {% if action_url and action_text %}
+    <a href="{{ action_url }}"
+       class="mt-4 inline-flex items-center px-4 py-2 bg-[{{ color_value }}] text-white rounded-lg hover:opacity-90 transition-opacity">
+        <i class="fas fa-plus mr-2"></i>
+        {{ action_text }}
+    </a>
+    {% endif %}
+</div>

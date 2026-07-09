@@ -1,0 +1,467 @@
+{% extends 'base.html' %}
+
+{% block title %}Clients Management - Platinum Heritage{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<header class="mb-6">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+            <h1 class="font-display-lg text-[var(--luxury-text-primary)] mb-2">Clients</h1>
+            <p class="font-body-lg text-[var(--luxury-muted)]">Manage client relationships and engagement history</p>
+        </div>
+        <button onclick="document.getElementById('addClientModal').classList.remove('hidden')"
+                class="bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] px-6 py-3 rounded-lg text-label-md font-label-md hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] hover:opacity-95 transition-all flex items-center gap-2 w-fit">
+            <span class="material-symbols-outlined text-lg">add</span>
+            Add New Client
+        </button>
+    </div>
+</header>
+
+<!-- Search & Filters Panel -->
+<section class="bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-xl p-6 mb-6 shadow-sm">
+    <div class="flex flex-col xl:flex-row gap-6 mb-6">
+        <!-- Text Search -->
+        <div class="flex-1">
+            <label class="block text-[var(--luxury-muted)] text-xs mb-1 uppercase tracking-wider">Search Clients</label>
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--luxury-muted)]">search</span>
+                <input class="w-full bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg pl-10 pr-4 py-2.5 font-body-md text-body-md text-[var(--luxury-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20" placeholder="Search by name, email..." type="text"/>
+            </div>
+        </div>
+        <!-- Dropdowns -->
+        <div class="flex flex-col md:flex-row gap-4">
+            <div class="w-full md:w-48">
+                <label class="block text-[var(--luxury-muted)] text-xs mb-1 uppercase tracking-wider">Client Type</label>
+                <select class="w-full bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg px-4 py-2.5 font-body-md text-body-md text-[var(--luxury-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 appearance-none">
+                    <option>All Types</option>
+                    <option>Buyer</option>
+                    <option>Seller</option>
+                    <option>Investor</option>
+                </select>
+            </div>
+            <div class="w-full md:w-48">
+                <label class="block text-[var(--luxury-muted)] text-xs mb-1 uppercase tracking-wider">Status</label>
+                <select class="w-full bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg px-4 py-2.5 font-body-md text-body-md text-[var(--luxury-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 appearance-none">
+                    <option>Active</option>
+                    <option>Lead</option>
+                    <option>Inactive</option>
+                </select>
+            </div>
+            <div class="w-full md:w-48">
+                <label class="block text-[var(--luxury-muted)] text-xs mb-1 uppercase tracking-wider">Assigned Agent</label>
+                <select class="w-full bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg px-4 py-2.5 font-body-md text-body-md text-[var(--luxury-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 appearance-none">
+                    <option>Any Agent</option>
+                    <option>Sarah Jenkins</option>
+                    <option>David Croft</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <!-- Tags -->
+    <div class="flex flex-wrap items-center gap-3">
+        <span class="text-[var(--luxury-muted)] text-xs">Quick Filters:</span>
+        <button class="border border-[var(--luxury-border)] rounded-full px-4 py-1.5 text-[var(--luxury-primary)] font-label-md text-label-md hover:bg-[var(--luxury-primary)]/10 transition-colors">
+            High Budget
+        </button>
+        <button class="border border-[var(--luxury-border)] rounded-full px-4 py-1.5 text-[var(--luxury-primary)] font-label-md text-label-md hover:bg-[var(--luxury-primary)]/10 transition-colors">
+            Immediate
+        </button>
+        <button class="border border-[var(--luxury-border)] rounded-full px-4 py-1.5 text-[var(--luxury-primary)] font-label-md text-label-md hover:bg-[var(--luxury-primary)]/10 transition-colors">
+            Commercial
+        </button>
+    </div>
+</section>
+
+<!-- Clients Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+    <!-- Client Card 1 -->
+    <div class="bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-xl p-6 hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow flex flex-col group">
+        <div class="flex justify-between items-start mb-4">
+            <div class="flex items-center gap-3">
+                <img alt="Julian Vance" class="w-12 h-12 rounded-full object-cover border border-[var(--luxury-border)]"
+                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuCclgNQ7gXDklNDerOEL8TWcYNTm3Wbgrvz6znLEmgm3D6zO86m7eRh7BbCaQPzIWriJllufqnqFBHPBDyzp8jDeONDifu1HDSIOEFJcTU-BQkVzQ4XNvqDlHHiwPicmgYacQ6kDOZY347TZm_7tFMxaoS9_zLgCiBvoTc87RDs0knJnG-ZHJ5j49JnHjRmjs5BswfkGJ_g_jPD1wMhzoWRcOOIx-43NBDwgmz7TWN9KUqAVt2gloQ"/>
+                <div>
+                    <h3 class="font-headline-md text-[var(--luxury-text-primary)]">Julian Vance</h3>
+                    <span class="inline-flex items-center px-2.5 py-0.5 bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-full text-[10px] uppercase tracking-wider font-label-sm">Investor</span>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button class="w-8 h-8 rounded-full border border-[var(--luxury-border)]/20 flex items-center justify-center text-[var(--luxury-muted)] hover:text-[var(--luxury-primary)] transition-colors">
+                    <span class="material-symbols-outlined text-sm">mail</span>
+                </button>
+                <button class="w-8 h-8 rounded-full border border-[var(--luxury-border)]/20 flex items-center justify-center text-[var(--luxury-muted)] hover:text-[var(--luxury-primary)] transition-colors">
+                    <span class="material-symbols-outlined text-sm">call</span>
+                </button>
+            </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3 mb-4 text-center border-t border-b border-[var(--luxury-border)]/20 py-3">
+            <div>
+                <div class="font-headline-md text-[var(--luxury-text-primary)]">12</div>
+                <div class="font-label-sm text-[var(--luxury-muted)]">Viewed</div>
+            </div>
+            <div class="border-x border-[var(--luxury-border)]/20">
+                <div class="font-headline-md text-[var(--luxury-text-primary)]">4</div>
+                <div class="font-label-sm text-[var(--luxury-muted)]">Saved</div>
+            </div>
+            <div>
+                <div class="font-headline-md text-[var(--luxury-text-primary)]">85%</div>
+                <div class="font-label-sm text-[var(--luxury-muted)]">Score</div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <h4 class="font-label-sm text-[var(--luxury-muted)] text-xs uppercase tracking-wider mb-2">Preferences</h4>
+            <p class="font-body-md text-[var(--luxury-text-primary)] flex items-center gap-2 mb-1">
+                <span class="material-symbols-outlined text-base">apartment</span> Luxury Penthouse
+            </p>
+            <p class="font-body-md text-[var(--luxury-text-primary)] flex items-center gap-2 mb-1">
+                <span class="material-symbols-outlined text-base">location_on</span> Beverly Hills
+            </p>
+            <p class="font-body-md text-[var(--luxury-text-primary)] flex items-center gap-2">
+                <span class="material-symbols-outlined text-base">payments</span> $5M - $10M
+            </p>
+        </div>
+        <div class="bg-[var(--luxury-border)]/10 rounded-lg p-3 mb-4">
+            <p class="font-label-sm text-[var(--luxury-muted)] flex items-start gap-2">
+                <span class="material-symbols-outlined text-base mt-0.5">history</span>
+                <span>Viewed <span class="font-medium text-[var(--luxury-text-primary)]">1240 High Ridge Road</span> yesterday</span>
+            </p>
+        </div>
+        <div class="flex items-center gap-3 mt-auto">
+            <button class="flex-1 border border-[var(--luxury-border)] rounded-lg py-2 text-[var(--luxury-muted)] font-label-md text-label-md hover:bg-[var(--luxury-primary)]/10 transition-colors">Message</button>
+            <button class="flex-1 bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] rounded-lg py-2 text-[var(--luxury-muted)] font-label-md text-label-md hover:opacity-90 transition-opacity">View Profile</button>
+        </div>
+    </div>
+
+    <!-- Client Card 2 -->
+    <div class="bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-xl p-6 hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow flex flex-col group">
+        <div class="flex justify-between items-start mb-4">
+            <div class="flex items-center gap-3">
+                <img alt="Sophia Chen" class="w-12 h-12 rounded-full object-cover border border-[var(--luxury-border)]"
+                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWeezvcjHSr4p6bBYL8U7gmYUB2yRYqB0jtPvG5eU_iIqMttingjCFAcls1ARsl4oHpakpsD8FqxFUzmvgK-zc-HhiQGJGg2Iro15IhoczFEQQXZg_V8gH7chQobzBgOufGaDxcyLOgIZWv4EtjpNb4G3UqTEhVowQxWe4Zi2mQ9X6mZX1bPddLJij-I1tYtl623e3MjIPXRomlJ_0eVn6BUC9vbAY9AkTjIMB6SQCcGj6-Cg8Kpw"/>
+                <div>
+                    <h3 class="font-headline-md text-[var(--luxury-text-primary)]">Sophia Chen</h3>
+                    <span class="inline-flex items-center px-2.5 py-0.5 bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-full text-[10px] uppercase tracking-wider font-label-sm">Buyer</span>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button class="w-8 h-8 rounded-full border border-[var(--luxury-border)]/20 flex items-center justify-center text-[var(--luxury-muted)] hover:text-[var(--luxury-primary)] transition-colors">
+                    <span class="material-symbols-outlined text-sm">mail</span>
+                </button>
+                <button class="w-8 h-8 rounded-full border border-[var(--luxury-border)]/20 flex items-center justify-center text-[var(--luxury-muted)] hover:text-[var(--luxury-primary)] transition-colors">
+                    <span class="material-symbols-outlined text-sm">call</span>
+                </button>
+            </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3 mb-4 text-center border-t border-b border-[var(--luxury-border)]/20 py-3">
+            <div>
+                <div class="font-headline-md text-[var(--luxury-text-primary)]">8</div>
+                <div class="font-label-sm text-[var(--luxury-muted)]">Viewed</div>
+            </div>
+            <div class="border-x border-[var(--luxury-border)]/20">
+                <div class="font-headline-md text-[var(--luxury-text-primary)]">2</div>
+                <div class="font-label-sm text-[var(--luxury-muted)]">Saved</div>
+            </div>
+            <div>
+                <div class="font-headline-md text-[var(--luxury-text-primary)]">92%</div>
+                <div class="font-label-sm text-[var(--luxury-muted)]">Score</div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <h4 class="font-label-sm text-[var(--luxury-muted)] text-xs uppercase tracking-wider mb-2">Preferences</h4>
+            <p class="font-body-md text-[var(--luxury-text-primary)] flex items-center gap-2 mb-1">
+                <span class="material-symbols-outlined text-base">home</span> Modern Estate
+            </p>
+            <p class="font-body-md text-[var(--luxury-text-primary)] flex items-center gap-2 mb-1">
+                <span class="material-symbols-outlined text-base">location_on</span> Bel Air
+            </p>
+            <p class="font-body-md text-[var(--luxury-text-primary)] flex items-center gap-2">
+                <span class="material-symbols-outlined text-base">payments</span> $8M - $15M
+            </p>
+        </div>
+        <div class="bg-[var(--luxury-border)]/10 rounded-lg p-3 mb-4">
+            <p class="font-label-sm text-[var(--luxury-muted)] flex items-start gap-2">
+                <span class="material-symbols-outlined text-base mt-0.5">event</span>
+                <span>Scheduled tour for <span class="font-medium text-[var(--luxury-text-primary)]">789 Ocean Drive</span></span>
+            </p>
+        </div>
+        <div class="flex items-center gap-3 mt-auto">
+            <button class="flex-1 border border-[var(--luxury-border)] rounded-lg py-2 text-[var(--luxury-muted)] font-label-md text-label-md hover:bg-[var(--luxury-primary)]/10 transition-colors">Message</button>
+            <button class="flex-1 bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] rounded-lg py-2 text-[var(--luxury-muted)] font-label-md text-label-md hover:opacity-90 transition-opacity">View Profile</button>
+        </div>
+    </div>
+
+    <!-- Client Card 3 -->
+    <div class="bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-xl p-6 hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow flex flex-col group">
+        <div class="flex justify-between items-start mb-4">
+            <div class="flex items-center gap-3">
+                <img alt="Marcus Thorne" class="w-12 h-12 rounded-full object-cover border border-[var(--luxury-border)]"
+                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeTF0IQ-CuIbvofxP2UwFiimtFUqmA8WkJ2GkKf-AjiB4GhSsJm8PANbfZez-MKHkxCV5mJwJq0MKSDJ8cUn-sz4wlTjMK9vWc4e-lGFU6Eb0dFL-mxh_45hsh_6nIJxjnwxhLiBwvE8XNZL10yijhA5s25ir4iohK9ZVazcOFng2VK4WJChq4IVlpvDqPzdODOuSKxx7rDJzjFVxYNv0BO1wPuB0DX83pLf9Jd12Hia7ytnwDcWM"/>
+                <div>
+                    <h3 class="font-headline-md text-[var(--luxury-text-primary)]">Marcus Thorne</h3>
+                    <span class="inline-flex items-center px-2.5 py-0.5 bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-full text-[10px] uppercase tracking-wider font-label-sm">Seller</span>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button class="w-8 h-8 rounded-full border border-[var(--luxury-border)]/20 flex items-center justify-center text-[var(--luxury-muted)] hover:text-[var(--luxury-primary)] transition-colors">
+                    <span class="material-symbols-outlined text-sm">mail</span>
+                </button>
+                <button class="w-8 h-8 rounded-full border border-[var(--luxury-border)]/20 flex items-center justify-center text-[var(--luxury-muted)] hover:text-[var(--luxury-primary)] transition-colors">
+                    <span class="material-symbols-outlined text-sm">call</span>
+                </button>
+            </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3 mb-4 text-center border-t border-b border-[var(--luxury-border)]/20 py-3">
+            <div>
+                <div class="font-headline-md text-[var(--luxury-text-primary)]">3</div>
+                <div class="font-label-sm text-[var(--luxury-muted)]">Listings</div>
+            </div>
+            <div class="border-x border-[var(--luxury-border)]/20">
+                <div class="font-headline-md text-[var(--luxury-text-primary)]">45</div>
+                <div class="font-label-sm text-[var(--luxury-muted)]">Inquiries</div>
+            </div>
+            <div>
+                <div class="font-headline-md text-[var(--luxury-text-primary)]">78%</div>
+                <div class="font-label-sm text-[var(--luxury-muted)]">Score</div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <h4 class="font-label-sm text-[var(--luxury-muted)] text-xs uppercase tracking-wider mb-2">Portfolio Focus</h4>
+            <p class="font-body-md text-[var(--luxury-text-primary)] flex items-center gap-2 mb-1">
+                <span class="material-symbols-outlined text-base">landscape</span> Private Compounds
+            </p>
+            <p class="font-body-md text-[var(--luxury-text-primary)] flex items-center gap-2 mb-1">
+                <span class="material-symbols-outlined text-base">location_on</span> Malibu Coast
+            </p>
+            <p class="font-body-md text-[var(--luxury-text-primary)] flex items-center gap-2">
+                <span class="material-symbols-outlined text-base">sell</span> Listed: $22M Total
+            </p>
+        </p>
+        </div>
+        <div class="bg-[var(--luxury-border)]/10 rounded-lg p-3 mb-4">
+            <p class="font-label-sm text-[var(--luxury-muted)] flex items-start gap-2">
+                <span class="material-symbols-outlined text-base mt-0.5">mark_email_read</span>
+                <span>Responded to offer on <span class="font-medium text-[var(--luxury-text-primary)]">Villa Sol</span></span>
+            </p>
+        </div>
+        <div class="flex items-center gap-3 mt-auto">
+            <button class="flex-1 border border-[var(--luxury-border)] rounded-lg py-2 text-[var(--luxury-muted)] font-label-md text-label-md hover:bg-[var(--luxury-primary)]/10 transition-colors">Message</button>
+            <button class="flex-1 bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] rounded-lg py-2 text-[var(--luxury-muted)] font-label-md text-label-md hover:opacity-90 transition-opacity">View Profile</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Client Modal -->
+<div id="addClientModal" class="fixed inset-0 z-50 flex pointer-events-none">
+    <div class="w-full max-w-[500px] mx-auto mt-16 space-y-4 pointer-auto bg-[var(--luxury-card-bg)] rounded-lg shadow-xl p-4">
+        <div class="flex justify-between items-start mb-3">
+            <div class="flex items-center">
+                <i class="fas fa-user-plus text-[var(--luxury-primary)] text-xl mr-2"></i>
+                <div>
+                    <h2 class="font-bold text-[var(--luxury-text-primary)]">Add New Client</h2>
+                    <p class="text-[var(--luxury-muted)] text-xs">Complete the form below to add a new client</p>
+                </div>
+            </div>
+            <button onclick="document.getElementById('addClientModal').classList.add('hidden')"
+                    class="text-[var(--luxury-muted)] hover:text-[var(--luxury-text-primary)]/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--luxury-card-bg)] focus:ring-[var(--luxury-primary)]/50">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ url_for('add_client') }}" id="addClientForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+            <!-- Basic Information -->
+            <div class="border-l-4 border-[var(--luxury-primary)]/20 pl-3 mb-3">
+                <div class="flex items-center mb-2">
+                    <i class="fas fa-user-contract text-[var(--luxury-primary)] text-lg mr-2"></i>
+                    <div>
+                        <p class="font-medium text-[var(--luxury-text-primary)]">Client Information</p>
+                        <p class="text-[var(--luxury-muted)] text-xs">Enter client details</p>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-[var(--luxury-muted)] text-xs mb-0.5 font-medium">Full Name *</label>
+                        <input type="text" id="name" name="name" required
+                               class="w-full px-3 py-1.5 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[var(--luxury-muted)] text-xs mb-0.5 font-medium">Email Address</label>
+                        <input type="email" id="email" name="email"
+                               class="w-full px-3 py-1.5 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[var(--luxury-muted)] text-xs mb-0.5 font-medium">Phone Number</label>
+                        <input type="tel" id="phone" name="phone"
+                               class="w-full px-3 py-1.5 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 text-sm"
+                               placeholder="(555) 123-4567">
+                    </div>
+                    <div>
+                        <label class="block text-[var(--luxury-muted)] text-xs mb-0.5 font-medium">Company</label>
+                        <input type="text" id="company" name="company"
+                               class="w-full px-3 py-1.5 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Details -->
+            <div class="border-l-4 border-[var(--luxury-success)]/20 pl-3 mb-3">
+                <div class="flex items-center mb-2">
+                    <i class="fas fa-id-card text-[var(--luxury-success)] text-lg mr-2"></i>
+                    <div>
+                        <p class="font-medium text-[var(--luxury-text-primary)]">Additional Details</p>
+                        <p class="text-[var(--luxury-muted)] text-xs">Optional information about the client</p>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-[var(--luxury-muted)] text-xs mb-0.5 font-medium">Tags (comma-separated)</label>
+                        <input type="text" id="tags" name="tags"
+                               class="w-full px-3 py-1.5 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 text-sm"
+                               placeholder="VIP, Buyer, Seller, Investor">
+                    </div>
+                    <div>
+                        <label class="block text-[var(--luxury-muted)] text-xs mb-0.5 font-medium">Notes</label>
+                        <textarea id="notes" name="notes" rows="3"
+                                  class="w-full px-3 py-1.5 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 text-sm"
+                                  placeholder="Any additional notes about the client..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-[var(--luxury-border)]/20">
+                <div class="flex justify-end">
+                    <button type="button" onclick="document.getElementById('addClientModal').classList.add('hidden')"
+                            class="mr-3 px-3 py-1.5 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg hover:bg-[var(--luxury-card-bg)]/50 transition-colors text-sm">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] rounded-lg hover:bg-[var(--luxury-primary)]/90 transition-colors flex items-center justify-center gap-1 text-sm">
+                        <i class="fas fa-save me-1"></i>
+                        Add Client
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Client Details Modal -->
+<div id="clientDetailsModal" class="fixed inset-0 z-50 hidden pointer-events-none">
+    <div class="w-full max-w-[500px] mx-auto mt-16 space-y-4 pointer-auto bg-[var(--luxury-card-bg)] rounded-lg shadow-xl p-4">
+        <div class="flex justify-between items-start mb-3">
+            <div class="flex items-center">
+                <i class="fas fa-user text-[var(--luxury-primary)] text-xl mr-2"></i>
+                <div>
+                    <h2 class="font-bold text-[var(--luxury-text-primary)]">Client Details</h2>
+                    <p class="text-[var(--luxury-muted)] text-xs">View detailed client information</p>
+                </div>
+            </div
+            <button onclick="document.getElementById('clientDetailsModal').classList.add('hidden')"
+                    class="text-[var(--luxury-muted)] hover:text-[var(--luxury-text-primary)]/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--luxury-card-bg)] focus:ring-[var(--luxury-primary)]/50">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div id="clientDetailsContent">
+            <!-- Content will be loaded dynamically -->
+            <div class="flex flex-col items-center justify-center py-6">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--luxury-primary)] mb-2"></div>
+                <p class="text-[var(--luxury-muted)] text-sm">Loading client details...</p>
+            </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-[var(--luxury-border)]/20">
+            <div class="flex justify-end">
+                <button onclick="document.getElementById('clientDetailsModal').classList.add('hidden')"
+                        class="mr-3 px-3 py-1.5 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg hover:bg-[var(--luxury-card-bg)]/50 transition-colors text-sm">
+                    Close
+                </button>
+                <button onclick="editClientFromDetails()"
+                        class="ml-3 px-3 py-1.5 bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] rounded-lg hover:bg-[var(--luxury-primary)]/90 transition-colors flex items-center justify-center gap-1 text-sm">
+                    <i class="fas fa-edit me-1"></i>
+                    Edit Client
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+// Mobile-specific client management functions
+document.addEventListener('DOMContentLoaded', function() {
+    // Format phone number input
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 6) {
+                value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+            } else if (value.length >= 3) {
+                value = value.replace(/(\d{3})(\d{0,3})/, '($1) $2');
+            }
+            e.target.value = value;
+        });
+    }
+});
+
+function viewClientDetails(clientId) {
+    // Show loading state
+    document.getElementById('clientDetailsContent').innerHTML = `
+        <div class="flex flex-col items-center justify-center py-6">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--luxury-primary)] mb-2"></div>
+            <p class="text-[var(--luxury-muted)] text-sm">Loading client details...</p>
+        </div>
+    `;
+    document.getElementById('clientDetailsModal').classList.remove('hidden');
+
+    // Simulate loading (in real app, this would be an AJAX call)
+    setTimeout(() => {
+        document.getElementById('clientDetailsContent').innerHTML = `
+            <div class="space-y-4">
+                <div class="flex flex-col items-center">
+                    <div class="flex h-12 w-12 items-center justify-center bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-lg mb-3">
+                        JC
+                    </div>
+                    <h2 class="font-bold text-[var(--luxury-text-primary)]">Julian Vance</h2>
+                    <p class="text-[var(--luxury-muted)] text-sm">Investor</p>
+                </div>
+
+                <div class="grid gap-3">
+                    <div class="border-l-4 border-[var(--luxury-primary)]/20 pl-3">
+                        <p class="text-[var(--luxury-muted)] text-xs font-medium">Contact Information</p>
+                        <p class="text-[var(--luxury-muted)] text-xs">julian.vance@email.com</p>
+                        <p class="text-[var(--luxury-muted)] text-xs">(555) 123-4567</p>
+                    </div>
+                    <div class="border-l-4 border-[var(--luxury-success)]/20 pl-3">
+                        <p class="text-[var(--luxury-muted)] text-xs font-medium">Engagement Stats</p>
+                        <p class="text-[var(--luxury-muted)] text-xs"><span class="font-medium">12</span> Properties Viewed</p>
+                        <p class="text-[var(--luxury-muted)] text-xs"><span class="font-medium">4</span> Properties Saved</p>
+                        <p class="text-[var(--luxury-muted)] text-xs"><span class="font-medium">85%</span> Engagement Score</p>
+                    </div>
+                </div>
+
+                <div class="border-l-4 border-[var(--luxury-primary)]/20 pl-3">
+                    <p class="text-[var(--luxury-muted)] text-xs font-medium">Preferences</p>
+                    <p class="text-[var(--luxury-muted)] text-xs">Luxury Penthouse in Beverly Hills, $5M - $10M range</p>
+                </div>
+
+                <div class="border-l-4 border-[var(--luxury-primary)]/20 pl-3">
+                    <p class="text-[var(--luxury-muted)] text-xs font-medium">Recent Activity</p>
+                    <p class="text-[var(--luxury-muted)] text-xs">Viewed 1240 High Ridge Road yesterday</p>
+                </div>
+            </div>
+        `;
+    }, 1000);
+}
+
+function editClientFromDetails() {
+    document.getElementById('clientDetailsModal').classList.add('hidden');
+    // Would typically open edit form with current client data
+    alert('Edit client functionality would be implemented here');
+}
+</script>
+{% endblock %}

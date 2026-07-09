@@ -1,31 +1,34 @@
-{% extends get_template_variant('base.html') %}
+{% extends 'base.html' %}
 
-{% block title %}{{ property.title }} - Stitch KPI{% endblock %}
-{% block page_title %}{{ property.title }}{% endblock %}
+{% block title %}{{ property.title }} - Real Estate CRM{% endblock %}
+
+{% block header_right %}
+    <!-- Property-specific header actions can go here -->
+{% endblock %}
 
 {% block content %}
-<div class="bg-surface-white rounded-lg shadow-sm">
+<div class="bg-[var(--surface-container-lowest)] border-l-4 border-[var(--primary)]/20 p-6 rounded-lg hover:shadow-md transition-shadow">
     <!-- Property Header -->
     <div class="flex flex-col md:flex-row items-center md:items-start gap-6 p-6">
         <!-- Property Images -->
         <div class="w-full md:w-1/2">
             {% if property.image_filename %}
-            <div class="aspect-w-16 aspect-h-9 w-full rounded-lg overflow-hidden shadow-lg bg-gray-200">
+            <div class="aspect-w-16 aspect-h-9 w-full rounded-lg overflow-hidden shadow-lg bg-[var(--outline-variant)]/20">
                 <img src="{{ url_for('static', filename='uploads/' + property.image_filename) }}"
                      alt="{{ property.title }}"
                      class="w-full h-full object-cover">
             </div>
             {% else %}
-            <div class="aspect-w-16 aspect-h-9 w-full flex items-center justify-content-center rounded-lg bg-surface-variant">
-                <i class="fas fa-image text-primary text-5xl opacity-50"></i>
-                <span class="ml-2 text-on-surface-variant">No Image Available</span>
+            <div class="aspect-w-16 aspect-h-9 w-full flex items-center justify-content-center rounded-lg bg-[var(--outline-variant)]/20">
+                <i class="fas fa-image text-[var(--primary)] text-5xl opacity-50"></i>
+                <span class="ml-2 text-[var(--on-surface-variant)]">No Image Available</span>
             </div>
             {% endif %}
         </div>
 
         <!-- Property Details -->
         <div class="w-full md:w-1/2 space-y-4">
-            <h1 class="text-headline-lg text-primary font-bold">{{ property.title }}</h1>
+            <h1 class="font-headline-lg text-[var(--on-surface)] font-bold">{{ property.title }}</h1>
 
             <!-- Price Section -->
             <div class="space-y-2">
@@ -33,71 +36,71 @@
                 <!-- Iranian Rental Pricing System -->
                 {% if property.rahn %}
                 <div class="flex flex-col">
-                    <span class="text-label-sm text-on-surface-variant">رهن (Rahn/Deposit)</span>
-                    <span class="text-2xl font-semibold text-success">{{ "{:,.0f}".format(property.rahn) }} تومان</span>
+                    <span class="text-[var(--on-surface-variant)] text-xs">رهن (Rahn/Deposit)</span>
+                    <span class="text-3xl font-bold text-[var(--primary)]">{{ "{:,.0f}".format(property.rahn) }} تومان</span>
                 </div>
                 {% endif %}
 
                 {% if property.ejare %}
                 <div class="flex flex-col">
-                    <span class="text-label-sm text-on-surface-variant">اجاره (Ejare/Monthly Rent)</span>
-                    <span class="text-2xl font-semibold text-success">{{ "{:,.0f}".format(property.ejare) }} تومان</span>
+                    <span class="text-[var(--on-surface-variant)] text-xs">اجاره (Ejare/Monthly Rent)</span>
+                    <span class="text-3xl font-bold text-[var(--primary)]">{{ "{:,.0f}".format(property.ejare) }} تومان</span>
                 </div>
                 {% endif %}
                 {% else %}
                 <!-- Sale Pricing -->
                 <div class="flex flex-col">
-                    <span class="text-label-sm text-on-surface-variant">Sale Price</span>
-                    <span class="text-3xl font-bold text-primary">${{ "{:,.0f}".format(property.price) }}</span>
+                    <span class="text-[var(--on-surface-variant)] text-xs">Sale Price</span>
+                    <span class="text-4xl font-bold text-[var(--primary)]">${{ "{:,.0f}".format(property.price) }}</span>
                 </div>
                 {% endif %}
             </div>
 
             <!-- Property Stats -->
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div class="flex flex-col items-center text-center p-3 bg-surface border rounded-lg">
-                    <i class="fas fa-bed text-primary text-xl mb-2"></i>
-                    <span class="font-medium">{{ property.bedrooms }}</span>
-                    <span class="text-label-sm text-on-surface-variant">Beds</span>
+            <div class="gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="flex flex-col items-center text-center p-3 bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-lg">
+                    <i class="fas fa-bed text-[var(--primary)] text-xl mb-2"></i>
+                    <span class="font-medium text-[var(--on-surface)]">{{ property.bedrooms }}</span>
+                    <span class="text-[var(--on-surface-variant)] text-xs">Beds</span>
                 </div>
-                <div class="flex flex-col items-center text-center p-3 bg-surface border rounded-lg">
-                    <i class="fas fa-bath text-primary text-xl mb-2"></i>
-                    <span class="font-medium">{{ property.bathrooms }}</span>
-                    <span class="text-label-sm text-on-surface-variant">Baths</span>
+                <div class="flex flex-col items-center text-center p-3 bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-lg">
+                    <i class="fas fa-bath text-[var(--primary)] text-xl mb-2"></i>
+                    <span class="font-medium text-[var(--on-surface)]">{{ property.bathrooms }}</span>
+                    <span class="text-[var(--on-surface-variant)] text-xs">Baths</span>
                 </div>
-                <div class="flex flex-col items-center text-center p-3 bg-surface border rounded-lg">
-                    <i class="fas fa-ruler-combined text-primary text-xl mb-2"></i>
-                    <span class="font-medium">{{ "{:,}".format(property.square_feet) }}</span>
-                    <span class="text-label-sm text-on-surface-variant">sqft</span>
+                <div class="flex flex-col items-center text-center p-3 bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-lg">
+                    <i class="fas fa-ruler-combined text-[var(--primary)] text-xl mb-2"></i>
+                    <span class="font-medium text-[var(--on-surface)]">{{ "{:,}".format(property.square_feet) }}</span>
+                    <span class="text-[var(--on-surface-variant)] text-xs">sqft</span>
                 </div>
                 {% if property.parking_spaces %}
-                <div class="flex flex-col items-center text-center p-3 bg-surface border rounded-lg">
-                    <i class="fas fa-car text-primary text-xl mb-2"></i>
-                    <span class="font-medium">{{ property.parking_spaces }}</span>
-                    <span class="text-label-sm text-on-surface-variant">Parking</span>
+                <div class="flex flex-col items-center text-center p-3 bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-lg">
+                    <i class="fas fa-car text-[var(--primary)] text-xl mb-2"></i>
+                    <span class="font-medium text-[var(--on-surface)]">{{ property.parking_spaces }}</span>
+                    <span class="text-[var(--on-surface-variant)] text-xs">Parking</span>
                 </div>
                 {% endif %}
                 {% if property.year_built %}
-                <div class="flex flex-col items-center text-center p-3 bg-surface border rounded-lg">
-                    <i class="fas fa-calendar text-primary text-xl mb-2"></i>
-                    <span class="font-medium">{{ property.year_built }}</span>
-                    <span class="text-label-sm text-on-surface-variant">Built</span>
+                <div class="flex flex-col items-center text-center p-3 bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-lg">
+                    <i class="fas fa-calendar text-[var(--primary)] text-xl mb-2"></i>
+                    <span class="font-medium text-[var(--on-surface)]">{{ property.year_built }}</span>
+                    <span class="text-[var(--on-surface-variant)] text-xs">Built</span>
                 </div>
                 {% endif %}
             </div>
 
             <!-- Location and Status -->
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-4 pt-3 border-t border-outline/20">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-4 pt-3 border-t border-[var(--outline-variant)]/20">
                 <div class="flex items-center space-x-2 mb-2 sm:mb-0">
-                    <i class="fas fa-map-marker-alt text-primary"></i>
-                    <span>{{ property.neighborhood or 'Location not specified' }}</span>
+                    <i class="fas fa-map-marker-alt text-[var(--primary)]"></i>
+                    <span class="text-[var(--on-surface)]">{{ property.neighborhood or 'Location not specified' }}</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <span class="px-2 py-1 text-xs rounded-full
-                        {% if property.status == 'active' %}bg-success/10 text-success
-                        {% elif property.status == 'pending' %}bg-warning/10 text-warning
-                        {% elif property.status == 'sold' or property.status == 'rented' %}bg-error/10 text-error
-                        {% else %}bg-surface/10 text-on-surface-variant
+                    <span class="px-2 py-1 text-[var(--on-surface-variant)] rounded-full
+                        {% if property.status == 'active' %}bg-[var(--primary)]/10 text-[var(--primary)]
+                        {% elif property.status == 'pending' %}bg-[var(--error)]/10 text-[var(--error)]
+                        {% elif property.status == 'sold' or property.status == 'rented' %}bg-[var(--on-surface-variant)]/10 text-[var(--on-surface-variant)]
+                        {% else %}bg-[var(--surface-container-lowest)]/10 text-[var(--on-surface)]
                         {% endif %}">
                         {{ property.status.title() }}
                     </span>
@@ -108,21 +111,26 @@
 
     <!-- Property Description -->
     {% if property.description and property.description != 'No description available' %}
-    <div class="p-6 border-t border-outline/20">
-        <h2 class="text-headline-md text-primary font-bold mb-4">Property Description</h2>
-        <p class="text-on-surface/80 leading-relaxed">{{ property.description }}</p>
+    <div class="p-6 border-t border-[var(--outline-variant)]/20">
+        <h2 class="font-headline-md text-[var(--on-surface)] font-bold mb-4">Property Description</h2>
+        <p class="text-[var(--on-surface)]/80 leading-relaxed">{{ property.description }}</p>
     </div>
     {% endif %}
 
     <!-- Property Features -->
     {% if property.property_features %}
-    <div class="p-6 border-t border-outline/20">
-        <h2 class="text-headline-md text-primary font-bold mb-4">Property Features</h2>
+    <div class="p-6 border-t border-[var(--outline-variant)]/20">
+        <h2 class="font-headline-md text-[var(--on-surface)] font-bold mb-4">Property Features</h2>
         <div class="flex flex-wrap gap-2">
-            {% for feature in property.property_features.split(',') %}
-            <span class="inline-flex items-center px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full
+            {% if property.property_features is string %}
+                {% set feature_list = property.property_features.split(',') %}
+            {% else %}
+                {% set feature_list = property.property_features %}
+            {% endif %}
+            {% for feature in feature_list %}
+            <span class="inline-flex items-center px-3 py-1 bg-[var(--primary)]/10 text-[var(--primary)] text-xs font-medium rounded-full
                        {% if loop.last %}mr-0{% endif %}">
-                {{ feature.strip() }}
+                {{ feature.strip() if feature is string else feature }}
             </span>
             {% endfor %}
         </div>
@@ -130,41 +138,41 @@
     {% endif %}
 
     <!-- Additional Details -->
-    <div class="p-6 border-t border-outline/20">
-        <h2 class="text-headline-md text-primary font-bold mb-4">Additional Details</h2>
+    <div class="p-6 border-t border-[var(--outline-variant)]/20">
+        <h2 class="font-headline-md text-[var(--on-surface)] font-bold mb-4">Additional Details</h2>
         <div class="gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div class="flex flex-col space-y-1">
-                <span class="text-label-sm text-on-surface-variant">Property Type</span>
-                <span class="font-medium">{{ property.property_type }}</span>
+                <span class="text-[var(--on-surface-variant)] text-xs">Property Type</span>
+                <span class="font-medium text-[var(--on-surface)]">{{ property.property_type }}</span>
             </div>
             <div class="flex flex-col space-y-1">
-                <span class="text-label-sm text-on-surface-variant">Property Category</span>
-                <span class="font-medium">{{ property.property_category.title() }}</span>
+                <span class="text-[var(--on-surface-variant)] text-xs">Property Category</span>
+                <span class="font-medium text-[var(--on-surface)]">{{ (property.property_category or 'N/A')|string|title }}</span>
             </div>
             <div class="flex flex-col space-y-1">
-                <span class="text-label-sm text-on-surface-variant">Listing Type</span>
+                <span class="text-[var(--on-surface-variant)] text-xs">Listing Type</span>
                 <span class="font-medium
-                    {% if property.listing_type == 'rental' %}text-success
-                    {% else %}text-primary
+                    {% if property.listing_type == 'rental' %}text-[var(--primary)]
+                    {% else %}text-[var(--primary)]
                     {% endif %}">
                     {{ property.listing_type.title() }}
                 </span>
             </div>
             <div class="flex flex-col space-y-1">
-                <span class="text-label-sm text-on-surface-variant">Floors</span>
-                <span class="font-medium">{{ property.floors }}</span>
+                <span class="text-[var(--on-surface-variant)] text-xs">Floors</span>
+                <span class="font-medium text-[var(--on-surface)]">{{ property.floors }}</span>
             </div>
             <div class="flex flex-col space-y-1">
-                <span class="text-label-sm text-on-surface-variant">Units</span>
-                <span class="font-medium">{{ property.units }}</span>
+                <span class="text-[var(--on-surface-variant)] text-xs">Units</span>
+                <span class="font-medium text-[var(--on-surface)]">{{ property.units }}</span>
             </div>
             <div class="flex flex-col space-y-1">
-                <span class="text-label-sm text-on-surface-variant">Condition</span>
+                <span class="text-[var(--on-surface-variant)] text-xs">Condition</span>
                 <span class="font-medium
-                    {% if property.property_condition == 'excellent' %}text-success
-                    {% elif property.property_condition == 'good' %}text-success
-                    {% elif property.property_condition == 'fair' %}text-warning
-                    {% else %}text-error
+                    {% if property.property_condition == 'excellent' %}text-[var(--primary)]
+                    {% elif property.property_condition == 'good' %}text-[var(--primary)]
+                    {% elif property.property_condition == 'fair' %}text-[var(--error)]
+                    {% else %}text-[var(--on-surface-variant)]
                     {% endif %}">
                     {{ property.property_type.replace('_', ' ').title() }}
                 </span>
@@ -174,25 +182,25 @@
 
     <!-- Agent Information -->
     {% if property.has_agent %}
-    <div class="p-6 border-t border-outline/20">
-        <h2 class="text-headline-md text-primary font-bold mb-4">Listing Agent</h2>
+    <div class="p-6 border-t border-[var(--outline-variant)]/20">
+        <h2 class="font-headline-md text-[var(--on-surface)] font-bold mb-4">Listing Agent</h2>
         <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
             <div class="flex-shrink-0">
                 <img src="{{ url_for('static', filename='agents/default-agent.png') }}"
                      alt="{{ property.agent_name }}"
-                     class="w-16 h-16 rounded-full border-2 border-primary/20">
+                     class="w-16 h-16 rounded-full border-2 border-[var(--primary)]/20">
             </div>
             <div class="flex-1">
-                <h3 class="font-semibold text-on-surface">{{ property.agent_name }}</h3>
-                <p class="text-label-sm text-on-surface-variant">Real Estate Agent</p>
+                <h3 class="font-semibold text-[var(--on-surface)]">{{ property.agent_name }}</h3>
+                <p class="text-[var(--on-surface-variant)] text-xs">Real Estate Agent</p>
                 {% if property.agent_email %}
-                <p class="flex items-center space-x-2 text-label-sm text-on-surface-variant mt-1">
+                <p class="flex items-center space-x-2 text-[var(--on-surface-variant)] text-xs mt-1">
                     <i class="fas fa-envelope"></i>
                     <span>{{ property.agent_email }}</span>
                 </p>
                 {% endif %}
                 {% if property.agent_phone %}
-                <p class="flex items-center space-x-2 text-label-sm text-on-surface-variant mt-1">
+                <p class="flex items-center space-x-2 text-[var(--on-surface-variant)] text-xs mt-1">
                     <i class="fas fa-phone"></i>
                     <span>{{ property.agent_phone }}</span>
                 </p>
@@ -204,28 +212,28 @@
 
     <!-- Related Properties -->
     {% if related_properties and related_properties|length > 0 %}
-    <div class="p-6 border-t border-outline/20">
-        <h2 class="text-headline-md text-primary font-bold mb-4">Similar Properties</h2>
+    <div class="p-6 border-t border-[var(--outline-variant)]/20">
+        <h2 class="font-headline-md text-[var(--on-surface)] font-bold mb-4">Similar Properties</h2>
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {% for prop in related_properties %}
-            <div class="bg-surface-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
+            <div class="bg-[var(--surface-container-lowest)] rounded-lg shadow-sm overflow-hidden hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow duration-300">
                 <a href="{{ url_for('properties.property_detail', property_id=prop.id) }}" class="block">
                     {% if prop.image_filename %}
-                    <div class="aspect-w-16 aspect-h-9 w-full rounded-t-lg overflow-hidden bg-gray-200">
+                    <div class="aspect-w-16 aspect-h-9 w-full rounded-t-lg overflow-hidden bg-[var(--outline-variant)]/20">
                         <img src="{{ url_for('static', filename='uploads/' + prop.image_filename) }}"
                              alt="{{ prop.title }}"
                              class="w-full h-full object-cover">
                     </div>
                     {% else %}
-                    <div class="aspect-w-16 aspect-h-9 w-full flex items-center justify-content-center rounded-t-lg bg-surface-variant">
-                        <i class="fas fa-image text-primary text-3xl opacity-50"></i>
+                    <div class="aspect-w-16 aspect-h-9 w-full flex items-center justify-content-center rounded-t-lg bg-[var(--outline-variant)]/20">
+                        <i class="fas fa-image text-[var(--primary)] text-3xl opacity-50"></i>
                     </div>
                     {% endif %}
                     <div class="p-4">
-                        <h3 class="font-medium text-on-surface line-clamp-2">{{ prop.title }}</h3>
-                        <p class="text-label-sm text-on-surface-variant line-clamp-2 mt-1">{{ prop.address }}</p>
+                        <h3 class="font-medium text-[var(--on-surface)] line-clamp-2">{{ prop.title }}</h3>
+                        <p class="text-[var(--on-surface-variant)] text-xs line-clamp-2 mt-1">{{ prop.address }}</p>
                         <div class="mt-3 flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0 sm:space-x-4">
-                            <div class="text-label-sm text-on-surface-variant">
+                            <div class="text-[var(--on-surface-variant)] text-xs">
                                 <i class="fas fa-bed mr-1"></i>{{ prop.bedrooms }}bd
                                 <span class="mx-2">|</span>
                                 <i class="fas fa-bath mr-1"></i>{{ prop.bathrooms }}ba
@@ -234,13 +242,13 @@
                             </div>
                             {% if prop.listing_type == 'rental' %}
                             {% if prop.rahn %}
-                            <span class="block text-label-sm text-on-surface-variant">رهن: {{ "{:,.0f}".format(prop.rahn) }} تومان</span>
+                            <span class="block text-[var(--on-surface-variant)] text-xs">رهن: {{ "{:,.0f}".format(prop.rahn) }} تومان</span>
                             {% endif %}
                             {% if prop.ejare %}
-                            <span class="block text-label-sm text-on-surface-variant">اجاره: {{ "{:,.0f}".format(prop.ejare) }} تومان</span>
+                            <span class="block text-[var(--on-surface-variant)] text-xs">اجاره: {{ "{:,.0f}".format(prop.ejare) }} تومان</span>
                             {% endif %}
                             {% else %}
-                            <span class="block text-xl font-bold text-primary">${{ "{:,.0f}".format(prop.price) }}</span>
+                            <span class="block text-3xl font-bold text-[var(--primary)]">${{ "{:,.0f}".format(prop.price) }}</span>
                             {% endif %}
                         </div>
                     </div>
@@ -252,19 +260,19 @@
     {% endif %}
 
     <!-- Action Buttons -->
-    <div class="p-6 border-t border-outline/20 flex flex-col sm:flex-row sm:justify-end space-y-4 sm:space-y-0 sm:space-x-3">
+    <div class="p-6 border-t border-[var(--outline-variant)]/20 flex flex-col sm:flex-row sm:justify-end space-y-4 sm:space-y-0 sm:space-x-3">
         <a href="{{ url_for('properties.properties') }}"
-           class="flex items-center px-4 py-2 bg-surface border border-outline/20 rounded-lg hover:bg-surface/50 transition-colors font-medium text-on-surface/80">
+           class="flex items-center px-4 py-2 bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-lg hover:bg-[var(--surface-container-lowest)]/50 transition-colors font-medium text-[var(--on-surface-variant)]">
             <i class="fas fa-arrow-left mr-2"></i>
             Back to Properties
         </a>
         <button onclick="window.print()"
-                class="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium">
+                class="flex items-center px-4 py-2 bg-[var(--primary)] text-white rounded-lg hover:bg-[var(--primary)]/90 transition-colors font-medium">
             <i class="fas fa-print mr-2"></i>
             Print Property Details
         </button>
         <a href="#"
-           class="flex items-center px-4 py-2 bg-primary/10 text-primary rounded-lg hover-bg-primary/20 transition-colors font-medium"
+           class="flex items-center px-4 py-2 bg-[var(--primary)]/10 text-[var(--primary)] rounded-lg hover:bg-[var(--primary)]/20 transition-colors font-medium"
            id="sharePropertyBtn">
             <i class="fas fa-share-alt mr-2"></i>
             Share Property
@@ -280,8 +288,8 @@ document.getElementById('sharePropertyBtn').addEventListener('click', function(e
     e.preventDefault();
     if (navigator.share) {
         navigator.share({
-            title: '{{ property.title | escapejs }}',
-            text: 'Check out this property: {{ property.title }} - {{ property.address }}',
+            title: {{ property.title|tojson }},
+            text: {{ ("Check out this property: " ~ property.title ~ " - " ~ (property.address or ""))|tojson }},
             url: window.location.href
         }).then(() => {
             console.log('Thanks for sharing!');

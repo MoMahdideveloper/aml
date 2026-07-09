@@ -1,0 +1,247 @@
+{% extends "mobile/base.html" %}
+
+{% block title %}{{ property.title }} - Property Detail - Platinum Heritage{% endblock %}
+
+{% block content %}
+<!-- TopAppBar (Custom header as requested in prompt) -->
+<header class="fixed top-0 w-full z-50 bg-[var(--luxury-card-bg)]/90 backdrop-blur-md border-b border-[var(--luxury-border)] flex justify-between items-center px-4 h-16 w-full">
+<button class="p-2 text-[var(--luxury-text-primary)] hover:bg-[var(--luxury-primary)]/10 rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-[var(--luxury-text-primary)] truncate max-w-[60%]">{{ property.title }}</h1>
+<div class="flex gap-2">
+<button class="p-2 text-[var(--luxury-text-primary)] hover:bg-[var(--luxury-primary)]/10 rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">ios_share</span>
+</button>
+<button class="p-2 text-[var(--luxury-text-primary)] hover:bg-[var(--luxury-primary)]/10 rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">favorite_border</span>
+</button>
+</div>
+</header>
+<main class="pt-16">
+<!-- Immersive Image Gallery -->
+<section class="relative w-full h-[353px] bg-[var(--luxury-card-bg)] group">
+<div class="w-full h-full overflow-x-auto snap-x snap-mandatory flex no-scrollbar" id="image-gallery">
+<img alt="Property exterior" class="w-full h-full object-cover snap-center flex-shrink-0" data-alt="A modern minimalist villa exterior featuring stark white geometric lines, expansive floor-to-ceiling glass windows, and a pristine rectangular infinity pool. The scene is bathed in bright, soft sunlight typical of Southern California. The color palette emphasizes clean whites, the azure blue of the pool, and deep greens of meticulously manicured palm trees. The architectural style represents high-end luxury real estate." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD32hzJRsdinjztdxMuvTlDGDlLOitSNMnWzyqp2hipPI9z_g6iAxzQgn3aaqiBq-ulQ15DQL8929B2FrGUQBQMUMQCczVFlVz7H0pSfpxucU6u0PB9S-G4OUWHQ68zIBHJfDvHBseu4tLMCCuApB_akqBF-W2IqjHZe5ciy-BXmzUqX2HLinedUJusogoyuznUiA2U1bIp2xznlZkNy47Kpk9b4e9QK3O0mXDb_st1ILfAtzyVoM8"/>
+<img alt="Property interior" class="w-full h-full object-cover snap-center flex-shrink-0" data-alt="Interior view of a luxury minimalist living room with wide-plank light oak flooring, white walls, and carefully curated low-profile modular furniture. Natural light floods the space through large sliding glass doors that open to an outdoor terrace. The aesthetic is serene, elegant, and sophisticated, utilizing a neutral palette with subtle contrasting textures." src="https://lh3.googleusercontent.com/aida-public/ab6axudluhy-xmfv8dm-3uolcmgi8ht03n1euifpzip1i0rszu0j0w9dehvsexgnpkizpktdkpkvejfpex-fj_jhdisaghcmqhx3wje1lg1v-44mwjcwgzszsb5czqfr9bo9eqz_vraz6_socuzvelfclf9hfb-ne_lg1gzwyh0unfsf6idbixgceem7uyqoudccmuas39hts93kyhm02vsvbc1pwlvggmbk49nqb6r7e7-qfgqi35o6kv1a"/>
+</div>
+<!-- Floating View All Button -->
+<button class="absolute bottom-4 right-4 bg-[var(--luxury-primary)]/90 backdrop-blur-sm text-[var(--luxury-text-primary)] font-label-md text-label-md px-3 py-2 rounded-full border border-[var(--luxury-border)] shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 16px;">photo_library</span>
+View all photos
+</button>
+</section>
+<!-- Property Overview -->
+<section class="px-4 py-6 bg-[var(--luxury-card-bg)] border-b border-[var(--luxury-border)]">
+<div class="flex justify-between items-start mb-2">
+<h2 class="font-display-md text-[var(--luxury-text-primary)]">$ {{ '{:,.0f}'.format(property.price) }}</h2>
+<span class="inline-flex items-center px-3 py-1 rounded-full border border-[var(--luxury-border)] bg-[var(--luxury-card-bg)] text-[var(--luxury-text-primary)] font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-[var(--luxury-success)] mr-2"></span>
+                    {{ property.status|title }}
+                </span>
+</div>
+<p class="font-body-md text-[var(--luxury-muted)] mb-4">{{ property.address }}</p>
+<!-- Quick Specs Grid -->
+<div class="grid grid-cols-2 gap-4">
+<div class="flex items-center gap-3 p-3 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg">
+<span class="material-symbols-outlined text-[var(--luxury-text-primary)]">bed</span>
+<div>
+<p class="font-label-sm text-[var(--luxury-muted)] text-sm">Beds</p>
+<p class="font-headline-md text-[var(--luxury-text-primary)]">{{ property.bedrooms }}</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg">
+<span class="material-symbols-outlined text-[var(--luxury-text-primary)]">shower</span>
+<div>
+<p class="font-label-sm text-[var(--luxury-muted)] text-sm">Baths</p>
+<p class="font-headline-md text-[var(--luxury-text-primary)]">{{ property.bathrooms }}</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg">
+<span class="material-symbols-outlined text-[var(--luxury-text-primary)]">square_foot</span>
+<div>
+<p class="font-label-sm text-[var(--luxury-muted)] text-sm">Area</p>
+<p class="font-headline-md text-[var(--luxury-text-primary)]">{{ property.sqft }} sqft</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg">
+<span class="material-symbols-outlined text-[var(--luxury-text-primary)]">calendar_today</span>
+<div>
+<p class="font-label-sm text-[var(--luxury-muted)] text-sm">Built</p>
+<p class="font-headline-md text-[var(--luxury-text-primary)] property.year_built }}</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Collapsible Sections -->
+<section class="bg-[var(--luxury-card-bg)]">
+<!-- Amenities -->
+<div class="border-t border-[var(--luxury-border)]">
+<button class="w-full px-4 py-4 flex justify-between items-center text-left" onclick="toggleAccordion('amenities-content')">
+<h3 class="font-headline-md text-[var(--luxury-text-primary)]">Amenities</h3>
+<span class="material-symbols-outlined text-[var(--luxury-muted)] accordion-icon">expand_more</span>
+</button>
+<div class="accordion-content px-4 pb-4" id="amenities-content">
+<div class="grid grid-cols-2 gap-4">
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-[var(--luxury-text-primary)]" style="font-size: 20px;">pool</span> <span class="font-body-md text-[var(--luxury-text-primary)]">Infinity Pool</span></div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-[var(--luxury-text-primary)]" style="font-size: 20px;">directions_car</span> <span class="font-body-md text-[var(--luxury-text-primary)]">3-Car Garage</span></div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-[var(--luxury-text-primary)]" style="font-size: 20px;">wine_bar</span> <span class="font-body-md text-[var(--luxury-text-primary)]">Wine Cellar</span></div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-[var(--luxury-text-primary)]" style="font-size: 20px;">local_fire_department</span> <span class="font-body-md text-[var(--luxury-text-primary)]">Fire Pit</span></div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-[var(--luxury-text-primary)]" style="font-size: 20px;">smart_toy</span> <span class="font-body-md text-[var(--luxury-text-primary)]">Smart Home</span></div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-[var(--luxury-text-primary)]" style="font-size: 20px;">theaters</span> <span class="font-body-md text-[var(--luxury-text-primary)]">Home Theater</span></div>
+</div>
+</div>
+</div>
+<!-- Neighborhood Context -->
+<div class="border-t border-[var(--luxury-border)]">
+<button class="w-full px-4 py-4 flex justify-between items-center text-left" onclick="toggleAccordion('neighborhood-content')">
+<h3 class="font-headline-md text-[var(--luxury-text-primary)]">Neighborhood Context</h3>
+<span class="material-symbols-outiled text-[var(--luxury-muted)] accordion-icon">expand_more</span>
+</button>
+<div class="accordion-content px-4 pb-4" id="neighborhood-content">
+<div class="w-full h-48 bg-[var(--luxury-card-bg)] rounded-lg mb-4 flex items-center justify-center overflow-hidden border border-[var(--luxury-border)] relative">
+<img alt="Map of Beverly Hills" class="absolute inset-0 w-full h-full object-cover opacity-70" data-alt="A stylized aerial map view of Beverly Hills, California, showing winding hillside roads, dense green vegetation, and spaced-out luxury properties. The map aesthetic matches the app's clean, modern styling with a light color scheme emphasizing roads and green spaces." data-location="Beverly Hills" src="https://lh3.googleusercontent.com/aida-public/ab6axuduktl4ozk2wq_upmjd2nhvw3alwwrjdzbxgye v0ij9rbpgylo br6ivsila x9104jaiv9s_lkfhev0ofrvuibwdhzbp1-l-kozuhqsjrjo4iw yq_v5tjpganzkatiiy yfw zhr6ztkq6_rstryz0eqpt tsxhegskr nr6w8xmxe q i9cyf19b5d88616dlaecz nuezl7r3p2y j_dsak ba ior iqq59t si4vloh lr bn3l swd myt q"/>
+<div class="relative z-10 bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] p-2 rounded-full shadow-lg">
+<span class="material-symbols-outiled">location_on</span>
+</div>
+</div>
+<div class="flex justify-between items-center bg-[var(--luxury-card-bg)] p-4 rounded-lg border border-[var(--luxury-border)]">
+<div>
+<p class="font-label-sm text-[var(--luxury-muted)] text-sm">Walk Score</p>
+<p class="font-headline-md text-[var(--luxury-text-primary)]">34 <span class="text-[var(--luxury-muted)] text-sm font-normal">/ 100</span></p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-[var(--luxury-muted)] text-sm">Transit Score</p>
+<p class="font-headline-md text-[var(--luxury-text-primary)]">22 <span class="text-[var(--luxury-muted)] text-sm font-normal">/ 100</span></p>
+</div>
+</div>
+</div>
+</div>
+<!-- Smart Intake (AI Tool) -->
+<div class="border-t border-[var(--luxury-border)] bg-[var(--luxury-card-bg)]">
+<button class="w-full px-4 py-4 flex justify-between items-center text-left" onclick="toggleAccordion('smart-intake-content')">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[var(--luxury-text-primary)]">auto_awesome</span>
+<h3 class="font-headline-md text-[var(--luxury-text-primary)]">Smart Intake</h3>
+</div>
+<span class="material-symbols-outlined text-[var(--luxury-muted)] accordion-icon">expand_more</span>
+</button>
+<div class="accordion-content px-4 pb-4" id="smart-intake-content">
+<p class="font-body-md text-[var(--luxury-muted)] mb-3">Paste unstructured client notes or MLS descriptions to automatically extract data fields.</p>
+<textarea class="w-full h-32 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg p-3 font-body-md text-[var(--luxury-text-primary)] focus:border-[var(--luxury-primary)] focus:ring-2 focus:ring-[var(--luxury-primary)]/20 mb-3" placeholder="Paste description here..."></textarea>
+<button class="w-full bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] font-label-md text-label-md py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors hover:bg-[var(--luxury-primary)]/90 mb-4">
+<span class="material-symbols-outlined" style="font-size: 18px;">analytics</span>
+                        Analyze Details
+                    </button>
+<div class="space-y-3 opacity-50 pointer-events-none">
+<h4 class="font-label-sm text-[var(--luxury-muted)] text-xs uppercase tracking-wider">Detected Fields</h4>
+<div class="flex justify-between items-center p-3 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg">
+<div>
+<p class="font-label-sm text-[var(--luxury-muted)] text-sm">Property Type</p>
+<p class="font-body-md text-[var(--luxury-text-primary)]">Single Family</p>
+</div>
+<button class="text-[var(--luxury-primary)] font-label-md"><span class="material-symbols-outiled">add_circle</span></button>
+</div>
+<div class="flex justify-between items-center p-3 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg">
+<div>
+<p class="font-label-sm text-[var(--luxury-muted)] text-sm">Condition</p>
+<p class="font-body-md text-[var(--luxury-text-primary)]">Turnkey</p>
+</div>
+<button class="text-[var(--luxury-primary)] font-label-md"><span class="material-symbols-outiled">add_circle</span></button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Sticky Primary Action Bar -->
+<div class="fixed bottom-4 left-0 right-0 mx-4 bg-[var(--luxury-card-bg)] border-t border-[var(--luxury-border)] p-4 z-40 flex gap-3 shadow-[0_-4px_20px_rgba(27,38,49,0.05)]">
+<button class="flex-1 bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] text-[var(--luxury-text-primary)] font-label-md text-label-md py-3 px-4 rounded-lg flex justify-center items-center gap-2 hover:bg-[var(--luxury-primary)]/10 transition-colors">
+<span class="material-symbols-outiled" style="font-size: 18px;">mail</span>
+            Contact Agent
+        </button>
+<button class="flex-1 bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] font-label-md text-label-md py-3 px-4 rounded-lg flex justify-center items-center gap-2 hover:bg-[var(--luxury-primary)]/90 transition-colors">
+<span class="material-symbols-outiled" style="font-size: 18px;">calendar_month</span>
+            Schedule Viewing
+        </button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .carousel-indicator {
+            transition: width 0.3s ease;
+        }
+        .carousel-indicator.active {
+            width: 24px;
+            background-color: var(--luxury-primary);
+        }
+
+        .accordion-content {
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .accordion-content.expanded {
+            max-height: 1000px;
+            opacity: 1;
+        }
+
+        .accordion-icon {
+            transition: transform 0.3s ease;
+        }
+        .accordion-content.expanded + .accordion-icon,
+        [aria-expanded="true"] .accordion-icon {
+            transform: rotate(180deg);
+        }
+</style>
+<script>
+// Simple accordion logic
+function toggleAccordion(id) {
+    const content = document.getElementById(id);
+    const button = content.previousElementSibling;
+
+    if (content.classList.contains('expanded')) {
+        content.classList.remove('expanded');
+        button.setAttribute('aria-expanded', 'false');
+    } else {
+        content.classList.add('expanded');
+        button.setAttribute('aria-expanded', 'true');
+    }
+}
+
+// Initialize first accordion as open
+document.addEventListener('DOMContentLoaded', () => {
+    const amenities = document.getElementById('amenities-content');
+    if(amenities) {
+        amenities.classList.add('expanded');
+        amenities.previousElementSibling.setAttribute('aria-expanded', 'true');
+    }
+});
+
+// Mobile-specific property detail functions
+document.addEventListener('DOMContentLoaded', function() {
+    // Add touch-friendly enhancements
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(button => {
+        // Ensure minimum touch target size
+        const minHeight = 44; // Apple/HIG recommended minimum
+        const computedStyle = window.getComputedStyle(button);
+        const height = parseInt(computedStyle.height);
+        if (height < minHeight) {
+            button.style.minHeight = minHeight + 'px';
+        }
+    });
+});
+</script>
+{% endblock %}

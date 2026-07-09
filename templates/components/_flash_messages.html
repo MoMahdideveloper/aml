@@ -1,0 +1,49 @@
+{# Flash Messages Component - Compatible with existing CSS variables #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="fixed top-4 right-4 z-50 space-y-3 max-w-md" id="flash-messages-container">
+        {% for category, message in messages %}
+        <div data-flash-message
+             class="flex items-start gap-3 p-4 rounded-lg shadow-lg border-l-4 transition-all duration-300 transform
+                    {% if category == 'error' %}bg-red-50 border-red-500{% endif %}
+                    {% if category == 'success' %}bg-green-50 border-green-500{% endif %}
+                    {% if category == 'warning' %}bg-yellow-50 border-yellow-500{% endif %}
+                    {% if category == 'info' %}bg-blue-50 border-blue-500{% endif %}"
+             role="alert"
+             style="opacity: 1;">
+            <!-- Icon -->
+            <div class="flex-shrink-0">
+                <i class="fas text-xl
+                    {% if category == 'error' %}fa-exclamation-circle text-red-500{% endif %}
+                    {% if category == 'success' %}fa-check-circle text-green-500{% endif %}
+                    {% if category == 'warning' %}fa-exclamation-triangle text-yellow-500{% endif %}
+                    {% if category == 'info' %}fa-info-circle text-blue-500{% endif %}"></i>
+            </div>
+
+            <!-- Message -->
+            <div class="flex-1">
+                <p class="text-sm font-medium
+                    {% if category == 'error' %}text-red-800{% endif %}
+                    {% if category == 'success' %}text-green-800{% endif %}
+                    {% if category == 'warning' %}text-yellow-800{% endif %}
+                    {% if category == 'info' %}text-blue-800{% endif %}">
+                    {{ message }}
+                </p>
+            </div>
+
+            <!-- Close Button -->
+            <button type="button"
+                    data-dismiss
+                    class="flex-shrink-0 hover:opacity-75 focus:outline-none transition-opacity
+                    {% if category == 'error' %}text-red-500{% endif %}
+                    {% if category == 'success' %}text-green-500{% endif %}
+                    {% if category == 'warning' %}text-yellow-500{% endif %}
+                    {% if category == 'info' %}text-blue-500{% endif %}"
+                    aria-label="Dismiss">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+{% endwith %}

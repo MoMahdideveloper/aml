@@ -1,0 +1,316 @@
+{% extends 'base.html' %}
+
+{% block title %}Market Analysis - Real Estate CRM{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        font-family: 'Material Symbols Outlined';
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+    <div>
+        <h1 class="font-display-lg text-display-lg text-primary mb-2">Market Analysis</h1>
+        <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
+            Real-time insights and trends for the luxury real estate market.
+        </p>
+    </div>
+    <div class="flex items-center gap-4">
+        <!-- Date Range -->
+        <div class="relative">
+            <button class="flex items-center gap-2 bg-surface-container-lowest border border-outline-variant rounded px-4 py-2 font-label-md text-label-md text-on-surface hover:border-primary transition-colors">
+                <span class="material-symbols-outlined text-[18px]">calendar_today</span>
+                This Quarter
+                <span class="material-symbols-outlined text-[18px]">arrow_drop_down</span>
+            </button>
+        </div>
+        <!-- Export Actions -->
+        <div class="flex rounded border border-outline-variant overflow-hidden bg-surface-container-lowest">
+            <button class="px-4 py-2 font-label-md text-label-md text-primary hover:bg-surface-variant transition-colors border-r border-outline-variant flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+                PDF
+            </button>
+            <button class="px-4 py-2 font-label-md text-label-md text-primary hover:bg-surface-variant transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">table_view</span>
+                CSV
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- Key Metrics Grid (4 cards) -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter mb-12">
+    <!-- Median Sale Price -->
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow duration-300">
+        <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Median Sale Price</p>
+        <div class="flex items-end justify-between">
+            <p class="font-headline-lg text-headline-lg text-primary">
+                {% if market_data and market_data.median_price %}
+                    ${{ "{:,.0f}".format(market_data.median_price) }}
+                {% else %}$1.2M{% endif %}
+            </p>
+            <div class="flex items-center text-[#1b8044] bg-[#e6f4ea] px-2 py-0.5 rounded font-label-sm text-label-sm">
+                <span class="material-symbols-outlined text-[14px] mr-1">trending_up</span>
+                +5% YoY
+            </div>
+        </div>
+        <div class="mt-4 h-8 w-full">
+            <svg class="w-full h-full" viewBox="0 0 100 20" preserveAspectRatio="none">
+                <path d="M0,15 Q10,18 20,10 T40,12 T60,5 T80,8 T100,2" fill="none" stroke="#1b8044" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Avg Days on Market -->
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow duration-300">
+        <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Avg Days on Market</p>
+        <div class="flex items-end justify-between">
+            <p class="font-headline-lg text-headline-lg text-primary">
+                {% if market_data and market_data.avg_days %}{{ market_data.avg_days }}{% else %}24{% endif %}
+            </p>
+            <div class="flex items-center text-[#1b8044] bg-[#e6f4ea] px-2 py-0.5 rounded font-label-sm text-label-sm">
+                <span class="material-symbols-outlined text-[14px] mr-1">trending_down</span>
+                -2 MoM
+            </div>
+        </div>
+        <div class="mt-4 h-8 w-full">
+            <svg class="w-full h-full" viewBox="0 0 100 20" preserveAspectRatio="none">
+                <path d="M0,5 Q15,8 30,12 T60,15 T100,18" fill="none" stroke="#1b8044" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Months of Supply -->
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow duration-300">
+        <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Months of Supply</p>
+        <div class="flex items-end justify-between">
+            <p class="font-headline-lg text-headline-lg text-primary">3.2</p>
+            <div class="flex items-center text-outline bg-surface-variant px-2 py-0.5 rounded font-label-sm text-label-sm">
+                <span class="material-symbols-outlined text-[14px] mr-1">horizontal_rule</span>
+                Stable
+            </div>
+        </div>
+        <div class="mt-4 h-8 w-full">
+            <svg class="w-full h-full" viewBox="0 0 100 20" preserveAspectRatio="none">
+                <path d="M0,10 L20,11 L40,9 L60,10 L80,9 L100,10" fill="none" stroke="#74777d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Price per Sq Ft -->
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow duration-300">
+        <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Price per Sq Ft</p>
+        <div class="flex items-end justify-between">
+            <p class="font-headline-lg text-headline-lg text-primary">$850</p>
+            <div class="flex items-center text-[#1b8044] bg-[#e6f4ea] px-2 py-0.5 rounded font-label-sm text-label-sm">
+                <span class="material-symbols-outlined text-[14px] mr-1">trending_up</span>
+                +3% YoY
+            </div>
+        </div>
+        <div class="mt-4 h-8 w-full">
+            <svg class="w-full h-full" viewBox="0 0 100 20" preserveAspectRatio="none">
+                <path d="M0,18 Q15,15 30,12 T70,8 T100,4" fill="none" stroke="#1b8044" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
+    </div>
+</section>
+
+<!-- Main Bento Analytics Grid -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-gutter mb-12">
+    <!-- Price Trends Chart (8 cols) -->
+    <div class="lg:col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col h-[400px]">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h2 class="font-headline-md text-headline-md text-primary">Price Trends</h2>
+                <p class="font-body-md text-body-md text-on-surface-variant">Modern Villas vs Luxury Penthouses (12 Mo)</p>
+            </div>
+            <div class="flex gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-primary flex-shrink-0"></span>
+                    <span class="font-label-sm text-label-sm text-on-surface-variant">Villas</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-outline-variant flex-shrink-0"></span>
+                    <span class="font-label-sm text-label-sm text-on-surface-variant">Penthouses</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex-grow relative w-full mt-4">
+            <svg class="w-full h-full" viewBox="0 0 800 250" preserveAspectRatio="none">
+                <line x1="0" y1="50"  x2="800" y2="50"  stroke="#f0f0f0" stroke-width="1"/>
+                <line x1="0" y1="100" x2="800" y2="100" stroke="#f0f0f0" stroke-width="1"/>
+                <line x1="0" y1="150" x2="800" y2="150" stroke="#f0f0f0" stroke-width="1"/>
+                <line x1="0" y1="200" x2="800" y2="200" stroke="#f0f0f0" stroke-width="1"/>
+                <line x1="0" y1="250" x2="800" y2="250" stroke="#c4c6cc" stroke-width="1"/>
+                <!-- Penthouses (lighter) -->
+                <path d="M0,200 C100,180 200,190 300,150 C400,110 500,140 600,120 C700,100 800,80 800,80" fill="none" stroke="#c4c6cc" stroke-width="3" stroke-linecap="round"/>
+                <!-- Villas (primary) -->
+                <path d="M0,180 C100,150 200,160 300,120 C400,80 500,90 600,50 C700,10 800,20 800,20" fill="none" stroke="#142435" stroke-width="4" stroke-linecap="round"/>
+                <!-- Area fill -->
+                <path d="M0,180 C100,150 200,160 300,120 C400,80 500,90 600,50 C700,10 800,20 800,20 L800,250 L0,250 Z" fill="url(#villaGrad)" opacity="0.1"/>
+                <defs>
+                    <linearGradient id="villaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#142435" stop-opacity="1"/>
+                        <stop offset="100%" stop-color="#142435" stop-opacity="0"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+            <div class="absolute bottom-[-24px] w-full flex justify-between font-label-sm text-label-sm text-on-surface-variant px-2">
+                <span>Jan</span><span>Mar</span><span>May</span><span>Jul</span><span>Sep</span><span>Nov</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Strategic Insights (4 cols) -->
+    <div class="lg:col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col h-[400px]">
+        <h2 class="font-headline-md text-headline-md text-primary mb-6 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">lightbulb</span>
+            Strategic Insights
+        </h2>
+        <ul class="flex flex-col gap-6 flex-grow overflow-y-auto no-scrollbar">
+            {% set insights = market_data.insights if market_data and market_data.insights else [
+                ('villa', 'Increased demand for 3+ bedroom villas in the northern corridor.'),
+                ('inventory_2', 'Inventory remains exceptionally tight in the $2M+ penthouse segment.'),
+                ('sell', 'Cash transactions are up 15% quarter-over-quarter among international buyers.'),
+            ] %}
+            {% for icon, text in insights %}
+            <li class="flex items-start gap-4">
+                <div class="min-w-[40px] h-10 rounded-full bg-surface-container flex items-center justify-center text-primary flex-shrink-0">
+                    <span class="material-symbols-outlined text-[20px]">{{ icon }}</span>
+                </div>
+                <p class="font-body-md text-body-md text-on-surface">{{ text }}</p>
+            </li>
+            {% endfor %}
+        </ul>
+        <button class="w-full mt-4 py-3 border border-outline-variant rounded text-primary font-label-md text-label-md hover:bg-surface-variant transition-colors">
+            View Full Report
+        </button>
+    </div>
+
+    <!-- Inventory vs Sales Bar Chart (6 cols) -->
+    <div class="lg:col-span-6 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 h-[320px] flex flex-col">
+        <h2 class="font-headline-md text-headline-md text-primary mb-2">Inventory vs Sales</h2>
+        <p class="font-body-md text-body-md text-on-surface-variant mb-6">Market balance indicators</p>
+        <div class="flex-grow flex items-end justify-around gap-2 pb-6 border-b border-outline-variant relative">
+            {% for q, inv_h, sales_h in [('Q1','60%','40%'),('Q2','75%','50%'),('Q3','65%','55%'),('Q4','50%','70%')] %}
+            <div class="flex-1 flex flex-col items-center gap-1 group relative">
+                <div class="w-full bg-surface-dim rounded-t group-hover:bg-surface-tint transition-colors" style="height: {{ inv_h }};"></div>
+                <div class="w-full bg-primary-container rounded-t group-hover:bg-primary transition-colors -mt-2 relative z-10" style="height: {{ sales_h }};"></div>
+                <span class="absolute bottom-[-24px] font-label-sm text-label-sm text-on-surface-variant">{{ q }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="mt-8 flex justify-center gap-6">
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-sm bg-surface-dim flex-shrink-0"></span>
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Active Listings</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-sm bg-primary-container flex-shrink-0"></span>
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Closed Sales</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Price Distribution Histogram (6 cols) -->
+    <div class="lg:col-span-6 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 h-[320px] flex flex-col">
+        <h2 class="font-headline-md text-headline-md text-primary mb-2">Price Distribution</h2>
+        <p class="font-body-md text-body-md text-on-surface-variant mb-6">Volume of sales by price tier</p>
+        <div class="flex-grow flex items-end justify-between gap-1 pb-6 border-b border-outline-variant relative">
+            {% for bar_h, is_primary in [('10%',false),('25%',false),('45%',false),('80%',true),('60%',false),('30%',false),('15%',false),('5%',false)] %}
+            <div class="flex-1 rounded-t hover:bg-primary transition-colors {{ 'bg-primary' if is_primary else 'bg-outline-variant' }}" style="height: {{ bar_h }};"></div>
+            {% endfor %}
+            <span class="absolute bottom-[-24px] left-0 font-label-sm text-label-sm text-on-surface-variant">&lt; $500k</span>
+            <span class="absolute bottom-[-24px] right-0 font-label-sm text-label-sm text-on-surface-variant">&gt; $5M+</span>
+        </div>
+        <div class="mt-8 text-center">
+            <p class="font-label-sm text-label-sm text-on-surface-variant">Core volume concentrated in $1.5M – $2.5M bracket</p>
+        </div>
+    </div>
+
+    <!-- Geographic Heatmap (12 cols) -->
+    <div class="lg:col-span-12 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col lg:flex-row gap-8">
+        <div class="w-full lg:w-1/3 flex flex-col justify-center">
+            <h2 class="font-headline-md text-headline-md text-primary mb-4">Geographic Heatmap</h2>
+            <p class="font-body-md text-body-md text-on-surface-variant mb-6">
+                Price variations by luxury neighborhood. Coastal zones show a 12% premium over inland estates, driven by limited waterfront availability.
+            </p>
+            <div class="flex items-center justify-between p-4 border border-outline-variant rounded mb-4">
+                <span class="font-label-md text-label-md text-on-surface">Coastal Zones</span>
+                <span class="font-headline-md text-headline-md text-primary">$1,250/sqft</span>
+            </div>
+            <div class="flex items-center justify-between p-4 border border-outline-variant rounded">
+                <span class="font-label-md text-label-md text-on-surface">Inland Estates</span>
+                <span class="font-headline-md text-headline-md text-primary">$980/sqft</span>
+            </div>
+        </div>
+        <div class="w-full lg:w-2/3 h-[280px] rounded-xl overflow-hidden border border-outline-variant relative bg-surface-variant flex items-center justify-center">
+            <!-- Map placeholder -->
+            <div class="text-center">
+                <span class="material-symbols-outlined text-5xl text-outline mb-3 block">map</span>
+                <p class="font-label-md text-label-md text-secondary">Geographic heatmap visualization</p>
+                <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Integrate with your preferred mapping API</p>
+            </div>
+            <!-- Controls -->
+            <div class="absolute top-4 right-4 flex flex-col gap-2">
+                <button class="w-10 h-10 bg-surface-container-lowest rounded shadow flex items-center justify-center text-on-surface hover:text-primary transition-colors border border-outline-variant">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+                <button class="w-10 h-10 bg-surface-container-lowest rounded shadow flex items-center justify-center text-on-surface hover:text-primary transition-colors border border-outline-variant">
+                    <span class="material-symbols-outlined">remove</span>
+                </button>
+            </div>
+            <!-- Legend -->
+            <div class="absolute bottom-4 left-4 bg-surface-container-lowest p-3 rounded shadow border border-outline-variant flex flex-col gap-2">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Value Concentration</span>
+                <div class="w-32 h-2 bg-gradient-to-r from-surface-variant to-primary rounded"></div>
+                <div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant text-[10px]">
+                    <span>Low</span><span>High</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- AI Market Analysis from Backend -->
+{% if analysis_text %}
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 mb-8">
+    <h2 class="font-headline-md text-headline-md text-primary mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined">auto_awesome</span>
+        AI Market Commentary
+    </h2>
+    <div class="font-body-md text-body-md text-on-surface leading-relaxed max-h-[300px] overflow-y-auto no-scrollbar prose-none">
+        {{ analysis_text | safe }}
+    </div>
+    <button onclick="refreshAnalysis()"
+            class="mt-4 flex items-center gap-2 px-4 py-2 border border-outline-variant text-primary rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors">
+        <span class="material-symbols-outlined text-[18px]">refresh</span>
+        Refresh Analysis
+    </button>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function refreshAnalysis() {
+    fetch('/api/market-analysis')
+        .then(r => r.json())
+        .then(data => {
+            if (data.analysis) {
+                App.showSuccess('Analysis refreshed');
+                location.reload();
+            }
+        })
+        .catch(() => App.showError('Failed to refresh analysis'));
+}
+</script>
+{% endblock %}

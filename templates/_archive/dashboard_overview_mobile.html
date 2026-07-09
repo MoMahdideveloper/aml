@@ -1,0 +1,194 @@
+{% extends "mobile/base.html" %}
+
+{% block title %}Dashboard - Platinum Heritage{% endblock %}
+
+{% block content %}
+<!-- Performance Overview (Bento Grid Style) -->
+<section aria-labelledby="performance-heading">
+    <h2 class="font-headline-md text-[var(--luxury-text-primary)] mb-4" id="performance-heading">Performance Overview</h2>
+    <div class="grid grid-cols-2 gap-4">
+        <div class="bg-[var(--luxury-card-bg)] rounded-xl p-4 border border-[var(--luxury-border)] shadow-[0_8px_30px_rgba(27,38,49,0.02)] flex flex-col justify-between h-28">
+            <div class="flex justify-between items-start">
+                <span class="font-label-md text-[var(--luxury-muted)]">Total Properties</span>
+                <span class="material-symbols-outlined text-[var(--luxury-border)] text-[18px]">domain</span>
+            </div>
+            <div>
+                <div class="font-headline-md text-[var(--luxury-text-primary)]">{{ '{:,}'.format(stats.total_properties) }}</div>
+                <div class="font-label-sm text-[var(--luxury-success)] mt-1">+4% vs last mo</div>
+            </div>
+        </div>
+        <div class="bg-[var(--luxury-card-bg)] rounded-xl p-4 border border-[var(--luxury-border)] shadow-[0_8px_30px_rgba(27,38,49,0.02)] flex flex-col justify-between h-28">
+            <div class="flex justify-between items-start">
+                <span class="font-label-md text-[var(--luxury-muted)]">Active Deals</span>
+                <span class="material-symbols-outlined text-[var(--luxury-border)] text-[18px]">handshake</span>
+            </div>
+            <div>
+                <div class="font-headline-md text-[var(--luxury-text-primary)]">{{ '{:,}'.format(stats.active_deals) }}</div>
+                <div class="font-label-sm text-[var(--luxury-success)] mt-1">+12% vs last mo</div>
+            </div>
+        </div>
+        <div class="bg-[var(--luxury-card-bg)] rounded-xl p-4 border border-[var(--luxury-border)] shadow-[0_8px_30px_rgba(27,38,49,0.02)] flex flex-col justify-between h-28 col-span-2">
+            <div class="flex justify-between items-start">
+                <span class="font-label-md text-[var(--luxury-muted)]">Monthly Revenue</span>
+                <span class="material-symbols-outlined text-[var(--luxury-border)] text-[18px]">payments</span>
+            </div>
+            <div class="flex items-end justify-between w-full">
+                <div class="font-headline-lg-mobile text-[var(--luxury-text-primary)]">${'{:,.0f}'.format(stats.total_deal_value)}</div>
+                <div class="font-label-sm text-[var(--luxury-success)] mb-1">+8% vs last mo</div>
+            </div>
+        </div>
+        <div class="bg-[var(--luxury-card-bg)] rounded-xl p-4 border border-[var(--luxury-border)] shadow-[0_8px_30px_rgba(27,38,49,0.02)] flex flex-col justify-between h-28 col-span-2 relative overflow-hidden group">
+            <div class="absolute right-0 top-0 h-full w-1/3 bg-[var(--luxury-error)]/30 pointer-events-none"></div>
+            <div class="font-headline-md text-[var(--luxury-text-primary)]">{{ '{:,}'.format(stats.total_leads) }} Leads</div>
+            <div class="font-label-sm text-[var(--luxury-success)] mt-1">+6% vs last mo</div>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Activity -->
+<section aria-labelledby="activity-heading">
+    <h2 class="font-headline-md text-[var(--luxury-text-primary)] mb-4" id="activity-heading">Recent Activity</h2>
+    <div class="space-y-4">
+        {% for activity in recent_activities %}
+        <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0">
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] flex-shrink-0">
+                    {% if activity.type == 'deal' %}
+                        <span class="material-symbols-outlined">handshake</span>
+                    {% elif activity.type == 'lead' %}
+                        <span class="material-symbols-outlined>person_add</span>
+                    {% elif activity.type == 'property' %}
+                        <span class="material-symbols-outlined>home</span>
+                    {% else %}
+                        <span class="material-symbols-outlined>description</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex-1">
+                <h3 class="font-label-md text-[var(--luxury-text-primary)]">{{ activity.title }}</h3>
+                <p class="text-[var(--luxury-muted)] text-sm">{{ activity.description }}</p>
+                <span class="text-xs text-[var(--luxury-muted)]">{{ activity.timestamp | timesince }} ago</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Quick Actions -->
+<section aria-labelledby="actions-heading">
+    <h2 class="font-headline-md text-[var(--luxury-text-primary)] mb-4" id="actions-heading">Quick Actions</h2>
+    <div class="grid grid-cols-1 gap-3">
+        <a href="{{ url_for('properties') }}" class="bg-[var(--luxury-card-bg)] rounded-xl p-4 border border-[var(--luxury-border)] shadow-[0_8px_30px_rgba(27,38,49,0.02)] flex items-center space-x-3">
+            <div class="flex h-10 w-10 items-center justify-center bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-lg">
+                <span class="material-symbols-outlined>home</span>
+            </div>
+            <div>
+                <h3 class="font-label-md text-[var(--luxury-text-primary)]">Properties</h3>
+                <p class="text-[var(--luxury-muted)] text-xs">View all properties</p>
+            </div>
+        </a>
+        <a href="{{ url_for('clients') }}" class="bg-[var(--luxury-card-bg)] rounded-xl p-4 border border-[var(--luxury-border)] shadow-[0_8px_30px_rgba(27,38,49,0.02)] flex items-center space-x-3">
+            <div class="flex h-10 w-10 items-center justify-center bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-lg">
+                <span class="material-symbols-outlined>people</span>
+            </div>
+            <div>
+                <h3 class="font-label-md text-[var(--luxury-text-primary)]">Clients</h3>
+                <p class="text-[var(--luxury-muted)] text-xs">Manage contacts</p>
+            </div>
+        </a>
+        <a href="{{ url_for('deals') }}" class="bg-[var(--luxury-card-bg)] rounded-xl p-4 border border-[var(--luxury-border)] shadow-[0_8px_30px_rgba(27,38,49,0.02)] flex items-center space-x-3">
+            <div class="flex h-10 w-10 items-center justify-center bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-lg">
+                <span class="material-symbols-outlined>attach_money</span>
+            </div>
+            <div>
+                <h3 class="font-label-md text-[var(--luxury-text-primary)]">Deals</h3>
+                <p class="text-[var(--luxury-muted)] text-xs">Track transactions</p>
+            </div>
+        </a>
+        <a href="{{ url_for('tasks') }}" class="bg-[var(--luxury-card-bg)] rounded-xl p-4 border border-[var(--luxury-border)] shadow-[0_8px_30px_rgba(27,38,49,0.02)] flex items-center space-x-3">
+            <div class="flex h-10 w-10 items-center justify-center bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-lg">
+                <span class="material-symbols-outlined>list_alt</span>
+            </div>
+            <div>
+                <h3 class="font-label-md text-[var(--luxury-text-primary)]">Tasks</h3>
+                <p class="text-[var(--luxury-muted)] text-xs">Manage to-dos</p>
+            </div>
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<!-- Mobile-specific JavaScript -->
+<script>
+    // Mobile-specific enhancements can go here
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add touch-friendly enhancements
+        const buttons = document.querySelectorAll('button, .btn');
+        buttons.forEach(button => {
+            // Ensure minimum touch target size
+            const minHeight = 44; // Apple/HIG recommended minimum
+            const computedStyle = window.getComputedStyle(button);
+            const height = parseInt(computedStyle.height);
+            if (height < minHeight) {
+                button.style.minHeight = minHeight + 'px';
+            }
+        });
+
+        // Improve form input touch targets
+        const inputs = document.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            const minHeight = 44;
+            const computedStyle = window.getComputedStyle(input);
+            const height = parseInt(computedStyle.height);
+            if (height < minHeight) {
+                input.style.minHeight = minHeight + 'px';
+            }
+        });
+
+        // Add pull-to-refresh for mobile
+        let touchStartY = 0;
+        let isRefreshing = false;
+
+        document.addEventListener('touchstart', function(e) {
+            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
+                touchStartY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchmove', function(e) {
+            if (isRefreshing) return;
+
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                return;
+            }
+
+            const touchY = e.touches[0].clientY;
+            const diff = touchY - touchStartY;
+
+            // Pull down to refresh
+            if (diff > 50 && !isRefreshing && window.pageYOffset === 0) {
+                isRefreshing = true;
+                // Show loading indicator
+                const loader = document.createElement('div');
+                loader.className = 'h-4 w-4 border-2 border-[var(--luxury-primary)]/50 border-t-[var(--luxury-primary)] rounded-full animate-spin';
+                loader.style.position = 'fixed';
+                loader.style.top = '10px';
+                loader.style.left = '50%';
+                loader.style.transform = 'translateX(-50%)';
+                loader.style.zIndex = '1000';
+                document.body.appendChild(loader);
+
+                // Simulate refresh
+                setTimeout(() => {
+                    isRefreshing = false;
+                    loader.remove();
+                    // In a real app, you would refresh the data here
+                    window.location.reload();
+                }, 1500);
+            }
+        }, { passive: true });
+    });
+</script>
+{% endblock %}

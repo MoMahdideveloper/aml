@@ -1,0 +1,62 @@
+{# Card List Item Component
+   Usage:
+   {% include 'components/_card_list_item.html' with {
+       'title': property.title,
+       'subtitle': property.address,
+       'price': property.price,
+       'status': property.status,
+       'status_colors': {
+           'active': 'success',
+           'pending': 'warning',
+           'sold': 'danger'
+       }
+   } %}
+#}
+<div class="p-4 hover:bg-[var(--luxury-card-bg)]/50 transition-colors">
+    <div class="flex justify-between items-start gap-4">
+        <!-- Content -->
+        <div class="flex-1 min-w-0">
+            <p class="font-medium text-[var(--luxury-text-primary)] truncate">
+                {{ title }}
+            </p>
+            {% if subtitle %}
+            <p class="text-[var(--luxury-muted)] text-sm truncate mt-1">
+                {{ subtitle }}
+            </p>
+            {% endif %}
+            {% if price %}
+            <p class="mt-2 font-semibold text-[var(--luxury-success)]">
+                ${{ "{:,.0f}".format(price) }}
+            </p>
+            {% endif %}
+            {% if meta_text %}
+            <p class="text-[var(--luxury-muted)] text-sm mt-1">
+                {{ meta_text }}
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- Status Badge -->
+        {% if status %}
+        {% set status_color_map = {
+            'success': 'var(--luxury-success)',
+            'warning': 'var(--luxury-warning)',
+            'danger': 'var(--luxury-danger)',
+            'primary': 'var(--luxury-primary)'
+        } %}
+        {% set badge_color = status_colors.get(status, 'primary') if status_colors else 'primary' %}
+        {% set color_value = status_color_map.get(badge_color, status_color_map['primary']) %}
+
+        <span class="px-3 py-1 text-xs rounded-full whitespace-nowrap flex-shrink-0"
+              style="background-color: {{ color_value }}20; color: {{ color_value }}">
+            {{ status.replace('_', ' ').title() }}
+        </span>
+        {% endif %}
+
+        {% if badge_text %}
+        <span class="px-3 py-1 text-xs rounded-full whitespace-nowrap flex-shrink-0 bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)]">
+            {{ badge_text }}
+        </span>
+        {% endif %}
+    </div>
+</div>

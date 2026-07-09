@@ -1,0 +1,250 @@
+{% extends "mobile/base.html" %}
+
+{% block title %}Agent Dashboard - Alexander Sterling - Platinum Heritage{% endblock %}
+
+{% block content %}
+<!-- Top Navigation Bar -->
+<header class="docked full-width top-0 border-b border-[var(--luxury-border)] bg-[var(--luxury-card-bg)] px-4 py-4 flex justify-between items-center z-50">
+<h1 class="font-headline-md text-[var(--luxury-text-primary)] font-bold">Platinum Heritage</h1>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[var(--luxury-text-primary)] cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-[var(--luxury-text-primary)] cursor-pointer">menu</span>
+</div>
+</header>
+<main class="flex-grow p-4 pb-24 space-y-6 max-w-lg mx-auto w-full">
+<!-- Profile Summary Section -->
+<section class="flex items-center justify-between bg-[var(--luxury-card-bg)] p-4 rounded-lg shadow-[0_8px_30px_rgba(27,38,49,0.06)] border border-[var(--luxury-border)]">
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 rounded-full overflow-hidden border-2 border-[var(--luxury-primary)]">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a sophisticated senior real estate associate named Alexander Sterling. He is a middle-aged man with sharp features, wearing a tailored navy blue charcoal suit and a crisp white shirt. The background is a blurred, high-end modern interior with warm wooden accents and soft lighting, conveying an atmosphere of trust and premium corporate service." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDr2jQE2to21YOUFPX85VOixrIuDhdmNCg0RJaLXbNY7LmzUBKgxSNRg3ScWlk3eWAab8L1Z4agwuBAs-sbmiDwJLMvnEw6x-2joHvijBb4F-lcU8e68OPEesgg0SqZSDs90D3D5F1tVk4wXFGV67iqj8fJruv7Y2k5xuWZHgTo0INOmEl5gGsH-J_HseEpwJvUXV66kv0kbGddRxJJu8CaO1W6OaQAPaSVxD2Nzn9Z7HM4SJdBDWh5sgsrXrbGxJ9JgCxnEwmQbA"/>
+</div>
+<div>
+<h2 class="font-headline-md text-[var(--luxury-text-primary)]">Alexander Sterling</h2>
+<p class="font-label-md text-[var(--luxury-muted)]">Senior Associate</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="w-10 h-10 rounded-full border border-[var(--luxury-primary)] flex items-center justify-center text-[var(--luxury-primary)] hover:bg-[var(--luxury-primary)]/10 transition-colors">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+</button>
+<button class="w-10 h-10 rounded-full bg-[var(--luxury-primary)] flex items-center justify-center text-[var(--luxury-text-primary)] hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[20px]">call</span>
+</button>
+</div>
+</section>
+<!-- Performance Overview Grid -->
+<section>
+<h3 class="font-label-md text-[var(--luxury-text-primary)] mb-2 uppercase tracking-wider">Performance Overview</h3>
+<div class="grid grid-cols-2 gap-3">
+<!-- Active Listings -->
+<div class="bg-[var(--luxury-card-bg)] p-4 rounded-lg border border-[var(--luxury-border)] shadow-[0_8px_30px_rgba(27,38,49,0.06)]">
+<span class="material-symbols-outlined text-[var(--luxury-primary)] mb-2">home_work</span>
+<p class="font-label-sm text-[var(--luxury-muted)]">Active Listings</p>
+<p class="font-headline-md text-[var(--luxury-text-primary)]">24</p>
+</div>
+<!-- Recent Deals -->
+<div class="bg-[var(--luxury-card-bg)] p-4 rounded-lg border border-[var(--luxury-border)] shadow-[0_8px_30px_rgba(27,38,49,0.06)]">
+<span class="material-symbols-outlined text-[var(--luxury-primary)] mb-2">handshake</span>
+<p class="font-label-sm text-[var(--luxury-muted)]">Recent Deals</p>
+<div class="flex items-baseline gap-2">
+<p class="font-headline-md text-[var(--luxury-text-primary)]">8</p>
+<p class="font-label-sm text-[var(--luxury-success)]">+2 this month</p>
+</div>
+</div>
+<!-- Pending Tasks -->
+<div class="bg-[var(--luxury-card-bg)] p-4 rounded-lg border border-[var(--luxury-border)] shadow-[0_8px_30px_rgba(27,38,49,0.06)]">
+<span class="material-symbols-outlined text-[var(--luxury-warning)] mb-2">assignment_late</span>
+<p class="font-label-sm text-[var(--luxury-muted)]">Pending Tasks</p>
+<p class="font-headline-md text-[var(--luxury-text-primary)]">12</p>
+</div>
+<!-- Notifications -->
+<div class="bg-[var(--luxury-card-bg)] p-4 rounded-lg border border-[var(--luxury-border)] border-l-4 border-l-[var(--luxury-error)] shadow-[0_8px_30px_rgba(27,38,49,0.06)]">
+<span class="material-symbols-outlined text-[var(--luxury-error)] mb-2">campaign</span>
+<p class="font-label-sm text-[var(--luxury-muted)]">Notifications</p>
+<div class="flex items-baseline gap-2">
+<p class="font-headline-md text-[var(--luxury-text-primary)]">5</p>
+<p class="font-label-sm text-[var(--luxury-error)]">3 Priority</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Smart Intake AI Card -->
+<section class="bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] p-5 rounded-lg relative overflow-hidden border border-[var(--luxury-border)]">
+<div class="absolute top-0 right-0 w-32 h-32 bg-[var(--luxury-primary)]/20 -mr-16 -mt-16 rounded-full"></div>
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-md text-[var(--luxury-text-primary)]">Smart Intake</h3>
+<p class="font-label-sm text-[var(--luxury-text-primary)]">AI-Powered Extraction</p>
+</div>
+<div class="bg-[var(--luxury-text-primary)]/10 px-2 py-1 rounded border border-[var(--luxury-border)]/20">
+<p class="font-label-sm text-[10px] uppercase tracking-tighter">Powered by Gemini</p>
+</div>
+</div>
+<div class="space-y-4">
+<div class="relative">
+<textarea class="w-full bg-[var(--luxury-card-bg)]/30 border border-[var(--luxury-border)]/40 rounded p-3 text-[var(--luxury-text-primary)] font-body-md placeholder:text-[var(--luxury-muted)] focus:border-[var(--luxury-primary)] focus:ring-0 transition-all min-h-[100px]" placeholder="Paste property description here..."></textarea>
+</div>
+<button class="w-full bg-[var(--luxury-card-bg)] text-[var(--luxury-text-primary)] py-3 rounded flex items-center justify-center gap-2 font-label-md hover:bg-[var(--luxury-card-bg)]/50 transition-all active:scale-[0.98]" id="analyze-btn">
+<span class="material-symbols-outlined text-[20px]">auto_awesome</span>
+                    Analyze Description
+                </button>
+<!-- Extracted Entities (Initially Hidden or Subtle) -->
+<div class="grid grid-cols-3 gap-2 pt-2 border-t border-[var(--luxury-border)]/10" id="extraction-preview">
+<div class="text-center p-2 rounded bg-[var(--luxury-card-bg)]/5">
+<p class="font-label-sm text-[10px] text-[var(--luxury-muted)] uppercase">Price</p>
+<p class="font-label-md text-[var(--luxury-text-primary)]">$---</p>
+</div>
+<div class="text-center p-2 rounded bg-[var(--luxury-card-bg)]/5">
+<p class="font-label-sm text-[10px] text-[var(--luxury-muted)] uppercase">Beds</p>
+<p class="font-label-md text-[var(--luxury-text-primary)]">-</p>
+</div>
+<div class="text-center p-2 rounded bg-[var(--luxury-card-bg)]/5">
+<p class="font-label-sm text-[10px] text-[var(--luxury-muted)] uppercase">Area</p>
+<p class="font-label-md text-[var(--luxury-text-primary)]">--- sqft</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Activity Stream -->
+<section>
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-label-md text-[var(--luxury-text-primary)] mb-2 uppercase tracking-wider">Activity Stream</h3>
+<button class="font-label-sm text-[var(--luxury-text-primary)] underline">View All</button>
+</div>
+<div class="bg-[var(--luxury-card-bg)] rounded-lg border border-[var(--luxury-border)] divide-y divide-[var(--luxury-border)]">
+<!-- Priority Item -->
+<div class="p-4 flex gap-4 bg-[var(--luxury-error)]/10">
+<div class="w-10 h-10 shrink-0 bg-[var(--luxury-error)] text-[var(--luxury-text-primary)] rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">priority_high</span>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<p class="font-body-md font-semibold text-[var(--luxury-text-primary)]">Offer Received: 1420 Luxury Ave</p>
+<span class="font-label-sm text-[var(--luxury-muted)]">10m ago</span>
+</div>
+<p class="font-label-sm text-[var(--luxury-muted)] mt-1">New cash offer at 5% above asking price.</p>
+</div>
+</div>
+<!-- Recent Item -->
+<div class="p-4 flex gap-4">
+<div class="w-10 h-10 shrink-0 bg-[var(--luxury-card-bg)] text-[var(--luxury-text-primary)] rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">visibility</span>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<p class="font-body-md text-[var(--luxury-text-primary)]">Showing Confirmed</p>
+<span class="font-label-sm text-[var(--luxury-muted)]">1h ago</span>
+</div>
+<p class="font-label-sm text-[var(--luxury-muted)] mt-1">Penthouse 4B, The Regency Tower.</p>
+</div>
+</div>
+<!-- Yesterday Item -->
+<div class="p-4 flex gap-4">
+<div class="w-10 h-10 shrink-0 bg-[var(--luxury-card-bg)] text-[var(--luxury-text-primary)] rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">edit_document</span>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<p class="font-body-md text-[var(--luxury-text-primary)]">Contract Signed</p>
+<span class="font-label-sm text-[var(--luxury-muted)]">Yesterday</span>
+</div>
+<p class="font-label-sm text-[var(--luxury-muted)] mt-1">Sales agreement finalized for 88 Harbor View.</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center py-2 bg-[var(--luxury-card-bg)] border-t border-[var(--luxury-border)]">
+<a class="flex flex-col items-center justify-center bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] rounded-full px-4 py-1 transition-transform duration-150 scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-sm">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[var(--luxury-muted)] px-4 py-1 hover:text-[var(--luxury-primary)] transition-transform duration-150 active:scale-90" href="#">
+<span class="material-symbols-outlined">home_work</span>
+<span class="font-label-sm">Properties</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[var(--luxury-muted)] px-4 py-1 hover:text-[var(--luxury-primary)] transition-transform duration-150 active:scale-90" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-sm">Analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[var(--luxury-muted)] px-4 py-1 hover:text-[var(--luxury-primary)] transition-transform duration-150 active:scale-90" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-sm">Clients</span>
+</a>
+</nav>
+<script>
+// Simple Interaction logic for Smart Intake
+const analyzeBtn = document.getElementById('analyze-btn');
+const previewSection = document.getElementById('extraction-preview');
+
+analyzeBtn.addEventListener('click', () => {
+    analyzeBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Analyzing...';
+
+    setTimeout(() => {
+        analyzeBtn.innerHTML = '<span class="material-symbols-outlined">check_circle</span> Analysis Complete';
+        analyzeBtn.classList.replace('bg-[var(--luxury-card-bg)]', 'bg-[var(--luxury-success)]');
+        analyzeBtn.classList.add('text-[var(--luxury-text-primary)]');
+
+        // Animate extracted entities
+        const data = [
+            { label: 'Price', value: '$2,450k' },
+            { label: 'Beds', value: '4' },
+            { label: 'Area', value: '3,200 sqft' }
+        ];
+
+        const children = previewSection.children;
+        data.forEach((item, index) => {
+            setTimeout(() => {
+                children[index].querySelector('p:last-child').innerText = item.value;
+                children[index].classList.add('bg-[var(--luxury-card-bg)]/20');
+            }, index * 200);
+        });
+
+        setTimeout(() => {
+            analyzeBtn.innerHTML = '<span class="material-symbols-outlined">auto_awesome</span> Analyze Description';
+            analyzeBtn.classList.replace('bg-[var(--luxury-success)]', 'bg-[var(--luxury-card-bg)]');
+            analyzeBtn.classList.remove('text-[var(--luxury-text-primary)]');
+        }, 3000);
+
+    }, 1500);
+});
+</script>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Custom Scrollbar for Horizontal Performance Grid */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<script>
+        // Mobile-specific agent dashboard functions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add touch-friendly enhancements
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(button => {
+                // Ensure minimum touch target size
+                const minHeight = 44; // Apple/HIG recommended minimum
+                const computedStyle = window.getComputedStyle(button);
+                const height = parseInt(computedStyle.height);
+                if (height < minHeight) {
+                    button.style.minHeight = minHeight + 'px';
+                }
+            });
+        });
+    </script>
+{% endblock %}

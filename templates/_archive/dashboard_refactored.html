@@ -1,0 +1,381 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Real Estate CRM{% endblock %}
+
+{% block content %}
+<!-- Key Metrics Cards - Using Component -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    {% include 'components/_stat_card.html' with {
+        'label': 'Total Properties',
+        'value': stats.total_properties,
+        'icon': 'fa-building',
+        'color': 'primary',
+        'border_color': 'primary'
+    } %}
+
+    {% include 'components/_stat_card.html' with {
+        'label': 'Active Properties',
+        'value': stats.active_properties,
+        'icon': 'fa-home',
+        'color': 'success',
+        'border_color': 'success'
+    } %}
+
+    {% include 'components/_stat_card.html' with {
+        'label': 'Total Customers',
+        'value': stats.total_customers,
+        'icon': 'fa-user-friends',
+        'color': 'primary',
+        'border_color': 'primary'
+    } %}
+
+    {% include 'components/_stat_card.html' with {
+        'label': 'Active Deals',
+        'value': stats.active_deals,
+        'icon': 'fa-handshake',
+        'color': 'warning',
+        'border_color': 'warning'
+    } %}
+</div>
+
+<!-- Deal Value and Market Analysis -->
+<div class="grid gap-6 md:grid-cols-2 mb-8">
+    <!-- Pipeline Value -->
+    <div class="bg-[var(--luxury-card-bg)] rounded-lg shadow-sm hover:shadow-md transition-shadow p-6">
+        <div class="border-l-4 border-[var(--luxury-primary)]/20 pl-4">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-[var(--luxury-muted)] text-sm font-medium">Pipeline Value</p>
+                    <i class="fas fa-dollar-sign text-[var(--luxury-primary)]"></i>
+                </div>
+            </div>
+            <div class="text-center">
+                <p class="text-[var(--luxury-success)] text-2xl font-bold">${{ "{:,.0f}".format(stats.total_deal_value) }}</p>
+                <p class="text-[var(--luxury-muted)] text-sm">Total Deal Value in Pipeline</p>
+            </div>
+            <div class="mt-6 grid grid-cols-2 gap-4 text-center">
+                <div class="border-r border-[var(--luxury-border)]/20 pr-4">
+                    <p class="text-[var(--luxury-primary)] text-xl font-bold">{{ stats.total_deals }}</p>
+                    <p class="text-[var(--luxury-muted)] text-sm">Total Deals</p>
+                </div>
+                <div>
+                    <p class="text-[var(--luxury-warning)] text-xl font-bold">{{ stats.active_deals }}</p>
+                    <p class="text-[var(--luxury-muted)] text-sm">Active Deals</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Market Analysis -->
+    <div class="bg-[var(--luxury-card-bg)] rounded-lg shadow-sm hover:shadow-md transition-shadow p-6">
+        <div class="border-l-4 border-[var(--luxury-primary)]/20 pl-4">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-[var(--luxury-muted)] text-sm font-medium">Market Analysis</p>
+                    <i class="fas fa-chart-line text-[var(--luxury-primary)]"></i>
+                </div>
+            </div>
+            <div id="marketAnalysis">
+                <div class="flex flex-col items-center justify-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--luxury-primary)] mb-4"></div>
+                    <p class="text-[var(--luxury-muted)] mt-4 text-sm">Generating AI market analysis...</p>
+                </div>
+            </div>
+            <button onclick="refreshMarketAnalysis()"
+                    class="mt-6 w-full flex items-center justify-center gap-2 px-4 py-3 bg-[var(--luxury-primary)] text-white rounded-lg hover:bg-[var(--luxury-primary)]/90 transition-colors font-medium">
+                <i class="fas fa-refresh"></i>
+                <span>Refresh Analysis</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities -->
+<div class="grid gap-6 mb-8">
+    <!-- Recent Properties -->
+    <div class="bg-[var(--luxury-card-bg)] rounded-lg shadow-sm hover:shadow-md transition-shadow p-6">
+        <div class="border-l-4 border-[var(--luxury-primary)]/20 pl-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-[var(--luxury-text-primary)] font-medium">Recent Properties</h3>
+                <i class="fas fa-building text-[var(--luxury-primary)]"></i>
+            </div>
+
+            {% if recent_properties %}
+            <div class="divide-y divide-[var(--luxury-border)]/20">
+                {% for property in recent_properties %}
+                    {% include 'components/_card_list_item.html' with {
+                        'title': property.title,
+                        'subtitle': property.address,
+                        'price': property.price,
+                        'status': property.status,
+                        'status_colors': {
+                            'active': 'success',
+                            'pending': 'warning',
+                            'sold': 'danger'
+                        }
+                    } %}
+                {% endfor %}
+            </div>
+            {% else %}
+                {% include 'components/_empty_state.html' with {
+                    'icon': 'fa-building',
+                    'message': 'No properties available',
+                    'color': 'primary'
+                } %}
+            {% endif %}
+
+            <div class="mt-6 pt-4 border-t border-[var(--luxury-border)]/20">
+                {% include 'components/_action_button.html' with {
+                    'url': url_for('properties'),
+                    'icon': 'fa-external-link-alt',
+                    'text': 'View All Properties',
+                    'color': 'primary',
+                    'full_width': true
+                } %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Deals -->
+    <div class="bg-[var(--luxury-card-bg)] rounded-lg shadow-sm hover:shadow-md transition-shadow p-6">
+        <div class="border-l-4 border-[var(--luxury-warning)]/20 pl-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-[var(--luxury-text-primary)] font-medium">Recent Deals</h3>
+                <i class="fas fa-handshake text-[var(--luxury-warning)]"></i>
+            </div>
+
+            {% if recent_deals %}
+            <div class="divide-y divide-[var(--luxury-border)]/20">
+                {% for deal in recent_deals %}
+                    {% include 'components/_card_list_item.html' with {
+                        'title': deal.property_name,
+                        'subtitle': deal.customer_name,
+                        'meta_text': 'Agent: ' + deal.agent_name,
+                        'price': deal.offer_amount if deal.offer_amount > 0 else None,
+                        'status': deal.status,
+                        'status_colors': {
+                            'closed_won': 'success',
+                            'qualified': 'warning',
+                            'proposal': 'warning'
+                        }
+                    } %}
+                {% endfor %}
+            </div>
+            {% else %}
+                {% include 'components/_empty_state.html' with {
+                    'icon': 'fa-handshake',
+                    'message': 'No deals available',
+                    'color': 'warning'
+                } %}
+            {% endif %}
+
+            <div class="mt-6 pt-4 border-t border-[var(--luxury-border)]/20">
+                {% include 'components/_action_button.html' with {
+                    'url': url_for('deals'),
+                    'icon': 'fa-external-link-alt',
+                    'text': 'View All Deals',
+                    'color': 'warning',
+                    'full_width': true
+                } %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Tasks -->
+    <div class="bg-[var(--luxury-card-bg)] rounded-lg shadow-sm hover:shadow-md transition-shadow p-6">
+        <div class="border-l-4 border-[var(--luxury-primary)]/20 pl-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-[var(--luxury-text-primary)] font-medium">Pending Tasks</h3>
+                <i class="fas fa-tasks text-[var(--luxury-primary)]"></i>
+            </div>
+
+            {% if pending_tasks %}
+            <div class="divide-y divide-[var(--luxury-border)]/20">
+                {% for task in pending_tasks %}
+                    {% include 'components/_card_list_item.html' with {
+                        'title': task.title,
+                        'subtitle': task.description[:50] + '...' if task.description|length > 50 else task.description,
+                        'meta_text': 'Assigned to: ' + task.agent_name,
+                        'badge_text': task.priority.title(),
+                        'status': task.priority,
+                        'status_colors': {
+                            'high': 'danger',
+                            'medium': 'warning',
+                            'low': 'primary'
+                        }
+                    } %}
+                {% endfor %}
+            </div>
+            {% else %}
+                {% include 'components/_empty_state.html' with {
+                    'icon': 'fa-tasks',
+                    'message': 'No pending tasks',
+                    'color': 'primary'
+                } %}
+            {% endif %}
+
+            <div class="mt-6 pt-4 border-t border-[var(--luxury-border)]/20">
+                {% include 'components/_action_button.html' with {
+                    'url': url_for('tasks'),
+                    'icon': 'fa-external-link-alt',
+                    'text': 'View All Tasks',
+                    'color': 'primary',
+                    'full_width': true
+                } %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="mt-6">
+    <div class="bg-[var(--luxury-card-bg)] rounded-lg shadow-sm hover:shadow-md transition-shadow p-6">
+        <div class="border-l-4 border-[var(--luxury-muted)]/20 pl-4 mb-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-[var(--luxury-text-primary)] font-medium">Quick Actions</h3>
+                <i class="fas fa-bolt text-[var(--luxury-muted)]"></i>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <a href="{{ url_for('properties') }}"
+               class="flex flex-col items-center justify-center px-4 py-6 bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-lg hover:bg-[var(--luxury-primary)]/20 transition-colors font-medium text-center">
+                <i class="fas fa-plus text-2xl mb-2"></i>
+                <span class="text-sm">Add Property</span>
+            </a>
+            <a href="{{ url_for('customers') }}"
+               class="flex flex-col items-center justify-center px-4 py-6 bg-[var(--luxury-success)]/10 text-[var(--luxury-success)] rounded-lg hover:bg-[var(--luxury-success)]/20 transition-colors font-medium text-center">
+                <i class="fas fa-user-plus text-2xl mb-2"></i>
+                <span class="text-sm">Add Customer</span>
+            </a>
+            <a href="{{ url_for('deals') }}"
+               class="flex flex-col items-center justify-center px-4 py-6 bg-[var(--luxury-warning)]/10 text-[var(--luxury-warning)] rounded-lg hover:bg-[var(--luxury-warning)]/20 transition-colors font-medium text-center">
+                <i class="fas fa-handshake text-2xl mb-2"></i>
+                <span class="text-sm">Create Deal</span>
+            </a>
+            <a href="{{ url_for('recommendations') }}"
+               class="flex flex-col items-center justify-center px-4 py-6 bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-lg hover:bg-[var(--luxury-primary)]/20 transition-colors font-medium text-center">
+                <i class="fas fa-magic text-2xl mb-2"></i>
+                <span class="text-sm">AI Recommendations</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Market Analysis Functions (kept from original)
+    function renderAnalysis(data) {
+        const analysisDiv = document.getElementById('marketAnalysis');
+        if (!data) return;
+
+        const updated = data.updated_at ? `<small class="text-[var(--luxury-muted)] text-sm block mt-2">Updated: ${new Date(data.updated_at).toLocaleString()}</small>` : '';
+
+        if (Array.isArray(data.bullets) && data.bullets.length > 0) {
+            const bullets = data.bullets.map(b => `<li class="flex items-start gap-2"><span class="flex-shrink-0 text-[var(--luxury-primary)]">•</span><span class="flex-1">${b}</span></li>`).join('');
+            const overview = data.analysis ? `<p class="mb-2 text-[var(--luxury-text-primary)]">${data.analysis}</p>` : '';
+            analysisDiv.innerHTML = `
+                <div class="max-h-[300px] overflow-y-auto pr-2">
+                    ${overview}
+                    <ul class="list-none space-y-2">${bullets}</ul>
+                    ${updated}
+                </div>
+            `;
+            return;
+        }
+
+        if (data.analysis) {
+            let analysisText = data.analysis
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+            analysisDiv.innerHTML = `
+                <div class="max-h-[300px] overflow-y-auto pr-2">
+                    ${analysisText}
+                    ${updated}
+                </div>
+            `;
+            return;
+        }
+
+        analysisDiv.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-info-circle text-[var(--luxury-primary)]/50 text-2xl mb-4"></i>
+                <p class="text-[var(--luxury-muted)] text-sm">Market analysis unavailable.</p>
+            </div>
+        `;
+    }
+
+    function saveAnalysis(data) {
+        try { localStorage.setItem('marketAnalysis', JSON.stringify(data)); } catch {}
+    }
+
+    function loadSavedAnalysis() {
+        try {
+            const raw = localStorage.getItem('marketAnalysis');
+            return raw ? JSON.parse(raw) : null;
+        } catch { return null; }
+    }
+
+    function setLoading() {
+        document.getElementById('marketAnalysis').innerHTML = `
+            <div class="flex flex-col items-center justify-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--luxury-primary)] mb-4"></div>
+                <p class="text-[var(--luxury-muted)] text-sm">Generating market analysis...</p>
+            </div>
+        `;
+    }
+
+    async function fetchWithRetry(url, options, retries=2, backoff=800) {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 25000);
+            const resp = await fetch(url, { ...(options||{}), signal: controller.signal });
+            clearTimeout(timeout);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            return await resp.json();
+        } catch (e) {
+            if (retries > 0) {
+                await new Promise(r => setTimeout(r, backoff));
+                return fetchWithRetry(url, options, retries-1, backoff*2);
+            }
+            throw e;
+        }
+    }
+
+    function refreshMarketAnalysis() {
+        setLoading();
+        fetchWithRetry('/api/market-analysis')
+            .then(data => {
+                if (data) {
+                    renderAnalysis(data);
+                    saveAnalysis(data);
+                }
+            })
+            .catch(error => {
+                const saved = loadSavedAnalysis();
+                if (saved) {
+                    renderAnalysis(saved);
+                    App.showError('Using cached analysis. ' + error.message);
+                } else {
+                    document.getElementById('marketAnalysis').innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-exclamation-triangle text-[var(--luxury-danger)]/50 text-2xl mb-4"></i>
+                            <p class="text-[var(--luxury-muted)] text-sm">Error: ${error.message}</p>
+                            <button onclick="refreshMarketAnalysis()" class="mt-4 px-4 py-2 bg-[var(--luxury-primary)] text-white rounded-lg hover:opacity-90">
+                                <i class="fas fa-refresh mr-2"></i>Retry
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const saved = loadSavedAnalysis();
+        if (saved) renderAnalysis(saved);
+        refreshMarketAnalysis();
+    });
+</script>
+{% endblock %}

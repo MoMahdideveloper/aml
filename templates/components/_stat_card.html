@@ -1,0 +1,28 @@
+{# Stat Card Component - Compatible with existing CSS variables
+   Usage:
+   {% include 'components/_stat_card.html' with {
+       'label': 'Total Properties',
+       'value': stats.total_properties,
+       'icon': 'fa-building',
+       'color': 'primary'
+   } %}
+#}
+{% set color_classes = {
+    'primary': 'var(--primary)',
+    'success': 'var(--secondary-color)',
+    'warning': 'var(--warning-color)',
+    'danger': 'var(--error)'
+} %}
+{% set color_value = color_classes.get(color, color_classes['primary']) %}
+
+<div class="bg-[var(--surface-white)] border-l-4 p-6 rounded-lg hover:shadow-md transition-shadow" style="border-color: {{ color_value }}20;">
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="text-[var(--on-surface-variant)] text-sm font-medium">{{ label }}</p>
+            <p class="text-2xl font-semibold mt-1" style="color: {{ color_value }};">{{ value }}</p>
+        </div>
+        <div class="flex h-12 w-12 items-center justify-center rounded-lg" style="background-color: {{ color_value }}20;">
+            <i class="fas {{ icon }} text-xl" style="color: {{ color_value }};"></i>
+        </div>
+    </div>
+</div>

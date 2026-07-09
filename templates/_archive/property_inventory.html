@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+
+{% block title %}Property Inventory - Platinum Heritage{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<header class="mb-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 w-full">
+        <div>
+            <h1 class="font-display-lg text-[var(--luxury-text-primary)] mb-2">Property Inventory</h1>
+            <p class="font-body-lg text-[var(--luxury-muted)]">Dynamic listing management connected to the property model.</p>
+        </div>
+        <div class="flex gap-4 w-full md:w-auto">
+            <button class="flex-1 md:flex-none bg-[var(--luxury-card-bg)] text-[var(--luxury-text-primary)] border border-[var(--luxury-border)] rounded-md px-6 py-3 font-label-md text-label-md hover:bg-[var(--luxury-primary)]/10 transition-all flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">download</span> Export
+            </button>
+            <button onclick="document.getElementById('addPropertyModal').classList.remove('hidden')"
+                    class="flex-1 md:flex-none bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] rounded-md px-6 py-3 font-label-md text-label-md hover:bg-[var(--luxury-primary)]/90 transition-all shadow-[0_8px_30px_rgba(27,38,49,0.06)] flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">add</span> Add New Property
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- Filtering Panel (Bento Grid Style) -->
+<section class="bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg p-6 w-full flex flex-col gap-6 shadow-[0_8px_30px_rgba(27,38,49,0.06)]">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <!-- Search -->
+        <div class="md:col-span-12 relative">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[var(--luxury-muted)]">search</span>
+            <input class="w-full bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-md py-3 pl-12 pr-4 font-body-md text-body-md text-[var(--luxury-text-primary)] placeholder-[var(--luxury-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 transition-colors" placeholder="Search by title, address, or ID..." type="text"/>
+        </div>
+        <!-- Dropdowns -->
+        <div class="md:col-span-3 flex flex-col gap-1">
+            <label class="font-label-sm text-[var(--luxury-muted)] text-xs uppercase">Listing Type</label>
+            <select class="w-full bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-md py-2 px-3 font-body-md text-body-md text-[var(--luxury-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 appearance-none">
+                <option>All Types</option>
+                <option>Sale</option>
+                <option>Rental</option>
+            </select>
+        </div>
+        <div class="md:col-span-3 flex flex-col gap-1">
+            <label class="font-label-sm text-[var(--luxury-muted)] text-xs uppercase">Source</label>
+            <select class="w-full bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-md py-2 px-3 font-body-md text-body-md text-[var(--luxury-text-primary)] focus:outline-none focus:ring-3 font-body-md text-body-md text-[var(--luxury-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 appearance-none">
+                <option>All Sources</option>
+                <option>Maskan</option>
+                <option>Manual</option>
+                <option>Autofill</option>
+            </select>
+        </div>
+        <div class="md:col-span-3 flex flex-col gap-1">
+            <label class="font-label-sm text-[var(--luxury-muted)] text-xs uppercase">Status</label>
+            <select class="w-full bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-md py-2 px-3 font-body-md text-body-md text-[var(--luxury-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 appearance-none">
+                <option>Any Status</option>
+                <option>Active</option>
+                <option>Pending</option>
+                <option>Sold/Rented</option>
+            </select>
+        </div>
+        <div class="md:col-span-3 flex flex-col gap-1">
+            <label class="font-label-sm text-[var(--luxury-muted)] text-xs uppercase">Property Type</label>
+            <select class="w-full bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-md py-2 px-3 font-body-md text-body-md text-[var(--luxury-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 appearance-none">
+                <option>All Types</option>
+                <option>Apartment</option>
+                <option>Villa</option>
+                <option>Penthouse</option>
+            </select>
+        </div>
+    </div>
+    <!-- Actions -->
+    <div class="flex justify-end gap-4 mt-2 border-t border-[var(--luxury-border)]/20 pt-6">
+        <button class="text-[var(--luxury-muted)] font-label-md text-label-md hover:text-[var(--luxury-primary)] transition-colors">Clear All</button>
+        <button class="bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] rounded-md px-6 py-2 font-label-md text-label-md hover:bg-[var(--luxury-primary)]/90 transition-all shadow-[0_8px_30px_rgba(27,38,49,0.06)]">Apply Filters</button>
+    </div>
+</section>
+
+<!-- Property Grid -->
+<section class="w-full">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Card 1 -->
+        <div class="bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg overflow-hidden flex flex-col group hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-all duration-300">
+            <div class="relative h-64 w-full overflow-hidden">
+                <img alt="Modern white architectural home with large windows and clean lines" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjnMNi_krDlsdOnBGTB2xTeM6Ga1QjXVW03Rs8zJ_NfAWjh9NiGu-kaCmY9WeIY-4xBngwMu_uGi29rdSPC74hn4zgMA_jv7cikmPYM_CWR3kylow6L2rr6jj3Ur9FJbaQeTK9sA0cBppQ9Yzb1EImPoZsallyKt7utHzzMwNH0c1lN0ieyWqPiQMjH24wcJdqtuAYMrx1s_qUDR_YBeDZIYn6BaXgiN_b1tAIjP3Gxugr8NXf-zM"/>
+                <div class="absolute top-4 left-4 bg-[var(--luxury-success)] text-[var(--luxury-text-primary)] border border-[var(--luxury-border)] px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wider">Sale</div>
+                <div class="absolute top-4 right-4 flex gap-2">
+                    <button class="w-8 h-8 rounded-full bg-[var(--luxury-card-bg)] text-[var(--luxury-muted)] flex items-center justify-center hover:text-[var(--luxury-primary)] hover:bg-[var(--luxury-primary)]/10 transition-colors border border-[var(--luxury-border)] shadow-sm">
+                        <span class="material-symbols-outlined text-[18px]">edit</span>
+                    </button>
+                </div>
+            </div>
+            <div class="p-5 flex flex-col gap-4">
+                <div>
+                    <div class="flex justify-between items-start mb-1">
+                        <h3 class="font-headline-md text-[20px] leading-[28px] font-semibold text-[var(--luxury-text-primary)] line-clamp-1">Modern Minimalist Villa</h3>
+                        <span class="bg-[var(--luxury-border)]/20 text-[var(--luxury-primary)] px-2 py-0.5 rounded font-label-sm text-[10px] uppercase border border-[var(--luxury-border)]/20 ml-2 whitespace-nowrap">Active</span>
+                    </div>
+                    <p class="font-body-sm text-[14px] text-[var(--luxury-muted)] flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]">location_on</span>
+                                                    Beverly Hills, CA
+                                                </p>
+                </div>
+                <div class="font-headline-md text-[var(--luxury-text-primary)]">$4,500,000</div>
+                <div class="flex items-center gap-3 font-body-sm text-[14px] text-[var(--luxury-muted)] border-t border-[var(--luxury-border)]/20 border-b border-[var(--luxury-border)]/20 py-3">
+                    <div class="flex items-center gap-1"><span class="font-medium text-[var(--luxury-text-primary)]">4</span> Beds</div>
+                    <div class="w-px h-4 bg-[var(--luxury-border)]/20"></div>
+                    <div class="flex items-center gap-1"><span class="font-medium text-[var(--luxury-text-primary)]">5</span> Baths</div>
+                    <div class="w-px h-4 bg-[var(--luxury-border)]/20"></div>
+                    <div class="flex items-center gap-1"><span class="font-medium text-[var(--luxury-text-primary)]">4,200</span> Sqft</div>
+                </div>
+                <div class="flex justify-between items-center mt-auto pt-2">
+                    <span class="text-[12px] text-[var(--luxury-muted)] flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">info</span> Manual Entry</span>
+                    <button class="text-[var(--luxury-primary)] font-label-md text-label-md hover:underline flex items-center gap-1">View Details <span class="material-symbols-outlined text-[16px]">arrow_forward</span></button>
+                </div>
+            </div>
+        </div>
+        <!-- Card 2 -->
+        <div class="bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg overflow-hidden flex flex-col group hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-all duration-300">
+            <div class="relative h-64 w-full overflow-hidden">
+                <img alt="Luxurious living room interior with contemporary furniture" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxQyK26zY9cdnPH5MECj7rGn8NEmNjphaT0vmyQPdzg5vX3T2Gb_QAAIbb4BXBj80L8k-lDfM_JCdOFWY1rBcnF2p9u5LeZAuxkidTOnTGi5oODVCMq51RMxLUWaxbbNDZW9EL0HLBdZvjWIDruuk2MlukyLfqijlfFR8hIYG2hjZZZofira-wyTQwep30AvCibN12-qFNCKhuJBOBFMmw6Sav95R091Ph6-vD5WzQHaSVpJ-LZvM"/>
+                <div class="absolute top-4 left-4 bg-[var(--luxury-warning)] text-[var(--luxury-text-primary)] border border-[var(--luxury-border)] px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wider">Rental</div>
+                <div class="absolute top-4 right-4 flex gap-2">
+                    <button class="w-8 h-8 rounded-full bg-[var(--luxury-card-bg)] text-[var(--luxury-muted)] flex items-center justify-center hover:text-[var(--luxury-primary)] hover:bg-[var(--luxury-primary)]/10 transition-colors border border-[var(--luxury-border)] shadow-sm">
+                        <span class="material-symbols-outlined text-[18px]">edit</span>
+                    </button>
+                </div>
+            </div>
+            <div class="p-5 flex flex-col gap-4">
+                <div>
+                    <div class="flex justify-between items-start mb-1">
+                        <h3 class="font-headline-md text-[20px] leading-[28px] font-semibold text-[var(--luxury-text-primary)] line-clamp-1">Downtown Skyline Penthouse</h3>
+                        <span class="bg-[var(--luxury-border)]/20 text-[var(--luxury-success)] px-2 py-0.5 rounded font-label-sm text-[10px] uppercase border border-[var(--luxury-border)]/20 ml-2 whitespace-nowrap">Active</span>
+                    </div>
+                    <p class="font-body-sm text-[14px] text-[var(--luxury-muted)] flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]">location_on</span>
+                                                    Tribeca, NY
+                                                </p>
+                </div>
+                <div class="font-headline-md text-[var(--luxury-text-primary)]">$15,000 <span class="font-body-sm text-[14px] text-[var(--luxury-muted)] font-normal">/mo</span></div>
+                <div class="flex items-center gap-3 font-body-sm text-[14px] text-[var(--luxury-muted)] border-t border-[var(--luxury-border)]/20 border-b border-[var(--luxury-border)]/20 py-3">
+                    <div class="flex items-center gap-1"><span class="font-medium text-[var(--luxury-text-primary)]">3</span> Beds</div>
+                    <div class="w-px h-4 bg-[var(--luxury-border)]/20"></div>
+                    <div class="flex items-center gap-1"><span class="font-medium text-[var(--luxury-text-primary)]">3.5</span> Baths</div>
+                    <div class="w-px h-4 bg-[var(--luxury-border)]/20"></div>
+                    <div class="flex items-center gap-1"><span class="font-medium text-[var(--luxury-text-primary)]">2,800</span> Sqft</div>
+                </div>
+                <div class="flex justify-between items-center mt-auto pt-2">
+                    <span class="text-[12px] text-[var(--luxury-muted)] flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">auto_awesome</span> Maskan Sync</span>
+                    <button class="text-[var(--luxury-primary)] font-label-md text-label-md hover:underline flex items-center gap-1">View Details <span class="material-symbols-outlined text-[16px]">arrow_forward</span></button>
+                </div>
+            </div>
+        </div>
+        <!-- Card 3 -->
+        <div class="bg-[var(--luxury-card-bg)] border border-[var(--luxury-border)] rounded-lg overflow-hidden flex flex-col group hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-all duration-300">
+            <div class="relative h-64 w-full overflow-hidden">
+                <div class="w-full h-full bg-[var(--luxury-border)]/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[var(--luxury-muted)] text-[48px]">image</span>
+                </div>
+                <div class="absolute top-4 left-4 bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] border border-[var(--luxury-border)] px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wider">Sale</div>
+                <div class="absolute top-4 right-4 flex gap-2">
+                    <button class="w-8 h-8 rounded-full bg-[var(--luxury-card-bg)] text-[var(--luxury-muted)] flex items-center justify-center hover:text-[var(--luxury-primary)] hover:bg-[var(--luxury-primary)]/10 transition-colors border border-[var(--luxury-border)] shadow-sm">
+                        <span class="material-symbols-outlined text-[18px]">edit</span>
+                    </button>
+                </div>
+            </div>
+            <div class="p-5 flex flex-col gap-4">
+                <div>
+                    <div class="flex justify-between items-start mb-1">
+                        <h3 class="font-headline-md text-[20px] leading-[28px] font-semibold text-[var(--luxury-text-primary)] line-clamp-1">Suburban Family Estate</h3>
+                        <span class="bg-[var(--luxury-border)]/20 text-[var(--luxury-muted)] px-2 py-0.5 rounded font-label-sm text-[10px] uppercase border border-[var(--luxury-border)]/20 ml-2 whitespace-nowrap">Pending</span>
+                    </div>
+                    <p class="font-body-sm text-[14px] text-[var(--luxury-muted)] flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]">location_on</span>
+                                                    Westchester, NY
+                                                </p>
+                </div>
+                <div class="font-headline-md text-[var(--luxury-text-primary)]">$2,150,000</div>
+                <div class="flex items-center gap-3 font-body-sm text-[14px] text-[var(--luxury-muted)] border-t border-[var(--luxury-border)]/20 border-b border-[var(--luxury-border)]/20 py-3">
+                    <div class="flex items-center gap-1"><span class="font-medium text-[var(--luxury-text-primary)]">5</span> Beds</div>
+                    <div class="w-px h-4 bg-[var(--luxury-border)]/20"></div>
+                    <div class="flex items-center gap-1><span class="font-medium text-[var(--luxury-text-primary)]">4</span> Baths</div>
+                    <div class="w-px h-4 bg-[var(--luxury-border)]/20"></div>
+                    <div class="flex items-center gap-1"><span class="font-medium text-[var(--luxury-text-primary)]">5,100</span> Sqft</div>
+                </div>
+                <div class="flex justify-between items-center mt-auto pt-2">
+                    <span class="text-[12px] text-[var(--luxury-muted)] flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">smart_toy</span> AI Autofill</span>
+                    <button class="text-[var(--luxury-primary)] font-label-md text-label-md hover:underline flex items-center gap-1">View Details <span class="material-symbols-outlined text-[16px]">arrow_forward</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Pagination -->
+    <div class="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-[var(--luxury-border)]/20 pt-6">
+        <p class="font-body-sm text-[14px] text-[var(--luxury-muted)]">Showing <span class="font-medium text-[var(--luxury-text-primary)]">1-12</span> of <span class="font-medium text-[var(--luxury-text-primary)]">156</span> results</p>
+        <div class="flex items-center gap-2">
+            <button class="px-3 py-1 border border-[var(--luxury-border)] rounded bg-[var(--luxury-card-bg)] text-[var(--luxury-muted)] hover:bg-[var(--luxury-primary)]/10 hover:text-[var(--luxury-primary)] transition-colors font-label-sm text-label-sm flex items-center gap-1 disabled:opacity-50"><span class="material-symbols-outlined text-[16px]">chevron_left</span> Prev</button>
+            <button class="w-8 h-8 border border-[var(--luxury-primary)] rounded bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] font-label-sm text-label-sm flex items-center justify-center">1</button>
+            <button class="w-8 h-8 border border-[var(--luxury-border)] rounded bg-[var(--luxury-card-bg)] text-[var(--luxury-muted)] hover:bg-[var(--luxury-primary)]/10 hover:text-[var(--luxury-primary)] transition-colors font-label-sm text-label-sm flex items-center justify-center">2</button>
+            <button class="w-8 h-8 border border-[var(--luxury-border)] rounded bg-[var(--luxury-card-bg)] text-[var(--luxury-muted)] hover:bg-[var(--luxury-primary)]/10 hover:text-[var(--luxury-primary)] transition-colors font-label-sm text-label-sm flex items-center justify-center">3</button>
+            <span class="text-[var(--luxury-muted)] px-1">...</span>
+            <button class="px-3 py-1 border border-[var(--luxury-border)] rounded bg-[var(--luxury-card-bg)] text-[var(--luxury-muted)] hover:bg-[var(--luxury-primary)]/10 hover:text-[var(--luxury-primary)] transition-colors font-label-sm text-label-sm flex items-center gap-1">Next <span class="material-symbols-outlined text-[16px]">chevron_right</span></button>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+// Property inventory specific functions
+document.addEventListener('DOMContentLoaded', function() {
+    // Add touch-friendly enhancements for mobile
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(button => {
+        // Ensure minimum touch target size
+        const minHeight = 44; // Apple/HIG recommended minimum
+        const computedStyle = window.getComputedStyle(button);
+        const height = parseInt(computedStyle.height);
+        if (height < minHeight) {
+            button.style.minHeight = minHeight + 'px';
+        }
+    });
+});
+</script>
+{% endblock %}

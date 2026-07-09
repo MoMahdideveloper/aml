@@ -1,0 +1,24 @@
+{# Action Button Component
+   Usage:
+   {% include 'components/_action_button.html' with {
+       'url': url_for('properties'),
+       'icon': 'fa-external-link-alt',
+       'text': 'View All Properties',
+       'color': 'primary',
+       'full_width': true
+   } %}
+#}
+{% set colors_map = {
+    'primary': 'var(--luxury-primary)',
+    'success': 'var(--luxury-success)',
+    'warning': 'var(--luxury-warning)',
+    'danger': 'var(--luxury-danger)'
+} %}
+{% set color_value = colors_map.get(color, colors_map['primary']) %}
+{% set width_class = 'w-full' if full_width else '' %}
+
+<a href="{{ url }}"
+   class="{{ width_class }} flex items-center justify-center px-4 py-2 bg-[{{ color_value }}]/10 text-[{{ color_value }}] rounded-lg hover:bg-[{{ color_value }}]/20 transition-colors font-medium">
+    <i class="fas {{ icon }} mr-2"></i>
+    <span>{{ text }}</span>
+</a>

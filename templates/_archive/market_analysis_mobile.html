@@ -1,0 +1,263 @@
+{% extends "mobile/base.html" %}
+
+{% block title %}Market Analysis - Platinum Heritage{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-5">
+    <div class="flex justify-between items-center">
+        <div>
+            <h2 class="font-headline-lg-mobile text-headline-lg-mobile text-[var(--luxury-text-primary)]">Luxe Estate</h2>
+            <p class="font-body-md text-body-md text-[var(--luxury-muted)]">Market Analysis Dashboard</p>
+        </div>
+        <!-- Date Range Selector -->
+        <div class="flex space-x-2">
+            <button class="px-3 py-1.5 bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-lg text-sm hover:bg-[var(--luxury-primary)]/20 transition-colors">
+                <span class="material-symbols-outlined">calendar_today</span>
+                <span class="ml-1">Oct 2024</span>
+            </button>
+            <button class="px-3 py-1.5 bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] rounded-lg text-sm hover:bg-[var(--luxury-primary)]/90 transition-colors flex items-center gap-1">
+                <span class="material-symbols-outlined">arrow_drop_down</span>
+                <span class="ml-1">▼</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Performance KPIs -->
+<div class="grid grid-cols-1 gap-4 mb-6">
+    <div class="bg-[var(--luxury-card-bg)]/50 backdrop-blur-sm rounded-[var(--borderRadius_lg)] border border-[var(--luxury-border)] p-4">
+        <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 flex items-center justify-center bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-lg">
+                    <span class="material-symbols-outlined">trending_up</span>
+                </div>
+                <div>
+                    <p class="font-label-md text-label-md text-[var(--luxury-muted)]">Total Market Value</p>
+                    <p class="font-headline-md text-headline-md text-[var(--luxury-text-primary)] font-bold">$2.4B</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-1 text-[var(--luxury-success)]">
+                <span class="material-symbols-outlined">trending_up</span>
+                <span class="font-label-sm text-label-sm">+12.5%</span>
+            </div>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+        <div class="bg-[var(--luxury-card-bg)]/50 backdrop-blur-sm rounded-[var(--borderRadius_lg)] border border-[var(--luxury-border)] p-4">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 flex items-center justify-center bg-[var(--luxury-success)]/10 text-[var(--luxury-success)] rounded-lg">
+                        <span class="material-symbols-outlined">attach_money</span>
+                    </div>
+                    <div>
+                        <p class="font-label-md text-label-md text-[var(--luxury-muted)]">Monthly Sales Volume</p>
+                        <p class="font-headline-md text-headline-md text-[var(--luxury-text-primary)] font-bold">142 Units</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1 text-[var(--luxury-success)]">
+                    <span class="material-symbols-outlined">trending_up</span>
+                    <span class="font-label-sm text-label-sm">+8.3%</span>
+                </div>
+            </div>
+        </div>
+        <div class="bg-[var(--luxury-card-bg)]/50 backdrop-blur-sm rounded-[var(--borderRadius_lg)] border border-[var(--luxury-border)] p-4">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 flex items-center justify-center bg-[var(--luxury-warning)]/10 text-[var(--luxury-warning)] rounded-lg">
+                        <span class="material-symbols-outlined">visibility</span>
+                    </div>
+                    <div>
+                        <p class="font-label-md text-label-md text-[var(--luxury-muted)]">Active Listings</p>
+                        <p class="font-headline-md text-headline-md text-[var(--luxury-text-primary)] font-bold">89 Properties</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1 text-[var(--luxury-muted)]">
+                    <span class="material-symbols-outlined">remove</span>
+                    <span class="font-label-sm text-label-sm">-3.2%</span>
+                </div>
+            </div>
+        </div>
+        <div class="bg-[var(--luxury-card-bg)]/50 backdrop-blur-sm rounded-[var(--borderRadius_lg)] border border-[var(--luxury-border)] p-4">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 flex items-center justify-center bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-lg">
+                        <span class="material-symbols-outlined">groups</span>
+                    </div>
+                    <div>
+                        <p class="font-label-md text-label-md text-[var(--luxury-muted)]">Average Days on Market</p>
+                        <p class="font-headline-md text-headline-md text-[var(--luxury-text-primary)] font-bold">32 days</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1 text-[var(--luxury-success)]">
+                    <span class="material-symbols-outlined">trending_down</span>
+                    <span class="font-label-sm text-label-sm">-5.7%</span>
+                </div>
+            </div>
+        </div>
+        <div class="bg-[var(--luxury-card-bg)]/50 backdrop-blur-sm rounded-[var(--borderRadius_lg)] border border-[var(--luxury-border)] p-4">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 flex items-center justify-center bg-[var(--luxury-success)]/10 text-[var(--luxury-success)] rounded-lg">
+                        <span class="material-symbols-outlined">paid</span>
+                    </div>
+                    <div>
+                        <p class="font-label-md text-label-md text-[var(--luxury-muted)]">Average Sale Price</p>
+                        <p class="font-headline-md text-headline-md text-[var(--luxury-text-primary)] font-bold">$425K</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1 text-[var(--luxury-success)]">
+                    <span class="material-symbols-outlined">trending_up</span>
+                    <span class="font-label-sm text-label-sm">+6.8%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="space-y-6">
+    <!-- Price Trends Chart -->
+    <div class="bg-[var(--luxury-card-bg)]/50 backdrop-blur-sm rounded-[var(--borderRadius_lg)] border border-[var(--luxury-border)] p-4">
+        <div class="flex justify-between items-start mb-3">
+            <h3 class="font-headline-md text-[var(--luxury-text-primary)]">Price Trends</h3>
+            <div class="flex space-x-2">
+                <button class="px-2 py-1 bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-full text-xs hover:bg-[var(--luxury-primary)]/20 transition-colors">
+                    <span class="material-symbols-outlined">visibility_off</span>
+                </button>
+                <button class="px-2 py-1 bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] rounded-full text-xs hover:bg-[var(--luxury-primary)]/90 transition-colors">
+                    <span class="material-symbols-outlined">download</span>
+                </button>
+            </div>
+        </div>
+        <div>
+            <canvas id="priceTrendsChart" height="80"></canvas>
+        </div>
+    </div>
+
+    <!-- Inventory Chart -->
+    <div class="bg-[var(--luxury-card-bg)]/50 backdrop-blur-sm rounded-[var(--borderRadius_lg)] border border-[var(--luxury-border)] p-4">
+        <div class="flex justify-between items-start mb-3">
+            <h3 class="font-headline-md text-[var(--luxury-text-primary)]">Inventory Levels</h3>
+            <div class="flex space-x-2">
+                <button class="px-2 py-1 bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] rounded-full text-xs hover:bg-[var(--luxury-primary)]/20 transition-colors">
+                    <span class="material-symbols-outlined">visibility_off</span>
+                </button>
+                <button class="px-2 py-1 bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] rounded-full text-xs hover:bg-[var(--luxury-primary)]/90 transition-colors">
+                    <span class="material-symbols-outlined">download</span>
+                </button>
+            </div>
+        </div>
+        <div>
+            <canvas id="inventoryChart" height="80"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+// Mobile-specific market analysis functions
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize charts
+    try {
+        // Price Trends Chart
+        const priceCtx = document.getElementById('priceTrendsChart');
+        if (priceCtx) {
+            new Chart(priceCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Price Trend',
+                        data: [65, 59, 80, 81, 56, 55],
+                        borderColor: 'var(--luxury-primary)',
+                        backgroundColor: 'var(--luxury-primary)/10',
+                        tension: 0.3,
+                        fill: true,
+                        pointBackgroundColor: 'var(--luxury-primary)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            display: false,
+                            beginAtZero: true
+                        },
+                        x: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Inventory Chart
+        const inventoryCtx = document.getElementById('inventoryChart');
+        if (inventoryCtx) {
+            new Chart(inventoryCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Inventory',
+                        data: [30, 45, 28, 35, 42, 38],
+                        backgroundColor: 'var(--luxury-primary)/30',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            display: false,
+                            beginAtZero: true
+                        },
+                        x: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+    } catch (e) {
+        // Chart.js might not be available in all environments
+        console.log('Chart initialization failed:', e);
+    }
+
+    // Add touch-friendly enhancements
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(button => {
+        // Ensure minimum touch target size
+        const minHeight = 44; // Apple/HIG recommended minimum
+        const computedStyle = window.getComputedStyle(button);
+        const height = parseInt(computedStyle.height);
+        if (height < minHeight) {
+            button.style.minHeight = minHeight + 'px';
+        }
+    });
+});
+</script>
+{% endblock %}

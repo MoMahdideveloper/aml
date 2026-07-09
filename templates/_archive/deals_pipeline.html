@@ -247,7 +247,7 @@
 <h3 class="font-headline-md text-body-md font-semibold text-primary uppercase tracking-wide">Prospecting</h3>
 <div class="text-right">
 <span class="block font-label-sm text-label-sm text-secondary">{{ pipeline_stats.prospecting.count }} Deals</span>
-<span class="block font-label-sm text-label-sm font-semibold text-primary">${pipeline_stats.prospecting.value/1000000|round(1)}M</span>
+<span class="block font-label-sm text-label-sm font-semibold text-primary">{{ (pipeline_stats.prospecting.value / 1000000) | round(1) }}M</span>
 </div>
 </div>
 <div class="flex-1 overflow-y-auto pr-2 space-y-4 pb-4">
@@ -282,7 +282,7 @@
 <h3 class="font-headline-md text-body-md font-semibold text-primary uppercase tracking-wide">Contact Made</h3>
 <div class="text-right">
 <span class="block font-label-sm text-label-sm text-secondary">{{ pipeline_stats.contact_made.count }} Deals</span>
-<span class="block font-label-sm text-label-sm font-semibold text-primary">${pipeline_stats.contact_made.value/1000000|round(1)}M</span>
+<span class="block font-label-sm text-label-sm font-semibold text-primary">{{ (pipeline_stats.contact_made.value / 1000000) | round(1) }}M</span>
 </div>
 </div>
 <div class="flex-1 overflow-y-auto pr-2 space-y-4 pb-4">
@@ -314,7 +314,7 @@
 <h3 class="font-headline-md text-body-md font-semibold text-primary uppercase tracking-wide">Property Shown</h3>
 <div class="text-right">
 <span class="block font-label-sm text-label-sm text-secondary">{{ pipeline_stats.property_shown.count }} Deals</span>
-<span class="block font-label-sm text-label-sm font-semibold text-primary">${pipeline_stats.property_shown.value/1000000|round(1)}M</span>
+<span class="block font-label-sm text-label-sm font-semibold text-primary">{{ (pipeline_stats.property_shown.value / 1000000) | round(1) }}M</span>
 </div>
 </div>
 <div class="flex-1 overflow-y-auto pr-2 space-y-4 pb-4">
@@ -348,7 +348,7 @@
 <h3 class="font-headline-md text-body-md font-semibold text-primary uppercase tracking-wide">Offer Submitted</h3>
 <div class="text-right">
 <span class="block font-label-sm text-label-sm text-secondary">{{ pipeline_stats.offer_submitted.count }} Deals</span>
-<span class="block font-label-sm text-label-sm font-semibold text-primary">${pipeline_stats.offer_submitted.value/1000000|round(1)}M</span>
+<span class="block font-label-sm text-label-sm font-semibold text-primary">{{ (pipeline_stats.offer_submitted.value / 1000000) | round(1) }}M</span>
 </div>
 </div>
 <div class="flex-1 flex flex-col items-center justify-center text-center p-4 border-2 border-dashed border-outline-variant/50 rounded-lg mx-2 mb-2">
@@ -362,7 +362,7 @@
 <h3 class="font-headline-md text-body-md font-semibold text-primary uppercase tracking-wide">Negotiation</h3>
 <div class="text-right">
 <span class="block font-label-sm text-label-sm text-secondary">{{ pipeline_stats.negotiation.count }} Deals</span>
-<span class="block font-label-sm text-label-sm font-semibold text-primary">${pipeline_stats.negotiation.value/1000000|round(1)}M</span>
+<span class="block font-label-sm text-label-sm font-semibold text-primary">{{ (pipeline_stats.negotiation.value / 1000000) | round(1) }}M</span>
 </div>
 </div>
 <div class="flex-1 overflow-y-auto pr-2 space-y-4 pb-4">

@@ -1,0 +1,109 @@
+{% extends "mobile/base.html" %}
+
+{% block title %}Property Inventory - Platinum Heritage{% endblock %}
+
+{% block content %}
+<!-- Page Title & Actions -->
+<div class="flex flex-col gap-2 mb-4">
+    <h2 class="font-headline-lg-mobile text-headline-lg-mobile text-[var(--luxury-text-primary)]">Property Inventory</h2>
+    <p class="font-body-md text-body-md text-[var(--luxury-muted)]">Manage and review your listed properties.</p>
+</div>
+
+<!-- Search & Filter Bar -->
+<div class="mb-4">
+    <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--luxury-muted)]">search</span>
+        <input class="w-full pl-10 pr-4 py-2 border border-[var(--luxury-border)] rounded-lg bg-[var(--luxury-card-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--luxury-primary)]/20 font-body-md text-body-md text-[var(--luxury-text-primary)]" placeholder="Search address or ID..." type="text"/>
+    </div>
+    <button class="mt-2 flex items-center justify-center p-2 border border-[var(--luxury-border)] rounded-lg bg-[var(--luxury-card-bg)] text-[var(--luxury-primary)] hover:bg-[var(--luxury-primary)]/20 transition-colors">
+        <span class="material-symbols-outlined">tune</span>
+    </button>
+</div>
+
+<!-- Quick Filters -->
+<div class="mb-4">
+    <div class="flex gap-2 overflow-x-auto pb-2">
+        <button class="whitespace-nowrap px-4 py-1.5 rounded-full border border-[var(--luxury-primary)] bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] font-label-md text-label-md">All</button>
+        <button class="whitespace-nowrap px-4 py-1.5 rounded-full border border-[var(--luxury-border)] bg-[var(--luxury-card-bg)] text-[var(--luxury-text-primary)] hover:bg-[var(--luxury-primary)]/10 transition-colors font-label-md text-label-md">For Sale</button>
+        <button class="whitespace-nowrap px-4 py-1.5 rounded-full border border-[var(--luxury-border)] bg-[var(--luxury-card-bg)] text-[var(--luxury-text-primary)] hover:bg-[var(--luxury-primary)]/10 transition-colors font-label-md text-label-md">For Rent</button>
+        <button class="whitespace-nowrap px-4 py-1.5 rounded-full border border-[var(--luxury-border)] bg-[var(--luxury-card-bg)] text-[var(--luxury-text-primary)] hover:bg-[var(--luxury-primary)]/10 transition-colors font-label-md text-label-md">Active</button>
+        <button class="whitespace-nowrap px-4 py-1.5 rounded-full border border-[var(--luxury-border)] bg-[var(--luxury-card-bg)] text-[var(--luxury-text-primary)] hover:bg-[var(--luxury-primary)]/10 transition-colors font-label-md text-label-md">Pending</button>
+    </div>
+</div>
+
+<!-- Property List -->
+<div class="space-y-4">
+    {% if properties %}
+        {% for property in properties %}
+        <div class="bg-[var(--luxury-card-bg)] rounded-xl border border-[var(--luxury-border)] overflow-hidden hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow">
+            <div class="relative h-48 w-full">
+                {% if property.main_image %}
+                <img alt="{{ property.title }}" class="w-full h-full object-cover" src="{{ property.main_image }}">
+                {% else %}
+                <div class="w-full h-full bg-[var(--luxury-border)]/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[var(--luxury-muted)]">house</span>
+                </div>
+                {% endif %}
+                {% if property.status == 'active' %}
+                <div class="absolute top-3 left-3 bg-[var(--luxury-success)] text-[var(--luxury-text-primary)] px-2 py-1 rounded-lg font-label-sm text-label-sm">ACTIVE</div>
+                {% elif property.status == 'pending' %}
+                <div class="absolute top-3 left-3 bg-[var(--luxury-warning)] text-[var(--luxury-text-primary)] px-2 py-1 rounded-lg font-label-sm text-label-sm">PENDING</div>
+                {% elif property.status == 'sold' %}
+                <div class="absolute top-3 left-3 bg-[var(--luxury-muted)] text-[var(--luxury-text-primary)] px-2 py-1 rounded-lg font-label-sm text-label-sm">SOLD</div>
+                {% else %}
+                <div class="absolute top-3 left-3 bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] px-2 py-1 rounded-lg font-label-sm text-label-sm">{{ property.status|title }}</div>
+                {% endif %}
+                <div class="absolute top-3 right-3 bg-[var(--luxury-primary)]/10 text-[var(--luxury-primary)] p-1 rounded-full">
+                    <span class="material-symbols-outlined">favorite</span>
+                </div>
+            </div>
+            <div class="p-4 flex flex-col gap-2">
+                <div class="flex justify-between items-start">
+                    <span class="font-headline-md text-headline-md text-[var(--luxury-text-primary)] font-bold">${{ '{:,.0f}'.format(property.price) }}</span>
+                    <span class="text-[var(--luxury-muted)] font-label-sm text-label-sm">MLS: #{{ property.mls_number or 'N/A' }}</span>
+                </div>
+                <p class="font-body-md text-body-md text-[var(--luxury-muted)] truncate">{{ property.address }}</p>
+                <div class="flex items-center gap-3 pt-2 font-label-md text-label-md text-[var(--luxury-text-primary)]">
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[18px] text-[var(--luxury-muted)]">bed</span> {{ property.bedrooms }}</span>
+                    <div class="w-px h-4 bg-[var(--luxury-border)]/20"></div>
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[18px] text-[var(--luxury-muted)]">shower</span> {{ property.bathrooms }}</span>
+                    <div class="w-px h-4 bg-[var(--luxury-border)]/20"></div>
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[18px] text-[var(--luxury-muted)]">square_foot</span> {{ property.sqft }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center py-8">
+            <i class="fas fa-home text-[var(--luxury-primary)]/20 text-6xl mb-4"></i>
+            <p class="text-[var(--luxury-muted)] text-lg">No Properties Found</p>
+            <p class="text-[var(--luxury-muted)] text-sm">Add your first property to get started.</p>
+            <button onclick="document.getElementById('addPropertyModal').classList.remove('hidden')"
+                    class="mt-4 w-full max-w-xs px-4 py-2 bg-[var(--luxury-primary)] text-[var(--luxury-text-primary)] rounded-lg hover:bg-[var(--luxury-primary)]/90 transition-colors font-medium flex items-center justify-center gap-2">
+                <i class="fas fa-plus"></i>
+                <span>Add Your First Property</span>
+            </button>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+// Mobile-specific property inventory functions
+document.addEventListener('DOMContentLoaded', function() {
+    // Add touch-friendly enhancements
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(button => {
+        // Ensure minimum touch target size
+        const minHeight = 44; // Apple/HIG recommended minimum
+        const computedStyle = window.getComputedStyle(button);
+        const height = parseInt(computedStyle.height);
+        if (height < minHeight) {
+            button.style.minHeight = minHeight + 'px';
+        }
+    });
+});
+</script>
+{% endblock %}
