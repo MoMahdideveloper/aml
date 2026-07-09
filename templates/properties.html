@@ -1,577 +1,379 @@
-{% extends get_template_variant('base.html') %}
+{% extends 'base.html' %}
 
-{% block title %}Properties - Stitch KPI{% endblock %}
-{% block page_title %}Properties{% endblock %}
+{% block title %}Property Inventory - Real Estate CRM{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        font-family: 'Material Symbols Outlined';
+    }
+    .card-hover {
+        transition: all 0.3s ease;
+    }
+    .card-hover:hover {
+        box-shadow: 0 8px 30px rgba(27, 38, 49, 0.06);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<!-- Advanced Search and Filter Section -->
-<div class="bg-surface-white rounded-lg shadow-sm p-6">
-    <div class="border-l-4 border-primary/20 pl-4 mb-6">
-        <div class="flex items-center justify-between mb-4">
-            <div>
-                <p class="text-label-md text-on-surface-variant font-medium">Advanced Property Search & Filters</p>
-                <p class="text-on-surface/70">Find your perfect property with detailed filters</p>
-            </div>
-            <button onclick="document.getElementById('addPropertyModal').classList.remove('hidden')"
-                    class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium">
-                <i class="fas fa-plus"></i>
-                <span>Add Property</span>
-            </button>
-        </div>
-        <form method="GET" action="{{ url_for('properties') }}" id="advancedSearchForm" class="space-y-4">
-            <!-- Basic Search Row -->
-            <div class="grid gap-4 sm:grid-cols-2">
-                <div>
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Search Keywords</label>
-                    <input type="text" name="search" id="search"
-                           class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                           placeholder="Search by title, address, or description..."
-                           value="{{ search_query or '' }}">
-                </div>
-                <div>
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Neighborhood</label>
-                    <select name="neighborhood" class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-                        <option value="">All Neighborhoods</option>
-                        {% for n in neighborhoods %}
-                        <option value="{{ n }}" {{ 'selected' if neighborhood == n }}>{{ n }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-
-            <!-- Property Type and Category Row -->
-            <div class="grid gap-4 sm:grid-cols-3">
-                <div>
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Property Type</label>
-                    <select name="type" class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-                        <option value="">All Types</option>
-                        {% for pt in property_types %}
-                        <option value="{{ pt }}" {{ 'selected' if property_type == pt }}>{{ pt }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Category</label>
-                    <select name="category" class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-                        <option value="">All Categories</option>
-                        {% for pc in property_categories %}
-                        <option value="{{ pc }}" {{ 'selected' if property_category == pc }}>{{ pc.title() }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Condition</label>
-                    <select name="condition" class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-                        <option value="">All Conditions</option>
-                        {% for cond in property_conditions %}
-                        <option value="{{ cond }}" {{ 'selected' if property_condition == cond }}>{{ cond.replace('_', ' ').title() }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-
-            <!-- Price and Size Range Row -->
-            <div class="grid gap-4 sm:grid-cols-4">
-                <div>
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Min Price ($)</label>
-                    <input type="number" name="min_price" id="min_price"
-                           class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                           placeholder="0" value="{{ min_price or '' }}">
-                </div>
-                <div>
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Max Price ($)</label>
-                    <input type="number" name="max_price" id="max_price"
-                           class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                           placeholder="No limit" value="{{ max_price or '' }}">
-                </div>
-                <div>
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Min Sq Ft</label>
-                    <input type="number" name="min_sqft" id="min_sqft"
-                           class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                           placeholder="Any size" value="{{ min_sqft or '' }}">
-                </div>
-                <div>
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Max Sq Ft</label>
-                    <input type="number" name="max_sqft" id="max_sqft"
-                           class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                           placeholder="No limit" value="{{ max_sqft or '' }}">
-                </div>
-            </div>
-
-            <!-- Additional Filters Row -->
-            <div class="grid gap-4 sm:grid-cols-4">
-                <div>
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Min Bathrooms</label>
-                    <select name="bathrooms" class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-                        <option value="">Any</option>
-                        {% for i in range(1, 5) %}
-                        <option value="{{ i }}" {{ 'selected' if bathrooms == i }}>{{ i }}+</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Built After</label>
-                    <input type="number" name="year_built_min" id="year_built_min"
-                           class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                           placeholder="e.g. 2000" value="{{ year_built_min or '' }}">
-                </div>
-                <div>
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Built Before</label>
-                    <input type="number" name="year_built_max" id="year_built_max"
-                           class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                           placeholder="e.g. 2024" value="{{ year_built_max or '' }}">
-                </div>
-                <div class="flex items-end">
-                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium w-full">
-                        <i class="fas fa-search me-2"></i> Search
-                    </button>
-                    <a href="{{ url_for('properties') }}" class="ml-4 px-4 py-2 bg-surface border border-outline/20 rounded-lg hover:bg-surface/50 transition-colors font-medium w-full text-center">
-                        <i class="fas fa-times me-2"></i> Clear
-                    </a>
-                </div>
-            </div>
-        </form>
+<!-- Page Header -->
+<header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 w-full mb-8">
+    <div>
+        <h1 class="font-display-lg text-display-lg text-primary mb-2">Property Inventory</h1>
+        <p class="font-body-lg text-body-lg text-secondary">Dynamic listing management connected to the property model.</p>
     </div>
+    <div class="flex gap-4 w-full md:w-auto">
+        <button class="flex-1 md:flex-none bg-transparent text-primary border border-outline-variant rounded-lg px-6 py-3 font-label-md text-label-md hover:bg-surface-container transition-all flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined">download</span>
+            Export
+        </button>
+        <button onclick="document.getElementById('addPropertyModal').classList.remove('hidden')"
+                class="flex-1 md:flex-none bg-primary text-on-primary rounded-lg px-6 py-3 font-label-md text-label-md hover:opacity-90 transition-all shadow-sm flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined">add</span>
+            Add New Property
+        </button>
+    </div>
+</header>
 
-    <!-- Properties Grid -->
-    <div class="mt-6">
-        {% if properties %}
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {% for property in properties %}
-            <div class="bg-surface-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
-                <div class="space-y-3">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="px-2 py-1 text-xs rounded-full
-                            {% if property.status == 'active' %}bg-green-50 text-green-600{% endif %}
-                            {% if property.status == 'pending' %}bg-yellow-50 text-yellow-600{% endif %}
-                            {% if property.status == 'sold' %}bg-red-50 text-red-600{% endif %}">
-                            {{ property.status.title() }}
-                        </span>
-                        <span class="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary">
-                            {{ property.property_type.title() }}
-                        </span>
-                    </div>
-                    <h3 class="font-semibold text-on-surface line-clamp-2 hover:underline">{{ property.title }}</h3>
-                    <p class="text-label-sm text-on-surface-variant line-clamp-2">{{ property.address }}</p>
+<!-- Filter Panel (Bento Grid Style) -->
+<section class="bg-surface rounded-lg border border-outline-variant p-6 w-full flex flex-col gap-6 shadow-sm mb-8">
+    <form method="GET" action="{{ url_for('properties') }}" id="propertyFilterForm">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <!-- Full-width search -->
+            <div class="md:col-span-12 relative">
+                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-secondary">search</span>
+                <input type="text" name="search" value="{{ search_query or '' }}"
+                       class="w-full bg-background border border-outline-variant rounded-lg py-3 pl-12 pr-4 font-body-md text-body-md text-primary focus:border-primary focus:ring-1 focus:ring-primary transition-colors outline-none placeholder:text-secondary"
+                       placeholder="Search by title, address, or ID...">
+            </div>
 
-                    <div class="grid gap-2 text-center text-label-sm text-on-surface-variant">
-                        <div><i class="fas fa-bed text-primary"></i><span class="ml-1">{{ property.bedrooms }} Beds</span></div>
-                        <div><i class="fas fa-bath text-primary"></i><span class="ml-1">{{ property.bathrooms }} Baths</span></div>
-                        <div><i class="fas fa-ruler-combined text-primary"></i><span class="ml-1">{{ "{:,}".format(property.square_feet) }} sqft</span></div>
-                        <div><i class="fas fa-car text-primary"></i><span class="ml-1">{{ property.parking_spaces }} Parking</span></div>
-                    </div>
+            <!-- Listing Type -->
+            <div class="md:col-span-3 flex flex-col gap-1">
+                <label class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Listing Type</label>
+                <select name="listing_type"
+                        class="w-full bg-background border border-outline-variant rounded-lg py-2.5 px-3 font-body-md text-body-md text-primary focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+                    <option value="">All Types</option>
+                    <option value="sale" {{ 'selected' if listing_type == 'sale' }}>For Sale</option>
+                    <option value="rent" {{ 'selected' if listing_type == 'rent' }}>For Rent</option>
+                    <option value="lease" {{ 'selected' if listing_type == 'lease' }}>Lease</option>
+                </select>
+            </div>
 
-                    {% if property.year_built %}
-                    <p class="text-label-sm text-on-surface-variant mt-2"><i class="fas fa-calendar"></i> Built {{ property.year_built }}</p>
-                    {% endif %}
+            <!-- Status / Stage -->
+            <div class="md:col-span-3 flex flex-col gap-1">
+                <label class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Status</label>
+                <select name="status"
+                        class="w-full bg-background border border-outline-variant rounded-lg py-2.5 px-3 font-body-md text-body-md text-primary focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+                    <option value="">All Statuses</option>
+                    <option value="active" {{ 'selected' if status_filter == 'active' }}>Active</option>
+                    <option value="pending" {{ 'selected' if status_filter == 'pending' }}>Pending</option>
+                    <option value="sold" {{ 'selected' if status_filter == 'sold' }}>Sold</option>
+                    <option value="off_market" {{ 'selected' if status_filter == 'off_market' }}>Off Market</option>
+                </select>
+            </div>
 
-                    {% if property.units > 1 %}
-                    <p class="text-label-sm text-on-surface-variant"><i class="fas fa-home"></i> {{ property.units }} Units</p>
-                    {% endif %}
+            <!-- Location / Neighborhood -->
+            <div class="md:col-span-3 flex flex-col gap-1">
+                <label class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Location</label>
+                <select name="neighborhood"
+                        class="w-full bg-background border border-outline-variant rounded-lg py-2.5 px-3 font-body-md text-body-md text-primary focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+                    <option value="">All Neighborhoods</option>
+                    {% for n in neighborhoods %}
+                    <option value="{{ n }}" {{ 'selected' if neighborhood == n }}>{{ n }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-                    {% if property.neighborhood %}
-                    <p class="text-label-sm text-on-surface-variant"><i class="fas fa-map-marker-alt"></i> {{ property.neighborhood }}</p>
-                    {% endif %}
+            <!-- Property Type -->
+            <div class="md:col-span-3 flex flex-col gap-1">
+                <label class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Property Type</label>
+                <select name="type"
+                        class="w-full bg-background border border-outline-variant rounded-lg py-2.5 px-3 font-body-md text-body-md text-primary focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+                    <option value="">All Types</option>
+                    {% for pt in property_types %}
+                    <option value="{{ pt }}" {{ 'selected' if property_type == pt }}>{{ pt }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-                    {% if property.features_list %}
-                    <p class="text-label-sm text-on-surface-variant mt-2"><i class="fas fa-tags"></i>
-                        {% for feature in property.features_list[:3] %}
-                        <span class="inline-block bg-secondary/20 text-secondary px-2 py-1 mr-1 mb-1 rounded">{{ feature }}</span>
-                        {% endfor %}
-                        {% if property.features_list|length > 3 %}
-                        <span class="inline-block bg-secondary/20 text-secondary px-2 py-1 mr-1 mb-1 rounded">+{{ property.features_list|length - 3 }} more</span>
-                        {% endif %}
-                    </p>
-                    {% endif %}
-
-                    <!-- Pricing Section -->
-                    <div class="mt-4 p-3 bg-surface border rounded-lg">
-                        {% if property.listing_type == 'rental' %}
-                        <!-- Iranian Rental Pricing System -->
-                        {% if property.rahn %}
-                        <div class="mb-2">
-                            <span class="block text-label-sm text-on-surface-variant">رهن (Rahn/Deposit)</span>
-                            <span class="block text-xl font-semibold text-success">{{ "{:,.0f}".format(property.rahn) }} تومان</span>
-                        </div>
-                        {% endif %}
-
-                        {% if property.ejare %}
-                        <div class="mb-2">
-                            <span class="block text-label-sm text-on-surface-variant">اجاره (Ejare/Monthly Rent)</span>
-                            <span class="block text-xl font-semibold text-success">{{ "{:,.0f}".format(property.ejare) }} تومان</span>
-                        </div>
-                        {% endif %}
-
-                        <div class="mt-2 grid gap-2 text-label-sm text-on-surface-variant">
-                            {% if property.rahn_per_meter > 0 %}
-                            <div><span>رهن/متر:</span> <span class="font-medium">{{ "{:,.0f}".format(property.rahn_per_meter) }} تومان/متر</span></div>
-                            {% endif %}
-                            {% if property.ejare_per_meter > 0 %}
-                            <div><span>اجاره/متر:</span> <span class="font-medium">{{ "{:,.0f}".format(property.ejare_per_meter) }} تومان/متر</span></div>
-                            {% endif %}
-                        </div>
-                        {% else %}
-                        <!-- Sale Pricing System -->
-                        <div class="mb-2">
-                            <span class="block text-label-sm text-on-surface-variant">Sale Price</span>
-                            <span class="block text-xl font-semibold text-primary">${{ "{:,.0f}".format(property.price) }}</span>
-                        </div>
-
-                        {% if property.sale_price_per_meter > 0 %}
-                        <div class="text-label-sm text-on-surface-variant">
-                            <span>Price per Meter:</span> <span class="font-mdium">${{ "{:,.0f}".format(property.sale_price_per_meter) }}/m²</span>
-                        </div>
-                        {% endif %}
-                        {% endif %}
-                    </div>
-
-                    <!-- Listing Type Badge -->
-                    <div class="mt-2">
-                        <span class="px-2 py-1 text-xs rounded-full
-                            {% if property.listing_type == 'rental' %}bg-info/10 text-info{% else %}bg-warning/10 text-warning{% endif %}">
-                            {{ property.listing_type.title() }}
-                        </span>
-                    </div>
-
-                    <p class="mt-3 text-label-sm text-on-surface-variant line-clamp-3">{{ property.description[:150] }}...</p>
-
-                    <div class="mt-4 pt-3 border-t border-outline/20">
-                        <div class="flex justify-between items-center text-label-sm">
-                            <span><i class="fas fa-user me-1"></i> {{ property.agent_name }}</span>
-                            <span class="text-on-surface/70">Listed by</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-4 pt-3 border-t border-outline/20">
-                    <a href="{{ url_for('properties.property_detail', property_id=property.id) }}"
-                       class="w-full flex items-center justify-center px-3 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors font-medium text-center">
-                        <i class="fas fa-eye me-2"></i>
-                        <span>View Details</span>
-                    </a>
+            <!-- Price Range -->
+            <div class="md:col-span-6 flex flex-col gap-1">
+                <label class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Price Range ($)</label>
+                <div class="flex items-center gap-3">
+                    <input type="number" name="min_price" value="{{ min_price or '' }}"
+                           class="flex-1 bg-background border border-outline-variant rounded-lg py-2.5 px-3 font-body-md text-body-md text-primary focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                           placeholder="Min price">
+                    <span class="text-secondary font-body-md">–</span>
+                    <input type="number" name="max_price" value="{{ max_price or '' }}"
+                           class="flex-1 bg-background border border-outline-variant rounded-lg py-2.5 px-3 font-body-md text-body-md text-primary focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                           placeholder="Max price">
                 </div>
             </div>
-            {% endfor %}
+
+            <!-- Size Range -->
+            <div class="md:col-span-6 flex flex-col gap-1">
+                <label class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Size (sqft)</label>
+                <div class="flex items-center gap-3">
+                    <input type="number" name="min_sqft" value="{{ min_sqft or '' }}"
+                           class="flex-1 bg-background border border-outline-variant rounded-lg py-2.5 px-3 font-body-md text-body-md text-primary focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                           placeholder="Min sqft">
+                    <span class="text-secondary font-body-md">–</span>
+                    <input type="number" name="max_sqft" value="{{ max_sqft or '' }}"
+                           class="flex-1 bg-background border border-outline-variant rounded-lg py-2.5 px-3 font-body-md text-body-md text-primary focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                           placeholder="Max sqft">
+                </div>
+            </div>
+
+            <!-- Apply / Reset buttons -->
+            <div class="md:col-span-12 flex items-center gap-4 justify-end">
+                <a href="{{ url_for('properties') }}"
+                   class="border border-outline-variant text-primary rounded-lg px-6 py-2.5 font-label-md text-label-md hover:bg-surface-container-low transition-colors">
+                    Reset
+                </a>
+                <button type="submit"
+                        class="bg-primary text-on-primary rounded-lg px-6 py-2.5 font-label-md text-label-md hover:opacity-90 transition-opacity">
+                    Apply Filters
+                </button>
+            </div>
         </div>
-        {% else %}
-        <div class="text-center py-12">
-            <i class="fas fa-building text-primary/20 text-8xl mb-6"></i>
-            <p class="text-label-md text-on-surface-variant">No Properties Found</p>
-            <p class="text-label-sm text-on-surface-variant">Try adjusting your search criteria or add a new property.</p>
-            <button onclick="document.getElementById('addPropertyModal').classList.remove('hidden')"
-                    class="mt-4 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium flex-items-center justify-center gap-2">
-                <i class="fas fa-plus me-2"></i>
-                Add Your First Property
-            </button>
-        </div>
-        {% endif %}
+    </form>
+</section>
+
+<!-- Results Summary -->
+<div class="flex items-center justify-between mb-6">
+    <p class="font-body-md text-body-md text-secondary">
+        Showing <span class="font-semibold text-primary">{{ properties|length }}</span> propert{{ 'y' if properties|length == 1 else 'ies' }}
+        {% if search_query %} for "<span class="text-primary">{{ search_query }}</span>"{% endif %}
+    </p>
+    <div class="flex items-center gap-2">
+        <span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Sort by</span>
+        <select class="bg-surface border border-outline-variant rounded-lg px-3 py-1.5 font-label-md text-label-md text-on-surface focus:border-primary outline-none appearance-none text-sm">
+            <option>Newest First</option>
+            <option>Price: Low to High</option>
+            <option>Price: High to Low</option>
+        </select>
     </div>
+</div>
+
+<!-- Property Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-gutter">
+    {% for property in properties %}
+    {% set status_colors = {
+        'active':     {'bg': 'bg-[#dcfce7]', 'text': 'text-[#15803d]'},
+        'pending':    {'bg': 'bg-[#fef9c3]', 'text': 'text-[#854d0e]'},
+        'sold':       {'bg': 'bg-[#fee2e2]', 'text': 'text-[#991b1b]'},
+        'off_market': {'bg': 'bg-surface-container', 'text': 'text-secondary'},
+    } %}
+    {% set sc = status_colors.get(property.status, status_colors['off_market']) %}
+
+    {% set detail_href = url_for('properties.property_detail', property_id=property.id) %}
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden card-hover flex flex-col">
+        <!-- Property Image -->
+        <a href="{{ detail_href }}" class="relative aspect-video bg-surface-container-high flex items-center justify-center overflow-hidden block">
+            {% if property.image_filename %}
+            <img src="{{ url_for('static', filename='uploads/' + property.image_filename) }}" alt="{{ property.title }}"
+                 class="w-full h-full object-cover" loading="lazy">
+            {% elif property.images and property.images|length > 0 %}
+            <img src="{{ property.images[0].url }}" alt="{{ property.title }}"
+                 class="w-full h-full object-cover" loading="lazy">
+            {% else %}
+            <span class="material-symbols-outlined text-4xl text-outline">domain</span>
+            {% endif %}
+            <!-- Status Badge -->
+            <span class="absolute top-3 left-3 {{ sc.bg }} {{ sc.text }} font-label-sm text-label-sm px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                {{ property.status.replace('_', ' ').title() if property.status else 'Unknown' }}
+            </span>
+        </a>
+
+        <!-- Card Body -->
+        <div class="p-5 flex flex-col flex-1">
+            <div class="flex items-start justify-between gap-2 mb-2">
+                <h3 class="font-headline-md text-headline-md text-primary leading-tight truncate">
+                    <a href="{{ detail_href }}" class="hover:underline">{{ property.title }}</a>
+                </h3>
+                <button type="button" class="text-secondary hover:text-primary transition-colors flex-shrink-0" title="More options">
+                    <span class="material-symbols-outlined text-[20px]">more_vert</span>
+                </button>
+            </div>
+
+            <p class="font-body-md text-label-sm text-secondary flex items-center gap-1 mb-3 truncate">
+                <span class="material-symbols-outlined text-[14px] flex-shrink-0">location_on</span>
+                {{ property.address }}{% if property.neighborhood %}, {{ property.neighborhood }}{% endif %}
+            </p>
+
+            <!-- Price -->
+            <p class="font-headline-md text-headline-md text-primary mb-4">
+                ${{ "{:,.0f}".format(property.price or 0) }}
+            </p>
+
+            <!-- Property Specs -->
+            <div class="flex items-center gap-4 mb-4 text-secondary font-label-sm text-label-sm">
+                {% if property.bedrooms %}
+                <span class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">bed</span>
+                    {{ property.bedrooms }} bd
+                </span>
+                {% endif %}
+                {% if property.bathrooms %}
+                <span class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">bathtub</span>
+                    {{ property.bathrooms }} ba
+                </span>
+                {% endif %}
+                {% set sqft = property.square_feet if property.square_feet is defined else property.sqft %}
+                {% if sqft %}
+                <span class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">square_foot</span>
+                    {{ "{:,.0f}".format(sqft) }} sqft
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Type Tag -->
+            <div class="flex items-center gap-2 mb-4 flex-wrap">
+                {% if property.property_type %}
+                <span class="border border-outline-variant text-secondary font-label-sm text-label-sm px-3 py-1 rounded-full">
+                    {{ property.property_type }}
+                </span>
+                {% endif %}
+                {% set category = property.property_category if property.property_category is defined else property.category %}
+                {% if category %}
+                <span class="border border-outline-variant text-secondary font-label-sm text-label-sm px-3 py-1 rounded-full">
+                    {{ category|string|title }}
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-2 mt-auto pt-4 border-t border-outline-variant">
+                <a href="{{ detail_href }}"
+                   class="flex-1 text-center border border-outline-variant text-primary rounded-lg py-2 font-label-md text-label-md hover:bg-surface-container-low transition-colors text-sm">
+                    View Details
+                </a>
+                <button type="button" class="p-2 text-secondary hover:text-primary transition-colors border border-transparent hover:border-outline-variant rounded"
+                        title="Edit property">
+                    <span class="material-symbols-outlined text-[20px]">edit</span>
+                </button>
+                <button type="button" class="p-2 text-secondary hover:text-error transition-colors border border-transparent hover:border-outline-variant rounded"
+                        title="Delete property">
+                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="col-span-3 flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-outline-variant rounded-lg">
+        <span class="material-symbols-outlined text-5xl text-outline mb-4">domain_disabled</span>
+        <p class="font-body-lg text-body-lg text-secondary mb-2">No properties found</p>
+        <p class="font-body-md text-body-md text-on-surface-variant mb-6">
+            {% if search_query or min_price or max_price %}
+                Try adjusting your filters
+            {% else %}
+                Add your first property to get started
+            {% endif %}
+        </p>
+        <button onclick="document.getElementById('addPropertyModal').classList.remove('hidden')"
+                class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity">
+            Add New Property
+        </button>
+    </div>
+    {% endfor %}
 </div>
 
 <!-- Add Property Modal -->
-<div id="addPropertyModal" class="fixed inset-0 z-50 flex pointer-events-none">
-    <div class="w-full max-w-[600px] mx-auto mt-16 space-y-6 pointer-auto bg-surface-white rounded-lg shadow-xl p-6">
-        <div class="flex justify-between items-start mb-4">
-            <div class="flex items-center">
-                <i class="fas fa-plus text-primary text-2xl mr-3"></i>
-                <div>
-                    <h3 class="font-semibold text-on-surface">Add New Property</h3>
-                    <p class="text-label-sm text-on-surface-variant">Complete the form below to add a property</p>
-                </div>
-            </div>
-            <button onclick="document.getElementById('addPropertyModal').classList.add('hidden')"
-                    class="text-on-surface-variant hover:text-on-surface/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-primary/50">
-                <i class="fas fa-times"></i>
+<div id="addPropertyModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50" data-modal>
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl w-full max-w-2xl mx-4 p-8 max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="addPropertyTitle">
+        <div class="flex items-center justify-between mb-6">
+            <h2 id="addPropertyTitle" class="font-headline-md text-headline-md text-primary">Add New Property</h2>
+            <button data-modal-close
+                    onclick="document.getElementById('addPropertyModal').classList.add('hidden')"
+                    class="text-secondary hover:text-primary transition-colors">
+                <span class="material-symbols-outlined">close</span>
             </button>
         </div>
 
-        <form method="POST" action="{{ url_for('add_property') }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
-
-            <!-- AI Autofill Section -->
-            <div class="border-l-4 border-info/20 pl-4 mb-6">
-                <div class="flex items-center mb-3">
-                    <i class="fas fa-magic text-info text-xl mr-3"></i>
-                    <div>
-                        <p class="font-medium text-on-surface">AI Autofill</p>
-                        <p class="text-label-sm text-on-surface-variant">Paste property details and let AI automatically fill the form fields for you.</p>
-                    </div>
+        <form method="POST" action="{{ url_for('add_property') }}" class="space-y-5" data-loading>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="md:col-span-2">
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Property Title *</label>
+                    <input type="text" name="title" required
+                           class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                           placeholder="e.g. Modern Estate Villa">
                 </div>
-                <textarea id="ai_blob" name="ai_blob" rows="4"
-                          class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          placeholder="Paste property info here... e.g., 'Modern 3-bedroom house in downtown, 150 sqm, built in 2020, asking $450,000'"></textarea>
-                <div class="flex justify-between items-center mt-2">
-                    <button type="button" id="ai_autofill_btn" class="flex items-center gap-2 px-3 py-2 bg-info/10 text-info rounded-lg hover:bg-info/20 transition-colors font-medium">
-                        <i class="fas fa-wand-magic-sparkles me-1"></i>
-                        Autofill with AI
-                    </button>
-                    <div id="ai_autofill_status" class="text-label-sm text-on-surface-variant"></div>
+                <div class="md:col-span-2">
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Address *</label>
+                    <input type="text" name="address" required
+                           class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                           placeholder="e.g. 1240 High Ridge Road, Beverly Hills">
                 </div>
-            </div>
-
-            <div class="grid gap-4">
-                <div class="col-span-2">
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Property Title *</label>
-                    <input type="text" id="title" name="title" required
-                           class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                <div>
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Price ($) *</label>
+                    <input type="number" name="price" required
+                           class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                           placeholder="e.g. 2500000">
                 </div>
-
-                <div class="col-span-2 sm:col-span-6 lg:col-span-4">
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Address *</label>
-                    <input type="text" id="address" name="address" required
-                           class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                <div>
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Property Type</label>
+                    <select name="property_type"
+                            class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+                        <option value="">Select type...</option>
+                        {% for pt in property_types %}
+                        <option value="{{ pt }}">{{ pt }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-
-                <div id="pricing-section">
-                    <!-- Sale Pricing (Default) -->
-                    <div id="sale-pricing" class="pricing-option">
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Sale Price *</label>
-                        <input type="number" id="sale_price" name="sale_price" step="1000"
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                               placeholder="e.g. 450000">
-                        <label class="block text-label-sm text-on-surface-variant mt-2 font-medium">Price per Meter (Auto)</label>
-                        <input type="text" id="sale_price_per_meter" name="sale_price_per_meter" readonly
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                               placeholder="Calculated automatically">
-                    </div>
-
-                    <!-- Rental Pricing (Hidden by default) -->
-                    <div id="rental-pricing" class="pricing-option space-y-4" style="display: none;">
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Iranian Rental System</label>
-                        <div class="grid gap-4">
-                            <div>
-                                <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">رهن (Rahn/Deposit)</label>
-                                <input type="number" id="rahn" name="rahn" step="1000000"
-                                       class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                       placeholder="e.g. 400000000">
-                                <small class="text-label-sm text-on-surface-variant">In Toman</small>
-                            </div>
-                            <div>
-                                <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">اجاره (Ejare/Monthly Rent)</label>
-                                <input type="number" id="ejare" name="ejare" step="100000"
-                                       class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                       placeholder="e.g. 2500000">
-                                <small class="text-label-sm text-on-surface-variant">In Toman</small>
-                            </div>
-                            <div class="col-span-2">
-                                <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Per Meter (Auto)</label>
-                                <div class="grid gap-2">
-                                    <div>
-                                        <label class="block text-label-xs text-on-surface-variant">Rahn per m²</label>
-                                        <input type="text" id="rahn_per_meter" name="rahn_per_meter" readonly
-                                               class="w-full px-2 py-1 bg-surface border border-outline/20 rounded-lg"
-                                               placeholder="Rahn per m²">
-                                    </div>
-                                    <div>
-                                        <label class="block text-label-xs text-on-surface-variant">Ejare per m²</label>
-                                        <input type="text" id="ejare_per_meter" name="ejare_per_meter" readonly
-                                               class="w-full px-2 py-1 bg-surface border border-outline/20 rounded-lg"
-                                               placeholder="Ejare per m²">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div>
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Bedrooms</label>
+                    <input type="number" name="bedrooms" min="0"
+                           class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                           placeholder="0">
                 </div>
-
-                <div class="grid gap-4">
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Square Meters *</label>
-                        <input type="number" id="square_feet" name="square_feet" min="0" required
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    </div>
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Bedrooms</label>
-                        <input type="number" id="bedrooms" name="bedrooms" min="0" max="20"
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    </div>
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Bathrooms</label>
-                        <input type="number" id="bathrooms" name="bathrooms" min="0" max="20" step="0.5"
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    </div>
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Parking</label>
-                        <input type="number" id="parking_spaces" name="parking_spaces" min="0" max="10"
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    </div>
+                <div>
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Bathrooms</label>
+                    <input type="number" name="bathrooms" min="0" step="0.5"
+                           class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                           placeholder="0">
                 </div>
-
-                <div class="grid gap-4">
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Floors</label>
-                        <input type="number" id="floors" name="floors" min="1" max="50" value="1"
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    </div>
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Units</label>
-                        <input type="number" id="units" name="units" min="1" max="100" value="1"
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    </div>
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Year Built</label>
-                        <input type="number" id="year_built" name="year_built" min="1900" max="2024"
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    </div>
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Condition</label>
-                        <select id="property_condition" name="property_condition"
-                                class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                            <option value="excellent">Excellent</option>
-                            <option value="good" selected>Good</option>
-                            <option value="fair">Fair</option>
-                            <option value="needs_renovation">Needs Renovation</option>
-                        </select>
-                    </div>
+                <div>
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Square Footage</label>
+                    <input type="number" name="sqft" min="0"
+                           class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                           placeholder="e.g. 3500">
                 </div>
-
-                <div class="grid gap-4">
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Neighborhood</label>
-                        <input type="text" id="neighborhood" name="neighborhood"
-                               class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    </div>
-                    <div>
-                        <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Assigned Agent</label>
-                        <select id="agent_id" name="agent_id"
-                                class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                            <option value="">Unassigned</option>
-                            {% for agent in agents %}
-                            <option value="{{ agent.id }}">{{ agent.name }} - {{ agent.specialization }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                <div>
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Status</label>
+                    <select name="status"
+                            class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+                        <option value="active">Active</option>
+                        <option value="pending">Pending</option>
+                        <option value="sold">Sold</option>
+                        <option value="off_market">Off Market</option>
+                    </select>
                 </div>
-
-                <div class="col-span-2">
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Features</label>
-                    <input type="text" id="property_features" name="property_features"
-                           class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                           placeholder="e.g. Swimming Pool, Gym, Parking, Balcony (comma-separated)">
-                </div>
-
-                <div class="col-span-2">
-                    <label class="block text-label-sm text-on-surface-variant mb-2 font-medium">Description</label>
-                    <textarea id="description" name="description" rows="4"
-                              class="w-full px-4 py-2 bg-surface border border-outline/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                              placeholder="Describe the property features, amenities, and highlights..."></textarea>
+                <div class="md:col-span-2">
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Description</label>
+                    <textarea name="description" rows="3"
+                              class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-none"
+                              placeholder="Property description..."></textarea>
                 </div>
             </div>
-
-            <div class="mt-6 pt-4 border-t border-outline/20">
-                <div class="flex justify-end">
-                    <button type="button" onclick="document.getElementById('addPropertyModal').classList.add('hidden')"
-                            class="mr-4 px-4 py-2 bg-surface border border-outline/20 rounded-lg hover:bg-surface/50 transition-colors font-medium">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium flex-items-center justify-center gap-2">
-                        <i class="fas fa-save me-2"></i>
-                        Add Property
-                    </button>
-                </div>
+            <div class="flex items-center gap-3 pt-2">
+                <button type="button"
+                        onclick="document.getElementById('addPropertyModal').classList.add('hidden')"
+                        class="flex-1 border border-outline-variant text-primary rounded-lg py-2.5 font-label-md text-label-md hover:bg-surface-container-low transition-colors">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="flex-1 bg-primary text-on-primary rounded-lg py-2.5 font-label-md text-label-md hover:opacity-90 transition-opacity">
+                    Add Property
+                </button>
             </div>
         </form>
     </div>
 </div>
-
-<script>
-// Iranian Real Estate Pricing System with Dynamic Forms
-document.addEventListener('DOMContentLoaded', function() {
-    const listingTypeRadios = document.querySelectorAll('input[name="listing_type"]');
-    const salePricing = document.getElementById('sale-pricing');
-    const rentalPricing = document.getElementById('rental-pricing');
-
-    // Form inputs
-    const squareFeetInput = document.getElementById('square_feet');
-    const salePriceInput = document.getElementById('sale_price');
-    const salePricePerMeterInput = document.getElementById('sale_price_per_meter');
-    const rahnInput = document.getElementById('rahn');
-    const ejareInput = document.getElementById('ejare');
-    const rahnPerMeterInput = document.getElementById('rahn_per_meter');
-    const ejarePerMeterInput = document.getElementById('ejare_per_meter');
-
-    // Switch between Sale and Rental pricing
-    listingTypeRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.value === 'sale') {
-                salePricing.style.display = 'block';
-                rentalPricing.style.display = 'none';
-                salePriceInput.required = true;
-                rahnInput.required = false;
-                ejareInput.required = false;
-            } else {
-                salePricing.style.display = 'none';
-                rentalPricing.style.display = 'block';
-                salePriceInput.required = false;
-                rahnInput.required = true;
-                ejareInput.required = true;
-            }
-            // Recalculate when switching
-            calculatePrices();
-        });
-    });
-
-    // Real-time price per meter calculations
-    function calculatePrices() {
-        const squareMeters = parseFloat(squareFeetInput.value) || 0;
-
-        if (squareMeters > 0) {
-            // Calculate sale price per meter
-            const salePrice = parseFloat(salePriceInput.value) || 0;
-            if (salePrice > 0) {
-                const salePricePerMeter = (salePrice / squareMeters).toFixed(0);
-                salePricePerMeterInput.value = `$${parseInt(salePricePerMeter).toLocaleString()}/m²`;
-            } else {
-                salePricePerMeterInput.value = '';
-            }
-
-            // Calculate rahn per meter
-            const rahn = parseFloat(rahnInput.value) || 0;
-            if (rahn > 0) {
-                const rahnPerMeter = (rahn / squareMeters).toFixed(0);
-                rahnPerMeterInput.value = `${parseInt(rahnPerMeter).toLocaleString()} تومان/متر`;
-            } else {
-                rahnPerMeterInput.value = '';
-            }
-
-            // Calculate ejare per meter
-            const ejare = parseFloat(ejareInput.value) || 0;
-            if (ejare > 0) {
-                const ejarePerMeter = (ejare / squareMeters).toFixed(0);
-                ejarePerMeterInput.value = `${parseInt(ejarePerMeter).toLocaleString()} تومان/متر`;
-            } else {
-                ejarePerMeterInput.value = '';
-            }
-        } else {
-            // Clear all per-meter calculations
-            salePricePerMeterInput.value = '';
-            rahnPerMeterInput.value = '';
-            ejarePerMeterInput.value = '';
-        }
-    }
-
-    // Add event listeners for real-time calculations
-    if (squareFeetInput) squareFeetInput.addEventListener('input', calculatePrices);
-    if (salePriceInput) salePriceInput.addEventListener('input', calculatePrices);
-    if (rahnInput) rahnInput.addEventListener('input', calculatePrices);
-    if (ejareInput) ejareInput.addEventListener('input', calculatePrices);
-
-    // Auto-format large numbers with commas for Iranian currency
-    function formatIranianNumber(input) {
-        input.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/,/g, '');
-            if (!isNaN(value) && value !== '') {
-                e.target.value = parseInt(value).toLocaleString();
-            }
-        });
-    }
-
-    // Apply formatting to relevant inputs
-    if (salePriceInput) formatIranianNumber(salePriceInput);
-    if (rahnInput) formatIranianNumber(rahnInput);
-    if (ejareInput) formatIranianNumber(ejareInput);
-
-    // Initialize calculations
-    calculatePrices();
-});
-</script>
 {% endblock %}

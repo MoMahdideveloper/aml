@@ -62,18 +62,9 @@ def _parse_optional_toman(raw_value, field_label):
 
 
 def _serialize_property_for_json(property_obj):
-    from property_error_handlers import _is_mock_value as _is_mock_value_internal, _safe_attr as _safe_attr_internal
-    from property_error_handlers import PropertyValidationError, PropertyOperationError
-    # We cannot import from property_error_handlers because of circular import?
-    # But note: we are in property_helpers and property_error_handlers is a different module.
-    # However, we are using _is_mock_value and _safe_attr from property_error_handlers in the original code.
-    # To avoid circular import, we'll define our own versions here (which are the same as above)
-    # or we can import them if we are sure there's no circular dependency.
-    # Since property_error_handlers does not import from property_helpers, it should be safe.
-    from property_error_handlers import _is_mock_value as _is_mock_value_internal, _safe_attr as _safe_attr_internal
-
-    deals = _safe_attr_internal(property_obj, "deals", []) or []
-    if _is_mock_value_internal(deals):
+    # Use local helpers (property_error_handlers does not export _is_mock_value/_safe_attr).
+    deals = _safe_attr(property_obj, "deals", []) or []
+    if _is_mock_value(deals):
         deals = []
 
     active_deals = 0
@@ -82,84 +73,84 @@ def _serialize_property_for_json(property_obj):
         if deal_status not in ["closed_won", "closed_lost"]:
             active_deals += 1
 
-    agent = _safe_attr_internal(property_obj, "agent", None)
-    agent_name = _safe_attr_internal(agent, "name", "Unassigned") if agent else "Unassigned"
-    agent_email = _safe_attr_internal(agent, "email", "") if agent else ""
-    agent_phone = _safe_attr_internal(agent, "phone", "") if agent else ""
+    agent = _safe_attr(property_obj, "agent", None)
+    agent_name = _safe_attr(agent, "name", "Unassigned") if agent else "Unassigned"
+    agent_email = _safe_attr(agent, "email", "") if agent else ""
+    agent_phone = _safe_attr(agent, "phone", "") if agent else ""
 
     # Import url_for for building URLs (safe because this is only used in request context)
     from flask import url_for
 
     return {
-        "id": _safe_attr_internal(property_obj, "id", None),
-        "title": _safe_attr_internal(property_obj, "title", "Untitled Property") or "Untitled Property",
-        "address": _safe_attr_internal(property_obj, "address", "Address not available") or "Address not available",
-        "price": _safe_attr_internal(property_obj, "price", 0) or 0,
-        "property_type": _safe_attr_internal(property_obj, "property_type", "Unknown") or "Unknown",
-        "bedrooms": _safe_attr_internal(property_obj, "bedrooms", 0) or 0,
-        "bathrooms": _safe_attr_internal(property_obj, "bathrooms", 0) or 0,
-        "square_feet": _safe_attr_internal(property_obj, "square_feet", 0) or 0,
-        "description": _safe_attr_internal(property_obj, "description", "No description available") or "No description available",
-        "status": _safe_attr_internal(property_obj, "status", "unknown") or "unknown",
-        "year_built": _safe_attr_internal(property_obj, "year_built", None),
-        "parking_spaces": _safe_attr_internal(property_obj, "parking_spaces", 0) or 0,
-        "floors": _safe_attr_internal(property_obj, "floors", 1) or 1,
-        "units": _safe_attr_internal(property_obj, "units", 1) or 1,
-        "property_condition": _safe_attr_internal(property_obj, "property_condition", "unknown") or "unknown",
-        "heating_type": _safe_attr_internal(property_obj, "heating_type", "") or "",
-        "cooling_type": _safe_attr_internal(property_obj, "cooling_type", "") or "",
-        "neighborhood": _safe_attr_internal(property_obj, "neighborhood", "Unknown") or "Unknown",
-        "property_category": _safe_attr_internal(property_obj, "property_category", "residential") or "residential",
-        "listing_type": _safe_attr_internal(property_obj, "listing_type", "sale") or "sale",
-        "rahn": _safe_attr_internal(property_obj, "rahn", None),
-        "ejare": _safe_attr_internal(property_obj, "ejare", None),
-        "property_features": _safe_attr_internal(property_obj, "property_features", "") or "",
-        "document_type": _safe_attr_internal(property_obj, "document_type", None),
-        "floor_number": _safe_attr_internal(property_obj, "floor_number", None),
-        "built_area": _safe_attr_internal(property_obj, "built_area", None),
-        "land_area": _safe_attr_internal(property_obj, "land_area", None),
-        "floor_covering": _safe_attr_internal(property_obj, "floor_covering", None),
-        "facade_type": _safe_attr_internal(property_obj, "facade_type", None),
-        "wall_covering": _safe_attr_internal(property_obj, "wall_covering", None),
-        "cabinet_type": _safe_attr_internal(property_obj, "cabinet_type", None),
-        "property_direction": _safe_attr_internal(property_obj, "property_direction", None),
-        "is_exchangeable": bool(_safe_attr_internal(property_obj, "is_exchangeable", False)),
-        "boundary_width": _safe_attr_internal(property_obj, "boundary_width", None),
-        "density": _safe_attr_internal(property_obj, "density", None),
-        "commercial_status": _safe_attr_internal(property_obj, "commercial_status", None),
-        "usage_type": _safe_attr_internal(property_obj, "usage_type", None),
-        "ceiling_count": _safe_attr_internal(property_obj, "ceiling_count", None),
-        "permit_ceiling": _safe_attr_internal(property_obj, "permit_ceiling", None),
-        "property_length": _safe_attr_internal(property_obj, "property_length", None),
-        "property_height": _safe_attr_internal(property_obj, "property_height", None),
-        "price_per_meter": _safe_attr_internal(property_obj, "price_per_meter", None),
-        "custom_fields": _safe_attr_internal(property_obj, "custom_features", "") or "",
-        "created_at": _format_datetime(_safe_attr_internal(property_obj, "created_at", None)),
+        "id": _safe_attr(property_obj, "id", None),
+        "title": _safe_attr(property_obj, "title", "Untitled Property") or "Untitled Property",
+        "address": _safe_attr(property_obj, "address", "Address not available") or "Address not available",
+        "price": _safe_attr(property_obj, "price", 0) or 0,
+        "property_type": _safe_attr(property_obj, "property_type", "Unknown") or "Unknown",
+        "bedrooms": _safe_attr(property_obj, "bedrooms", 0) or 0,
+        "bathrooms": _safe_attr(property_obj, "bathrooms", 0) or 0,
+        "square_feet": _safe_attr(property_obj, "square_feet", 0) or 0,
+        "description": _safe_attr(property_obj, "description", "No description available") or "No description available",
+        "status": _safe_attr(property_obj, "status", "unknown") or "unknown",
+        "year_built": _safe_attr(property_obj, "year_built", None),
+        "parking_spaces": _safe_attr(property_obj, "parking_spaces", 0) or 0,
+        "floors": _safe_attr(property_obj, "floors", 1) or 1,
+        "units": _safe_attr(property_obj, "units", 1) or 1,
+        "property_condition": _safe_attr(property_obj, "property_condition", "unknown") or "unknown",
+        "heating_type": _safe_attr(property_obj, "heating_type", "") or "",
+        "cooling_type": _safe_attr(property_obj, "cooling_type", "") or "",
+        "neighborhood": _safe_attr(property_obj, "neighborhood", "Unknown") or "Unknown",
+        "property_category": _safe_attr(property_obj, "property_category", "residential") or "residential",
+        "listing_type": _safe_attr(property_obj, "listing_type", "sale") or "sale",
+        "rahn": _safe_attr(property_obj, "rahn", None),
+        "ejare": _safe_attr(property_obj, "ejare", None),
+        "property_features": _safe_attr(property_obj, "property_features", "") or "",
+        "document_type": _safe_attr(property_obj, "document_type", None),
+        "floor_number": _safe_attr(property_obj, "floor_number", None),
+        "built_area": _safe_attr(property_obj, "built_area", None),
+        "land_area": _safe_attr(property_obj, "land_area", None),
+        "floor_covering": _safe_attr(property_obj, "floor_covering", None),
+        "facade_type": _safe_attr(property_obj, "facade_type", None),
+        "wall_covering": _safe_attr(property_obj, "wall_covering", None),
+        "cabinet_type": _safe_attr(property_obj, "cabinet_type", None),
+        "property_direction": _safe_attr(property_obj, "property_direction", None),
+        "is_exchangeable": bool(_safe_attr(property_obj, "is_exchangeable", False)),
+        "boundary_width": _safe_attr(property_obj, "boundary_width", None),
+        "density": _safe_attr(property_obj, "density", None),
+        "commercial_status": _safe_attr(property_obj, "commercial_status", None),
+        "usage_type": _safe_attr(property_obj, "usage_type", None),
+        "ceiling_count": _safe_attr(property_obj, "ceiling_count", None),
+        "permit_ceiling": _safe_attr(property_obj, "permit_ceiling", None),
+        "property_length": _safe_attr(property_obj, "property_length", None),
+        "property_height": _safe_attr(property_obj, "property_height", None),
+        "price_per_meter": _safe_attr(property_obj, "price_per_meter", None),
+        "custom_fields": _safe_attr(property_obj, "custom_features", "") or "",
+        "created_at": _format_datetime(_safe_attr(property_obj, "created_at", None)),
         "agent_name": agent_name,
         "agent_email": agent_email,
         "agent_phone": agent_phone,
-        "agent_id": _safe_attr_internal(property_obj, "agent_id", None),
+        "agent_id": _safe_attr(property_obj, "agent_id", None),
         "total_deals": len(deals),
         "active_deals": active_deals,
-        "image_filename": _safe_attr_internal(property_obj, "image_filename", None),
+        "image_filename": _safe_attr(property_obj, "image_filename", None),
         "detail_url": (
-            url_for("properties.property_detail", property_id=_safe_attr_internal(property_obj, "id", 0))
-            if _safe_attr_internal(property_obj, "id", None)
+            url_for("properties.property_detail", property_id=_safe_attr(property_obj, "id", 0))
+            if _safe_attr(property_obj, "id", None)
             else None
         ),
         "modal_url": (
-            url_for("properties.view_property", property_id=_safe_attr_internal(property_obj, "id", 0))
-            if _safe_attr_internal(property_obj, "id", None)
+            url_for("properties.view_property", property_id=_safe_attr(property_obj, "id", 0))
+            if _safe_attr(property_obj, "id", None)
             else None
         ),
         "edit_modal_url": (
-            url_for("properties.edit_property", property_id=_safe_attr_internal(property_obj, "id", 0))
-            if _safe_attr_internal(property_obj, "id", None)
+            url_for("properties.edit_property", property_id=_safe_attr(property_obj, "id", 0))
+            if _safe_attr(property_obj, "id", None)
             else None
         ),
         "share_url": (
-            url_for("properties.share_property", property_id=_safe_attr_internal(property_obj, "id", 0))
-            if _safe_attr_internal(property_obj, "id", None)
+            url_for("properties.share_property", property_id=_safe_attr(property_obj, "id", 0))
+            if _safe_attr(property_obj, "id", None)
             else None
         ),
     }

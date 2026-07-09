@@ -47,14 +47,17 @@ from .property_helpers import (
 
 # Therefore, in this file (property_details.py) we define the functions without decorators.
 
-def view_property(property_id, property_obj):
-    """Get property details for viewing modal with enhanced error handling"""
+def view_property(property_id, property_obj=None):
+    """GET /properties/<id>: full detail page for browsers; JSON/modal for AJAX clients."""
+    if property_obj is None:
+        property_obj = get_property_with_related_data(property_id)
+
+    # Browser navigation should land on the shell-backed detail page.
+    if not _wants_json():
+        return redirect(url_for("properties.property_detail", property_id=property_id))
+
     property_data = _serialize_property_for_json(property_obj)
-
-    if _wants_json():
-        return jsonify({"property": property_data}), 200
-
-    return render_template("modals/property_view_modal.html", property=property_data)
+    return jsonify({"property": property_data}), 200
 
 
 def property_detail(property_id):
