@@ -211,7 +211,7 @@ def create_app(test_config=None):
 
     @app.route("/readyz")
     def readyz():
-        """Readiness: verifies DB connectivity."""
+        """Readiness: verifies DB connectivity (no internal details in response)."""
         from flask import jsonify
         from database import db
         from sqlalchemy import text
@@ -219,9 +219,11 @@ def create_app(test_config=None):
         try:
             db.session.execute(text("SELECT 1"))
             return jsonify({"status": "ready"}), 200
-        except Exception as exc:
+        except Exception:
             logging.exception("readyz failed")
-            return jsonify({"status": "not_ready", "error": str(exc)}), 503
+            return jsonify(
+                {"status": "not_ready", "error": "database_unavailable"}
+            ), 503
 
     # Warn if using default secret in non-dev
     if (not app.debug or is_production) and app.secret_key in (

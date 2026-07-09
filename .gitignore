@@ -153,6 +153,23 @@ nul
 graphify-out/cache/
 **/graphify-out/cache/
 
+# Duplicate runnable snapshot — root Flask app is the sole Track A source.
+# Do not commit a second app tree; use root + Docker for supported run paths.
+platinum-heritage-runnable/
+
+# Stitch design library policy:
+# Track intentionally: code.html, screen.png (and curated TASTE/DESIGN docs).
+# Ignore generated sync derivatives and duplicates (do not force-delete user work).
+stitch_kpi_performance_dashboard/**/index.html
+stitch_kpi_performance_dashboard/**/screen_meta.json
+stitch_kpi_performance_dashboard/**/code1.html
+stitch_kpi_performance_dashboard/**/__pycache__/
+
+# Agent / knowledge tooling (local)
+.brv/
+.serena/
+.spec-workflow/
+
 # Additional ignores for Node.js and frontend frameworks
 node_modules/
 api/node_modules/

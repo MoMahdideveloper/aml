@@ -62,15 +62,20 @@ python main.py
 
 Multi-stage `Dockerfile` builds Tailwind then runs gunicorn as non-root.
 
+**Required env vars (no weak defaults):**
+- `SESSION_SECRET` — long random secret (app refuses the default in production)
+- `POSTGRES_PASSWORD` — explicit DB password (compose fails without it)
+
 ```bash
 # Required
 export SESSION_SECRET="$(openssl rand -hex 32)"
-# Optional: POSTGRES_PASSWORD, WEB_PORT, GOOGLE_API_KEY
+export POSTGRES_PASSWORD="$(openssl rand -hex 24)"
+# Optional: WEB_PORT, GOOGLE_API_KEY, RUN_MIGRATIONS=1
 
 # Build & start Postgres + web
 docker compose --profile prod up -d --build
 
-# Health
+# Probes: liveness vs DB readiness
 curl -fsS http://127.0.0.1:8000/healthz
 curl -fsS http://127.0.0.1:8000/readyz
 
@@ -79,10 +84,16 @@ docker compose --profile prod logs -f web
 docker compose --profile prod down
 ```
 
+Container entrypoint runs `flask db upgrade heads` when `RUN_MIGRATIONS=1` (default).
+Migration failures **exit non-zero** after bounded retries (`MIGRATION_RETRIES`,
+`MIGRATION_RETRY_DELAY`) so Gunicorn does not start on a broken schema.
+Set `RUN_MIGRATIONS=0` only when migrations are applied externally.
+
 Or via Makefile (Git Bash / WSL / Linux):
 
 ```bash
 export SESSION_SECRET=...
+export POSTGRES_PASSWORD=...
 make up-prod
 make health
 make logs-prod
@@ -93,8 +104,11 @@ Windows PowerShell:
 
 ```powershell
 $env:SESSION_SECRET = "your-long-secret"
+$env:POSTGRES_PASSWORD = "your-strong-db-password"
 .\scripts\up-prod.ps1
 ```
+
+`up-prod.ps1` waits for **`/readyz`** (not only `/healthz`).
 
 Volumes: `postgres_data` (DB), `uploads_data` (property media). Redis is included in the `prod` profile for optional cache/Celery.
 
@@ -107,7 +121,24 @@ Volumes: `postgres_data` (DB), `uploads_data` (property media). Redis is include
 
 Wire these into load balancers / Kubernetes probes.
 
-## 5. CSS workflow
+## 5. Image packaging boundary
+
+Production `Dockerfile` builds from a filtered context (see `.dockerignore`):
+
+| Included (runtime) | Excluded |
+|--------------------|----------|
+| `app.py`, `views/`, `templates/` (live only), `static/`, `migrations/`, `services/`, `repositories/` | `templates/_archive/`, `stitch_kpi_performance_dashboard/`, `graphify-out/` |
+| `docker/entrypoint.sh`, `requirements.txt` | `tests/`, Track B (`api/`, `matcher/`, `ingestor/`, `chatbot/`) |
+| Built CSS in image build stage | `platinum-heritage-runnable/`, agent tooling, local DB/vector data |
+
+Template reference audit (no Stitch dependency):
+
+```bash
+python scripts/audit_template_references.py
+pytest -q tests/test_template_references.py tests/test_docker_context.py
+```
+
+## 6. CSS workflow
 
 | Mode | How |
 |------|-----|
@@ -117,7 +148,7 @@ Wire these into load balancers / Kubernetes probes.
 
 After template class changes, re-run `npm run build:css` before shipping.
 
-## 6. Security checklist
+## 7. Security checklist
 
 - [ ] `SESSION_SECRET` is unique and long (production refuses default secret)
 - [ ] HTTPS terminated (cookie `Secure` + HSTS headers when `FLASK_ENV=production`)
@@ -127,7 +158,7 @@ After template class changes, re-run `npm run build:css` before shipping.
 - [ ] Review CSP if you add new third-party scripts
 - [ ] Backups for `DATABASE_URL` / upload volume (`static/uploads`)
 
-## 7. Post-deploy smoke
+## 8. Post-deploy smoke
 
 ```bash
 curl -fsS https://your-host/healthz
@@ -136,28 +167,40 @@ curl -fsSI https://your-host/ | head
 # Browser: login → dashboard → properties → map → recommendations
 ```
 
-## 8. Rollback
+## 9. Rollback
 
 1. Redeploy previous app image / git tag  
 2. `flask db downgrade -1` only if the failed release added a migration you must reverse  
 3. Restore DB snapshot if data migrations were destructive  
 
-## 9. CI (GitHub Actions)
+## 10. CI (GitHub Actions)
 
 Workflow: `.github/workflows/tests.yml`
 
-| Job | What it does |
-|-----|----------------|
-| **css** | `npm ci` + `npm run build:css`, asserts `tailwind-ph.css` exists |
-| **lint** | Ruff on core packages |
-| **core-tests** | Platinum Heritage UI + smoke + forms/SMS (must pass) |
-| **full-tests** | Entire pytest suite (informational; `continue-on-error`) |
+| Job | What it does | Blocks merge? |
+|-----|----------------|---------------|
+| **css** | `npm ci` + `npm run build:css`, asserts `tailwind-ph.css` exists | Yes |
+| **lint** | Ruff + strict Black on maintained Track A paths | Yes |
+| **core-tests** | PH UI + smoke + production config/health/entrypoint tests | Yes |
+| **postgres-migrations** | Empty Postgres `flask db upgrade heads` + `/readyz` | Yes |
+| **full-tests** | Entire pytest suite (informational; may be flaky) | No |
 
 Local mirror:
 
 ```bash
+make ci-local
+# or:
 npm run build:css
-pytest -q tests/test_platinum_heritage_ui.py tests/test_app_smoke.py tests/test_simple.py
+pytest -q \
+  tests/test_platinum_heritage_ui.py \
+  tests/test_app_smoke.py \
+  tests/test_simple.py \
+  tests/test_template_replacement.py \
+  tests/test_production_config.py \
+  tests/test_health_readiness.py \
+  tests/test_auth_cookie_hardening.py \
+  tests/test_docker_entrypoint.py \
+  tests/test_dashboard_trends.py
 ```
 
 ## Feature surface (reference)

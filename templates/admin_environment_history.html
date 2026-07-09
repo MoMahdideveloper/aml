@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Environment History · Platinum Heritage{% endblock %}
+
+{% block content %}
+<section class="mb-8">
+    <p class="text-label-md text-on-surface-variant uppercase tracking-[0.2em] mb-3 font-medium">Admin</p>
+    <h1 class="text-2xl md:text-3xl font-semibold text-primary mb-2">Environment change history</h1>
+    <p class="text-base text-on-surface-variant max-w-2xl">
+        Audit trail for environment variable updates
+        {% if variable_key %} for <span class="font-medium text-primary">{{ variable_key }}</span>{% endif %}.
+    </p>
+    <a href="{{ url_for('admin_environment.environment') }}"
+       class="inline-flex items-center gap-1 mt-4 text-sm font-medium text-primary hover:underline">
+        ← Back to environment console
+    </a>
+</section>
+
+<section class="bg-surface-container-lowest rounded-lg border border-outline-variant p-5 md:p-6">
+    {% if history %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+            <thead class="text-xs uppercase text-on-surface-variant border-b border-outline-variant">
+                <tr>
+                    <th class="py-2 pr-4 font-medium">When</th>
+                    <th class="py-2 pr-4 font-medium">Key</th>
+                    <th class="py-2 pr-4 font-medium">Action</th>
+                    <th class="py-2 font-medium">Actor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in history %}
+                <tr class="border-b border-outline-variant/60 align-top">
+                    <td class="py-3 pr-4 text-on-surface-variant whitespace-nowrap">
+                        {% if row.created_at %}
+                            {{ row.created_at }}
+                        {% elif row.timestamp %}
+                            {{ row.timestamp }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td class="py-3 pr-4 font-medium text-primary">{{ row.variable_key or row.key or '—' }}</td>
+                    <td class="py-3 pr-4">{{ row.action or row.change_type or row.event or 'updated' }}</td>
+                    <td class="py-3">{{ row.changed_by or row.actor or row.user or 'system' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-sm text-on-surface-variant">No change history recorded yet.</p>
+    {% endif %}
+</section>
+{% endblock %}

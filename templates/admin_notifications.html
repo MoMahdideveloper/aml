@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Notifications · Platinum Heritage{% endblock %}
+
+{% block content %}
+<section class="mb-8">
+    <p class="text-label-md text-on-surface-variant uppercase tracking-[0.2em] mb-3 font-medium">Operations</p>
+    <h1 class="text-2xl md:text-3xl font-semibold text-primary mb-2">Agent notification overview</h1>
+    <p class="text-base text-on-surface-variant max-w-2xl">
+        Seven-day notification volume, unread load, and high-priority alerts by agent.
+    </p>
+</section>
+
+<section class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8" aria-label="Notification stats">
+    <article class="bg-surface-container-lowest rounded-lg border border-outline-variant p-5">
+        <p class="text-xs uppercase tracking-wider text-on-surface-variant mb-2">Total (7d)</p>
+        <p class="text-2xl font-semibold text-primary tabular-nums">{{ stats.total_notifications_7d|default(0) }}</p>
+    </article>
+    <article class="bg-surface-container-lowest rounded-lg border border-outline-variant p-5">
+        <p class="text-xs uppercase tracking-wider text-on-surface-variant mb-2">Unread</p>
+        <p class="text-2xl font-semibold text-primary tabular-nums">{{ stats.unread_count|default(0) }}</p>
+    </article>
+    <article class="bg-surface-container-lowest rounded-lg border border-outline-variant p-5">
+        <p class="text-xs uppercase tracking-wider text-on-surface-variant mb-2">High priority</p>
+        <p class="text-2xl font-semibold text-primary tabular-nums">{{ stats.high_priority_count|default(0) }}</p>
+    </article>
+</section>
+
+<section class="bg-surface-container-lowest rounded-lg border border-outline-variant p-5 md:p-6">
+    <h2 class="text-lg font-semibold text-primary mb-4">By agent</h2>
+    {% if stats.agent_stats %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+            <thead class="text-xs uppercase text-on-surface-variant border-b border-outline-variant">
+                <tr>
+                    <th class="py-2 pr-4 font-medium">Agent</th>
+                    <th class="py-2 pr-4 font-medium">Total</th>
+                    <th class="py-2 pr-4 font-medium">Unread</th>
+                    <th class="py-2 font-medium">High priority</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in stats.agent_stats %}
+                <tr class="border-b border-outline-variant/60">
+                    <td class="py-3 pr-4 text-primary font-medium">{{ row.agent_name }}</td>
+                    <td class="py-3 pr-4 tabular-nums">{{ row.total }}</td>
+                    <td class="py-3 pr-4 tabular-nums">{{ row.unread }}</td>
+                    <td class="py-3 tabular-nums">{{ row.high_priority }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-sm text-on-surface-variant">No notifications in the last 7 days.</p>
+    {% endif %}
+</section>
+{% endblock %}

@@ -16,12 +16,25 @@ fi
 if [ "${RUN_MIGRATIONS:-1}" = "1" ]; then
   echo "[entrypoint] Running database migrations..."
   export FLASK_APP=app.py
-  # Non-fatal if DB not ready yet — compose healthcheck/retry handles DB
-  if flask db upgrade; then
-    echo "[entrypoint] Migrations complete"
-  else
-    echo "[entrypoint] WARNING: flask db upgrade failed (will still start app)"
-  fi
+  # Bounded retry for transient DB readiness, then fail closed.
+  attempts="${MIGRATION_RETRIES:-10}"
+  delay="${MIGRATION_RETRY_DELAY:-3}"
+  i=1
+  while [ "$i" -le "$attempts" ]; do
+    if flask db upgrade heads; then
+      echo "[entrypoint] Migrations complete"
+      break
+    fi
+    if [ "$i" -eq "$attempts" ]; then
+      echo "[entrypoint] ERROR: flask db upgrade failed after ${attempts} attempt(s); refusing to start"
+      exit 1
+    fi
+    echo "[entrypoint] Migration attempt ${i}/${attempts} failed; retrying in ${delay}s..."
+    sleep "$delay"
+    i=$((i + 1))
+  done
+else
+  echo "[entrypoint] RUN_MIGRATIONS=0 — skipping migrations (operator-managed schema)"
 fi
 
 # Ensure upload directory exists and is writable

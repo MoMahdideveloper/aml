@@ -69,9 +69,15 @@ jobs:
       - name: Ruff (views + app factory)
         run: ruff check app.py views forms.py database.py extensions.py services/geo_service.py services/sms_service.py
 
-      - name: Black (check focused paths)
-        run: |
-          black --check app.py views/main.py views/agents.py views/properties.py views/property_media.py services/geo_service.py || true
+      - name: Black (check maintained Track A paths)
+        run: >
+          black --check
+          app.py
+          views/main.py
+          views/agents.py
+          views/properties.py
+          views/property_media.py
+          services/geo_service.py
 
   core-tests:
     name: Core tests
@@ -99,17 +105,73 @@ jobs:
           pip install -q -r requirements.txt
           pip install -q pytest pytest-cov
 
-      - name: Run Platinum Heritage + smoke suite
+      - name: Run Platinum Heritage + production hardening suite
         run: |
           pytest -q \
             tests/test_platinum_heritage_ui.py \
             tests/test_app_smoke.py \
             tests/test_simple.py \
             tests/test_template_replacement.py \
+            tests/test_production_config.py \
+            tests/test_health_readiness.py \
+            tests/test_auth_cookie_hardening.py \
+            tests/test_docker_entrypoint.py \
+            tests/test_dashboard_trends.py \
+            tests/test_template_references.py \
+            tests/test_docker_context.py \
             --tb=short
 
+  postgres-migrations:
+    name: Postgres migrations + readiness
+    runs-on: ubuntu-latest
+    needs: [css]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: gptvli
+          POSTGRES_PASSWORD: ci_postgres_password
+          POSTGRES_DB: gptvli
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gptvli -d gptvli"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://gptvli:ci_postgres_password@localhost:5432/gptvli
+      SESSION_SECRET: ci-postgres-strong-secret-not-for-prod
+      FLASK_ENV: testing
+      USE_TAILWIND_CDN: "0"
+      ENABLE_CSRF: "0"
+      FLASK_APP: app.py
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -q -r requirements.txt
+          pip install -q pytest
+
+      - name: Alembic upgrade heads (empty database)
+        run: |
+          python -m flask db upgrade heads
+
+      - name: App readiness against Postgres
+        run: |
+          pytest -q tests/test_migrations_postgres.py --tb=short
+
   full-tests:
-    name: Full test suite
+    name: Full test suite (informational)
     runs-on: ubuntu-latest
     needs: [core-tests]
     # Informative full run — does not block merge if legacy tests are flaky

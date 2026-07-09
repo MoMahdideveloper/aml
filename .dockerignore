@@ -1,5 +1,16 @@
+# VCS / CI / agents
 .git
 .github
+.claude
+.kilocode
+.roo
+.agents
+.brv
+.serena
+.spec-workflow
+.playwright-mcp
+
+# Python envs / caches
 .venv
 venv
 env
@@ -11,9 +22,13 @@ __pycache__
 .ruff_cache
 .coverage
 htmlcov
+
+# Node (CSS is prebuilt into static/css in the image build stage)
 node_modules
 api/node_modules
 matcher/node_modules
+
+# Local data / secrets
 chroma_db
 instance
 *.db
@@ -21,23 +36,6 @@ instance
 celerybeat-schedule*
 celery_broker.db
 celery_results.db
-.playwright-mcp
-artifacts
-tmp
-tmp/
-%CLAUDE_CODE_TMPDIR%
-.claude
-.kilocode
-.roo
-graphify-out
-**/graphify-out
-stitch_kpi_performance_dashboard
-docs
-specs
-testsprite_tests
-tests
-*.md
-!README.md
 .env
 .env.*
 !.env.example
@@ -45,3 +43,34 @@ flask.out
 flask.err
 server.log
 *.pid
+
+# Design references & generated graphs (not runtime)
+stitch_kpi_performance_dashboard
+graphify-out
+**/graphify-out
+docs
+specs
+testsprite_tests
+artifacts
+tmp
+tmp/
+%CLAUDE_CODE_TMPDIR%
+
+# Tests stay out of production image
+tests
+test_*.py
+*_test.py
+
+# Archived / duplicate source trees (root Track A only)
+templates/_archive
+platinum-heritage-runnable
+api
+matcher
+ingestor
+chatbot
+
+# Scratch / agent docs
+*.md
+!README.md
+MEMORY.md
+AI_PROMPT_TEMPLATE.md

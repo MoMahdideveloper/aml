@@ -16,7 +16,8 @@ services:
     profiles: ["prod"]
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-gptvli}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gptvli_change_me}
+      # Required for prod — no weak default password.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:-gptvli}
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -40,10 +41,12 @@ services:
     environment:
       FLASK_ENV: production
       SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-gptvli}:${POSTGRES_PASSWORD:-gptvli_change_me}@db:5432/${POSTGRES_DB:-gptvli}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gptvli}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-gptvli}
       USE_TAILWIND_CDN: "0"
       ENABLE_CSRF: ${ENABLE_CSRF:-1}
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-1}
+      MIGRATION_RETRIES: ${MIGRATION_RETRIES:-10}
+      MIGRATION_RETRY_DELAY: ${MIGRATION_RETRY_DELAY:-3}
       SMS_PROVIDER: ${SMS_PROVIDER:-log}
       GEOCODE_PROVIDER: ${GEOCODE_PROVIDER:-auto}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
@@ -55,11 +58,12 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/healthz"]
+      # Gate on DB-backed readiness, not process liveness alone
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/readyz"]
       interval: 30s
       timeout: 5s
       retries: 5
-      start_period: 45s
+      start_period: 60s
 
   redis:
     image: redis:7-alpine

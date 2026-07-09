@@ -37,22 +37,30 @@ test-core:
 	  tests/test_app_smoke.py \
 	  tests/test_simple.py \
 	  tests/test_template_replacement.py \
+	  tests/test_production_config.py \
+	  tests/test_health_readiness.py \
+	  tests/test_auth_cookie_hardening.py \
+	  tests/test_docker_entrypoint.py \
+	  tests/test_dashboard_trends.py \
+	  tests/test_template_references.py \
+	  tests/test_docker_context.py \
 	  --tb=short
 
 test:
 	pytest -q --tb=line
 
 ci-local: css test-core
-	@echo "CI local gate OK"
+	@echo "CI local gate OK (CSS + core/production hardening tests)"
 
 migrate:
-	FLASK_APP=app.py flask db upgrade
+	FLASK_APP=app.py flask db upgrade heads
 
 build-prod:
 	docker compose --profile prod build
 
 up-prod:
 	@test -n "$$SESSION_SECRET" || (echo "Set SESSION_SECRET first (export SESSION_SECRET=...)"; exit 1)
+	@test -n "$$POSTGRES_PASSWORD" || (echo "Set POSTGRES_PASSWORD first (export POSTGRES_PASSWORD=...)"; exit 1)
 	docker compose --profile prod up -d --build
 
 down-prod:

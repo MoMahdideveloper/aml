@@ -10,7 +10,8 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '20250825_add_indexes'
-down_revision = None
+# Must follow initial schema so `properties` exists on empty-DB upgrades.
+down_revision = '5b578ff077cb'
 branch_labels = None
 depends_on = None
 

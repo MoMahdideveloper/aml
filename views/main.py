@@ -112,14 +112,31 @@ def dashboard():
 
     def _bento(label, icon, key):
         value, trend = _stat_value_and_trend(stats_dict, key)
+        direction = trend.get("direction") or "neutral"
+        # Missing history / empty trend: neutral flat, not false "up" growth.
+        if not trend:
+            direction = "neutral"
+            icon_name = "trending_flat"
+            sign = ""
+            percent = "0.0"
+        else:
+            icon_name = trend.get("icon") or (
+                "trending_down"
+                if direction == "down"
+                else "trending_up"
+                if direction == "up"
+                else "trending_flat"
+            )
+            sign = trend.get("sign", "" if direction == "neutral" else "+")
+            percent = trend.get("percent", "0.0")
         return {
             "label": label,
             "icon": icon,
             "value": value,
-            "trend_direction": trend.get("direction", "up"),
-            "trend_icon": trend.get("icon", "trending_up"),
-            "trend_sign": trend.get("sign", "+"),
-            "trend_percent": trend.get("percent", "0.0"),
+            "trend_direction": direction,
+            "trend_icon": icon_name,
+            "trend_sign": sign,
+            "trend_percent": percent,
         }
 
     bento_stats = [

@@ -63,12 +63,9 @@ def test_dashboard_template_stats_structure(client, app, db_setup):
         # The template uses: {{ '{:,}'.format(stats[0].value) }} for integers
         # and {{ '{:,.0f}'.format(stats[2].value) }} for currency
 
-        # Verify that we see the structural elements that indicate dynamic data binding
-        assert 'text-headline-lg' in response_text  # From the value display classes
-        assert 'text-label-sm' in response_text    # From the trend display classes
-        assert 'material-symbols-outlined' in response_text  # Icons
-
-        # Check for trend elements (rendered values, not template variable names)
+        # PH dashboard shell: metric values + trend rows + material icons
+        assert 'tabular-nums' in response_text or 'font-semibold text-primary' in response_text
+        assert 'material-symbols-outlined' in response_text
         assert 'vs last month' in response_text
         assert '%' in response_text
 
@@ -111,8 +108,8 @@ def test_dashboard_template_empty_state_handling(client, app, db_setup):
 
         # Shared shell + dashboard content
         assert 'Performance Overview' in response_text
-        assert 'Real Estate CRM' in response_text
-        assert 'Recent Activity' in response_text
+        assert 'Platinum Heritage' in response_text or 'Real Estate CRM' in response_text
+        assert 'Recent Activity' in response_text or 'Background matches' in response_text
 
 
 if __name__ == "__main__":

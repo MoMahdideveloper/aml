@@ -47,7 +47,8 @@ Long-term (only if product requires it): optional HTTP adapter Flask → matcher
 | Always-on | Faster rematch queue drain; separate property/customer cycles; notify on new/improved scores |
 | Ops | `.env.example` matcher knobs; `docs/PRODUCTION.md`; Docker multi-stage |
 
-Clean runnable snapshot (optional): `platinum-heritage-runnable/` — minimal copy to run CRM without monorepo junk.
+**Supported run paths:** root app (`python main.py`) and Docker Compose prod profile (`docs/PRODUCTION.md`).
+A local `platinum-heritage-runnable/` tree is **not** maintained as a second source of truth (ignored if present).
 
 ---
 
@@ -166,8 +167,8 @@ Prioritized for the **Flask CRM only** — not Track B:
 2. ~~**Recs dismiss + empty guidance**~~ — dismiss match API + card action; empty-state prefs guidance  
 3. ~~**Client card completeness**~~ — Prefs % badge on `/customers` cards  
 4. ~~**Match alert bell**~~ — shell inbox via `/api/notifications/inbox`  
-5. **Production hardening checklist** — Postgres default path, secrets, CSRF on, built Tailwind, health probes in CI  
-6. **Housekeeping** — drop `templates/_archive/` when confident; keep Stitch exports out of runtime deploys  
+5. ~~**Production hardening checklist**~~ — fail-closed migrations, required secrets, `/readyz`, Postgres CI  
+6. **Housekeeping** — after audit, confirm delete of `templates/_archive/` (optional); Stitch exports stay out of Docker  
 7. **Only if product requires graph matching later** — design HTTP adapter Flask → matcher; until then leave Track B alone  
 
 **Explicitly not next (unless product asks):** Neo4j rollout, rewriting CRM in Next.js, promoting `api/`/`matcher/` to default onboarding.
