@@ -16,43 +16,63 @@
 {% endblock %}
 
 {% block content %}
-{# Group deals by status for the kanban board #}
-{% set stages = [
-    ('prospecting',    'Prospecting'),
-    ('contact_made',   'Contact Made'),
+{% set stages = pipeline_stages or [
+    ('prospecting', 'Prospecting'),
+    ('contact_made', 'Contact Made'),
     ('property_shown', 'Property Shown'),
-    ('offer_submitted','Offer Submitted'),
-    ('negotiation',    'Negotiation'),
-    ('closed_won',     'Closed Won'),
+    ('offer_submitted', 'Offer Submitted'),
+    ('negotiation', 'Negotiation'),
+    ('closed_won', 'Closed Won'),
 ] %}
-{% set deals_by_stage = {} %}
-{% for stage_key, stage_label in stages %}
-    {% set _ = deals_by_stage.update({stage_key: deals | selectattr('status', 'equalto', stage_key) | list}) %}
-{% endfor %}
+{% set buckets = stage_buckets or {} %}
+{% set progress_map = {
+    'prospecting': 10,
+    'contact_made': 25,
+    'property_shown': 50,
+    'offer_submitted': 65,
+    'negotiation': 75,
+    'closed_won': 100,
+} %}
 
-<!-- Page Header -->
-<header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+<!-- Page Header (Stitch Deals Pipeline) -->
+<header class="ph-page-header">
     <div>
-        <h1 class="font-headline-lg text-headline-lg font-bold text-primary mb-1">Deals Pipeline</h1>
-        <p class="font-body-md text-label-md text-secondary">Track and manage transactions from prospecting to closing.</p>
+        <p class="ph-page-kicker">Pipeline</p>
+        <h1 class="ph-page-title">Deals Pipeline</h1>
+        <p class="ph-page-subtitle">Track and manage transactions from prospecting to closing.</p>
     </div>
-    <div class="flex items-center gap-3">
-        <button data-open-modal="addDealModal"
-                class="bg-primary text-on-primary font-label-md text-label-md px-6 py-2 rounded shadow-sm hover:bg-primary/90 transition-colors flex items-center gap-2">
-            <span class="material-symbols-outlined text-sm">add</span>
+    <div class="flex items-center gap-3 flex-wrap">
+        <button type="button" data-open-modal="addDealModal" class="ph-btn-primary">
+            <span class="material-symbols-outlined text-[18px]">add</span>
             Add New Deal
         </button>
     </div>
 </header>
 
+<!-- Pipeline summary strip -->
+<section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+    {% for stage_key, stage_label in stages %}
+    {% set n = (buckets.get(stage_key) or [])|length %}
+    <div class="ph-page-card p-3 text-center">
+        <p class="text-[10px] font-semibold uppercase tracking-wider text-secondary mb-0.5">{{ stage_label }}</p>
+        <p class="text-xl font-semibold text-primary tabular-nums">{{ n }}</p>
+    </div>
+    {% endfor %}
+</section>
+<p class="text-sm text-secondary mb-4">
+    <span class="font-semibold text-primary tabular-nums">{{ total_open_deals|default(0) }}</span> open
+    · pipeline
+    <span class="font-semibold text-primary tabular-nums">${{ "{:,.0f}".format(total_pipeline_value|default(0)) }}</span>
+    · legacy statuses (e.g. <code class="text-xs">qualified</code>) map into Prospecting
+</p>
+
 <!-- Main Pipeline Layout: left sidebar filters + board -->
-<div class="flex gap-6 -mx-4 lg:-mx-6" style="min-height: calc(100vh - 220px);">
+<div class="flex gap-6 min-h-[calc(100vh-280px)]">
 
     <!-- Filter Sidebar -->
-    <aside class="w-64 bg-surface-white border-r border-outline-variant flex-shrink-0 hidden lg:flex flex-col p-6 overflow-y-auto rounded-lg border">
-        <h2 class="font-headline-md text-body-lg font-semibold text-primary mb-6">Filters</h2>
+    <aside class="w-64 bg-white border border-outline-variant flex-shrink-0 hidden lg:flex flex-col p-6 overflow-y-auto rounded-xl shadow-sm self-start sticky top-2">
+        <h2 class="text-headline-md text-primary mb-6">Filters</h2>
         <div class="space-y-6">
-            <!-- Date Range -->
             <div>
                 <label class="block font-label-sm text-label-sm text-secondary mb-2 uppercase tracking-wider">Date Range</label>
                 <div class="space-y-2">
@@ -71,64 +91,50 @@
                 </div>
             </div>
             <div class="h-px bg-outline-variant w-full"></div>
-
-            <!-- Agent -->
             <div>
                 <label class="block font-label-sm text-label-sm text-secondary mb-2 uppercase tracking-wider">Agent</label>
-                <div class="space-y-2">
+                <div class="space-y-2 max-h-48 overflow-y-auto">
                     {% for agent in agents_list|default(agents, true)|default([]) %}
                     <label class="flex items-center gap-2 cursor-pointer group">
                         <input class="form-checkbox text-primary border-outline-variant rounded-sm focus:ring-primary" type="checkbox" name="agent" value="{{ agent.id }}">
-                        <span class="font-body-md text-label-md text-on-surface group-hover:text-primary transition-colors">{{ agent.name }}</span>
+                        <span class="font-body-md text-label-md text-on-surface group-hover:text-primary transition-colors truncate">{{ agent.name }}</span>
                     </label>
+                    {% else %}
+                    <p class="text-xs text-secondary">No agents</p>
                     {% endfor %}
                 </div>
             </div>
             <div class="h-px bg-outline-variant w-full"></div>
-
-            <!-- Deal Type -->
             <div>
                 <label class="block font-label-sm text-label-sm text-secondary mb-2 uppercase tracking-wider">Deal Type</label>
                 <div class="flex gap-2">
-                    <button class="flex-1 bg-primary text-on-primary font-label-md text-label-sm py-1.5 rounded border border-primary text-center" onclick="this.classList.add('bg-primary','text-on-primary'); this.nextElementSibling.classList.remove('bg-primary','text-on-primary')">Sale</button>
-                    <button class="flex-1 bg-surface-white text-on-surface font-label-md text-label-sm py-1.5 rounded border border-outline-variant hover:border-primary text-center transition-colors">Rent</button>
-                </div>
-            </div>
-            <div class="h-px bg-outline-variant w-full"></div>
-
-            <!-- Value Range -->
-            <div>
-                <label class="block font-label-sm text-label-sm text-secondary mb-2 uppercase tracking-wider">Value Range</label>
-                <div class="flex items-center gap-2">
-                    <input class="w-full bg-surface-white border border-outline-variant rounded px-3 py-2 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" placeholder="$Min" type="text" name="value_min">
-                    <span class="text-secondary">-</span>
-                    <input class="w-full bg-surface-white border border-outline-variant rounded px-3 py-2 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" placeholder="$Max" type="text" name="value_max">
+                    <button type="button" class="flex-1 bg-primary text-on-primary font-label-md text-label-sm py-1.5 rounded border border-primary text-center">Sale</button>
+                    <button type="button" class="flex-1 bg-white text-on-surface font-label-md text-label-sm py-1.5 rounded border border-outline-variant hover:border-primary text-center transition-colors">Rent</button>
                 </div>
             </div>
         </div>
         <div class="mt-auto pt-6">
-            <button class="w-full bg-surface-white text-primary border border-outline-variant font-label-md text-label-md py-2 rounded hover:border-primary hover:bg-surface-container-lowest transition-all">
+            <button type="button" class="w-full bg-white text-primary border border-outline-variant font-label-md text-label-md py-2 rounded hover:border-primary transition-all">
                 Reset Filters
             </button>
         </div>
     </aside>
 
-    <!-- Kanban Board -->
-    <div class="flex-1 flex flex-col overflow-hidden">
-        <div class="flex-1 overflow-x-auto kanban-scroll flex gap-6 pb-8 pt-1 px-1">
+    <!-- Kanban Board — always show every stage -->
+    <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
+        <div class="flex-1 overflow-x-auto kanban-scroll flex gap-4 pb-8 pt-1 px-1">
             {% for stage_key, stage_label in stages %}
-            {% set stage_deals = deals | selectattr('status', 'equalto', stage_key) | list %}
+            {% set stage_deals = buckets.get(stage_key) or [] %}
             {% set stage_value = stage_deals | sum(attribute='offer_amount') %}
+            {% set progress_pct = progress_map.get(stage_key, 0) %}
+            {% set progress_color = '#ef4444' if progress_pct < 30 else '#f59e0b' if progress_pct < 55 else '#10b981' if progress_pct < 80 else '#3b82f6' %}
 
-            {% if stage_deals or stage_key in ['prospecting','offer_submitted'] %}
-            <div class="w-80 flex-shrink-0 flex flex-col h-full
-                        {% if not stage_deals and stage_key == 'offer_submitted' %}bg-surface-container-lowest/50 rounded-lg border border-outline-variant/30 p-2{% endif %}">
-                <!-- Column Header -->
-                <div class="flex justify-between items-center mb-4 pb-2 border-b border-outline-variant">
-                    <h3 class="font-headline-md text-body-md font-semibold text-primary uppercase tracking-wide">{{ stage_label }}</h3>
+            <div class="w-72 sm:w-80 flex-shrink-0 flex flex-col bg-white/60 border border-outline-variant rounded-xl p-3 min-h-[22rem]">
+                <div class="flex justify-between items-center mb-3 pb-2 border-b border-outline-variant">
+                    <h3 class="text-xs font-semibold text-primary uppercase tracking-wide">{{ stage_label }}</h3>
                     <div class="text-right">
-                        <span class="block font-label-sm text-label-sm text-secondary">{{ stage_deals|length }} Deal{{ 's' if stage_deals|length != 1 }}</span>
-                        <span class="block font-label-sm text-label-sm font-semibold text-primary">
+                        <span class="block text-[11px] text-secondary">{{ stage_deals|length }} deal{{ 's' if stage_deals|length != 1 }}</span>
+                        <span class="block text-[11px] font-semibold text-primary tabular-nums">
                             {% if stage_value >= 1000000 %}${{ "%.1fM"|format(stage_value/1000000) }}
                             {% elif stage_value >= 1000 %}${{ "%.0fK"|format(stage_value/1000) }}
                             {% elif stage_value > 0 %}${{ "{:,.0f}".format(stage_value) }}
@@ -137,74 +143,61 @@
                     </div>
                 </div>
 
-                <!-- Cards or Empty State -->
                 {% if stage_deals %}
-                <div class="flex-1 overflow-y-auto pr-2 space-y-4 pb-4">
+                <div class="flex-1 overflow-y-auto pr-1 space-y-3 pb-2">
                     {% for deal in stage_deals %}
-                    {# Determine progress color by stage #}
-                    {% set progress_pct = {'prospecting':10,'contact_made':25,'property_shown':50,'offer_submitted':65,'negotiation':75,'closed_won':100}.get(deal.status, 0) %}
-                    {% set progress_color = '#ef4444' if progress_pct < 30 else '#f59e0b' if progress_pct < 55 else '#10b981' if progress_pct < 80 else '#3b82f6' %}
-                    {% set is_hot = deal.offer_amount and deal.offer_amount > 3000000 and deal.status == 'negotiation' %}
-
-                    <div class="bg-surface-white rounded-lg border {{ 'border-primary' if is_hot else 'border-outline-variant' }} p-4 shadow-[0_4px_12px_rgba(27,38,49,0.04)] hover:shadow-[0_8px_24px_rgba(27,38,49,0.08)] transition-all group cursor-pointer relative"
-                         onclick="openDealDetail({{ deal.id }})">
+                    {% set stage_for_card = deal.pipeline_stage if deal.pipeline_stage is defined else stage_key %}
+                    {% set pct = progress_map.get(stage_for_card, progress_pct) %}
+                    {% set is_hot = deal.offer_amount and deal.offer_amount > 3000000 and stage_for_card == 'negotiation' %}
+                    <div class="ph-page-card p-4 group cursor-pointer relative {{ 'ring-1 ring-primary' if is_hot else '' }}"
+                         onclick="openDealDetail({{ deal.id }})"
+                         data-deal-id="{{ deal.id }}"
+                         data-stage="{{ stage_for_card }}">
                         {% if is_hot %}
                         <div class="absolute top-0 right-0 bg-primary text-on-primary text-[10px] font-bold px-2 py-0.5 rounded-bl-lg rounded-tr-lg">HOT</div>
                         {% endif %}
-
+                        {% if deal.status and deal.status|lower != stage_for_card %}
+                        <div class="mb-2">
+                            <span class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-surface-container text-secondary border border-outline-variant">
+                                raw: {{ deal.status }}
+                            </span>
+                        </div>
+                        {% endif %}
                         <div class="flex gap-3 mb-3">
-                            <div class="w-16 h-16 rounded bg-surface-container-high flex items-center justify-center flex-shrink-0 {% if is_hot %}mt-1{% endif %}">
+                            <div class="w-14 h-14 rounded-lg bg-surface-container-high flex items-center justify-center flex-shrink-0">
                                 <span class="material-symbols-outlined text-outline">domain</span>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <h4 class="font-headline-md text-label-md font-semibold text-on-surface truncate">
+                                <h4 class="text-sm font-semibold text-on-surface truncate">
                                     {{ deal.property.title if deal.property else 'Unknown Property' }}
                                 </h4>
-                                <p class="font-body-md text-label-sm text-secondary truncate">
+                                <p class="text-xs text-secondary truncate">
                                     Client: {{ deal.customer.name if deal.customer else 'Unknown' }}
                                 </p>
-                                <p class="font-body-md text-label-sm text-secondary truncate">
+                                <p class="text-xs text-secondary truncate">
                                     Agent: {{ deal.agent.name if deal.agent else 'Unassigned' }}
                                 </p>
                             </div>
                         </div>
-
-                        <!-- Value & Progress -->
                         <div class="flex items-center justify-between mt-2 pt-2 border-t border-outline-variant border-dashed">
-                            <span class="font-label-md text-label-md font-bold text-primary">
+                            <span class="text-sm font-bold text-primary tabular-nums">
                                 {% if deal.offer_amount %}${{ "{:,.0f}".format(deal.offer_amount) }}{% else %}TBD{% endif %}
                             </span>
-                            <div class="flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded text-primary text-[10px] font-semibold border border-primary-fixed-dim">
+                            <div class="flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded text-primary text-[10px] font-semibold border border-outline-variant">
                                 <span class="w-1.5 h-1.5 rounded-full" style="background-color: {{ progress_color }};"></span>
-                                {{ progress_pct }}%
+                                {{ pct }}%
                             </div>
-                        </div>
-
-                        {% if deal.expected_close_date %}
-                        <div class="mt-2 flex items-center gap-1 text-label-sm text-secondary">
-                            <span class="material-symbols-outlined text-[14px]">event</span>
-                            <span class="text-[11px]">Exp. Close: {{ deal.expected_close_date.strftime('%b %d') if deal.expected_close_date else '' }}</span>
-                        </div>
-                        {% endif %}
-
-                        <!-- Hover Actions -->
-                        <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-surface-white/90 rounded p-1 backdrop-blur-sm shadow-sm border border-outline-variant {{ 'mt-5' if is_hot else '' }}">
-                            <button class="p-1 hover:text-primary text-secondary transition-colors" title="Details"
-                                    onclick="event.stopPropagation(); openDealDetail({{ deal.id }})">
-                                <span class="material-symbols-outlined text-[16px]">open_in_new</span>
-                            </button>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
-                <div class="flex-1 flex flex-col items-center justify-center text-center p-4 border-2 border-dashed border-outline-variant/50 rounded-lg mx-2 mb-2">
+                <div class="flex-1 flex flex-col items-center justify-center text-center p-4 border-2 border-dashed border-outline-variant/50 rounded-lg min-h-[10rem]">
                     <span class="material-symbols-outlined text-outline text-3xl mb-2">inbox</span>
-                    <p class="font-body-md text-label-md text-secondary">No deals in this stage</p>
+                    <p class="text-sm text-secondary">No deals in this stage</p>
                 </div>
                 {% endif %}
             </div>
-            {% endif %}
             {% endfor %}
         </div>
     </div>
@@ -264,7 +257,7 @@
                     <select name="status"
                             class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 text-body-md font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
                         {% for stage_key, stage_label in stages %}
-                        <option value="{{ stage_key }}">{{ stage_label }}</option>
+                        <option value="{{ stage_key }}" {{ 'selected' if stage_key == 'prospecting' }}>{{ stage_label }}</option>
                         {% endfor %}
                     </select>
                 </div>

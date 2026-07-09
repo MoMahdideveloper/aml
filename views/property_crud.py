@@ -199,6 +199,41 @@ def _serialize_property_for_json(property_obj):
     }
 
 
+def _form_data(form, name, default=None):
+    """Safe access for optional WTForms fields not present on every form class."""
+    field = getattr(form, name, None)
+    if field is None:
+        return default
+    return getattr(field, "data", default)
+
+
+def _form_str(form, name, default=""):
+    val = _form_data(form, name, default)
+    if val is None:
+        return default
+    return str(val).strip()
+
+
+def _form_int(form, name, default=None):
+    val = _form_data(form, name, None)
+    if val in (None, ""):
+        return default
+    try:
+        return int(val)
+    except (TypeError, ValueError):
+        return default
+
+
+def _form_float(form, name, default=None):
+    val = _form_data(form, name, None)
+    if val in (None, ""):
+        return default
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return default
+
+
 @bp.route("/properties/add", methods=["POST"])
 def add_property():
     form = PropertyForm()
@@ -208,25 +243,26 @@ def add_property():
         return redirect(url_for("properties.properties"))
 
     try:
-        listing_type = form.listing_type.data or "sale"
+        listing_type = _form_data(form, "listing_type") or "sale"
         if listing_type == "sale":
-            price = int(form.sale_price.data or 0)
+            price = int(_form_data(form, "sale_price") or 0)
             rahn = None
             ejare = None
         else:
             price = 0
-            rahn = int(form.rahn.data) if form.rahn.data not in (None, "") else None
-            ejare = int(form.ejare.data) if form.ejare.data not in (None, "") else None
+            rahn = _form_int(form, "rahn")
+            ejare = _form_int(form, "ejare")
 
         image_filename = None
-        if form.image.data:
-            file = form.image.data
-            filename = secure_filename(file.filename)
-            # Ensure upload directory exists
-            upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
-            os.makedirs(upload_folder, exist_ok=True)
-            file.save(os.path.join(upload_folder, filename))
-            image_filename = filename
+        image_field = getattr(form, "image", None)
+        if image_field is not None and image_field.data:
+            file = image_field.data
+            filename = secure_filename(file.filename or "")
+            if filename:
+                upload_folder = os.path.join(current_app.root_path, "static", "uploads")
+                os.makedirs(upload_folder, exist_ok=True)
+                file.save(os.path.join(upload_folder, filename))
+                image_filename = filename
 
         property_obj = database_service.add_property(
             form.title.data,
@@ -237,15 +273,15 @@ def add_property():
             int(form.bathrooms.data or 0),
             int(form.square_feet.data or 0),
             form.description.data or "",
-            "active",
+            _form_str(form, "status", "active") or "active",
             int(form.agent_id.data) if form.agent_id.data else None,
             int(form.year_built.data) if form.year_built.data else None,
             int(form.parking_spaces.data or 0),
             int(form.floors.data or 1),
             int(form.units.data or 1),
             form.property_condition.data or "good",
-            (form.heating_type.data or "").strip(),
-            (form.cooling_type.data or "").strip(),
+            _form_str(form, "heating_type"),
+            _form_str(form, "cooling_type"),
             None,
             form.property_features.data or "",
             form.neighborhood.data or "",
@@ -254,31 +290,31 @@ def add_property():
             rahn,
             ejare,
             image_filename=image_filename,
-            latitude=form.latitude.data,
-            longitude=form.longitude.data,
-            document_type=(form.document_type.data or "").strip() or None,
-            floor_number=int(form.floor_number.data) if form.floor_number.data not in (None, "") else None,
-            built_area=int(form.built_area.data) if form.built_area.data not in (None, "") else None,
-            land_area=int(form.land_area.data) if form.land_area.data not in (None, "") else None,
-            floor_covering=(form.floor_covering.data or "").strip() or None,
-            facade_type=(form.facade_type.data or "").strip() or None,
-            wall_covering=(form.wall_covering.data or "").strip() or None,
-            cabinet_type=(form.cabinet_type.data or "").strip() or None,
-            property_direction=(form.property_direction.data or "").strip() or None,
-            is_exchangeable=bool(form.is_exchangeable.data),
-            boundary_width=float(form.boundary_width.data) if form.boundary_width.data not in (None, "") else None,
-            density=(form.density.data or "").strip() or None,
-            commercial_status=(form.commercial_status.data or "").strip() or None,
-            usage_type=(form.usage_type.data or "").strip() or None,
-            ceiling_count=int(form.ceiling_count.data) if form.ceiling_count.data not in (None, "") else None,
-            permit_ceiling=(form.permit_ceiling.data or "").strip() or None,
-            property_length=float(form.property_length.data) if form.property_length.data not in (None, "") else None,
-            property_height=float(form.property_height.data) if form.property_height.data not in (None, "") else None,
-            price_per_meter=int(form.price_per_meter.data) if form.price_per_meter.data not in (None, "") else None,
-            custom_fields=(form.custom_fields.data or "").strip(),
-            is_ai_extracted=bool(form.is_ai_extracted.data or False),
-            ai_raw_data=form.ai_raw_data.data,
-            source=(form.source.data or "manual").strip()
+            latitude=_form_data(form, "latitude"),
+            longitude=_form_data(form, "longitude"),
+            document_type=_form_str(form, "document_type") or None,
+            floor_number=_form_int(form, "floor_number"),
+            built_area=_form_int(form, "built_area"),
+            land_area=_form_int(form, "land_area"),
+            floor_covering=_form_str(form, "floor_covering") or None,
+            facade_type=_form_str(form, "facade_type") or None,
+            wall_covering=_form_str(form, "wall_covering") or None,
+            cabinet_type=_form_str(form, "cabinet_type") or None,
+            property_direction=_form_str(form, "property_direction") or None,
+            is_exchangeable=bool(_form_data(form, "is_exchangeable") or False),
+            boundary_width=_form_float(form, "boundary_width"),
+            density=_form_str(form, "density") or None,
+            commercial_status=_form_str(form, "commercial_status") or None,
+            usage_type=_form_str(form, "usage_type") or None,
+            ceiling_count=_form_int(form, "ceiling_count"),
+            permit_ceiling=_form_str(form, "permit_ceiling") or None,
+            property_length=_form_float(form, "property_length"),
+            property_height=_form_float(form, "property_height"),
+            price_per_meter=_form_int(form, "price_per_meter"),
+            custom_fields=_form_str(form, "custom_fields"),
+            is_ai_extracted=bool(_form_data(form, "is_ai_extracted") or False),
+            ai_raw_data=_form_data(form, "ai_raw_data"),
+            source=_form_str(form, "source", "manual") or "manual",
         )
 
         flash(f'Property "{form.title.data}" added successfully!', "success")

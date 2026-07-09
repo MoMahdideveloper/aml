@@ -1170,7 +1170,8 @@ class DatabaseService:
                     value = self._to_toman_int(value)
                 original_values[key] = getattr(customer, key)
                 setattr(customer, key, value)
-        
+
+        db.session.commit()
         self.logger.info(f"Updated customer {customer_id}: {kwargs}")
         self._invalidate_customer_caches(customer_id)
         return customer

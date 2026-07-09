@@ -10,6 +10,8 @@ bp = Blueprint("customers", __name__)
 
 @bp.route("/customers")
 def customers():
+    from utils.match_profile import customer_preference_profile
+
     customers = database_service.get_customers()
     for customer in customers:
         setattr(customer, "total_deals", len(customer.deals))
@@ -18,6 +20,7 @@ def customers():
             "active_deals",
             len([d for d in customer.deals if d.status not in ["closed_won", "closed_lost"]]),
         )
+        setattr(customer, "match_profile", customer_preference_profile(customer))
     agents = database_service.get_agents()
     return render_template(
         "customers.html",
@@ -35,7 +38,9 @@ def add_customer():
         flash(first_error, "error")
         return redirect(url_for("customers"))
     try:
-        database_service.add_customer(
+        from utils.customer_opportunities import normalize_customer_type
+
+        customer = database_service.add_customer(
             form.name.data,
             form.email.data,
             form.phone.data,
@@ -46,6 +51,13 @@ def add_customer():
             form.preferred_type.data or "",
             form.location_preference.data or "",
         )
+        ctype = normalize_customer_type(
+            form.customer_type.data if hasattr(form, "customer_type") else None
+        )
+        extra = {"customer_type": ctype}
+        if form.preferences.data:
+            extra["preferences"] = form.preferences.data or ""
+        database_service.update_customer(customer.id, **extra)
         flash(f'Customer "{form.name.data}" added successfully!', "success")
     except Exception as e:
         logging.exception("Error adding customer")
@@ -58,11 +70,21 @@ def get_customer_json(customer_id):
     customer = database_service.get_customer(customer_id)
     if not customer or getattr(customer, "is_deleted", False):
         return jsonify({"error": "Customer not found"}), 404
-    return jsonify(customer.to_dict())
+    from utils.match_profile import customer_preference_profile
+
+    data = customer.to_dict()
+    data["match_profile"] = customer_preference_profile(customer)
+    data["preferred_bedrooms"] = customer.preferred_bedrooms
+    data["preferred_bathrooms"] = customer.preferred_bathrooms
+    data["preferences"] = customer.preferences or ""
+    data["status"] = customer.status or "active"
+    return jsonify(data)
 
 
 @bp.route("/customers/<int:customer_id>/edit", methods=["POST"])
 def edit_customer(customer_id):
+    from flask import request
+
     customer = database_service.get_customer(customer_id)
     if not customer or getattr(customer, "is_deleted", False):
         flash("Customer not found.", "error")
@@ -83,6 +105,15 @@ def edit_customer(customer_id):
             flash(f"Email {form.email.data} is already in use by another customer.", "error")
             return redirect(url_for("customers"))
 
+        status = (request.form.get("status") or customer.status or "active").strip()
+        if status not in ("active", "prospect", "lead", "inactive"):
+            status = customer.status or "active"
+
+        from utils.customer_opportunities import normalize_customer_type
+
+        ctype = normalize_customer_type(
+            form.customer_type.data if hasattr(form, "customer_type") else request.form.get("customer_type")
+        )
         database_service.update_customer(
             customer_id,
             name=form.name.data,
@@ -94,6 +125,9 @@ def edit_customer(customer_id):
             preferred_bathrooms=int(form.preferred_bathrooms.data or 0),
             preferred_type=form.preferred_type.data or "",
             location_preference=form.location_preference.data or "",
+            preferences=form.preferences.data or "",
+            customer_type=ctype,
+            status=status,
         )
         flash(f'Customer "{form.name.data}" updated successfully!', "success")
     except Exception as e:

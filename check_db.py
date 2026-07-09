@@ -1,4 +1,4 @@
-﻿import sqlite3
+import sqlite3
 import os
 
 # Check the database in current directory (what the config points to)
@@ -61,4 +61,4 @@ if os.path.exists(db_path_instance):
     except Exception as e:
         print(f'Error accessing database: {e}')
 else:
-    print(f'Database file not found: {db_path_instance}")
+    print(f"Database file not found: {db_path_instance}")

@@ -276,11 +276,192 @@ const App = {
     }
 };
 
-// 初始化
+// Match-alert inbox (shell bell)
+const PHNotif = {
+    agentId: null,
+    open: false,
+
+    init() {
+        this.refreshBadge();
+        document.addEventListener('click', (e) => {
+            if (!this.open) return;
+            const root = e.target.closest('[id^="ph-notif-root"]');
+            const panel = e.target.closest('[id^="ph-notif-panel"]');
+            if (!root && !panel) this.closeAll();
+        });
+        setInterval(() => this.refreshBadge(), 60000);
+    },
+
+    _badgeEls() {
+        return [
+            document.getElementById('ph-notif-badge-mobile'),
+            document.getElementById('ph-notif-badge-desktop'),
+        ].filter(Boolean);
+    },
+
+    _listEls() {
+        return [
+            document.getElementById('ph-notif-list-mobile'),
+            document.getElementById('ph-notif-list-desktop'),
+        ].filter(Boolean);
+    },
+
+    _panelEls() {
+        return [
+            document.getElementById('ph-notif-panel-mobile'),
+            document.getElementById('ph-notif-panel-desktop'),
+        ].filter(Boolean);
+    },
+
+    async refreshBadge() {
+        try {
+            const res = await fetch('/api/notifications/inbox?status=unread&limit=1', {
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            const n = data.unread_count || 0;
+            if (data.default_agent_id) this.agentId = data.default_agent_id;
+            this._badgeEls().forEach((el) => {
+                if (n > 0) {
+                    el.classList.remove('hidden');
+                    el.textContent = n > 99 ? '99+' : String(n);
+                } else {
+                    el.classList.add('hidden');
+                    el.textContent = '0';
+                }
+            });
+        } catch (_) { /* ignore */ }
+    },
+
+    async toggle() {
+        const wasOpen = this.open;
+        this.closeAll();
+        if (wasOpen) return;
+        this.open = true;
+        this._panelEls().forEach((p) => p && p.classList.remove('hidden'));
+        await this.loadList();
+    },
+
+    closeAll() {
+        this.open = false;
+        this._panelEls().forEach((p) => p && p.classList.add('hidden'));
+    },
+
+    async loadList() {
+        const lists = this._listEls();
+        lists.forEach((el) => {
+            el.innerHTML = '<p class="px-3 py-4 text-on-surface-variant text-xs">Loading…</p>';
+        });
+        try {
+            const res = await fetch('/api/notifications/inbox?status=all&limit=15', {
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!res.ok) throw new Error('Failed');
+            const data = await res.json();
+            if (data.default_agent_id) this.agentId = data.default_agent_id;
+            const items = data.notifications || [];
+            const html =
+                items.length === 0
+                    ? '<p class="px-3 py-6 text-center text-on-surface-variant text-xs">No match alerts yet. High-quality matches create alerts when always-on rematch runs.</p>'
+                    : items
+                          .map((n) => {
+                              const unread = n.status === 'unread';
+                              const title = this._esc(n.title || 'Match alert');
+                              const msg = this._esc((n.message || '').slice(0, 120));
+                              const when = n.created_at
+                                  ? new Date(n.created_at).toLocaleString()
+                                  : '';
+                              return (
+                                  '<button type="button" class="w-full text-left px-3 py-2.5 border-b border-outline-variant hover:bg-surface-container transition-colors ' +
+                                  (unread ? 'bg-primary/5' : '') +
+                                  '" data-notif-id="' +
+                                  n.id +
+                                  '" data-agent-id="' +
+                                  n.agent_id +
+                                  '" onclick="PHNotif.openItem(this)">' +
+                                  '<div class="flex items-start gap-2">' +
+                                  '<span class="material-symbols-outlined text-[18px] text-primary mt-0.5">' +
+                                  (n.priority === 'high' ? 'priority_high' : 'auto_awesome') +
+                                  '</span>' +
+                                  '<div class="min-w-0 flex-1">' +
+                                  '<div class="text-xs font-semibold text-primary">' +
+                                  title +
+                                  '</div>' +
+                                  '<div class="text-[11px] text-on-surface-variant mt-0.5 line-clamp-2">' +
+                                  msg +
+                                  '</div>' +
+                                  '<div class="text-[10px] text-on-surface-variant/80 mt-1">' +
+                                  when +
+                                  '</div></div></div></button>'
+                              );
+                          })
+                          .join('');
+            lists.forEach((el) => {
+                el.innerHTML = html;
+            });
+            const n = data.unread_count || 0;
+            this._badgeEls().forEach((el) => {
+                if (n > 0) {
+                    el.classList.remove('hidden');
+                    el.textContent = n > 99 ? '99+' : String(n);
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+        } catch (e) {
+            lists.forEach((el) => {
+                el.innerHTML = '<p class="px-3 py-4 text-error text-xs">Could not load alerts.</p>';
+            });
+        }
+    },
+
+    async openItem(btn) {
+        const id = btn.getAttribute('data-notif-id');
+        const agentId = btn.getAttribute('data-agent-id') || this.agentId;
+        if (id && agentId) {
+            try {
+                await fetch('/api/agents/' + agentId + '/notifications/' + id + '/read', {
+                    method: 'POST',
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                });
+            } catch (_) { /* ignore */ }
+        }
+        this.closeAll();
+        window.location.href = '/recommendations';
+    },
+
+    async markAllRead() {
+        if (!this.agentId) {
+            await this.loadList();
+            return;
+        }
+        try {
+            await fetch('/api/agents/' + this.agentId + '/notifications/mark-all-read', {
+                method: 'POST',
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
+        } catch (_) { /* ignore */ }
+        await this.refreshBadge();
+        await this.loadList();
+    },
+
+    _esc(s) {
+        return String(s ?? '').replace(/[&<>"']/g, function (m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+        });
+    },
+};
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => App.init());
+    document.addEventListener('DOMContentLoaded', () => {
+        App.init();
+        PHNotif.init();
+    });
 } else {
     App.init();
+    PHNotif.init();
 }
 
 window.App = App;
+window.PHNotif = PHNotif;

@@ -13,21 +13,21 @@
 {% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+<!-- Page Header (Stitch Clients Management) -->
+<header class="ph-page-header">
     <div>
-        <h1 class="text-display-lg font-display-lg text-primary mb-2">Clients</h1>
-        <p class="text-body-lg font-body-lg text-on-surface-variant">Manage client relationships and engagement history</p>
+        <p class="ph-page-kicker">Relationships</p>
+        <h1 class="ph-page-title">Clients</h1>
+        <p class="ph-page-subtitle">Manage client relationships and engagement history</p>
     </div>
-    <button data-open-modal="addCustomerModal"
-            class="bg-primary text-on-primary px-6 py-3 rounded-lg text-label-md font-label-md hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] hover:opacity-95 transition-all flex items-center gap-2 w-fit">
-        <span class="material-symbols-outlined text-lg">add</span>
+    <button type="button" data-open-modal="addCustomerModal" class="ph-btn-primary">
+        <span class="material-symbols-outlined text-[18px]">add</span>
         Add New Client
     </button>
 </header>
 
 <!-- Search & Filters Panel -->
-<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 mb-12 shadow-sm">
+<section class="ph-page-panel p-6 mb-8">
     <form method="GET" action="{{ url_for('customers') }}" id="customerSearchForm">
         <div class="flex flex-col xl:flex-row gap-6 mb-6">
             <!-- Text Search -->
@@ -93,9 +93,11 @@
 </section>
 
 <!-- Clients Grid -->
-<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-gutter">
+<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
     {% for customer in customers %}
-    <article class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-all flex flex-col">
+    {% set mp = customer.match_profile or {} %}
+    {% set pct = mp.percent|default(0) %}
+    <article class="ph-page-card p-6 flex flex-col">
         <!-- Card Header -->
         <div class="flex justify-between items-start mb-6">
             <div class="flex items-center gap-4">
@@ -104,9 +106,20 @@
                 </div>
                 <div>
                     <h3 class="text-headline-md font-headline-md text-primary leading-tight">{{ customer.name }}</h3>
-                    <span class="inline-block mt-1 bg-surface-container-high text-primary border border-outline-variant rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-wider font-label-sm">
-                        {{ customer.customer_type or 'Buyer' }}
+                    <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                    <span class="inline-block bg-surface-container-high text-primary border border-outline-variant rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-wider font-label-sm">
+                        {{ customer.customer_type or 'buyer' }}
                     </span>
+                    <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums border
+                        {% if pct >= 70 %}bg-[#dcfce7] text-[#15803d] border-green-200
+                        {% elif pct >= 50 %}bg-primary/10 text-primary border-outline-variant
+                        {% elif pct >= 30 %}bg-[#fef9c3] text-[#854d0e] border-amber-200
+                        {% else %}bg-surface-container text-secondary border-outline-variant{% endif %}"
+                          title="Match preference completeness{% if mp.missing %} — missing: {{ mp.missing|join(', ') }}{% endif %}">
+                        <span class="material-symbols-outlined text-[12px]">tune</span>
+                        Prefs {{ pct }}%
+                    </span>
+                    </div>
                 </div>
             </div>
             <div class="flex gap-2">
@@ -137,19 +150,25 @@
             </div>
         </div>
 
-        <!-- Preferences -->
+        <!-- Preferences (match parameters) -->
         <div class="mb-6 flex-1">
-            <h4 class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Preferences</h4>
-            {% if customer.property_type %}
+            <h4 class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Match preferences</h4>
+            {% if customer.preferred_type %}
             <p class="text-body-md font-body-md text-primary flex items-center gap-2 mb-1">
                 <span class="material-symbols-outlined text-base text-outline">apartment</span>
-                {{ customer.property_type }}
+                {{ customer.preferred_type }}
             </p>
             {% endif %}
-            {% if customer.preferred_location %}
+            {% if customer.location_preference %}
             <p class="text-body-md font-body-md text-primary flex items-center gap-2 mb-1">
                 <span class="material-symbols-outlined text-base text-outline">location_on</span>
-                {{ customer.preferred_location }}
+                {{ customer.location_preference }}
+            </p>
+            {% endif %}
+            {% if customer.preferred_bedrooms or customer.preferred_bathrooms %}
+            <p class="text-body-md font-body-md text-primary flex items-center gap-2 mb-1">
+                <span class="material-symbols-outlined text-base text-outline">bed</span>
+                {{ customer.preferred_bedrooms or '—' }} bd · {{ customer.preferred_bathrooms or '—' }} ba
             </p>
             {% endif %}
             {% if customer.budget_min or customer.budget_max %}
@@ -162,6 +181,11 @@
                 {% else %}
                     From ${{ "{:,.0f}".format(customer.budget_min) }}
                 {% endif %}
+            </p>
+            {% elif mp.is_weak %}
+            <p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-2 flex items-start gap-1.5">
+                <span class="material-symbols-outlined text-[14px] flex-shrink-0">warning</span>
+                Prefs incomplete — open View Profile to improve matches.
             </p>
             {% endif %}
         </div>
@@ -247,9 +271,10 @@
                 <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Client Type</label>
                 <select name="customer_type"
                         class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
-                    <option value="buyer">Buyer</option>
-                    <option value="seller">Seller</option>
-                    <option value="investor">Investor</option>
+                    <option value="buyer">Buyer — property opportunities</option>
+                    <option value="seller">Seller — comps &amp; deal pipeline</option>
+                    <option value="both">Both buyer &amp; seller</option>
+                    <option value="investor">Investor — both modes</option>
                 </select>
             </div>
             <div class="grid grid-cols-2 gap-4">
@@ -278,6 +303,26 @@
                        class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
                        placeholder="e.g. Condo, Villa">
             </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Bedrooms</label>
+                    <input type="number" name="preferred_bedrooms" min="0"
+                           class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                           placeholder="3">
+                </div>
+                <div>
+                    <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Bathrooms</label>
+                    <input type="number" name="preferred_bathrooms" min="0"
+                           class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                           placeholder="2">
+                </div>
+            </div>
+            <div>
+                <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Must-have features / notes</label>
+                <textarea name="preferences" rows="2"
+                          class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                          placeholder="elevator, parking, storage, approx size…"></textarea>
+            </div>
             <div class="flex items-center gap-3 pt-2">
                 <button type="button"
                         data-modal-close onclick="window.PHModal ? PHModal.hide('addCustomerModal') : document.getElementById('addCustomerModal').classList.add('hidden')"
@@ -293,11 +338,14 @@
     </div>
 </div>
 
-<!-- Customer profile modal shell -->
+<!-- Customer profile modal — full match parameters + edit -->
 <div id="customerProfileModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]" data-modal role="dialog" aria-modal="true" aria-labelledby="customerProfileTitle">
-    <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-lg max-h-[90vh] flex flex-col" onclick="event.stopPropagation()">
-        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
-            <h2 id="customerProfileTitle" class="text-lg font-semibold text-primary">Client profile</h2>
+    <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-2xl max-h-[92vh] flex flex-col" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant flex-shrink-0">
+            <h2 id="customerProfileTitle" class="text-lg font-semibold text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined text-[22px]">person</span>
+                Client profile
+            </h2>
             <button type="button" data-modal-close onclick="window.PHModal ? PHModal.hide('customerProfileModal') : document.getElementById('customerProfileModal').classList.add('hidden')"
                     class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" aria-label="Close">
                 <span class="material-symbols-outlined text-[20px]">close</span>
@@ -306,9 +354,13 @@
         <div id="customerProfileBody" class="px-5 py-4 overflow-y-auto flex-1 text-sm text-on-surface">
             Loading…
         </div>
-        <div class="px-5 py-4 border-t border-outline-variant flex justify-end gap-2">
+        <div class="px-5 py-4 border-t border-outline-variant flex flex-wrap justify-end gap-2 flex-shrink-0">
             <button type="button" class="px-4 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container"
                     onclick="window.PHModal ? PHModal.hide('customerProfileModal') : document.getElementById('customerProfileModal').classList.add('hidden')">Close</button>
+            <a id="customerProfileRecs" href="/recommendations" class="px-4 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container inline-flex items-center gap-1">
+                <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+                Recommendations
+            </a>
             <a id="customerProfileMail" href="#" class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90">Email client</a>
         </div>
     </div>
@@ -317,33 +369,212 @@
 
 {% block extra_js %}
 <script>
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function moneyFmt(n) {
+  if (n == null || n === '' || Number(n) === 0) return 'Not set';
+  return '$' + Number(n).toLocaleString();
+}
+function fillClass(pct) {
+  if (pct >= 70) return 'bg-green-700';
+  if (pct >= 50) return 'bg-primary';
+  if (pct >= 30) return 'bg-amber-600';
+  return 'bg-slate-400';
+}
+
 async function openCustomerProfile(customerId) {
   const modal = document.getElementById('customerProfileModal');
   const body = document.getElementById('customerProfileBody');
   const mail = document.getElementById('customerProfileMail');
+  const recs = document.getElementById('customerProfileRecs');
   if (!modal || !body) return;
   body.innerHTML = '<p class="text-on-surface-variant">Loading…</p>';
-  if (window.PHModal) PHModal.show(modal); else { modal.classList.remove('hidden'); document.body.style.overflow='hidden'; }
+  if (window.PHModal) PHModal.show(modal); else { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
   try {
-    const res = await fetch('/api/customers/' + customerId, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }});
+    const res = await fetch('/api/customers/' + customerId, {
+      headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    });
     if (!res.ok) throw new Error('Failed to load client');
     const c = await res.json();
-    const money = (n) => n != null ? '$' + Number(n).toLocaleString() : '—';
+    const mp = c.match_profile || { percent: 0, filled: 0, total: 7, missing: [], is_weak: true };
+    const pct = mp.percent || 0;
+    const csrfEl = document.querySelector('meta[name="csrf-token"], input[name="csrf_token"]');
+    const csrf = csrfEl ? (csrfEl.content || csrfEl.value || '') : '';
+    const status = c.status || 'active';
+    const ctype = c.customer_type || 'buyer';
+    const statuses = ['active', 'prospect', 'lead', 'inactive'];
+    const statusOpts = statuses.map(s =>
+      `<option value="${s}" ${s === status ? 'selected' : ''}>${s}</option>`
+    ).join('');
+    const typeOpts = [
+      ['buyer', 'Buyer — buying opportunities'],
+      ['seller', 'Seller — market & deal opportunities'],
+      ['both', 'Both — buy + sell'],
+      ['investor', 'Investor — both modes'],
+    ].map(([v, lab]) =>
+      `<option value="${v}" ${v === ctype ? 'selected' : ''}>${lab}</option>`
+    ).join('');
+
     body.innerHTML = `
-      <dl class="space-y-3">
-        <div><dt class="text-xs text-on-surface-variant uppercase tracking-wide">Name</dt><dd class="font-semibold text-primary mt-0.5">${esc(c.name)}</dd></div>
-        <div><dt class="text-xs text-on-surface-variant uppercase tracking-wide">Email</dt><dd class="mt-0.5"><a class="text-primary hover:underline" href="mailto:${esc(c.email||'')}">${esc(c.email||'—')}</a></dd></div>
-        <div><dt class="text-xs text-on-surface-variant uppercase tracking-wide">Phone</dt><dd class="mt-0.5">${esc(c.phone||'—')}</dd></div>
-        <div><dt class="text-xs text-on-surface-variant uppercase tracking-wide">Budget</dt><dd class="mt-0.5 tabular-nums">${money(c.budget_min)} – ${money(c.budget_max)}</dd></div>
-        <div><dt class="text-xs text-on-surface-variant uppercase tracking-wide">Prefs</dt><dd class="mt-0.5">${esc(c.preferred_type||'—')} · ${esc(c.location_preference||c.preferred_location||'—')}</dd></div>
-      </dl>`;
+      <div class="flex items-start gap-4 mb-5">
+        <div class="w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center font-semibold text-lg flex-shrink-0">
+          ${esc((c.name || '?').trim().charAt(0).toUpperCase())}
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <h3 class="text-lg font-semibold text-primary truncate">${esc(c.name)}</h3>
+            <span class="text-[11px] px-2 py-0.5 rounded-full border border-outline-variant text-secondary uppercase">${esc(status)}</span>
+            <span class="text-[11px] px-2 py-0.5 rounded-full bg-primary text-on-primary uppercase font-semibold">${esc(ctype)}</span>
+          </div>
+          <p class="text-sm text-secondary mt-1 flex flex-wrap gap-x-4 gap-y-1">
+            ${c.email ? `<a class="hover:text-primary inline-flex items-center gap-1" href="mailto:${esc(c.email)}"><span class="material-symbols-outlined text-[16px]">mail</span>${esc(c.email)}</a>` : ''}
+            ${c.phone ? `<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">call</span>${esc(c.phone)}</span>` : ''}
+          </p>
+        </div>
+      </div>
+
+      <h4 class="text-xs font-semibold text-secondary uppercase tracking-wider mb-3 flex items-center gap-1">
+        <span class="material-symbols-outlined text-[16px]">tune</span>
+        Match parameters
+      </h4>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-4">
+        <div class="rounded-lg border border-outline-variant bg-surface p-3 ${!(c.budget_min || c.budget_max) ? 'opacity-60' : ''}">
+          <div class="text-[10px] uppercase tracking-wider text-secondary mb-1">Budget</div>
+          <div class="text-sm font-semibold text-primary tabular-nums">${moneyFmt(c.budget_min)} – ${moneyFmt(c.budget_max)}</div>
+        </div>
+        <div class="rounded-lg border border-outline-variant bg-surface p-3 ${!(c.preferred_bedrooms) ? 'opacity-60' : ''}">
+          <div class="text-[10px] uppercase tracking-wider text-secondary mb-1">Bedrooms</div>
+          <div class="text-sm font-semibold text-primary">${c.preferred_bedrooms || 'Any'}</div>
+        </div>
+        <div class="rounded-lg border border-outline-variant bg-surface p-3 ${!(c.preferred_bathrooms) ? 'opacity-60' : ''}">
+          <div class="text-[10px] uppercase tracking-wider text-secondary mb-1">Bathrooms</div>
+          <div class="text-sm font-semibold text-primary">${c.preferred_bathrooms || 'Any'}</div>
+        </div>
+        <div class="rounded-lg border border-outline-variant bg-surface p-3 ${!(c.preferred_type) ? 'opacity-60' : ''}">
+          <div class="text-[10px] uppercase tracking-wider text-secondary mb-1">Property type</div>
+          <div class="text-sm font-semibold text-primary truncate">${esc(c.preferred_type || 'Any')}</div>
+        </div>
+        <div class="rounded-lg border border-outline-variant bg-surface p-3 ${!(c.location_preference) ? 'opacity-60' : ''}">
+          <div class="text-[10px] uppercase tracking-wider text-secondary mb-1">Location</div>
+          <div class="text-sm font-semibold text-primary truncate">${esc(c.location_preference || 'Any area')}</div>
+        </div>
+        <div class="rounded-lg border border-outline-variant bg-surface p-3 ${!(c.preferences) ? 'opacity-60' : ''}">
+          <div class="text-[10px] uppercase tracking-wider text-secondary mb-1">Features / notes</div>
+          <div class="text-sm text-primary line-clamp-2">${esc(c.preferences || 'None')}</div>
+        </div>
+      </div>
+
+      <div class="mb-5">
+        <div class="flex items-center justify-between gap-2 mb-1.5">
+          <span class="text-xs font-medium text-secondary">Preference completeness</span>
+          <span class="text-xs font-semibold text-primary tabular-nums">${pct}% (${mp.filled || 0}/${mp.total || 7})</span>
+        </div>
+        <div class="h-2 rounded-full bg-surface-container overflow-hidden">
+          <div class="h-full rounded-full ${fillClass(pct)}" style="width:${pct}%"></div>
+        </div>
+        ${mp.is_weak ? `
+        <p class="mt-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-start gap-2">
+          <span class="material-symbols-outlined text-[16px] flex-shrink-0">warning</span>
+          <span>Preferences incomplete${mp.missing && mp.missing.length ? ' (missing: ' + mp.missing.join(', ') + ')' : ''}. Fill them below for better recommendations.</span>
+        </p>` : ''}
+      </div>
+
+      <form method="POST" action="/customers/${customerId}/edit" class="space-y-3 border-t border-outline-variant pt-4" id="customerProfileEditForm">
+        ${csrf ? `<input type="hidden" name="csrf_token" value="${esc(csrf)}">` : ''}
+
+        <h4 class="text-sm font-semibold text-primary flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-[18px]">edit_note</span>
+          Edit match preferences
+        </h4>
+        <p class="text-xs text-secondary -mt-1">These drive AI ranking (budget, location, type, rooms, amenities).</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] uppercase tracking-wider text-secondary mb-1">Full name</label>
+            <input type="text" name="name" required value="${esc(c.name || '')}"
+                   class="w-full px-2.5 py-2 rounded-lg border border-outline-variant bg-surface text-sm focus:border-primary outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase tracking-wider text-secondary mb-1">Status</label>
+            <select name="status" class="w-full px-2.5 py-2 rounded-lg border border-outline-variant bg-surface text-sm focus:border-primary outline-none">
+              ${statusOpts}
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-[10px] uppercase tracking-wider text-secondary mb-1">Client role (opportunities)</label>
+            <select name="customer_type" class="w-full px-2.5 py-2 rounded-lg border border-outline-variant bg-surface text-sm focus:border-primary outline-none">
+              ${typeOpts}
+            </select>
+            <p class="text-[10px] text-secondary mt-1">Buyer = property opportunities for them. Seller = comps &amp; deals for them. Not agent metrics.</p>
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase tracking-wider text-secondary mb-1">Email</label>
+            <input type="email" name="email" required value="${esc(c.email || '')}"
+                   class="w-full px-2.5 py-2 rounded-lg border border-outline-variant bg-surface text-sm focus:border-primary outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase tracking-wider text-secondary mb-1">Phone</label>
+            <input type="tel" name="phone" required value="${esc(c.phone || '')}"
+                   class="w-full px-2.5 py-2 rounded-lg border border-outline-variant bg-surface text-sm focus:border-primary outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase tracking-wider text-secondary mb-1">Budget min ($)</label>
+            <input type="number" name="budget_min" min="0" step="1" value="${c.budget_min || ''}"
+                   class="w-full px-2.5 py-2 rounded-lg border border-outline-variant bg-surface text-sm focus:border-primary outline-none" placeholder="150000">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase tracking-wider text-secondary mb-1">Budget max ($)</label>
+            <input type="number" name="budget_max" min="0" step="1" value="${c.budget_max || ''}"
+                   class="w-full px-2.5 py-2 rounded-lg border border-outline-variant bg-surface text-sm focus:border-primary outline-none" placeholder="350000">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase tracking-wider text-secondary mb-1">Bedrooms</label>
+            <input type="number" name="preferred_bedrooms" min="0" max="20" value="${c.preferred_bedrooms || ''}"
+                   class="w-full px-2.5 py-2 rounded-lg border border-outline-variant bg-surface text-sm focus:border-primary outline-none" placeholder="3">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase tracking-wider text-secondary mb-1">Bathrooms</label>
+            <input type="number" name="preferred_bathrooms" min="0" max="20" value="${c.preferred_bathrooms || ''}"
+                   class="w-full px-2.5 py-2 rounded-lg border border-outline-variant bg-surface text-sm focus:border-primary outline-none" placeholder="2">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase tracking-wider text-secondary mb-1">Property type</label>
+            <input type="text" name="preferred_type" value="${esc(c.preferred_type || '')}"
+                   class="w-full px-2.5 py-2 rounded-lg border border-outline-variant bg-surface text-sm focus:border-primary outline-none" placeholder="apartment, villa…">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase tracking-wider text-secondary mb-1">Location preference</label>
+            <input type="text" name="location_preference" value="${esc(c.location_preference || '')}"
+                   class="w-full px-2.5 py-2 rounded-lg border border-outline-variant bg-surface text-sm focus:border-primary outline-none" placeholder="Neighborhood / area">
+          </div>
+        </div>
+        <div>
+          <label class="block text-[10px] uppercase tracking-wider text-secondary mb-1">Must-have features / notes</label>
+          <textarea name="preferences" rows="3"
+                    class="w-full px-2.5 py-2 rounded-lg border border-outline-variant bg-surface text-sm focus:border-primary outline-none resize-y"
+                    placeholder="elevator, parking, storage, ~120 sqm…">${esc(c.preferences || '')}</textarea>
+        </div>
+        <div class="flex flex-wrap gap-2 pt-1">
+          <button type="submit"
+                  class="inline-flex items-center justify-center gap-2 bg-primary text-on-primary rounded-lg px-4 py-2.5 text-sm font-medium hover:opacity-90">
+            <span class="material-symbols-outlined text-[18px]">save</span>
+            Save profile
+          </button>
+          <a href="/get_customer_recommendations/${customerId}"
+             class="inline-flex items-center justify-center gap-2 border border-outline-variant text-primary rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-surface-container">
+            <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+            Get recommendations
+          </a>
+        </div>
+      </form>
+    `;
+
     if (mail) mail.href = c.email ? ('mailto:' + c.email) : '#';
+    if (recs) recs.href = '/get_customer_recommendations/' + customerId;
   } catch (e) {
-    body.innerHTML = `<p class="text-error">${esc(e.message||'Error')}</p>`;
+    body.innerHTML = `<p class="text-error">${esc(e.message || 'Error')}</p>`;
   }
-}
-function esc(s) {
-  return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 </script>
 {% endblock %}

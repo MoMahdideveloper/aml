@@ -26,45 +26,42 @@
 {% set total_pending = agent_list|sum(attribute='pending_deals') %}
 {% set total_tasks = agent_list|sum(attribute='pending_tasks') %}
 
-<!-- Header -->
-<header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
+<!-- Header (Stitch Agent Management) -->
+<header class="ph-page-header">
     <div>
-        <p class="text-xs font-medium text-on-surface-variant uppercase tracking-[0.15em] mb-2">Team</p>
-        <h1 class="text-2xl md:text-3xl font-semibold text-primary mb-2">Agent management</h1>
-        <p class="text-sm md:text-base text-on-surface-variant">
-            Manage your real estate team, performance, and contact details.
-        </p>
+        <p class="ph-page-kicker">Team</p>
+        <h1 class="ph-page-title">Agent management</h1>
+        <p class="ph-page-subtitle">Manage your real estate team, performance, and contact details.</p>
     </div>
-    <button type="button" data-open-modal="addAgentModal"
-            class="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-lg text-sm font-medium hover:opacity-90 shadow-sm">
-        <span class="material-symbols-outlined text-[20px]">add</span>
+    <button type="button" data-open-modal="addAgentModal" class="ph-btn-primary">
+        <span class="material-symbols-outlined text-[18px]">add</span>
         Add new agent
     </button>
 </header>
 
 <!-- Team KPIs -->
 <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+    <div class="ph-page-card p-4">
         <p class="text-xs text-on-surface-variant uppercase tracking-wider mb-1">Agents</p>
         <p class="text-2xl font-semibold text-primary tabular-nums">{{ agent_list|length }}</p>
     </div>
-    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+    <div class="ph-page-card p-4">
         <p class="text-xs text-on-surface-variant uppercase tracking-wider mb-1">Active listings</p>
         <p class="text-2xl font-semibold text-primary tabular-nums">{{ total_active }}</p>
     </div>
-    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+    <div class="ph-page-card p-4">
         <p class="text-xs text-on-surface-variant uppercase tracking-wider mb-1">Open deals</p>
         <p class="text-2xl font-semibold text-primary tabular-nums">{{ total_pending }}</p>
         <p class="text-[11px] text-on-surface-variant mt-1">{{ total_deals }} total deals</p>
     </div>
-    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+    <div class="ph-page-card p-4">
         <p class="text-xs text-on-surface-variant uppercase tracking-wider mb-1">Pending tasks</p>
         <p class="text-2xl font-semibold text-primary tabular-nums">{{ total_tasks }}</p>
     </div>
 </section>
 
 <!-- Search -->
-<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 mb-8 shadow-sm">
+<section class="ph-page-panel p-4 mb-8">
     <div class="flex flex-col md:flex-row gap-3">
         <div class="relative flex-1">
             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
@@ -86,7 +83,7 @@
 <!-- Agents Grid -->
 <div id="agentGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
     {% for agent in agent_list %}
-    <article class="agent-card bg-surface-container-lowest border border-outline-variant rounded-xl p-6 card-hover flex flex-col"
+    <article class="agent-card ph-page-card p-6 card-hover flex flex-col"
              data-name="{{ agent.name|lower }}"
              data-email="{{ (agent.email or '')|lower }}"
              data-phone="{{ agent.phone or '' }}"

@@ -17,21 +17,21 @@
 {% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<section class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+<!-- Page Header (Stitch Tasks Management) -->
+<header class="ph-page-header">
     <div>
-        <h1 class="font-display-lg text-display-lg text-primary">Tasks</h1>
-        <p class="font-body-md text-body-md text-on-surface-variant mt-2">Manage follow-ups, appointments, and action items</p>
+        <p class="ph-page-kicker">Operations</p>
+        <h1 class="ph-page-title">Tasks</h1>
+        <p class="ph-page-subtitle">Manage follow-ups, appointments, and action items</p>
     </div>
-    <button type="button" data-open-modal="taskModal"
-            class="bg-primary text-on-primary font-label-md text-label-md px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-inverse-surface transition-colors shadow-sm w-full md:w-auto justify-center">
-        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+    <button type="button" data-open-modal="taskModal" class="ph-btn-primary shrink-0">
+        <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">add</span>
         Add New Task
     </button>
-</section>
+</header>
 
 <!-- Controls Toolbar -->
-<section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6">
+<section class="ph-page-panel p-4 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6">
     <!-- View Toggles -->
     <div class="flex bg-surface-container p-1 rounded-lg">
         <button class="px-4 py-2 rounded-lg bg-surface-container-lowest shadow-sm border border-outline-variant font-label-md text-label-md text-primary flex items-center gap-2">
@@ -84,9 +84,9 @@
 </section>
 
 <!-- Task List -->
-<section class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-[0_8px_30px_rgba(27,38,49,0.02)]">
+<section class="ph-page-panel overflow-hidden">
     <!-- Column Headers (Desktop) -->
-    <div class="hidden lg:grid grid-cols-[40px_minmax(250px,1fr)_180px_140px_100px_120px_100px_40px] gap-4 p-4 border-b border-outline-variant bg-surface-container-low font-label-sm text-label-sm text-secondary uppercase tracking-wider">
+    <div class="hidden md:grid grid-cols-[40px_minmax(0,1.4fr)_minmax(0,0.9fr)_120px_100px_110px_100px_40px] gap-4 p-4 border-b border-outline-variant bg-surface-container-low font-label-sm text-label-sm text-secondary uppercase tracking-wider">
         <div class="flex items-center justify-center">
             <span class="material-symbols-outlined text-[18px]">done_all</span>
         </div>
@@ -117,9 +117,9 @@
         {% set p_cls = priority_badge.get(task.priority, priority_badge['low']) %}
         {% set s_cls = status_badge.get(task.status, status_badge['pending']) %}
 
-        <div class="group flex flex-col lg:grid lg:grid-cols-[40px_minmax(250px,1fr)_180px_140px_100px_120px_100px_40px] gap-3 lg:gap-4 p-4 hover:bg-surface-container-low transition-colors items-start lg:items-center relative {{ 'opacity-60' if task.status == 'completed' }}">
+        <div class="group grid grid-cols-1 md:grid-cols-[40px_minmax(0,1.4fr)_minmax(0,0.9fr)_120px_100px_110px_100px_40px] gap-3 md:gap-4 p-4 hover:bg-surface-container-low transition-colors items-center relative {{ 'opacity-60' if task.status == 'completed' }}">
             <!-- Checkbox -->
-            <div class="absolute lg:relative top-4 lg:top-auto left-4 lg:left-auto flex items-center justify-center">
+            <div class="flex items-center justify-start md:justify-center">
                 <form method="POST" action="{{ url_for('complete_task', task_id=task.id) }}" class="inline">
                     <input type="checkbox"
                            class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary cursor-pointer bg-surface transition-all"
@@ -129,21 +129,21 @@
             </div>
 
             <!-- Task Name -->
-            <div class="pl-8 lg:pl-0">
-                <p class="font-body-md text-body-md text-on-surface font-medium group-hover:text-primary transition-colors cursor-pointer {{ 'line-through text-secondary' if task.status == 'completed' }}">
+            <div class="min-w-0">
+                <p class="font-body-md text-body-md text-on-surface font-medium group-hover:text-primary transition-colors cursor-pointer truncate {{ 'line-through text-secondary' if task.status == 'completed' }}">
                     {{ task.title }}
                 </p>
                 {% if task.description %}
-                <p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5 truncate max-w-xs">{{ task.description[:80] }}</p>
+                <p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5 truncate">{{ task.description[:80] }}</p>
                 {% endif %}
             </div>
 
             <!-- Related To -->
-            <div class="pl-8 lg:pl-0 flex items-center">
+            <div class="min-w-0 flex items-center">
                 {% if task.property or task.customer %}
-                <span class="inline-flex items-center gap-1.5 px-2 py-1 bg-surface-container rounded-md font-label-sm text-label-sm text-on-surface-variant border border-outline-variant/50">
-                    <span class="material-symbols-outlined text-[14px]">{{ 'home' if task.property else 'person' }}</span>
-                    {{ (task.property.title if task.property else task.customer.name) | truncate(20, True, '…') }}
+                <span class="inline-flex items-center gap-1.5 px-2 py-1 bg-surface-container rounded-md font-label-sm text-label-sm text-on-surface-variant border border-outline-variant/50 max-w-full truncate">
+                    <span class="material-symbols-outlined text-[14px] shrink-0">{{ 'home' if task.property else 'person' }}</span>
+                    <span class="truncate">{{ (task.property.title if task.property else task.customer.name) | truncate(20, True, '…') }}</span>
                 </span>
                 {% else %}
                 <span class="text-on-surface-variant font-label-sm text-label-sm">—</span>
@@ -151,7 +151,7 @@
             </div>
 
             <!-- Due Date -->
-            <div class="pl-8 lg:pl-0 font-body-md text-body-md {{ 'text-error flex items-center gap-1' if is_overdue else 'text-on-surface-variant' }}">
+            <div class="font-body-md text-body-md whitespace-nowrap {{ 'text-error flex items-center gap-1' if is_overdue else 'text-on-surface-variant' }}">
                 {% if is_overdue %}
                 <span class="material-symbols-outlined text-[16px]">warning</span>
                 {% endif %}
@@ -163,14 +163,14 @@
             </div>
 
             <!-- Priority Badge -->
-            <div class="pl-8 lg:pl-0">
+            <div>
                 <span class="inline-block px-2 py-1 rounded-md font-label-sm text-label-sm border {{ p_cls }}">
                     {{ task.priority.title() if task.priority else 'Low' }}
                 </span>
             </div>
 
             <!-- Status Badge -->
-            <div class="pl-8 lg:pl-0">
+            <div>
                 <span class="inline-block px-2 py-1 rounded-md font-label-sm text-label-sm border {{ s_cls }}">
                     {{ task.status.replace('_', ' ').title() if task.status else 'Pending' }}
                 </span>

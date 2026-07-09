@@ -2,7 +2,7 @@
 # Usage: make <target>
 # On Windows, use Git Bash / WSL, or run the equivalent commands from docs/PRODUCTION.md
 
-.PHONY: help install css test test-core ci-local migrate up-prod down-prod logs-prod build-prod health
+.PHONY: help install css test test-core ci-local migrate up-prod down-prod logs-prod build-prod health redis-up always-on worker beat
 
 help:
 	@echo "Targets:"
@@ -12,6 +12,10 @@ help:
 	@echo "  test        - Full pytest"
 	@echo "  ci-local    - CSS build + core tests (mirrors GitHub Actions gate)"
 	@echo "  migrate     - flask db upgrade"
+	@echo "  redis-up    - start Redis (compose profile crm)"
+	@echo "  worker      - Celery worker (always-on rematch)"
+	@echo "  beat        - Celery beat scheduler"
+	@echo "  always-on   - print how to run full local stack (see scripts/dev-always-on.ps1 on Windows)"
 	@echo "  build-prod  - docker compose build (prod profile)"
 	@echo "  up-prod     - docker compose up prod stack"
 	@echo "  down-prod   - docker compose down prod stack"
@@ -60,3 +64,21 @@ logs-prod:
 health:
 	curl -fsS http://127.0.0.1:8000/healthz && echo
 	curl -fsS http://127.0.0.1:8000/readyz && echo
+
+redis-up:
+	docker compose --profile crm up -d redis
+
+worker:
+	celery -A celery_app.celery_app worker -l info
+
+beat:
+	celery -A celery_app.celery_app beat -l info
+
+always-on:
+	@echo "Windows (recommended):  .\\scripts\\dev-always-on.ps1"
+	@echo "Unix-style terminals:"
+	@echo "  1) make redis-up"
+	@echo "  2) python main.py          # http://127.0.0.1:55555"
+	@echo "  3) make worker             # separate terminal"
+	@echo "  4) make beat               # separate terminal"
+	@echo "Requires REDIS_URL=redis://localhost:6379/0 in .env"

@@ -109,12 +109,41 @@ def run_property_matching_job():
 
 @log_execution
 def process_rematch_queue_job():
+    """
+    Drain RematchQueue quickly for always-on matching.
+
+    Property and customer items are matched in *separate* cycles so a batch that
+    mixes both types does not incorrectly narrow to only those IDs crossed
+    against each other.
+    """
     logger = logging.getLogger(__name__)
 
     try:
         with current_app.app_context():
             batch_size = int(current_app.config.get("REMATCH_QUEUE_BATCH_SIZE") or 50)
             batch_size = int(os.environ.get("REMATCH_QUEUE_BATCH_SIZE", str(batch_size)))
+            max_retries = int(os.environ.get("REMATCH_QUEUE_MAX_RETRIES", "5"))
+            stale_minutes = int(os.environ.get("REMATCH_STALE_PROCESSING_MINUTES", "15"))
+
+            # Re-queue items stuck in processing (worker crash / timeout)
+            stale_before = datetime.utcnow() - timedelta(minutes=stale_minutes)
+            stuck = (
+                RematchQueue.query.filter(
+                    RematchQueue.status == "processing",
+                    RematchQueue.updated_at < stale_before,
+                )
+                .limit(batch_size)
+                .all()
+            )
+            for item in stuck:
+                item.status = "pending"
+                item.retries = (item.retries or 0) + 1
+                item.last_error = "requeued_stale_processing"
+                item.updated_at = datetime.utcnow()
+            if stuck:
+                db.session.commit()
+                logger.warning("Requeued %s stale rematch items", len(stuck))
+
             pending = (
                 RematchQueue.query.filter_by(status="pending")
                 .order_by(RematchQueue.created_at.asc())
@@ -124,38 +153,73 @@ def process_rematch_queue_job():
             if not pending:
                 return
 
-            property_ids = sorted({q.entity_id for q in pending if q.entity_type == "property"})
-            customer_ids = sorted({q.entity_id for q in pending if q.entity_type == "customer"})
+            property_items = [q for q in pending if q.entity_type == "property"]
+            customer_items = [q for q in pending if q.entity_type == "customer"]
+            property_ids = sorted({q.entity_id for q in property_items})
+            customer_ids = sorted({q.entity_id for q in customer_items})
 
             for item in pending:
                 item.status = "processing"
                 item.updated_at = datetime.utcnow()
             db.session.commit()
 
-            result = background_matcher.run_matching_cycle(
-                property_ids=property_ids or None,
-                customer_ids=customer_ids or None,
-                trigger_source="queue",
-            )
+            results = []
+            # Separate cycles: each entity type vs full complementary set
+            if property_ids:
+                results.append(
+                    background_matcher.run_matching_cycle(
+                        property_ids=property_ids,
+                        customer_ids=None,
+                        trigger_source="queue_property",
+                    )
+                )
+            if customer_ids:
+                results.append(
+                    background_matcher.run_matching_cycle(
+                        property_ids=None,
+                        customer_ids=customer_ids,
+                        trigger_source="queue_customer",
+                    )
+                )
+            if not results:
+                results.append({"status": "completed", "matches_found": 0})
 
-            if result.get("status") == "completed":
+            # Success if every cycle completed or was intentionally skipped (dedupe)
+            ok_statuses = {"completed", "skipped"}
+            all_ok = all(r.get("status") in ok_statuses for r in results)
+            err = "; ".join(
+                str(r.get("error") or r.get("status"))
+                for r in results
+                if r.get("status") not in ok_statuses
+            ) or "unknown"
+
+            if all_ok:
                 for item in pending:
                     item.status = "done"
                     item.updated_at = datetime.utcnow()
             else:
-                err = result.get("error", "unknown")
                 for item in pending:
-                    item.status = "failed"
                     item.retries = (item.retries or 0) + 1
-                    item.last_error = str(err)
+                    item.last_error = str(err)[:500]
                     item.updated_at = datetime.utcnow()
+                    # Retry later until max; then leave as failed
+                    if item.retries < max_retries:
+                        item.status = "pending"
+                    else:
+                        item.status = "failed"
 
             db.session.commit()
+            total_matches = sum(int(r.get("matches_saved") or 0) for r in results)
+            total_notes = sum(int(r.get("notifications_created") or 0) for r in results)
             logger.info(
-                "Rematch queue processed: %s items, properties=%s, customers=%s",
+                "Rematch queue processed: %s items, properties=%s, customers=%s, "
+                "matches_saved=%s, notifications=%s, ok=%s",
                 len(pending),
                 len(property_ids),
                 len(customer_ids),
+                total_matches,
+                total_notes,
+                all_ok,
             )
     except Exception as exc:
         db.session.rollback()
@@ -274,12 +338,32 @@ def run_immediate_matching_job(property_ids=None, customer_ids=None):
 
     try:
         with current_app.app_context():
-            result = background_matcher.run_matching_cycle(
-                property_ids=property_ids,
-                customer_ids=customer_ids,
-                trigger_source="manual",
-            )
-            logger.info("Immediate matching job completed: %s", result)
+            results = []
+            # Same rule as queue: do not AND both ID lists into one narrow cross product
+            if property_ids and customer_ids:
+                results.append(
+                    background_matcher.run_matching_cycle(
+                        property_ids=property_ids,
+                        customer_ids=None,
+                        trigger_source="manual_property",
+                    )
+                )
+                results.append(
+                    background_matcher.run_matching_cycle(
+                        property_ids=None,
+                        customer_ids=customer_ids,
+                        trigger_source="manual_customer",
+                    )
+                )
+            else:
+                results.append(
+                    background_matcher.run_matching_cycle(
+                        property_ids=property_ids,
+                        customer_ids=customer_ids,
+                        trigger_source="manual",
+                    )
+                )
+            logger.info("Immediate matching job completed: %s", results)
     except Exception as exc:
         logger.error("Error in immediate matching job: %s", exc)
 

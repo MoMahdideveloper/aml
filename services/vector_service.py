@@ -3,6 +3,7 @@ import json
 import logging
 import math
 import os
+import re
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import bindparam, text
@@ -32,22 +33,38 @@ class VectorService:
         self.embedding_dim = int(os.environ.get("EMBEDDING_DIM", "768"))
         self._pgvector_column_available: Optional[bool] = None
 
-        # Hybrid weights (sum = 1.0) - configurable via environment variables
-        semantic_weight = float(os.environ.get("SEMANTIC_WEIGHT", "0.60"))
-        budget_weight = float(os.environ.get("BUDGET_WEIGHT", "0.25"))
-        requirements_weight = float(os.environ.get("REQUIREMENTS_WEIGHT", "0.15"))
-        total = semantic_weight + budget_weight + requirements_weight
+        # Hybrid weights (sum = 1.0). More parameters = better agent-facing scores.
+        # Legacy REQUIREMENTS_WEIGHT still supported (split into type + rooms).
+        raw = {
+            "semantic": float(os.environ.get("SEMANTIC_WEIGHT", "0.35")),
+            "budget": float(os.environ.get("BUDGET_WEIGHT", "0.20")),
+            "location": float(os.environ.get("LOCATION_WEIGHT", "0.15")),
+            "type": float(os.environ.get("TYPE_WEIGHT", "0.10")),
+            "rooms": float(os.environ.get("ROOMS_WEIGHT", "0.10")),
+            "amenities": float(os.environ.get("AMENITIES_WEIGHT", "0.05")),
+            "size": float(os.environ.get("SIZE_WEIGHT", "0.05")),
+        }
+        legacy_req = os.environ.get("REQUIREMENTS_WEIGHT")
+        if legacy_req is not None and os.environ.get("TYPE_WEIGHT") is None and os.environ.get("ROOMS_WEIGHT") is None:
+            # Old 3-knob config: map requirements into type+rooms and keep semantic/budget
+            try:
+                req = float(legacy_req)
+                raw["type"] = req * 0.5
+                raw["rooms"] = req * 0.5
+            except ValueError:
+                pass
+        total = sum(max(0.0, v) for v in raw.values())
         if total > 0:
-            self.weights = {
-                "semantic": semantic_weight / total,
-                "budget": budget_weight / total,
-                "requirements": requirements_weight / total,
-            }
+            self.weights = {k: max(0.0, v) / total for k, v in raw.items()}
         else:
             self.weights = {
-                "semantic": 0.60,
-                "budget": 0.25,
-                "requirements": 0.15,
+                "semantic": 0.35,
+                "budget": 0.20,
+                "location": 0.15,
+                "type": 0.10,
+                "rooms": 0.10,
+                "amenities": 0.05,
+                "size": 0.05,
             }
 
     @log_execution
@@ -366,25 +383,15 @@ class VectorService:
                     if not prop:
                         continue
                     semantic_score = max(0.0, similarity) * 100.0
-                    hybrid_score = self._calculate_hybrid_score(customer, prop, semantic_score)
-                    property_score = get_property_score(
-                        prop,
-                        neighborhood_benchmarks=neighborhood_benchmarks,
-                        recent_favorites_map=recent_favorites_map,
-                    )
                     recommendations.append(
-                        {
-                            "property": prop,
-                            "semantic_score": semantic_score,
-                            "hybrid_score": hybrid_score,
-                            "property_score": property_score,
-                            "customer_score": customer_score,
-                            "match_reasons": self._generate_match_reasons(
-                                customer,
-                                prop,
-                                semantic_score,
-                            ),
-                        }
+                        self._build_recommendation_item(
+                            customer,
+                            prop,
+                            semantic_score,
+                            customer_score=customer_score,
+                            neighborhood_benchmarks=neighborhood_benchmarks,
+                            recent_favorites_map=recent_favorites_map,
+                        )
                     )
             else:
                 missing_embeddings = False
@@ -398,26 +405,15 @@ class VectorService:
                     property_vector = self._load_embedding(record)
                     similarity = max(0.0, self._cosine_similarity(customer_embedding, property_vector))
                     semantic_score = similarity * 100.0
-
-                    hybrid_score = self._calculate_hybrid_score(customer, prop, semantic_score)
-                    property_score = get_property_score(
-                        prop,
-                        neighborhood_benchmarks=neighborhood_benchmarks,
-                        recent_favorites_map=recent_favorites_map,
-                    )
                     recommendations.append(
-                        {
-                            "property": prop,
-                            "semantic_score": semantic_score,
-                            "hybrid_score": hybrid_score,
-                            "property_score": property_score,
-                            "customer_score": customer_score,
-                            "match_reasons": self._generate_match_reasons(
-                                customer,
-                                prop,
-                                semantic_score,
-                            ),
-                        }
+                        self._build_recommendation_item(
+                            customer,
+                            prop,
+                            semantic_score,
+                            customer_score=customer_score,
+                            neighborhood_benchmarks=neighborhood_benchmarks,
+                            recent_favorites_map=recent_favorites_map,
+                        )
                     )
 
                 if not recommendations and missing_embeddings:
@@ -466,6 +462,274 @@ class VectorService:
                 },
             }
 
+    @staticmethod
+    def _safe_int(value: Any, default: int = 0) -> int:
+        try:
+            if value is None:
+                return default
+            return int(value)
+        except (TypeError, ValueError):
+            return default
+
+    def _score_budget(self, customer: Customer, property_obj: Property) -> float:
+        """0–100 budget fit (sale price, rahn, or rent)."""
+        price = property_obj.price if property_obj.price is not None else 0
+        max_b = self._safe_int(customer.budget_max)
+        min_b = self._safe_int(customer.budget_min)
+        # Prefer sale price; for rentals also consider rahn within budget
+        candidates = [price]
+        if property_obj.rahn:
+            candidates.append(int(property_obj.rahn))
+        if property_obj.rental_price:
+            candidates.append(int(property_obj.rental_price) * 12)  # rough annual
+
+        best = 20.0
+        for p in candidates:
+            if max_b <= 0 and min_b <= 0:
+                return 50.0  # no budget set → neutral
+            if max_b > 0 and min_b > 0 and min_b <= p <= max_b:
+                best = max(best, 100.0)
+            elif max_b > 0 and p <= max_b * 1.1:
+                best = max(best, 80.0)
+            elif max_b > 0 and p <= max_b * 1.2:
+                best = max(best, 60.0)
+            elif min_b > 0 and p >= min_b * 0.5 and (max_b <= 0 or p <= max_b * 1.3):
+                best = max(best, 40.0)
+        return best
+
+    def _score_location(self, customer: Customer, property_obj: Property) -> float:
+        pref = (customer.location_preference or "").strip().lower()
+        if not pref:
+            return 50.0
+        haystacks = [
+            (property_obj.neighborhood or "").lower(),
+            (property_obj.address or "").lower(),
+            (property_obj.title or "").lower(),
+        ]
+        # Token overlap for multi-word prefs ("north tehran", "jordan")
+        tokens = [t for t in pref.replace(",", " ").split() if len(t) > 1]
+        if not tokens:
+            return 50.0
+        for hay in haystacks:
+            if not hay:
+                continue
+            if pref in hay or hay in pref:
+                return 100.0
+            hits = sum(1 for t in tokens if t in hay)
+            if hits == len(tokens):
+                return 95.0
+            if hits > 0:
+                return 55.0 + 40.0 * (hits / len(tokens))
+        return 15.0
+
+    def _normalize_property_kind(self, text: str) -> str:
+        """Map EN/FA listing labels to a coarse kind for matching."""
+        t = (text or "").strip().lower()
+        if not t:
+            return ""
+        # Persian labels common in this inventory
+        if "آپارتمان" in t or "اپارتمان" in t:
+            return "apartment"
+        if "ویلا" in t or "ويلا" in t:
+            return "villa"
+        if "مغازه" in t or "تجاری" in t or "تجاري" in t:
+            return "shop"
+        if "زمین" in t or "زمين" in t:
+            return "land"
+        if "خانه" in t or "منزل" in t:
+            return "house"
+        # English / latin
+        if any(k in t for k in ("apartment", "apt", "flat", "condo", "unit")):
+            return "apartment"
+        if "villa" in t:
+            return "villa"
+        if any(k in t for k in ("house", "home", "townhouse")):
+            return "house"
+        if any(k in t for k in ("land", "lot", "plot")):
+            return "land"
+        if any(k in t for k in ("shop", "store", "retail", "office", "commercial")):
+            return "shop"
+        return t
+
+    def _score_type(self, customer: Customer, property_obj: Property) -> float:
+        preferred_raw = (customer.preferred_type or "").strip().lower()
+        actual_raw = (property_obj.property_type or "").strip().lower()
+        if not preferred_raw:
+            return 50.0
+        if not actual_raw:
+            return 30.0
+        if preferred_raw == actual_raw:
+            return 100.0
+
+        preferred = self._normalize_property_kind(preferred_raw)
+        actual = self._normalize_property_kind(actual_raw)
+        if preferred and actual and preferred == actual:
+            return 100.0
+
+        # Related residential kinds
+        residential = {"apartment", "villa", "house"}
+        if preferred in residential and actual in residential:
+            if {preferred, actual} == {"villa", "house"}:
+                return 85.0
+            return 55.0
+
+        if preferred in actual_raw or actual_raw in preferred_raw or preferred in actual or actual in preferred:
+            return 70.0
+        return 15.0
+
+    def _score_rooms(self, customer: Customer, property_obj: Property) -> float:
+        score = 50.0
+        parts = 0
+        pref_beds = self._safe_int(customer.preferred_bedrooms)
+        pref_baths = self._safe_int(customer.preferred_bathrooms)
+        beds = self._safe_int(property_obj.bedrooms)
+        baths = self._safe_int(property_obj.bathrooms)
+
+        if pref_beds > 0:
+            parts += 1
+            diff = abs(beds - pref_beds)
+            if diff == 0:
+                bed_s = 100.0
+            elif diff == 1:
+                bed_s = 65.0
+            elif diff == 2:
+                bed_s = 35.0
+            else:
+                bed_s = 10.0
+            score = bed_s if parts == 1 else (score + bed_s) / 2
+
+        if pref_baths > 0:
+            parts += 1
+            diff = abs(baths - pref_baths)
+            if baths >= pref_baths:
+                bath_s = 100.0 if diff == 0 else 80.0
+            elif diff == 1:
+                bath_s = 50.0
+            else:
+                bath_s = 15.0
+            if parts == 1:
+                score = bath_s
+            else:
+                score = (score + bath_s) / 2
+
+        return score if parts else 50.0
+
+    def _preference_tokens(self, customer: Customer) -> List[str]:
+        text = f"{customer.preferences or ''} {customer.location_preference or ''}"
+        return [t.lower() for t in text.replace(",", " ").split() if len(t) > 2]
+
+    def _score_amenities(self, customer: Customer, property_obj: Property) -> float:
+        """Overlap between free-text prefs and property features / flags."""
+        tokens = self._preference_tokens(customer)
+        feature_blob = " ".join(
+            [
+                property_obj.property_features or "",
+                property_obj.description or "",
+                property_obj.heating_type or "",
+                property_obj.cooling_type or "",
+                "elevator" if property_obj.has_elevator else "",
+                "storage" if property_obj.has_storage else "",
+                "parking" if (property_obj.parking_spaces or 0) > 0 else "",
+            ]
+        ).lower()
+
+        keyword_boosts = {
+            "elevator": bool(property_obj.has_elevator),
+            "parking": (property_obj.parking_spaces or 0) > 0,
+            "storage": bool(property_obj.has_storage),
+            "anbari": bool(property_obj.has_storage),
+            "asansor": bool(property_obj.has_elevator),
+        }
+
+        if not tokens and not any(keyword_boosts.values()):
+            return 50.0
+
+        hits = 0
+        checks = 0
+        for t in tokens:
+            checks += 1
+            if t in feature_blob or keyword_boosts.get(t):
+                hits += 1
+        # Always reward explicit amenities when present even without prefs
+        amenity_points = 0
+        if property_obj.has_elevator:
+            amenity_points += 15
+        if (property_obj.parking_spaces or 0) > 0:
+            amenity_points += 15
+        if property_obj.has_storage:
+            amenity_points += 10
+
+        if checks == 0:
+            return min(100.0, 40.0 + amenity_points)
+        overlap = 100.0 * hits / checks
+        return min(100.0, 0.7 * overlap + 0.3 * min(100.0, amenity_points * 2))
+
+    def _score_size(self, customer: Customer, property_obj: Property) -> float:
+        """Soft size fit from built_area / square_feet when prefs mention area numbers."""
+        area = property_obj.built_area or property_obj.square_feet or 0
+        if not area:
+            return 50.0
+        # Parse first number in preferences as approximate desired sqm/sqft
+        prefs = customer.preferences or ""
+        nums = re.findall(r"\b(\d{2,5})\b", prefs)
+        if not nums:
+            return 50.0
+        target = int(nums[0])
+        if target <= 0:
+            return 50.0
+        ratio = area / target
+        if 0.85 <= ratio <= 1.15:
+            return 100.0
+        if 0.7 <= ratio <= 1.3:
+            return 70.0
+        if 0.5 <= ratio <= 1.5:
+            return 40.0
+        return 15.0
+
+    @log_execution
+    def score_breakdown(
+        self,
+        customer: Customer,
+        property_obj: Property,
+        semantic_score: float,
+    ) -> Dict[str, float]:
+        """Per-parameter scores 0–100 plus weighted total (hybrid)."""
+        sem = max(0.0, min(100.0, float(semantic_score or 0.0)))
+        # Without embeddings/API, semantic is often 0 and tanks hybrid to ~35%.
+        # Use a neutral mid score and mark it so UI/debug can see it.
+        semantic_missing = sem <= 0.01
+        if semantic_missing:
+            sem = 50.0
+
+        components = {
+            "semantic": sem,
+            "budget": self._score_budget(customer, property_obj),
+            "location": self._score_location(customer, property_obj),
+            "type": self._score_type(customer, property_obj),
+            "rooms": self._score_rooms(customer, property_obj),
+            "amenities": self._score_amenities(customer, property_obj),
+            "size": self._score_size(customer, property_obj),
+        }
+        weights = dict(self.weights)
+        if semantic_missing:
+            # Prefer rule weights when vector similarity is unavailable
+            sem_w = weights.get("semantic", 0.0)
+            weights["semantic"] = sem_w * 0.25
+            boost = sem_w - weights["semantic"]
+            for key in ("budget", "location", "type", "rooms"):
+                weights[key] = weights.get(key, 0.0) + boost / 4.0
+            total_w = sum(max(0.0, v) for v in weights.values()) or 1.0
+            weights = {k: max(0.0, v) / total_w for k, v in weights.items()}
+
+        hybrid = 0.0
+        for key, value in components.items():
+            hybrid += value * weights.get(key, 0.0)
+        components["hybrid"] = min(100.0, max(0.0, hybrid))
+        components["semantic_missing"] = 1.0 if semantic_missing else 0.0
+        # Backward-compat alias used by older callers
+        components["requirements"] = (components["type"] + components["rooms"]) / 2.0
+        return components
+
     @log_execution
     def _calculate_hybrid_score(
         self,
@@ -473,35 +737,7 @@ class VectorService:
         property_obj: Property,
         semantic_score: float,
     ) -> float:
-        semantic_component = semantic_score * self.weights.get("semantic", 0.60)
-
-        budget_score = 0.0
-        if customer.budget_min <= property_obj.price <= customer.budget_max:
-            budget_score = 100
-        elif customer.budget_max and property_obj.price <= customer.budget_max * 1.1:
-            budget_score = 80
-        elif customer.budget_max and property_obj.price <= customer.budget_max * 1.2:
-            budget_score = 60
-        else:
-            budget_score = 20
-        budget_component = budget_score * self.weights.get("budget", 0.25)
-
-        requirements_score = 0.0
-        if property_obj.bedrooms == customer.preferred_bedrooms:
-            requirements_score += 40
-        elif abs(property_obj.bedrooms - customer.preferred_bedrooms) <= 1:
-            requirements_score += 20
-
-        if property_obj.bathrooms >= customer.preferred_bathrooms:
-            requirements_score += 30
-        elif property_obj.bathrooms >= customer.preferred_bathrooms - 0.5:
-            requirements_score += 15
-
-        if (property_obj.property_type or "").lower() == (customer.preferred_type or "").lower():
-            requirements_score += 30
-
-        requirements_component = requirements_score * self.weights.get("requirements", 0.15)
-        return min(100.0, max(0.0, semantic_component + budget_component + requirements_component))
+        return self.score_breakdown(customer, property_obj, semantic_score)["hybrid"]
 
     @log_execution
     def _generate_match_reasons(
@@ -510,25 +746,45 @@ class VectorService:
         property_obj: Property,
         similarity_score: float,
     ) -> List[str]:
+        breakdown = self.score_breakdown(customer, property_obj, similarity_score)
         reasons: List[str] = []
-        if similarity_score > 70:
-            reasons.append(f"High semantic match ({similarity_score:.1f}%)")
-        elif similarity_score > 50:
-            reasons.append(f"Good semantic match ({similarity_score:.1f}%)")
 
-        if customer.budget_min <= property_obj.price <= customer.budget_max:
-            reasons.append("Within budget range")
-        elif customer.budget_max and property_obj.price <= customer.budget_max * 1.1:
-            reasons.append("Near budget range")
+        if breakdown["semantic"] > 70:
+            reasons.append(f"High semantic match ({breakdown['semantic']:.0f}%)")
+        elif breakdown["semantic"] > 50:
+            reasons.append(f"Good semantic match ({breakdown['semantic']:.0f}%)")
 
-        if property_obj.bedrooms == customer.preferred_bedrooms:
-            reasons.append("Matches bedroom preference")
-        if property_obj.bathrooms >= customer.preferred_bathrooms:
-            reasons.append("Meets bathroom requirements")
-        if (property_obj.property_type or "").lower() == (customer.preferred_type or "").lower():
+        if breakdown["budget"] >= 100:
+            reasons.append("Within budget")
+        elif breakdown["budget"] >= 80:
+            reasons.append("Near budget (+10%)")
+        elif breakdown["budget"] >= 60:
+            reasons.append("Slightly over budget")
+
+        if breakdown["location"] >= 90:
+            reasons.append("Matches location preference")
+        elif breakdown["location"] >= 55:
+            reasons.append("Partial location match")
+
+        if breakdown["type"] >= 85:
             reasons.append("Matches property type")
+        if breakdown["rooms"] >= 80:
+            reasons.append("Fits bedroom/bath needs")
+        elif breakdown["rooms"] >= 50 and self._safe_int(customer.preferred_bedrooms) > 0:
+            reasons.append("Close on rooms")
 
-        return reasons[:4]
+        if breakdown["amenities"] >= 70:
+            reasons.append("Amenity / feature overlap")
+        if breakdown["size"] >= 85:
+            reasons.append("Size fits preference")
+
+        # Compact breakdown for agents/UI (always keep, even if we truncate other lines)
+        mix = (
+            f"Score mix: bud {breakdown['budget']:.0f} loc {breakdown['location']:.0f} "
+            f"type {breakdown['type']:.0f} rooms {breakdown['rooms']:.0f}"
+        )
+        head = reasons[:5]
+        return head + [mix]
 
     @log_execution
     def _fallback_search(
@@ -549,24 +805,43 @@ class VectorService:
 
         recommendations: List[Dict[str, Any]] = []
         for prop in properties:
-            score = self._calculate_hybrid_score(customer, prop, 50.0)
-            property_score = get_property_score(
-                prop,
-                neighborhood_benchmarks=neighborhood_benchmarks,
-                recent_favorites_map=recent_favorites_map,
-            )
             recommendations.append(
-                {
-                    "property": prop,
-                    "semantic_score": 50.0,
-                    "hybrid_score": score,
-                    "property_score": property_score,
-                    "customer_score": customer_score,
-                    "match_reasons": self._generate_match_reasons(customer, prop, 50.0),
-                }
+                self._build_recommendation_item(
+                    customer,
+                    prop,
+                    50.0,
+                    customer_score=customer_score,
+                    neighborhood_benchmarks=neighborhood_benchmarks,
+                    recent_favorites_map=recent_favorites_map,
+                )
             )
         recommendations.sort(key=lambda item: item["hybrid_score"], reverse=True)
         return recommendations[:top_k]
+
+    def _build_recommendation_item(
+        self,
+        customer: Customer,
+        prop: Property,
+        semantic_score: float,
+        customer_score: Optional[int] = None,
+        neighborhood_benchmarks: Optional[Dict[str, float]] = None,
+        recent_favorites_map: Optional[Dict[int, int]] = None,
+    ) -> Dict[str, Any]:
+        breakdown = self.score_breakdown(customer, prop, semantic_score)
+        property_score = get_property_score(
+            prop,
+            neighborhood_benchmarks=neighborhood_benchmarks or {},
+            recent_favorites_map=recent_favorites_map or {},
+        )
+        return {
+            "property": prop,
+            "semantic_score": semantic_score,
+            "hybrid_score": breakdown["hybrid"],
+            "score_breakdown": breakdown,
+            "property_score": property_score,
+            "customer_score": customer_score,
+            "match_reasons": self._generate_match_reasons(customer, prop, semantic_score),
+        }
 
     @log_execution
     def reset_database(self) -> None:

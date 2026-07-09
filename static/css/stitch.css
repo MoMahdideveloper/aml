@@ -54,6 +54,13 @@
   --on-background: #111d27;
   --surface-variant: #d8e4f3;
 
+  /* Brand tokens (Stitch Platinum Heritage) */
+  --brand-cream: #F4F2E5;
+  --brand-platinum: #C0C0C0;
+  --brand-deep-blue: #2A3A4B;
+  --brand-text: #1B2631;
+  --shadow-card-hover: 0 8px 30px rgba(27, 38, 49, 0.06);
+
   /* Typography */
   --font-family-base: 'IBM Plex Sans', sans-serif;
 
@@ -195,6 +202,294 @@ body {
 
 .text-primary {
   color: var(--primary);
+}
+
+/* Brand utility classes from Stitch DESIGN.md */
+.bg-brand-cream { background-color: var(--brand-cream); }
+.bg-brand-deep-blue { background-color: var(--brand-deep-blue); }
+.bg-brand-platinum { background-color: var(--brand-platinum); }
+.text-brand-deep-blue { color: var(--brand-deep-blue); }
+.text-brand-platinum { color: var(--brand-platinum); }
+.text-brand-text { color: var(--brand-text); }
+.border-brand-platinum { border-color: var(--brand-platinum); }
+.shadow-card-hover { box-shadow: var(--shadow-card-hover); }
+.shadow-ph-soft { box-shadow: var(--shadow-card-hover); }
+.rounded-card { border-radius: 8px; }
+.gap-gutter { gap: var(--spacing-gutter); }
+
+/* Stitch font-* aliases (templates use font-display-lg + text-display-lg together) */
+.font-display-lg,
+.font-headline-lg,
+.font-headline-md,
+.font-body-lg,
+.font-body-md,
+.font-label-md,
+.font-label-sm {
+  font-family: var(--font-family-base);
+}
+
+/* Surface token helpers for pages without full Tailwind rebuild */
+.bg-surface-container-lowest { background-color: var(--surface-container-lowest); }
+.bg-surface-container-low { background-color: var(--surface-container-low); }
+.bg-surface-container { background-color: var(--surface-container); }
+.bg-surface-container-high { background-color: var(--surface-container-high); }
+.bg-surface-container-highest { background-color: var(--surface-container-highest); }
+.border-outline-variant { border-color: var(--outline-variant); }
+.text-on-surface { color: var(--on-surface); }
+.text-on-surface-variant { color: var(--on-surface-variant); }
+.text-secondary { color: var(--secondary); }
+.text-on-primary { color: var(--on-primary); }
+.bg-primary-container { background-color: var(--primary-container); }
+.text-on-primary-container { color: var(--on-primary-container); }
+
+/*
+ * Shared CRM page shell — matches Stitch Platinum Heritage canvas
+ * (cream-adjacent gallery feel, white cards, platinum borders).
+ */
+.ph-page {
+  font-family: var(--font-family-base);
+  color: var(--on-surface);
+}
+.ph-page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.ph-page-header > .ph-btn-primary,
+.ph-page-header > .ph-btn-secondary {
+  align-self: flex-start;
+  width: auto;
+  flex-shrink: 0;
+}
+@media (min-width: 768px) {
+  .ph-page-header {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .ph-page-header > .ph-btn-primary,
+  .ph-page-header > .ph-btn-secondary {
+    align-self: flex-end;
+  }
+}
+.ph-page-kicker {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--secondary);
+  margin-bottom: 0.35rem;
+}
+.ph-page-title {
+  font-size: clamp(1.75rem, 2.5vw, 2rem);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--primary);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.ph-page-subtitle {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--secondary);
+  margin-top: 0.35rem;
+  max-width: 42rem;
+}
+.ph-page-panel {
+  background: #ffffff;
+  border: 1px solid var(--outline-variant);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(27, 38, 49, 0.04);
+}
+.ph-page-card {
+  background: #ffffff;
+  border: 1px solid var(--outline-variant);
+  border-radius: 0.75rem;
+  transition: box-shadow 0.25s ease, transform 0.2s ease;
+}
+.ph-page-card:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+.ph-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--primary);
+  color: var(--on-primary);
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s ease, box-shadow 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ph-btn-primary:hover {
+  opacity: 0.92;
+  box-shadow: var(--shadow-card-hover);
+  color: var(--on-primary);
+}
+.ph-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--outline-variant);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ph-btn-secondary:hover {
+  background: var(--surface-container-low);
+  color: var(--primary);
+}
+.ph-input {
+  width: 100%;
+  background: var(--background);
+  border: 1px solid var(--outline-variant);
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  font-size: 16px;
+  color: var(--on-surface);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.ph-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+/* Main canvas cream tint for Stitch gallery feel */
+.ph-main-canvas {
+  background-color: var(--brand-cream);
+  min-height: 100%;
+}
+
+.ph-stitch-page {
+  font-family: var(--font-family-base);
+  color: var(--on-surface);
+}
+
+.ph-stitch-card {
+  background: #ffffff;
+  border: 1px solid var(--brand-platinum);
+  border-radius: 8px;
+  transition: box-shadow 0.3s ease;
+}
+.ph-stitch-card:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+.ph-stitch-panel {
+  background: #ffffff;
+  border: 1px solid var(--brand-platinum);
+  border-radius: 8px;
+}
+
+.ph-stitch-input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--brand-platinum);
+  border-radius: 4px;
+  padding: 0.625rem 1rem;
+  color: var(--primary);
+  font-size: 16px;
+  line-height: 24px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.ph-stitch-input:focus {
+  border-color: var(--brand-deep-blue);
+}
+
+.ph-stitch-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--brand-deep-blue);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: opacity 0.15s ease, box-shadow 0.2s ease;
+  text-decoration: none;
+}
+.ph-stitch-btn-primary:hover {
+  opacity: 0.92;
+  box-shadow: var(--shadow-card-hover);
+  color: #ffffff;
+}
+
+.ph-stitch-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #ffffff;
+  color: var(--brand-deep-blue);
+  border: 1px solid var(--brand-platinum);
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  text-decoration: none;
+}
+.ph-stitch-btn-secondary:hover {
+  background: var(--surface);
+  color: var(--brand-deep-blue);
+}
+
+.ph-stitch-score-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: #ffffff;
+  border: 1px solid var(--brand-platinum);
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--primary);
+  box-shadow: 0 1px 2px rgba(27, 38, 49, 0.04);
+}
+
+.ph-stitch-rationale {
+  background: var(--surface);
+  border: 1px solid var(--brand-platinum);
+  border-radius: 4px;
+  padding: 1rem;
+  flex: 1;
+}
+
+.ph-role-buyer { background: #d3e4fa; color: #0c1d2d; }
+.ph-role-seller { background: #F4F2E5; color: #2A3A4B; border: 1px solid #C0C0C0; }
+.ph-role-exchange { background: #e3effe; color: #142435; }
+.ph-role-investor { background: #ecfdf5; color: #166534; }
+
+.ph-client-row:hover {
+  background: var(--surface-container-low);
 }
 
 .text-on-primary {

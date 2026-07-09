@@ -73,13 +73,18 @@
               "on-tertiary-container": "#a3a297",
               "on-secondary-fixed-variant": "#464747",
               "surface-bright": "#f7f9ff",
-              "surface": "#f7f9ff"
+              "surface": "#f7f9ff",
+              "brand-cream": "#F4F2E5",
+              "brand-platinum": "#C0C0C0",
+              "brand-deep-blue": "#2A3A4B",
+              "brand-text": "#1B2631"
             },
             borderRadius: {
               DEFAULT: "0.25rem",
               lg: "0.5rem",
               xl: "0.75rem",
-              full: "9999px"
+              full: "9999px",
+              card: "8px"
             },
             fontFamily: {
               headline: ["IBM Plex Sans", "sans-serif"],
@@ -87,7 +92,8 @@
               label: ["IBM Plex Sans", "sans-serif"]
             },
             boxShadow: {
-              ph: "0 8px 30px rgba(27, 38, 49, 0.06)"
+              ph: "0 8px 30px rgba(27, 38, 49, 0.06)",
+              "card-hover": "0 8px 30px rgba(27, 38, 49, 0.06)"
             }
           }
         }
@@ -113,11 +119,11 @@
     <div class="flex flex-1 overflow-hidden bg-background min-h-0">
         {% include 'components/_sidebar.html' %}
 
-        <main class="flex-1 min-w-0 flex flex-col overflow-hidden">
+        <main class="flex-1 min-w-0 flex flex-col overflow-hidden bg-brand-cream">
             {% include 'components/_mobile_header.html' %}
 
-            <div class="flex-1 overflow-y-auto">
-                <div class="p-4 lg:p-6 max-w-[1280px] mx-auto w-full">
+            <div class="flex-1 overflow-y-auto ph-main-canvas">
+                <div class="p-4 lg:p-6 max-w-[1280px] mx-auto w-full ph-page">
                     {% block content %}{% endblock %}
                 </div>
             </div>

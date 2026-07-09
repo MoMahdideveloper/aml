@@ -24,9 +24,14 @@ class BackgroundMatcher:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         # Make thresholds configurable via environment variables for tuning
-        self.min_match_score = float(os.environ.get("MATCHER_MIN_SCORE", "0.5"))
+        # 0.40 default: without Gemini embeddings pure-rule hybrids often land 40–55%
+        self.min_match_score = float(os.environ.get("MATCHER_MIN_SCORE", "0.40"))
         self.notification_threshold = float(os.environ.get("MATCHER_NOTIFICATION_THRESHOLD", "0.7"))
         self.high_priority_threshold = float(os.environ.get("MATCHER_HIGH_PRIORITY_THRESHOLD", "0.85"))
+        # Notify on score rise only when improvement is meaningful (avoid spam)
+        self.score_improve_delta = float(os.environ.get("MATCHER_SCORE_IMPROVE_DELTA", "0.05"))
+        # Suppress duplicate unread notifications for the same match
+        self.notify_dedupe = os.environ.get("MATCHER_NOTIFY_DEDUPE", "1") == "1"
 
     def _build_idempotency_key(
         self,
@@ -141,8 +146,9 @@ class BackgroundMatcher:
         return query.all()
 
     def _get_customers_for_matching(self, customer_ids: Optional[List[int]], limit: int) -> List[Customer]:
+        # Include lead — kiosk/open-house often creates lead clients that still need matches
         query = db.session.query(Customer).filter(
-            Customer.status.in_(["prospect", "active"]),
+            Customer.status.in_(["prospect", "active", "lead"]),
             Customer.is_deleted.is_(False),
         )
         if customer_ids:
@@ -158,6 +164,17 @@ class BackgroundMatcher:
         for i in range(0, len(items), batch_size):
             yield items[i : i + batch_size]
 
+    @staticmethod
+    def _score_as_unit(raw) -> float:
+        """Normalize engine scores to 0–1 (accepts 0–1 or 0–100)."""
+        try:
+            val = float(raw)
+        except (TypeError, ValueError):
+            return 0.0
+        if val > 1.0:
+            val = val / 100.0
+        return max(0.0, min(1.0, val))
+
     def _process_property_customer_batch(self, properties: List[Property], customers: List[Customer]) -> List[Dict]:
         matches: List[Dict] = []
 
@@ -165,7 +182,11 @@ class BackgroundMatcher:
             try:
                 recommendations = gemini_service.get_property_recommendations(customer, properties)
                 for rec in recommendations:
-                    if "match_score" in rec and rec["match_score"] >= self.min_match_score:
+                    unit = self._score_as_unit(rec.get("match_score", rec.get("hybrid_score", 0)))
+                    if unit >= self.min_match_score:
+                        # Ensure create_match_record sees 0–100 style when needed
+                        rec = dict(rec)
+                        rec["match_score"] = unit * 100.0
                         match = self._create_match_record(customer, rec, properties)
                         if match:
                             matches.append(match)
@@ -180,50 +201,93 @@ class BackgroundMatcher:
         try:
             recommendations = gemini_service.get_property_recommendations(customer, candidates)
             for rec in recommendations:
-                if "match_score" in rec and rec["match_score"] >= self.min_match_score:
+                unit = self._score_as_unit(rec.get("match_score", rec.get("hybrid_score", 0)))
+                if unit >= self.min_match_score:
+                    rec = dict(rec)
+                    rec["match_score"] = unit * 100.0
                     match = self._create_match_record(customer, rec, candidates)
                     if match:
                         matches.append(match)
+            # If AI/hybrid path returns nothing usable, fall back to rule scores on candidates
+            if not matches and candidates:
+                matches.extend(self._fallback_matching(customer, candidates))
         except Exception as exc:
             self.logger.error("Error processing customer %s candidates: %s", customer.id, exc)
             matches.extend(self._fallback_matching(customer, candidates))
         return matches
 
-    def _prefilter_candidate_properties(self, customer: Customer, properties: List[Property]) -> List[Property]:
-        top_n = int(os.environ.get("MATCHING_CANDIDATE_TOP_N", "15"))
+    def _dismissed_property_ids(self, customer_id: int) -> set:
+        """Properties the agent/customer already dismissed — never re-match."""
+        try:
+            rows = (
+                db.session.query(PropertyMatch.property_id)
+                .filter(
+                    PropertyMatch.customer_id == customer_id,
+                    PropertyMatch.status == "dismissed",
+                )
+                .all()
+            )
+            return {r[0] for r in rows}
+        except Exception as exc:
+            self.logger.warning("Could not load dismissed matches for customer %s: %s", customer_id, exc)
+            return set()
+
+    def _passes_hard_filters(self, customer: Customer, prop: Property, dismissed: set) -> bool:
+        """Hard gates before expensive scoring (budget, type, beds, location, dismissals)."""
+        if prop.id in dismissed:
+            return False
+        if prop.price is not None and prop.price < 0:
+            return False
+
         max_budget = customer.budget_max or 0
         min_budget = customer.budget_min or 0
+        price = prop.price if prop.price is not None else 0
+        max_budget_ok = (max_budget == 0) or (
+            (price <= int(max_budget * 1.2))
+            or (prop.rahn is not None and prop.rahn <= int(max_budget * 1.2))
+        )
+        min_budget_ok = (min_budget == 0) or (price >= int(min_budget * 0.5))
+        if not (max_budget_ok and min_budget_ok):
+            return False
 
-        # Input validation: if properties is None or not a list, return empty list
+        # Optional strict type
+        preferred_type = (customer.preferred_type or "").strip().lower()
+        strict_type = os.environ.get("MATCHING_STRICT_TYPE", "0") == "1"
+        if preferred_type and strict_type:
+            actual = (prop.property_type or "").strip().lower()
+            if actual and preferred_type != actual and preferred_type not in actual:
+                return False
+
+        # Bedroom tolerance (default ±1 when preferred set)
+        pref_beds = customer.preferred_bedrooms or 0
+        if pref_beds > 0:
+            tol = int(os.environ.get("MATCHING_BEDROOM_TOLERANCE", "1"))
+            beds = prop.bedrooms or 0
+            if abs(beds - pref_beds) > tol:
+                return False
+
+        # Optional strict location token match
+        strict_loc = os.environ.get("MATCHING_STRICT_LOCATION", "0") == "1"
+        loc_pref = (customer.location_preference or "").strip().lower()
+        if strict_loc and loc_pref:
+            hay = f"{prop.neighborhood or ''} {prop.address or ''}".lower()
+            tokens = [t for t in loc_pref.replace(",", " ").split() if len(t) > 1]
+            if tokens and not any(t in hay for t in tokens):
+                return False
+
+        return True
+
+    def _prefilter_candidate_properties(self, customer: Customer, properties: List[Property]) -> List[Property]:
+        top_n = int(os.environ.get("MATCHING_CANDIDATE_TOP_N", "15"))
+
         if not properties:
             return []
 
-        # Define a helper function to check if a property passes the budget filters
-        def _passes_budget_filter(prop: Property) -> bool:
-            # Filter out negative prices
-            if prop.price is not None and prop.price < 0:
-                return False
-
-            # Treat None price as 0 for budget comparisons
-            price_for_comparison = prop.price if prop.price is not None else 0
-
-            # Max budget check: if max_budget is 0 (unset), skip; else check price or rahn
-            max_budget_ok = (max_budget == 0) or (
-                (price_for_comparison <= int(max_budget * 1.2)) or
-                (prop.rahn is not None and prop.rahn <= int(max_budget * 1.2))
-            )
-            # Min budget check: if min_budget is 0 (unset), skip; else check price >= min_budget * 0.5
-            min_budget_ok = (min_budget == 0) or (
-                price_for_comparison >= int(min_budget * 0.5)
-            )
-            return max_budget_ok and min_budget_ok
-
-        budget_filtered = [
-            prop
-            for prop in properties
-            if _passes_budget_filter(prop)
+        dismissed = self._dismissed_property_ids(customer.id)
+        hard_filtered = [
+            prop for prop in properties if self._passes_hard_filters(customer, prop, dismissed)
         ]
-        candidate_pool = budget_filtered
+        candidate_pool = hard_filtered if hard_filtered else []
         if not candidate_pool:
             return []
 
@@ -249,9 +313,30 @@ class BackgroundMatcher:
             confidence_level = "high" if match_score >= 0.8 else "medium" if match_score >= 0.6 else "low"
             priority = "high" if match_score >= self.high_priority_threshold else "normal"
 
-            reasons = recommendation.get("pros") or []
+            reasons = recommendation.get("pros") or recommendation.get("match_reasons") or []
             if not reasons and recommendation.get("analysis"):
-                reasons = [line.strip("- ") for line in recommendation["analysis"].splitlines() if line.strip().startswith("-")]
+                reasons = [
+                    line.strip("- ")
+                    for line in recommendation["analysis"].splitlines()
+                    if line.strip().startswith("-")
+                ]
+
+            # Enrich with multi-parameter breakdown for agent-readable reasons
+            try:
+                breakdown = vector_service.score_breakdown(
+                    customer, property_obj, float(recommendation.get("semantic_score") or match_score_int)
+                )
+                extra = vector_service._generate_match_reasons(
+                    customer, property_obj, breakdown.get("semantic", match_score_int)
+                )
+                # Prefer concrete parameter reasons; keep unique order
+                merged: List[str] = []
+                for r in list(reasons) + list(extra):
+                    if r and r not in merged:
+                        merged.append(r)
+                reasons = merged[:6]
+            except Exception as exc:
+                self.logger.debug("score breakdown enrich skipped: %s", exc)
 
             return {
                 "property_id": property_obj.id,
@@ -271,18 +356,23 @@ class BackgroundMatcher:
     def _fallback_matching(self, customer: Customer, properties: List[Property]) -> List[Dict]:
         matches: List[Dict] = []
         try:
+            dismissed = self._dismissed_property_ids(customer.id)
             for property_obj in properties:
-                score = self._calculate_basic_match_score(customer, property_obj)
+                if not self._passes_hard_filters(customer, property_obj, dismissed):
+                    continue
+                breakdown = vector_service.score_breakdown(customer, property_obj, 50.0)
+                score = breakdown["hybrid"] / 100.0
                 if score >= self.min_match_score:
+                    reasons = vector_service._generate_match_reasons(customer, property_obj, 50.0)
                     matches.append(
                         {
                             "property_id": property_obj.id,
                             "customer_id": customer.id,
                             "agent_id": property_obj.agent_id,
                             "match_score": score,
-                            "confidence_level": "low",
-                            "priority": "normal",
-                            "match_reasons": json.dumps(["Basic preference matching"]),
+                            "confidence_level": "medium" if score >= 0.6 else "low",
+                            "priority": "high" if score >= self.high_priority_threshold else "normal",
+                            "match_reasons": json.dumps(reasons),
                             "property": property_obj,
                             "customer": customer,
                         }
@@ -292,88 +382,71 @@ class BackgroundMatcher:
         return matches
 
     def _calculate_basic_match_score(self, customer: Customer, property_obj: Property) -> float:
-        # Calculate score for each category between 0 and 1, then average
-        scores = []
-
-        # Budget score
-        if customer.budget_min is not None and customer.budget_max is not None and property_obj.price is not None:
-            if customer.budget_min <= property_obj.price <= customer.budget_max:
-                budget_score = 1.0
-            elif property_obj.price <= customer.budget_max * 1.1:
-                # Within 10% above max: give half credit (since full credit is 1.0)
-                budget_score = 0.5
-            else:
-                budget_score = 0.0
-            scores.append(budget_score)
-        else:
-            scores.append(0.0)
-
-        # Bedrooms score
-        if customer.preferred_bedrooms is not None and property_obj.bedrooms is not None:
-            diff = abs(customer.preferred_bedrooms - property_obj.bedrooms)
-            if diff == 0:
-                bedroom_score = 1.0
-            elif diff == 1:
-                bedroom_score = 0.5
-            else:
-                bedroom_score = 0.0
-            scores.append(bedroom_score)
-        else:
-            scores.append(0.0)
-
-        # Bathrooms score
-        if customer.preferred_bathrooms is not None and property_obj.bathrooms is not None:
-            diff = abs(customer.preferred_bathrooms - property_obj.bathrooms)
-            if diff == 0:
-                bathroom_score = 1.0
-            elif diff == 1:
-                bathroom_score = 0.5
-            else:
-                bathroom_score = 0.0
-            scores.append(bathroom_score)
-        else:
-            scores.append(0.0)
-
-        # Property type score
-        if customer.preferred_type is not None and property_obj.property_type is not None:
-            if customer.preferred_type.lower() == property_obj.property_type.lower():
-                type_score = 1.0
-            else:
-                type_score = 0.0
-            scores.append(type_score)
-        else:
-            scores.append(0.0)
-
-        # Average the four scores
-        return sum(scores) / len(scores)
+        """0–1 score via multi-parameter hybrid (shared with vector_service)."""
+        try:
+            return vector_service.score_breakdown(customer, property_obj, 50.0)["hybrid"] / 100.0
+        except Exception:
+            return 0.0
 
     def save_matches_to_database(self, matches: List[Dict]) -> List[PropertyMatch]:
+        """
+        Persist matches. Sets transient attrs for notification layer:
+          _notify_kind: "new" | "improved" | None
+          _previous_score: float | None
+        """
         saved_matches: List[PropertyMatch] = []
 
         try:
             for match_data in matches:
+                agent_id = match_data.get("agent_id")
+                # Prefer listing agent when match payload omits agent_id
+                if not agent_id:
+                    prop = match_data.get("property")
+                    if prop is not None and getattr(prop, "agent_id", None):
+                        agent_id = prop.agent_id
+
                 existing_match = db.session.query(PropertyMatch).filter_by(
                     property_id=match_data["property_id"],
                     customer_id=match_data["customer_id"],
                 ).first()
 
                 if existing_match:
-                    if match_data["match_score"] > existing_match.match_score:
-                        existing_match.match_score = match_data["match_score"]
+                    previous = float(existing_match.match_score or 0.0)
+                    new_score = float(match_data["match_score"])
+                    # Re-open dismissed matches if they score again
+                    if existing_match.status == "dismissed":
+                        existing_match.status = "pending"
+                    if new_score > previous:
+                        existing_match.match_score = new_score
                         existing_match.confidence_level = match_data["confidence_level"]
                         existing_match.priority = match_data["priority"]
                         existing_match.match_reasons = match_data["match_reasons"]
-                        saved_matches.append(existing_match)
+                        if agent_id and not existing_match.agent_id:
+                            existing_match.agent_id = agent_id
+                        existing_match._notify_kind = (  # type: ignore[attr-defined]
+                            "improved" if (new_score - previous) >= self.score_improve_delta else None
+                        )
+                        existing_match._previous_score = previous  # type: ignore[attr-defined]
+                    else:
+                        # Still count as handled so UI does not show "0 saved"
+                        existing_match.match_reasons = match_data.get(
+                            "match_reasons", existing_match.match_reasons
+                        )
+                        existing_match._notify_kind = None  # type: ignore[attr-defined]
+                        existing_match._previous_score = previous  # type: ignore[attr-defined]
+                    saved_matches.append(existing_match)
                 else:
                     new_match = PropertyMatch(
                         property_id=match_data["property_id"],
                         customer_id=match_data["customer_id"],
-                        agent_id=match_data["agent_id"],
+                        agent_id=agent_id,
                         match_score=match_data["match_score"],
                         confidence_level=match_data["confidence_level"],
                         priority=match_data["priority"],
                         match_reasons=match_data["match_reasons"],
                     )
+                    new_match._notify_kind = "new"  # type: ignore[attr-defined]
+                    new_match._previous_score = None  # type: ignore[attr-defined]
                     db.session.add(new_match)
                     saved_matches.append(new_match)
 
@@ -384,23 +457,61 @@ class BackgroundMatcher:
             self.logger.error(f"Error saving matches: {exc}")
             return []
 
+    def _resolve_notify_agent_id(self, match: PropertyMatch) -> Optional[int]:
+        if match.agent_id:
+            return match.agent_id
+        property_obj = db.session.get(Property, match.property_id)
+        if property_obj and property_obj.agent_id:
+            match.agent_id = property_obj.agent_id
+            return property_obj.agent_id
+        return None
+
+    def _has_unread_match_notification(self, agent_id: int, match_id: int) -> bool:
+        if not self.notify_dedupe:
+            return False
+        return (
+            db.session.query(AgentNotification.id)
+            .filter(
+                AgentNotification.agent_id == agent_id,
+                AgentNotification.property_match_id == match_id,
+                AgentNotification.status == "unread",
+                AgentNotification.notification_type == "property_match",
+            )
+            .first()
+            is not None
+        )
+
     def create_agent_notifications(self, matches: List[PropertyMatch]) -> List[AgentNotification]:
         """
-        Create agent notifications for saved matches.
-        Fixed: Added try/except around monitoring service calls to prevent breaking the loop.
+        Notify agents for new high matches or meaningful score improvements.
+        Skips duplicates when an unread notification already exists for the match.
         """
         notifications: List[AgentNotification] = []
 
         if not matches:
             return notifications
 
-        # Group matches by agent_id for efficiency
+        # Group by resolved agent
         matches_by_agent: Dict[int, List[PropertyMatch]] = {}
         for match in matches:
-            if match.match_score >= self.notification_threshold and match.agent_id:
-                matches_by_agent.setdefault(match.agent_id, []).append(match)
+            if match.match_score < self.notification_threshold:
+                continue
+            kind = getattr(match, "_notify_kind", "new")
+            # Only new matches or improved-by-delta get alerts (always-on, not noisy)
+            if kind not in ("new", "improved"):
+                continue
+            agent_id = self._resolve_notify_agent_id(match)
+            if not agent_id:
+                continue
+            if self._has_unread_match_notification(agent_id, match.id):
+                self.logger.debug(
+                    "Skip notify agent=%s match=%s (unread already exists)",
+                    agent_id,
+                    match.id,
+                )
+                continue
+            matches_by_agent.setdefault(agent_id, []).append(match)
 
-        # Process each agent's matches
         for agent_id, agent_match_list in matches_by_agent.items():
             agent_notifications: List[AgentNotification] = []
 
@@ -410,42 +521,74 @@ class BackgroundMatcher:
                     if notification:
                         agent_notifications.append(notification)
                 except Exception as e:
-                    self.logger.error(f"Failed to create notification for agent {agent_id}, match {match.id}: {e}")
-                    # Continue with other matches
+                    self.logger.error(
+                        "Failed to create notification for agent %s, match %s: %s",
+                        agent_id,
+                        match.id,
+                        e,
+                    )
 
-            # Add notifications to session
             if agent_notifications:
                 try:
                     db.session.add_all(agent_notifications)
-                    db.session.flush()  # Get IDs without committing yet
+                    db.session.flush()
                     notifications.extend(agent_notifications)
 
-                    # Log each notification individually with error handling
                     for notification in agent_notifications:
                         try:
                             monitoring_service.log_notification_activity(
                                 agent_id=agent_id,
                                 notification_id=notification.id,
-                                match_id=notification.property_match_id
+                                match_id=notification.property_match_id,
                             )
                         except Exception as e:
-                            self.logger.error(f"Failed to log notification activity for notification {notification.id}: {e}")
-                            # Continue logging other notifications
-
+                            self.logger.error(
+                                "Failed to log notification activity for notification %s: %s",
+                                notification.id,
+                                e,
+                            )
                 except Exception as e:
-                    self.logger.error(f"Failed to save notifications for agent {agent_id}: {e}")
+                    self.logger.error("Failed to save notifications for agent %s: %s", agent_id, e)
                     db.session.rollback()
-                    # Continue with other agents
 
-        # Commit all notifications at once
         try:
             db.session.commit()
         except Exception as e:
-            self.logger.error(f"Failed to commit notifications: {e}")
+            self.logger.error("Failed to commit notifications: %s", e)
             db.session.rollback()
-            return []  # Return empty list on commit failure
+            return []
+
+        # Optional email for high-priority matches (off by default)
+        if notifications and os.environ.get("MATCHER_EMAIL_ON_HIGH", "0") == "1":
+            try:
+                from services.notification_service import notification_service
+                from sqlalchemy_models import Agent
+
+                for note in notifications:
+                    if note.priority != "high" or not note.property_match_id:
+                        continue
+                    match = db.session.get(PropertyMatch, note.property_match_id)
+                    agent = db.session.get(Agent, note.agent_id)
+                    if not match or not agent:
+                        continue
+                    prop = db.session.get(Property, match.property_id)
+                    cust = db.session.get(Customer, match.customer_id)
+                    if prop and cust:
+                        notification_service._send_high_priority_email(
+                            agent, note, match, prop, cust
+                        )
+            except Exception as exc:
+                self.logger.debug("High-priority email hook skipped: %s", exc)
 
         return notifications
+
+    def _format_money(self, value: Optional[float]) -> str:
+        if value is None:
+            return "n/a"
+        try:
+            return f"${float(value):,.0f}"
+        except (TypeError, ValueError):
+            return "n/a"
 
     def _create_match_notification(self, agent_id: int, match: PropertyMatch) -> Optional[AgentNotification]:
         try:
@@ -454,16 +597,34 @@ class BackgroundMatcher:
             if not customer or not property_obj:
                 return None
 
-            score_pct = int(match.match_score * 100)
-            title = f"High-Quality Match Found ({score_pct}%)"
-            reasons = json.loads(match.match_reasons) if match.match_reasons else []
-            reasons_text = ", ".join(reasons[:3])
+            score_pct = int(round(match.match_score * 100))
+            kind = getattr(match, "_notify_kind", "new")
+            previous = getattr(match, "_previous_score", None)
 
+            if kind == "improved" and previous is not None:
+                prev_pct = int(round(float(previous) * 100))
+                title = f"Match improved: {prev_pct}% → {score_pct}%"
+            elif match.match_score >= self.high_priority_threshold:
+                title = f"New best match ({score_pct}%)"
+            else:
+                title = f"New property match ({score_pct}%)"
+
+            try:
+                reasons = json.loads(match.match_reasons) if match.match_reasons else []
+            except (json.JSONDecodeError, TypeError):
+                reasons = [match.match_reasons] if match.match_reasons else []
+            reasons_text = ", ".join(str(r) for r in reasons[:3]) if reasons else "preference alignment"
+
+            addr = property_obj.address or property_obj.title or f"property #{property_obj.id}"
             message = (
-                f"Customer {customer.name} is a {score_pct}% match for property at {property_obj.address}. "
-                f"Match reasons: {reasons_text}. Customer budget: ${customer.budget_min:,.0f}-${customer.budget_max:,.0f}. "
-                f"Property price: ${property_obj.price:,.0f}."
+                f"{customer.name} is a {score_pct}% match for {addr}. "
+                f"Why: {reasons_text}. "
+                f"Budget: {self._format_money(customer.budget_min)}–{self._format_money(customer.budget_max)}. "
+                f"Price: {self._format_money(property_obj.price)}."
             )
+            if kind == "improved" and previous is not None:
+                message = f"Score rose from {int(round(float(previous) * 100))}%. " + message
+
             priority = "high" if match.match_score >= self.high_priority_threshold else "normal"
 
             return AgentNotification(

@@ -1,4 +1,5 @@
 import logging
+from typing import Any, Dict, List, Tuple
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
@@ -7,36 +8,115 @@ from forms import DealForm
 
 bp = Blueprint("deals", __name__)
 
+# Canonical kanban columns (Stitch Deals Pipeline)
+PIPELINE_STAGES: List[Tuple[str, str]] = [
+    ("prospecting", "Prospecting"),
+    ("contact_made", "Contact Made"),
+    ("property_shown", "Property Shown"),
+    ("offer_submitted", "Offer Submitted"),
+    ("negotiation", "Negotiation"),
+    ("closed_won", "Closed Won"),
+]
+
+# Legacy / free-text statuses → canonical column
+STATUS_ALIASES = {
+    "qualified": "prospecting",
+    "lead": "prospecting",
+    "new": "prospecting",
+    "open": "prospecting",
+    "active": "prospecting",
+    "prospect": "prospecting",
+    "contacted": "contact_made",
+    "contact": "contact_made",
+    "shown": "property_shown",
+    "showing": "property_shown",
+    "viewing": "property_shown",
+    "offer": "offer_submitted",
+    "offered": "offer_submitted",
+    "submitted": "offer_submitted",
+    "negotiating": "negotiation",
+    "under_contract": "negotiation",
+    "contract": "negotiation",
+    "won": "closed_won",
+    "closed": "closed_won",
+    "sold": "closed_won",
+    "lost": "closed_lost",
+    "closed_lost": "closed_lost",
+}
+
 
 class SafeDict(dict):
     def __missing__(self, key):
         return {"count": 0, "value": 0}
 
 
+def normalize_deal_status(raw: Any) -> str:
+    """Map free-text / legacy deal status onto a pipeline column key."""
+    s = (str(raw or "prospecting")).strip().lower().replace(" ", "_").replace("-", "_")
+    if s in {k for k, _ in PIPELINE_STAGES}:
+        return s
+    if s in STATUS_ALIASES:
+        return STATUS_ALIASES[s]
+    # unknown → keep visible under prospecting rather than vanishing from board
+    return "prospecting"
+
+
+def group_deals_by_stage(deals: List[Any]) -> Dict[str, List[Any]]:
+    buckets: Dict[str, List[Any]] = {key: [] for key, _ in PIPELINE_STAGES}
+    buckets["closed_lost"] = []
+    for d in deals or []:
+        if getattr(d, "is_deleted", False):
+            continue
+        key = normalize_deal_status(getattr(d, "status", None))
+        # attach normalized stage for templates / progress bars
+        try:
+            d.pipeline_stage = key
+        except Exception:
+            pass
+        if key not in buckets:
+            buckets[key] = []
+        buckets[key].append(d)
+    return buckets
+
+
 @bp.route("/deals")
 def deals():
-    deals = database_service.get_deals()
+    deals_list = database_service.get_deals() or []
     properties = database_service.get_properties()
     customers = database_service.get_customers()
     agents = database_service.get_agents()
-    
+
+    stage_buckets = group_deals_by_stage(deals_list)
+
     pipeline_stats = SafeDict()
-    stages = ["prospecting", "contact_made", "property_shown", "offer_submitted", "negotiation", "closed_won", "closed_lost"]
-    for stage in stages:
-        stage_deals = [d for d in deals if getattr(d, 'status', '') == stage]
-        pipeline_stats[stage] = {
+    for stage_key, _label in PIPELINE_STAGES:
+        stage_deals = stage_buckets.get(stage_key) or []
+        pipeline_stats[stage_key] = {
             "count": len(stage_deals),
-            "value": sum(getattr(d, 'offer_amount', 0) or 0 for d in stage_deals)
+            "value": sum(getattr(d, "offer_amount", 0) or 0 for d in stage_deals),
         }
-        
+
+    total_open = sum(
+        pipeline_stats[k]["count"]
+        for k, _ in PIPELINE_STAGES
+        if k != "closed_won"
+    )
+    total_value = sum(
+        pipeline_stats[k]["value"] for k, _ in PIPELINE_STAGES
+    )
+
     return render_template(
         "deals.html",
-        deals=deals,
+        deals=deals_list,
+        stage_buckets=stage_buckets,
+        pipeline_stages=PIPELINE_STAGES,
         properties=properties,
         customers=customers,
         agents=agents,
         agents_list=agents,
         pipeline_stats=pipeline_stats,
+        total_open_deals=total_open,
+        total_pipeline_value=total_value,
     )
 
 

@@ -10,15 +10,27 @@ def _redis_url() -> str:
     return os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 
 
+def _rematch_queue_interval_seconds() -> int:
+    """How often to drain RematchQueue (always-on path). Prefer seconds; minutes still work."""
+    if os.environ.get("REMATCH_QUEUE_INTERVAL_SECONDS"):
+        return max(15, int(os.environ["REMATCH_QUEUE_INTERVAL_SECONDS"]))
+    # Default: 60s (was 2 minutes). Override with REMATCH_QUEUE_INTERVAL_MINUTES if set alone.
+    minutes = os.environ.get("REMATCH_QUEUE_INTERVAL_MINUTES")
+    if minutes is not None:
+        return max(15, int(minutes) * 60)
+    return 60
+
+
 def get_celery_beat_schedule() -> dict:
     return {
         "process-rematch-queue": {
             "task": "crm.process_rematch_queue",
-            "schedule": int(os.environ.get("REMATCH_QUEUE_INTERVAL_MINUTES", "2")) * 60,
+            "schedule": _rematch_queue_interval_seconds(),
         },
         "run-property-matching": {
             "task": "crm.run_property_matching",
-            "schedule": int(os.environ.get("MATCHING_INTERVAL_MINUTES", "30")) * 60,
+            # Full sweep default 15 min (was 30) — safety net under the fast queue
+            "schedule": int(os.environ.get("MATCHING_INTERVAL_MINUTES", "15")) * 60,
         },
         "cleanup-old-matches": {
             "task": "crm.cleanup_old_matches",

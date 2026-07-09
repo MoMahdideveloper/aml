@@ -1,574 +1,1139 @@
 {% extends 'base.html' %}
 
-{% block title %}AI Recommendations - Platinum Heritage{% endblock %}
+{% block title %}Client opportunities · Platinum Heritage{% endblock %}
 
 {% block extra_css %}
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
-    .material-symbols-outlined {
-        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        font-family: 'Material Symbols Outlined';
+  /* Page canvas: Stitch cream gallery background */
+  .ph-stitch-shell {
+    margin: -1rem -1rem 0;
+    padding: 1.5rem 1rem 3rem;
+    background: var(--brand-cream, #F4F2E5);
+    min-height: calc(100vh - 4rem);
+  }
+  @media (min-width: 1024px) {
+    .ph-stitch-shell {
+      margin: -1.5rem -1.5rem 0;
+      padding: 2.5rem 1.5rem 4rem;
     }
-    .shadow-ph-soft { box-shadow: 0 8px 30px rgba(27, 38, 49, 0.06); }
-    .customer-card-selected { border-color: #142435; box-shadow: 0 0 0 1px #142435; }
+  }
+  .ph-stitch-shell .ph-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .ph-score-dot { width: 8px; height: 8px; border-radius: 999px; background: #10b981; flex-shrink: 0; }
+  .ph-score-dot.mid { background: #f59e0b; }
+  .ph-score-dot.low { background: #94a3b8; }
+  .ph-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--secondary, #5d5e5f);
+    margin-bottom: 0.35rem;
+  }
+  .ph-divider { width: 1px; height: 1rem; background: var(--brand-platinum, #C0C0C0); }
+  .opp-card.selected {
+    border-color: var(--brand-deep-blue, #2A3A4B);
+    box-shadow: 0 0 0 2px rgba(42, 58, 75, 0.18);
+  }
+  .opp-check {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.85rem;
+    z-index: 2;
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: #2A3A4B;
+    cursor: pointer;
+  }
+  .ph-compose-bar {
+    position: sticky;
+    bottom: 0.75rem;
+    z-index: 40;
+    margin-top: 1.5rem;
+  }
+  .ph-compose-drawer {
+    max-height: min(78vh, 720px);
+    overflow-y: auto;
+  }
+  .ph-context-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: #edf4ff;
+    border: 1px solid #C0C0C0;
+    border-radius: 9999px;
+    padding: 0.2rem 0.65rem;
+    font-size: 11px;
+    font-weight: 500;
+    color: #2A3A4B;
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 w-full mb-8">
+{% set sections = opportunity_sections or (customer_opportunities.sections if customer_opportunities else []) %}
+<div class="ph-stitch-shell ph-stitch-page">
+<div class="ph-inner space-y-12 lg:space-y-16">
+
+{% if selected_customer %}
+<script>
+window.__selectedCustomerId = {{ selected_customer.id }};
+window.__allOpps = window.__allOpps || {};
+{% for sec in sections %}
+{% for o in sec.opportunities %}
+{% set oid = o.id or ('b' ~ sec.brief.id ~ '-i' ~ loop.index) %}
+window.__allOpps[{{ oid|tojson }}] = {{ {
+  "id": oid,
+  "kind": o.kind,
+  "kind_label": o.kind_label,
+  "brief_id": o.brief_id or sec.brief.id,
+  "brief_title": o.brief_title or sec.brief.title,
+  "title": o.title,
+  "subtitle": o.subtitle,
+  "score": o.score,
+  "reasons": o.reasons or [],
+  "primary_url": o.primary_url,
+  "property_id": o.property_id,
+  "location": o.location or sec.brief.location_preference or "",
+  "preferred_type": o.preferred_type or sec.brief.preferred_type or "",
+  "budget_min": o.budget_min if o.budget_min is defined else sec.brief.budget_min,
+  "budget_max": o.budget_max if o.budget_max is defined else sec.brief.budget_max
+}|tojson }};
+{% endfor %}
+{% endfor %}
+</script>
+
+{# ── Page header — live Stitch “AI Smart Property Matcher” ── #}
+<section class="flex flex-col gap-4">
+  <a href="{{ url_for('main.recommendations') }}"
+     class="inline-flex items-center gap-1 text-sm text-secondary hover:text-primary w-fit transition-colors">
+    <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+    All clients
+  </a>
+  <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
     <div>
-        <h1 class="font-display-lg text-2xl sm:text-3xl lg:text-display-lg text-primary mb-2">AI Recommendations</h1>
-        <p class="font-body-lg text-body-lg text-secondary max-w-2xl">
-            Match clients to inventory with hybrid scoring and AI analysis.
-        </p>
+      <h1 class="text-headline-lg text-primary">AI Smart Property Matcher</h1>
+      <p class="text-body-lg text-secondary mt-2 max-w-3xl">
+        Algorithmic pairing of active inventory with client preference profiles
+      </p>
     </div>
-    <div class="flex gap-3 w-full md:w-auto">
-        <button type="button" onclick="showRecommendationTips()"
-                class="flex-1 md:flex-none border border-outline-variant text-primary rounded-lg px-5 py-3 font-label-md text-label-md hover:bg-surface-container transition-all flex items-center justify-center gap-2">
-            <span class="material-symbols-outlined text-[20px]">lightbulb</span>
-            Tips
-        </button>
-        <a href="{{ url_for('customers') }}"
-           class="flex-1 md:flex-none bg-primary text-on-primary rounded-lg px-5 py-3 font-label-md text-label-md hover:opacity-90 transition-all flex items-center justify-center gap-2">
-            <span class="material-symbols-outlined text-[20px]">person_add</span>
-            Clients
-        </a>
+    <div class="flex flex-wrap gap-3">
+      <button type="button" id="matchingRunNowBtn" onclick="runMatchingNow()"
+              class="ph-stitch-btn-primary">
+        <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+        Refresh opportunities
+      </button>
+      <a href="#addBrief" class="ph-stitch-btn-secondary">
+        <span class="material-symbols-outlined text-[18px]">add</span>
+        Add need
+      </a>
     </div>
-</header>
+  </div>
+  <p id="matchingStatusMessage" class="text-label-sm text-secondary"></p>
+</section>
 
-{# ── Client picker ── #}
-<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 mb-8 shadow-sm">
-    <div class="flex items-center justify-between gap-4 mb-6">
-        <h2 class="font-headline-md text-headline-md text-primary flex items-center gap-2">
-            <span class="material-symbols-outlined text-[22px]">group</span>
-            Select a client
-        </h2>
-        {% if customers %}
-        <span class="text-label-sm text-secondary">{{ customers|length }} client{{ 's' if customers|length != 1 }}</span>
-        {% endif %}
-    </div>
-
-    {% if customers %}
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {% for customer in customers %}
-        {% set is_selected = selected_customer and selected_customer.id == customer.id %}
-        <div class="rounded-xl border border-outline-variant bg-surface p-5 flex flex-col gap-4 transition-all hover:shadow-ph-soft {{ 'customer-card-selected bg-surface-container-low' if is_selected else '' }}">
-            <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-full bg-primary text-on-primary flex items-center justify-center font-semibold text-sm flex-shrink-0">
-                    {{ customer.name.split()[0][0] }}{{ customer.name.split()[-1][0] if customer.name.split()|length > 1 else '' }}
-                </div>
-                <div class="min-w-0">
-                    <h3 class="font-semibold text-primary truncate">{{ customer.name }}</h3>
-                    <p class="text-sm text-secondary truncate">{{ customer.email or 'No email' }}</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-2 text-center">
-                <div class="rounded-lg bg-background border border-outline-variant p-2">
-                    <span class="material-symbols-outlined text-primary text-[18px]">payments</span>
-                    <div class="text-[11px] text-secondary mt-1 leading-tight">
-                        {% if customer.budget_min and customer.budget_max %}
-                        ${{ "{:,.0f}".format(customer.budget_min) }}–{{ "{:,.0f}".format(customer.budget_max) }}
-                        {% elif customer.budget_max %}
-                        Up to ${{ "{:,.0f}".format(customer.budget_max) }}
-                        {% else %}
-                        Any budget
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="rounded-lg bg-background border border-outline-variant p-2">
-                    <span class="material-symbols-outlined text-primary text-[18px]">bed</span>
-                    <div class="text-[11px] text-secondary mt-1">
-                        {{ customer.preferred_bedrooms if customer.preferred_bedrooms else 'Any' }} beds
-                    </div>
-                </div>
-                <div class="rounded-lg bg-background border border-outline-variant p-2">
-                    <span class="material-symbols-outlined text-primary text-[18px]">home</span>
-                    <div class="text-[11px] text-secondary mt-1 truncate">
-                        {{ customer.preferred_type or 'Any type' }}
-                    </div>
-                </div>
-            </div>
-
-            {% if customer.location_preference %}
-            <p class="text-xs text-secondary flex items-center gap-1 truncate">
-                <span class="material-symbols-outlined text-[14px]">location_on</span>
-                {{ customer.location_preference }}
-            </p>
-            {% endif %}
-
-            <a href="{{ url_for('get_customer_recommendations', customer_id=customer.id) }}"
-               class="mt-auto w-full text-center rounded-lg py-2.5 font-label-md text-sm transition-all flex items-center justify-center gap-2
-                      {{ 'bg-primary text-on-primary hover:opacity-90' if is_selected else 'border border-outline-variant text-primary hover:bg-surface-container' }}">
-                <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
-                {{ 'Refresh matches' if is_selected else 'Get recommendations' }}
-            </a>
-        </div>
+{# ── Stitch filter bar: client + stats ── #}
+<section class="bg-white border border-brand-platinum rounded-card p-4 flex flex-wrap gap-6 items-end">
+  <div class="flex-1 min-w-[220px]">
+    <label class="block text-label-sm text-secondary mb-1" for="clientProfileSelect">Client Profile</label>
+    <div class="relative">
+      <select id="clientProfileSelect"
+              class="w-full appearance-none bg-transparent border border-brand-platinum rounded px-4 py-2 text-body-md text-primary focus:outline-none focus:border-brand-deep-blue"
+              onchange="if(this.value) window.location.href=this.value">
+        {% for c in customers %}
+        <option value="{{ url_for('main.get_customer_recommendations', customer_id=c.id) }}"
+                {{ 'selected' if c.id == selected_customer.id }}>
+          {{ c.name }}{% if c.budget_max %} (${{ "{:,.0f}".format(c.budget_max) }}){% endif %}
+        </option>
         {% endfor %}
+      </select>
+      <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-secondary pointer-events-none text-[20px]">expand_more</span>
+    </div>
+    <div class="text-label-sm text-secondary mt-1.5">
+      {{ selected_customer.phone or 'No phone' }}
+      {% if selected_customer.email %} · {{ selected_customer.email }}{% endif %}
+    </div>
+  </div>
+  <div class="min-w-[100px]">
+    <span class="block text-label-sm text-secondary mb-1">Needs</span>
+    <div class="text-headline-md text-primary tabular-nums">{{ sections|length }}</div>
+  </div>
+  <div class="min-w-[100px]">
+    <span class="block text-label-sm text-secondary mb-1">Matches</span>
+    <div class="text-headline-md text-primary tabular-nums">
+      {{ customer_opportunities.opportunity_count if customer_opportunities else 0 }}
+    </div>
+  </div>
+  <div class="min-w-[120px]">
+    <span class="block text-label-sm text-secondary mb-1">Role</span>
+    <div class="text-body-md font-medium text-brand-deep-blue capitalize">
+      {{ selected_customer.customer_type or 'buyer' }}
+    </div>
+  </div>
+</section>
+
+{# ── Needs + opportunity cards ── #}
+{% if sections %}
+<div class="flex flex-col gap-16">
+  {% for sec in sections %}
+  {% set b = sec.brief %}
+  {% set role = b.role or 'buyer' %}
+  <section id="brief-{{ b.id }}" class="flex flex-col gap-6">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div>
+        <div class="flex flex-wrap items-center gap-2 mb-2">
+          <h2 class="text-headline-md text-primary tracking-tight">{{ b.title }}</h2>
+          <span class="text-[11px] font-semibold uppercase tracking-wider px-3 py-1 rounded-full ph-role-{{ role }}">{{ role }}</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 text-label-md text-secondary">
+          {% if b.budget_min or b.budget_max %}
+          <span class="font-medium text-brand-deep-blue tabular-nums">
+            {% if b.budget_min and b.budget_max %}
+              ${{ "{:,.0f}".format(b.budget_min) }} – ${{ "{:,.0f}".format(b.budget_max) }}
+            {% elif b.budget_max %}Up to ${{ "{:,.0f}".format(b.budget_max) }}
+            {% else %}From ${{ "{:,.0f}".format(b.budget_min) }}{% endif %}
+          </span>
+          <span class="ph-divider hidden sm:block"></span>
+          {% endif %}
+          <span>{{ b.preferred_type or 'Any type' }}</span>
+          {% if b.location_preference %}
+          <span class="ph-divider hidden sm:block"></span>
+          <span>{{ b.location_preference }}</span>
+          {% endif %}
+          {% if b.preferred_bedrooms %}
+          <span class="ph-divider hidden sm:block"></span>
+          <span>{{ b.preferred_bedrooms }} bed{% if b.preferred_bathrooms %} · {{ b.preferred_bathrooms }} bath{% endif %}</span>
+          {% endif %}
+        </div>
+      </div>
+      <button type="button"
+              onclick="document.getElementById('edit-brief-{{ b.id }}').classList.toggle('hidden')"
+              class="ph-stitch-btn-secondary py-2 px-4">
+        <span class="material-symbols-outlined text-[16px]">edit</span>
+        Edit need
+      </button>
+    </div>
+
+    <div id="edit-brief-{{ b.id }}" class="hidden ph-stitch-panel p-6">
+      <form method="POST" action="{{ url_for('main.edit_customer_brief', customer_id=selected_customer.id, brief_id=b.id) }}"
+            class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl">
+        {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+        <div class="sm:col-span-2">
+          <label class="ph-label">Title</label>
+          <input name="title" value="{{ b.title }}" required class="ph-stitch-input">
+        </div>
+        <div>
+          <label class="ph-label">Role</label>
+          <select name="role" class="ph-stitch-input">
+            <option value="buyer" {{ 'selected' if role == 'buyer' }}>Buyer</option>
+            <option value="seller" {{ 'selected' if role == 'seller' }}>Seller (cash / list)</option>
+            <option value="exchange" {{ 'selected' if role == 'exchange' }}>Exchange home</option>
+            <option value="investor" {{ 'selected' if role == 'investor' }}>Investor</option>
+          </select>
+        </div>
+        <div>
+          <label class="ph-label">Their property</label>
+          <select name="related_property_id" class="ph-stitch-input">
+            <option value="">— none —</option>
+            {% for p in linkable_properties|default([]) %}
+            <option value="{{ p.id }}" {{ 'selected' if b.related_property_id == p.id }}>#{{ p.id }} {{ p.title[:40] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="ph-label">Budget min</label>
+          <input type="number" name="budget_min" min="0" value="{{ b.budget_min or '' }}" class="ph-stitch-input">
+        </div>
+        <div>
+          <label class="ph-label">Budget max</label>
+          <input type="number" name="budget_max" min="0" value="{{ b.budget_max or '' }}" class="ph-stitch-input">
+        </div>
+        <div>
+          <label class="ph-label">Beds</label>
+          <input type="number" name="preferred_bedrooms" min="0" value="{{ b.preferred_bedrooms or '' }}" class="ph-stitch-input">
+        </div>
+        <div>
+          <label class="ph-label">Baths</label>
+          <input type="number" name="preferred_bathrooms" min="0" value="{{ b.preferred_bathrooms or '' }}" class="ph-stitch-input">
+        </div>
+        <div>
+          <label class="ph-label">Type</label>
+          <input name="preferred_type" value="{{ b.preferred_type or '' }}" class="ph-stitch-input">
+        </div>
+        <div>
+          <label class="ph-label">Location</label>
+          <input name="location_preference" value="{{ b.location_preference or '' }}" class="ph-stitch-input">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="ph-label">Notes</label>
+          <textarea name="preferences" rows="2" class="ph-stitch-input">{{ b.preferences or '' }}</textarea>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="ph-label">Exchange notes</label>
+          <textarea name="exchange_notes" rows="2" class="ph-stitch-input">{{ b.exchange_notes or '' }}</textarea>
+        </div>
+        <div class="sm:col-span-2 flex flex-wrap gap-2">
+          <button type="submit" class="ph-stitch-btn-primary">Save this need</button>
+          <button type="button" onclick="document.getElementById('edit-brief-{{ b.id }}').classList.add('hidden')"
+                  class="ph-stitch-btn-secondary">Cancel</button>
+        </div>
+      </form>
+      <form method="POST" action="{{ url_for('main.delete_customer_brief', customer_id=selected_customer.id, brief_id=b.id) }}"
+            class="mt-4" onsubmit="return confirm('Archive this need?');">
+        {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+        <button type="submit" class="text-label-sm text-error hover:underline">Archive this need</button>
+      </form>
+    </div>
+
+    {% if sec.opportunities %}
+    <div class="flex items-center justify-between gap-3 mb-1">
+      <p class="text-label-sm text-secondary">Select matches · message with client context (optional)</p>
+      <button type="button" class="text-xs font-medium text-primary hover:underline"
+              onclick="selectAllInBrief('brief-ops-{{ b.id }}', true)">Select all in this need</button>
+    </div>
+    {# Stitch: grid-cols-1 md:2 lg:3 gap-gutter (24px) #}
+    <div id="brief-ops-{{ b.id }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for o in sec.opportunities %}
+      {% set sc = o.score if o.score is not none else none %}
+      {% set oid = o.id or ('b' ~ b.id ~ '-i' ~ loop.index) %}
+      <article class="bg-white rounded-card border border-brand-platinum overflow-hidden flex flex-col relative opp-card hover:shadow-card-hover transition-shadow duration-300"
+               data-opp-id="{{ oid }}">
+        <label class="sr-only" for="chk-{{ oid }}">Select {{ o.title }}</label>
+        <input type="checkbox" id="chk-{{ oid }}" class="opp-check opp-select"
+               data-opp-id="{{ oid }}" onchange="onOppSelectChange(this)" title="Select for message">
+
+        {# Image hero — Stitch h-64 + score pill #}
+        <div class="relative h-48 sm:h-56 bg-surface-container-low">
+          {% if o.image_url %}
+          <img src="{{ o.image_url }}" alt="{{ o.title }}" class="w-full h-full object-cover">
+          {% else %}
+          <div class="w-full h-full flex items-center justify-center text-brand-platinum">
+            <span class="material-symbols-outlined text-5xl">apartment</span>
+          </div>
+          {% endif %}
+          <div class="absolute top-4 left-4 bg-white border border-brand-platinum rounded-full px-3 py-1 text-label-sm text-primary flex items-center gap-1 shadow-sm">
+            {% if sc is not none %}
+            <span class="ph-score-dot {{ 'mid' if sc < 70 else '' }}{{ ' low' if sc < 50 else '' }}"></span>
+            {{ sc }}% Match
+            {% else %}
+            <span class="material-symbols-outlined text-[14px]">flag</span>
+            {{ o.kind_label or o.kind }}
+            {% endif %}
+          </div>
+          <span class="absolute top-4 right-10 text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full ph-role-{{ o.kind }} bg-white/95">{{ o.kind }}</span>
+        </div>
+
+        <div class="p-6 flex flex-col gap-4 flex-1">
+          <div>
+            <h3 class="text-headline-md text-primary mb-1 leading-snug">{{ o.title }}</h3>
+            {% if o.price %}
+            <div class="text-headline-md text-brand-deep-blue">${{ "{:,.0f}".format(o.price) }}</div>
+            {% else %}
+            <p class="text-body-md text-brand-deep-blue font-medium">{{ o.subtitle }}</p>
+            {% endif %}
+          </div>
+
+          {% if o.bedrooms or o.bathrooms or o.square_feet or o.subtitle %}
+          <div class="flex flex-wrap items-center gap-3 text-label-md text-secondary">
+            {% if o.bedrooms %}<span>{{ o.bedrooms }} Bed</span>{% endif %}
+            {% if o.bedrooms and o.bathrooms %}<div class="w-px h-4 bg-brand-platinum"></div>{% endif %}
+            {% if o.bathrooms %}<span>{{ o.bathrooms }} Bath</span>{% endif %}
+            {% if (o.bedrooms or o.bathrooms) and o.square_feet %}<div class="w-px h-4 bg-brand-platinum"></div>{% endif %}
+            {% if o.square_feet %}<span>{{ "{:,.0f}".format(o.square_feet) }} SqFt</span>{% endif %}
+            {% if not o.bedrooms and not o.bathrooms and not o.square_feet and o.subtitle and o.price %}
+            <span class="truncate">{{ o.subtitle }}</span>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          {% if o.reasons %}
+          <div class="bg-surface p-4 rounded border border-brand-platinum flex-1">
+            <div class="text-label-sm text-brand-deep-blue mb-1 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px]">psychology</span>
+              AI Rationale
+            </div>
+            <p class="text-sm text-on-surface-variant leading-relaxed">
+              {{ o.reasons|join(' · ') }}
+            </p>
+          </div>
+          {% endif %}
+
+          {# Stitch dual CTAs: Send to Client + secondary #}
+          <div class="flex flex-col gap-2 mt-auto pt-1">
+            <button type="button"
+                    class="w-full bg-brand-deep-blue text-white text-label-md py-3 rounded hover:opacity-90 transition-opacity font-medium"
+                    onclick="sendThisOpp('{{ oid }}')">
+              Send to Client
+            </button>
+            <a href="{{ o.primary_url }}"
+               class="w-full text-center border border-brand-platinum text-brand-deep-blue text-label-md py-3 rounded hover:bg-surface transition-colors font-medium no-underline">
+              {{ o.primary_label or 'View property' }}
+            </a>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
     </div>
     {% else %}
-    <div class="text-center py-12">
-        <span class="material-symbols-outlined text-5xl text-outline mb-3">group_off</span>
-        <h3 class="font-headline-md text-primary mb-2">No clients yet</h3>
-        <p class="text-secondary mb-6 max-w-md mx-auto">Add clients with preferences to generate property matches.</p>
-        <a href="{{ url_for('customers') }}"
-           class="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-lg font-label-md hover:opacity-90">
-            <span class="material-symbols-outlined">person_add</span>
-            Add client
-        </a>
+    <div class="ph-stitch-card p-12 text-center">
+      <span class="material-symbols-outlined text-4xl text-brand-platinum mb-3">search_off</span>
+      <p class="text-primary font-semibold mb-1">No opportunities for this need yet</p>
+      <p class="text-sm text-secondary">Edit preferences or click Refresh opportunities.</p>
     </div>
     {% endif %}
-</section>
-
-{# ── Results ── #}
-{% if selected_customer %}
-<section class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-5 border-b border-outline-variant bg-primary text-on-primary">
-        <div>
-            <h2 class="font-headline-md text-lg font-semibold flex items-center gap-2">
-                <span class="material-symbols-outlined text-[22px]">auto_awesome</span>
-                Matches for {{ selected_customer.name }}
-            </h2>
-            <p class="text-sm text-on-primary/80 mt-1">
-                {% if recommendations %}
-                {{ recommendations|length }} ranked result{{ 's' if recommendations|length != 1 }}
-                {% else %}
-                No matches returned
-                {% endif %}
-            </p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-            <button type="button" onclick="refreshRecommendations()"
-                    class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors">
-                <span class="material-symbols-outlined text-[18px]">refresh</span>
-                Refresh
-            </button>
-            <button type="button" onclick="exportRecommendations()"
-                    class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors">
-                <span class="material-symbols-outlined text-[18px]">download</span>
-                Export
-            </button>
-        </div>
-    </div>
-
-    <div class="p-6">
-        {% if recommendations and recommendations|length > 0 %}
-        <div class="mb-6 rounded-lg border border-outline-variant bg-surface-container-low px-4 py-3 flex items-start gap-3 text-sm">
-            <span class="material-symbols-outlined text-primary text-[20px] flex-shrink-0">smart_toy</span>
-            <p class="text-on-surface">
-                <strong class="text-primary">Analysis complete.</strong>
-                Ranked {{ recommendations|length }} properties from preferences and inventory scoring.
-            </p>
-        </div>
-
-        {# Summary strip #}
-        {% set excellent = recommendations | selectattr('match_score', 'ge', 80) | list | length %}
-        {% set avg_score = (recommendations | map(attribute='match_score') | sum / recommendations|length) | round(1) %}
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-            <div class="rounded-lg border border-outline-variant bg-surface p-4">
-                <div class="text-label-sm text-secondary uppercase tracking-wider">Results</div>
-                <div class="font-headline-md text-primary tabular-nums">{{ recommendations|length }}</div>
-            </div>
-            <div class="rounded-lg border border-outline-variant bg-surface p-4">
-                <div class="text-label-sm text-secondary uppercase tracking-wider">Excellent (80+)</div>
-                <div class="font-headline-md text-primary tabular-nums">{{ excellent }}</div>
-            </div>
-            <div class="rounded-lg border border-outline-variant bg-surface p-4">
-                <div class="text-label-sm text-secondary uppercase tracking-wider">Avg score</div>
-                <div class="font-headline-md text-primary tabular-nums">{{ avg_score }}%</div>
-            </div>
-            <div class="rounded-lg border border-outline-variant bg-surface p-4">
-                <div class="text-label-sm text-secondary uppercase tracking-wider">Best match</div>
-                <div class="font-headline-md text-primary tabular-nums">{{ recommendations[0].match_score }}%</div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {% for recommendation in recommendations %}
-            {% set prop = recommendation.property %}
-            {% set score = recommendation.match_score|int %}
-            {% if score >= 80 %}
-                {% set score_label = 'Excellent' %}
-                {% set score_class = 'bg-[#dcfce7] text-[#15803d]' %}
-            {% elif score >= 60 %}
-                {% set score_label = 'Good' %}
-                {% set score_class = 'bg-[#fef9c3] text-[#854d0e]' %}
-            {% else %}
-                {% set score_label = 'Fair' %}
-                {% set score_class = 'bg-surface-container text-secondary' %}
-            {% endif %}
-
-            <article class="recommendation-card rounded-xl border border-outline-variant bg-surface flex flex-col overflow-hidden hover:shadow-ph-soft transition-shadow">
-                <div class="flex items-center justify-between gap-2 px-5 py-3 border-b border-outline-variant bg-surface-container-low">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-primary text-on-primary text-xs font-semibold tabular-nums">
-                            {{ score }}% match
-                        </span>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ score_class }}">
-                            {{ score_label }}
-                        </span>
-                    </div>
-                    {% if prop.property_type %}
-                    <span class="text-xs text-secondary border border-outline-variant rounded-full px-2.5 py-0.5">
-                        {{ prop.property_type }}
-                    </span>
-                    {% endif %}
-                </div>
-
-                <div class="p-5 flex flex-col flex-1 gap-4">
-                    <div>
-                        <h3 class="font-headline-md text-lg text-primary leading-snug">
-                            <a href="{{ url_for('properties.property_detail', property_id=prop.id) }}"
-                               class="hover:underline">{{ prop.title }}</a>
-                        </h3>
-                        <p class="text-sm text-secondary flex items-start gap-1 mt-1">
-                            <span class="material-symbols-outlined text-[16px] mt-0.5 flex-shrink-0">location_on</span>
-                            <span>{{ prop.address or prop.neighborhood or 'Location not set' }}</span>
-                        </p>
-                    </div>
-
-                    <div class="grid grid-cols-4 gap-2 text-center">
-                        <div class="rounded-lg bg-background border border-outline-variant p-2">
-                            <span class="material-symbols-outlined text-primary text-[18px]">payments</span>
-                            <div class="text-xs font-semibold text-primary tabular-nums mt-0.5">
-                                ${{ "{:,.0f}".format(prop.price or 0) }}
-                            </div>
-                        </div>
-                        <div class="rounded-lg bg-background border border-outline-variant p-2">
-                            <span class="material-symbols-outlined text-primary text-[18px]">bed</span>
-                            <div class="text-xs text-secondary mt-0.5">{{ prop.bedrooms or '—' }} bd</div>
-                        </div>
-                        <div class="rounded-lg bg-background border border-outline-variant p-2">
-                            <span class="material-symbols-outlined text-primary text-[18px]">bathtub</span>
-                            <div class="text-xs text-secondary mt-0.5">{{ prop.bathrooms or '—' }} ba</div>
-                        </div>
-                        <div class="rounded-lg bg-background border border-outline-variant p-2">
-                            <span class="material-symbols-outlined text-primary text-[18px]">square_foot</span>
-                            <div class="text-xs text-secondary mt-0.5">
-                                {% if prop.square_feet %}{{ "{:,.0f}".format(prop.square_feet) }}{% else %}—{% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    {% if recommendation.reasons %}
-                    <div class="flex flex-wrap gap-1.5">
-                        {% for reason in recommendation.reasons[:4] %}
-                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary">{{ reason }}</span>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-
-                    {% if recommendation.analysis %}
-                    <div class="ai-analysis rounded-lg border border-outline-variant bg-background p-3">
-                        <h4 class="text-xs font-semibold text-primary uppercase tracking-wider mb-2 flex items-center gap-1">
-                            <span class="material-symbols-outlined text-[16px]">smart_toy</span>
-                            AI analysis
-                        </h4>
-                        <p class="analysis-preview text-sm text-on-surface leading-relaxed">
-                            {{ recommendation.analysis[:220] }}{% if recommendation.analysis|length > 220 %}…{% endif %}
-                        </p>
-                        {% if recommendation.analysis|length > 220 %}
-                        <button type="button" class="text-xs text-primary font-medium mt-2 hover:underline" onclick="toggleAnalysis(this)">
-                            Show more
-                        </button>
-                        <p class="full-analysis hidden text-sm text-on-surface leading-relaxed mt-2">
-                            {{ recommendation.analysis }}
-                        </p>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-
-                    <div class="flex flex-wrap gap-2 mt-auto pt-2 border-t border-outline-variant">
-                        <a href="{{ url_for('properties.property_detail', property_id=prop.id) }}"
-                           class="flex-1 min-w-[7rem] text-center border border-outline-variant text-primary rounded-lg py-2 text-sm font-medium hover:bg-surface-container-low transition-colors inline-flex items-center justify-center gap-1">
-                            <span class="material-symbols-outlined text-[16px]">home</span>
-                            View
-                        </a>
-                        <button type="button"
-                                onclick="createDeal({{ prop.id }}, {{ selected_customer.id }})"
-                                class="flex-1 min-w-[7rem] text-center bg-primary text-on-primary rounded-lg py-2 text-sm font-medium hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-1">
-                            <span class="material-symbols-outlined text-[16px]">handshake</span>
-                            Create deal
-                        </button>
-                        <a href="{{ url_for('properties.property_detail', property_id=prop.id) }}#schedule"
-                           class="p-2 border border-outline-variant text-secondary hover:text-primary rounded-lg transition-colors inline-flex"
-                           title="Schedule viewing">
-                            <span class="material-symbols-outlined text-[18px]">event</span>
-                        </a>
-                        <button type="button"
-                                onclick="shareProperty({{ prop.id }})"
-                                class="p-2 border border-outline-variant text-secondary hover:text-primary rounded-lg transition-colors"
-                                title="Share">
-                            <span class="material-symbols-outlined text-[18px]">share</span>
-                        </button>
-                    </div>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-
-        {% else %}
-        <div class="text-center py-14" id="recsEmptyState">
-            <span class="material-symbols-outlined text-5xl text-outline mb-3">search_off</span>
-            <h3 class="font-headline-md text-primary mb-2">No matches found</h3>
-            <p class="text-secondary max-w-md mx-auto mb-6">
-                No properties ranked for this client. Try updating preferences or adding inventory.
-            </p>
-            <div class="flex flex-wrap justify-center gap-3">
-                <button type="button" onclick="refreshRecommendations()"
-                        class="inline-flex items-center gap-2 border border-outline-variant text-primary px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-surface-container">
-                    <span class="material-symbols-outlined text-[18px]">refresh</span>
-                    Try again
-                </button>
-                <a href="{{ url_for('properties') }}"
-                   class="inline-flex items-center gap-2 bg-primary text-on-primary px-5 py-2.5 rounded-lg text-sm font-medium hover:opacity-90">
-                    <span class="material-symbols-outlined text-[18px]">domain</span>
-                    Browse properties
-                </a>
-            </div>
-            {% if error_message %}
-            <p class="mt-6 text-sm text-error max-w-lg mx-auto">{{ error_message }}</p>
-            {% endif %}
-        </div>
-        {% endif %}
-    </div>
-</section>
-{% endif %}
-
-{# Tips modal #}
-<div id="recommendationTipsModal"
-     class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]"
-     data-modal role="dialog" aria-modal="true" aria-labelledby="recommendationTipsTitle">
-    <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-2xl max-h-[90vh] flex flex-col"
-         onclick="event.stopPropagation()">
-        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
-            <h2 id="recommendationTipsTitle" class="text-lg font-semibold text-primary flex items-center gap-2">
-                <span class="material-symbols-outlined text-[20px]">lightbulb</span>
-                AI match tips
-            </h2>
-            <button type="button" onclick="closeModal('recommendationTipsModal')"
-                    class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" aria-label="Close">
-                <span class="material-symbols-outlined text-[20px]">close</span>
-            </button>
-        </div>
-        <div class="px-5 py-5 overflow-y-auto space-y-5 text-sm">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                    <h3 class="font-semibold text-primary mb-2">How matching works</h3>
-                    <ul class="space-y-2 text-on-surface">
-                        <li class="flex gap-2"><span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>Budget, beds, and location preferences</li>
-                        <li class="flex gap-2"><span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>Property features and listing type</li>
-                        <li class="flex gap-2"><span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>AI notes on fit and trade-offs</li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-primary mb-2">Best practices</h3>
-                    <ul class="space-y-2 text-on-surface">
-                        <li class="flex gap-2"><span class="material-symbols-outlined text-primary text-[18px]">star</span>Keep client prefs complete</li>
-                        <li class="flex gap-2"><span class="material-symbols-outlined text-primary text-[18px]">star</span>Review analysis before client share</li>
-                        <li class="flex gap-2"><span class="material-symbols-outlined text-primary text-[18px]">star</span>Open deals from strong matches</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="rounded-lg border border-outline-variant bg-surface-container-low p-4">
-                <h3 class="font-semibold text-primary mb-3">Match scores</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                    <div><span class="inline-block px-2 py-0.5 rounded bg-primary text-on-primary mb-1">80–100%</span><p class="text-on-surface-variant">Excellent fit</p></div>
-                    <div><span class="inline-block px-2 py-0.5 rounded bg-primary-container text-on-primary mb-1">60–79%</span><p class="text-on-surface-variant">Good fit</p></div>
-                    <div><span class="inline-block px-2 py-0.5 rounded border border-outline-variant text-on-surface mb-1">&lt;60%</span><p class="text-on-surface-variant">Needs compromise</p></div>
-                </div>
-            </div>
-        </div>
-        <div class="px-5 py-4 border-t border-outline-variant flex justify-end">
-            <button type="button" onclick="closeModal('recommendationTipsModal')"
-                    class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90">
-                Got it
-            </button>
-        </div>
-    </div>
+  </section>
+  {% endfor %}
 </div>
 
-{# Create deal modal #}
-<div id="createDealModal"
-     class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-[2px]"
-     data-modal role="dialog" aria-modal="true" aria-labelledby="createDealTitle">
-    <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ph w-full max-w-md flex flex-col"
-         onclick="event.stopPropagation()">
-        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant">
-            <h2 id="createDealTitle" class="text-lg font-semibold text-primary flex items-center gap-2">
-                <span class="material-symbols-outlined text-[20px]">handshake</span>
-                Create deal
-            </h2>
-            <button type="button" onclick="closeModal('createDealModal')"
-                    class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container" aria-label="Close">
-                <span class="material-symbols-outlined text-[20px]">close</span>
-            </button>
+{# ── Sticky selection + compose panel ── #}
+<div id="composeBar" class="ph-compose-bar hidden">
+  <div class="ph-stitch-panel shadow-card-hover p-4 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3 min-w-0">
+      <span class="material-symbols-outlined text-brand-deep-blue">checklist</span>
+      <div>
+        <div class="text-sm font-semibold text-primary">
+          <span id="selCount">0</span> match<span id="selPlural">es</span> selected
         </div>
-        <form id="createDealForm" method="POST" action="{{ url_for('add_deal') }}" class="flex flex-col">
-            {% if csrf_token is defined %}
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            {% endif %}
-            <input type="hidden" id="deal_property_id" name="property_id">
-            <input type="hidden" id="deal_customer_id" name="customer_id">
-            <div class="px-5 py-4 space-y-4">
-                <div>
-                    <label for="deal_agent_id" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Agent *</label>
-                    <select id="deal_agent_id" name="agent_id" required
-                            class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
-                        <option value="">Select agent</option>
-                        {% for agent in agents|default([]) %}
-                        <option value="{{ agent.id }}" {% if loop.first %}selected{% endif %}>
-                            {{ agent.name }}{% if agent.specialization %} · {{ agent.specialization }}{% endif %}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    {% if not agents %}
-                    <p class="text-xs text-error mt-1">No agents available. Add an agent first.</p>
-                    {% endif %}
-                </div>
-                <div>
-                    <label for="deal_offer_amount" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Offer amount ($)</label>
-                    <input type="number" id="deal_offer_amount" name="offer_amount" min="0" step="1"
-                           class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none"
-                           placeholder="0">
-                </div>
-                <div>
-                    <label for="deal_status" class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Initial status</label>
-                    <select id="deal_status" name="status"
-                            class="w-full px-3 py-2.5 bg-background border border-outline-variant rounded-lg text-sm focus:border-primary outline-none">
-                        <option value="prospecting">Prospecting</option>
-                        <option value="contact_made">Contact made</option>
-                        <option value="property_shown">Property shown</option>
-                        <option value="offer_submitted">Offer submitted</option>
-                    </select>
-                </div>
-            </div>
-            <div class="px-5 py-4 border-t border-outline-variant flex justify-end gap-2">
-                <button type="button" onclick="closeModal('createDealModal')"
-                        class="px-4 py-2 rounded-lg border border-outline-variant text-sm font-medium text-primary hover:bg-surface-container">
-                    Cancel
-                </button>
-                <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90"
-                        {% if not agents %}disabled{% endif %}>
-                    Create deal
-                </button>
-            </div>
-        </form>
+        <div class="text-xs text-secondary truncate max-w-md" id="selPreview">—</div>
+      </div>
     </div>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="ph-stitch-btn-secondary py-2" onclick="clearOppSelection()">Clear</button>
+      <button type="button" class="ph-stitch-btn-primary py-2" onclick="openComposePanel()">
+        <span class="material-symbols-outlined text-[18px]">sms</span>
+        Message client
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="composePanel" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-6 bg-black/40">
+  <div class="ph-stitch-panel ph-compose-drawer w-full max-w-2xl p-5 sm:p-6 bg-white" role="dialog" aria-labelledby="composeTitle">
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <div>
+        <p class="ph-label mb-1">Outreach · optional</p>
+        <h2 id="composeTitle" class="text-headline-md text-primary">Message {{ selected_customer.name }}</h2>
+      </div>
+      <button type="button" class="ph-stitch-btn-secondary py-1.5 px-3" onclick="closeComposePanel()" aria-label="Close">
+        <span class="material-symbols-outlined text-[18px]">close</span>
+      </button>
+    </div>
+
+    {# Customer + need context #}
+    <div class="rounded-card border border-brand-platinum bg-surface p-4 mb-4">
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        <span class="ph-context-chip"><span class="material-symbols-outlined text-[14px]">person</span> {{ selected_customer.name }}</span>
+        <span class="ph-context-chip"><span class="material-symbols-outlined text-[14px]">call</span>
+          <span id="ctxPhoneLabel">{{ selected_customer.phone or 'No phone on file' }}</span>
+        </span>
+        <span class="ph-context-chip capitalize">{{ selected_customer.customer_type or 'buyer' }}</span>
+        {% if selected_customer.budget_max %}
+        <span class="ph-context-chip tabular-nums">Budget ≤ ${{ "{:,.0f}".format(selected_customer.budget_max) }}</span>
+        {% endif %}
+      </div>
+      <div class="text-xs text-secondary space-y-1">
+        <div><span class="font-medium text-primary">Prefs:</span>
+          {{ selected_customer.preferred_type or 'any type' }}
+          {% if selected_customer.location_preference %} · {{ selected_customer.location_preference }}{% endif %}
+          {% if selected_customer.preferred_bedrooms %} · {{ selected_customer.preferred_bedrooms }} bed{% endif %}
+        </div>
+        {% if selected_customer.preferences %}
+        <div><span class="font-medium text-primary">Notes:</span> {{ selected_customer.preferences[:180] }}{% if selected_customer.preferences|length > 180 %}…{% endif %}</div>
+        {% endif %}
+        <div><span class="font-medium text-primary">Selected needs:</span> <span id="ctxNeeds">—</span></div>
+        <div class="mt-2">
+          <span class="font-medium text-primary">Selected properties (<span id="ctxMatchCount">0</span>):</span>
+          <ul id="ctxMatchesList" class="mt-1.5 space-y-1 list-none pl-0"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+      <div>
+        <label class="ph-label" for="composePhone">Contact number</label>
+        <input id="composePhone" type="tel" class="ph-stitch-input"
+               value="{{ selected_customer.phone or '' }}"
+               placeholder="0912… / +98…"
+               oninput="document.getElementById('ctxPhoneLabel').textContent = this.value || 'No phone'">
+      </div>
+      <div>
+        <label class="ph-label" for="composeTemplate">Message template</label>
+        <select id="composeTemplate" class="ph-stitch-input" onchange="onTemplatePicked()">
+          <option value="">— recommended for selection —</option>
+          <optgroup id="tplDefaults" label="Default templates"></optgroup>
+          <optgroup id="tplPrior" label="Prior messages"></optgroup>
+        </select>
+        <p class="text-[11px] text-secondary mt-1">Multi-select auto-uses a shortlist that lists every property.</p>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-2 mb-3">
+      <button type="button" id="useTplBtn" class="ph-stitch-btn-secondary py-2 text-xs" onclick="applyTemplateFill()">
+        <span class="material-symbols-outlined text-[16px]">description</span>
+        Use selected template
+      </button>
+      <button type="button" class="ph-stitch-btn-secondary py-2 text-xs" id="aiComposeBtn" onclick="composeWithAI()">
+        <span class="material-symbols-outlined text-[16px]">auto_awesome</span>
+        AI draft from selection
+      </button>
+      <button type="button" id="smartDefaultBtn" class="ph-stitch-btn-secondary py-2 text-xs" onclick="composeWithDefault()">
+        Smart default
+      </button>
+    </div>
+
+    <div class="mb-2 flex justify-between items-center">
+      <label class="ph-label mb-0" for="composeBody">Message</label>
+      <span id="composeChar" class="text-xs text-secondary">0 chars</span>
+    </div>
+    <textarea id="composeBody" rows="7" class="ph-stitch-input mb-3 font-mono text-sm leading-relaxed"
+              placeholder="All selected properties should appear here after Smart default / template / AI…"
+              oninput="updateCharCount()"></textarea>
+
+    <div class="mb-4">
+      <label class="ph-label" for="composeProvider">SMS provider</label>
+      <select id="composeProvider" class="ph-stitch-input">
+        <option value="log" selected>log (dev / safe — no real SMS)</option>
+        <option value="melipayamak">melipayamak</option>
+      </select>
+    </div>
+
+    <p id="composeStatus" class="text-xs text-secondary mb-3 min-h-[1rem]"></p>
+
+    <div class="flex flex-wrap justify-end gap-2">
+      <button type="button" class="ph-stitch-btn-secondary" onclick="closeComposePanel()">Cancel</button>
+      <button type="button" class="ph-stitch-btn-primary" id="sendSmsBtn" onclick="sendSelectedSms()">
+        <span class="material-symbols-outlined text-[18px]">send</span>
+        Send to number
+      </button>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<div class="ph-stitch-card p-12 text-center">
+  <span class="material-symbols-outlined text-4xl text-brand-platinum mb-3">playlist_add</span>
+  <p class="text-primary font-semibold mb-1">No needs defined yet</p>
+  <p class="text-sm text-secondary mb-4">Add a buy, sell, exchange, or invest need below.</p>
+  <a href="#addBrief" class="ph-stitch-btn-primary">Add first need</a>
+</div>
+{% endif %}
+
+{# ── Add need ── #}
+<section id="addBrief" class="ph-stitch-panel p-6 sm:p-8">
+  <h2 class="text-headline-md text-primary mb-1">Add another need</h2>
+  <p class="text-body-md text-secondary mb-6">Buy, sell for cash, exchange home, or invest — each with separate preferences.</p>
+  <form method="POST" action="{{ url_for('main.create_customer_brief', customer_id=selected_customer.id) }}"
+        class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl">
+    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+    <div class="sm:col-span-2">
+      <label class="ph-label">Title</label>
+      <input name="title" required placeholder="e.g. Exchange home for larger villa" class="ph-stitch-input">
+    </div>
+    <div>
+      <label class="ph-label">Role</label>
+      <select name="role" class="ph-stitch-input">
+        <option value="buyer">Buyer</option>
+        <option value="seller">Seller (cash / list)</option>
+        <option value="exchange">Exchange (trade home)</option>
+        <option value="investor">Investor</option>
+      </select>
+    </div>
+    <div>
+      <label class="ph-label">Their property</label>
+      <select name="related_property_id" class="ph-stitch-input">
+        <option value="">— none —</option>
+        {% for p in linkable_properties|default([]) %}
+        <option value="{{ p.id }}">#{{ p.id }} {{ p.title[:36] }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="ph-label">Budget min</label>
+      <input type="number" name="budget_min" min="0" class="ph-stitch-input">
+    </div>
+    <div>
+      <label class="ph-label">Budget max</label>
+      <input type="number" name="budget_max" min="0" class="ph-stitch-input">
+    </div>
+    <div>
+      <label class="ph-label">Type</label>
+      <input name="preferred_type" class="ph-stitch-input" placeholder="apartment / villa">
+    </div>
+    <div>
+      <label class="ph-label">Location</label>
+      <input name="location_preference" class="ph-stitch-input">
+    </div>
+    <div class="sm:col-span-2">
+      <label class="ph-label">Notes</label>
+      <textarea name="preferences" rows="2" class="ph-stitch-input"></textarea>
+    </div>
+    <div class="sm:col-span-2">
+      <label class="ph-label">Exchange notes</label>
+      <textarea name="exchange_notes" rows="2" class="ph-stitch-input" placeholder="What they want in return"></textarea>
+    </div>
+    <div class="sm:col-span-2">
+      <button type="submit" class="ph-stitch-btn-primary">
+        <span class="material-symbols-outlined text-[18px]">add</span>
+        Add need
+      </button>
+    </div>
+  </form>
+</section>
+
+{% else %}
+{# ── Client picker (Stitch clients_management card grid) ── #}
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+  <div>
+    <h1 class="text-headline-lg text-primary tracking-tight mb-2">Client opportunities</h1>
+    <p class="text-body-lg text-secondary max-w-2xl">
+      Select a client to review multi-need opportunities — buy, sell, exchange, or invest.
+    </p>
+  </div>
+  <a href="{{ url_for('customers') }}" class="ph-stitch-btn-primary w-fit">
+    <span class="material-symbols-outlined text-[18px]">person_add</span>
+    Manage clients
+  </a>
+</section>
+
+{% if customers %}
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+  {% for customer in customers %}
+  <a href="{{ url_for('main.get_customer_recommendations', customer_id=customer.id) }}"
+     class="ph-stitch-card p-6 flex flex-col no-underline group">
+    <div class="flex items-start justify-between gap-3 mb-5">
+      <div class="flex items-center gap-4 min-w-0">
+        <div class="w-14 h-14 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-base font-semibold flex-shrink-0 border border-brand-platinum">
+          {{ customer.name.split()[0][0] }}{{ customer.name.split()[-1][0] if customer.name.split()|length > 1 else '' }}
+        </div>
+        <div class="min-w-0">
+          <h3 class="text-headline-md text-primary leading-tight truncate group-hover:text-brand-deep-blue transition-colors">
+            {{ customer.name }}
+          </h3>
+          <span class="inline-block mt-1.5 bg-surface-container-high text-primary border border-brand-platinum rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-wider font-medium">
+            {{ customer.customer_type or 'buyer' }}
+          </span>
+        </div>
+      </div>
+      <span class="material-symbols-outlined text-brand-platinum group-hover:text-primary transition-colors">chevron_right</span>
+    </div>
+    <div class="grid grid-cols-2 gap-3 border-t border-brand-platinum pt-4 mt-auto text-center">
+      <div>
+        <div class="text-label-sm text-secondary uppercase tracking-wider mb-0.5">Budget</div>
+        <div class="text-sm font-semibold text-brand-deep-blue tabular-nums">
+          {% if customer.budget_max %}${{ "{:,.0f}".format(customer.budget_max) }}{% else %}—{% endif %}
+        </div>
+      </div>
+      <div>
+        <div class="text-label-sm text-secondary uppercase tracking-wider mb-0.5">Focus</div>
+        <div class="text-sm font-semibold text-primary truncate">
+          {{ customer.preferred_type or customer.location_preference or 'Open' }}
+        </div>
+      </div>
+    </div>
+    {% if customer.email or customer.phone %}
+    <div class="text-label-sm text-secondary mt-3 truncate">
+      {{ customer.email or customer.phone }}
+    </div>
+    {% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<section class="ph-stitch-card p-12 text-center">
+  <span class="material-symbols-outlined text-4xl text-brand-platinum mb-3">group_off</span>
+  <p class="text-primary font-semibold mb-2">No clients yet</p>
+  <a href="{{ url_for('customers') }}" class="ph-stitch-btn-primary inline-flex">Add a client</a>
+</section>
+{% endif %}
+{% endif %}
+
+</div>
+</div>
+
+<div id="matchingSystemPanel" class="hidden">
+  <span id="matchingStatusLabel"></span>
+  <span id="matchingQueuePending"></span>
+  <span id="matchingMatches24h"></span>
+  <span id="matchingMatchesTotal"></span>
+  <span id="matchingAlertsUnread"></span>
+  <span id="matchingLastRun"></span>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-function openModal(id) {
-    var modal = document.getElementById(id);
-    if (!modal) return;
-    if (window.PHModal && typeof PHModal.show === 'function') {
-        PHModal.show(id);
-        return;
-    }
-    modal.classList.remove('hidden');
-    modal.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
-}
+window.__selectedCustomerId = window.__selectedCustomerId || null;
+window.__allOpps = window.__allOpps || {};
+window.__templateBodies = {}; // id -> body
+window.__templatesLoaded = false;
+window.__composeBusy = false;
 
-function closeModal(id) {
-    var modal = document.getElementById(id);
-    if (!modal) return;
-    if (window.PHModal && typeof PHModal.hide === 'function') {
-        PHModal.hide(id);
-        return;
-    }
-    modal.classList.add('hidden');
-    modal.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
+async function refreshMatchingStatus() {
+  try {
+    var res = await fetch('/api/matching/status', { headers: { Accept: 'application/json' }});
+    if (!res.ok) return;
+    var d = await res.json();
+    var el = document.getElementById('matchingStatusLabel');
+    if (el) el.textContent = d.worker_hint || '';
+  } catch (e) {}
 }
-
-function toggleAnalysis(button) {
-    var card = button.closest('.recommendation-card');
-    if (!card) return;
-    var full = card.querySelector('.full-analysis');
-    var preview = card.querySelector('.analysis-preview');
-    if (!full) return;
-    var open = !full.classList.contains('hidden');
-    if (open) {
-        full.classList.add('hidden');
-        if (preview) preview.classList.remove('hidden');
-        button.textContent = 'Show more';
-    } else {
-        full.classList.remove('hidden');
-        if (preview) preview.classList.add('hidden');
-        button.textContent = 'Show less';
-    }
-}
-
-function refreshRecommendations() {
-    {% if selected_customer %}
-    window.location.href = {{ url_for('get_customer_recommendations', customer_id=selected_customer.id)|tojson }};
-    {% endif %}
-}
-
-function exportRecommendations() {
-    {% if selected_customer and recommendations %}
-    var lines = [
-        'AI Recommendations for {{ selected_customer.name|e }}',
-        'Generated: ' + new Date().toISOString(),
-        ''
-    ];
-    {% for recommendation in recommendations %}
-    lines.push(
-        '{{ loop.index }}. {{ recommendation.property.title|e }} — {{ recommendation.match_score }}% match'
-        + ' | ${{ "{:,.0f}".format(recommendation.property.price or 0) }}'
-        + ' | {{ (recommendation.property.address or "")|e }}'
-    );
-    {% endfor %}
-    var blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'recommendations-{{ selected_customer.id }}.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(a.href);
-    {% elif selected_customer %}
-    alert('No recommendations to export for this client yet.');
-    {% else %}
-    alert('Select a client first to export recommendations.');
-    {% endif %}
-}
-
-function createDeal(propertyId, customerId) {
-    var propEl = document.getElementById('deal_property_id');
-    var custEl = document.getElementById('deal_customer_id');
-    if (propEl) propEl.value = propertyId;
-    if (custEl) custEl.value = customerId;
-    openModal('createDealModal');
-}
-
-function shareProperty(propertyId) {
-    var url = window.location.origin + '/properties/' + propertyId + '/detail';
-    if (navigator.share) {
-        navigator.share({ title: 'Property recommendation', text: 'Check out this property', url: url }).catch(function () {});
-        return;
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(function () {
-            alert('Property link copied to clipboard');
-        });
-    } else {
-        prompt('Copy this link:', url);
-    }
-}
-
-function showRecommendationTips() {
-    openModal('recommendationTipsModal');
-}
-
-// Backdrop click to close
-document.querySelectorAll('[data-modal]').forEach(function (modal) {
-    modal.addEventListener('click', function (e) {
-        if (e.target === modal) closeModal(modal.id);
+async function runMatchingNow() {
+  var btn = document.getElementById('matchingRunNowBtn');
+  var msg = document.getElementById('matchingStatusMessage');
+  var selectedId = window.__selectedCustomerId || null;
+  if (btn) { btn.disabled = true; btn.classList.add('opacity-70'); }
+  if (msg) msg.textContent = 'Refreshing opportunities…';
+  try {
+    var res = await fetch('/api/matching/run-now', {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'queue_and_sweep', customer_id: selectedId })
     });
+    var data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed');
+    if (msg) msg.textContent = 'Done. Reloading…';
+    if (selectedId) window.location.href = '/get_customer_recommendations/' + selectedId;
+    else window.location.reload();
+  } catch (e) {
+    if (msg) msg.textContent = e.message || 'Failed';
+    if (btn) { btn.disabled = false; btn.classList.remove('opacity-70'); }
+  }
+}
+
+/** Always rebuild from checked boxes + __allOpps (reliable multi-select). */
+function getSelectedList() {
+  var list = [];
+  var seen = {};
+  document.querySelectorAll('.opp-select:checked').forEach(function (chk) {
+    var id = chk.getAttribute('data-opp-id');
+    if (!id || seen[id]) return;
+    seen[id] = true;
+    var data = window.__allOpps[id];
+    if (!data) {
+      var card = chk.closest('.opp-card');
+      var h = card && card.querySelector('h3');
+      data = { id: id, title: h ? h.textContent.trim() : id };
+    }
+    // clone so mutations don't stick
+    list.push(Object.assign({}, data));
+  });
+  return list;
+}
+
+function onOppSelectChange(chk) {
+  var card = chk.closest('.opp-card');
+  if (card) {
+    if (chk.checked) card.classList.add('selected');
+    else card.classList.remove('selected');
+  }
+  refreshSelectionBar();
+  // live-update compose panel if open
+  var panel = document.getElementById('composePanel');
+  if (panel && !panel.classList.contains('hidden')) {
+    renderComposeContext(getSelectedList());
+  }
+}
+
+/** Stitch “Send to Client” — keep other selections, ensure this one is on */
+function sendThisOpp(oid) {
+  var card = document.querySelector('.opp-card[data-opp-id="' + CSS.escape(String(oid)) + '"]');
+  if (!card) {
+    // fallback without CSS.escape for older browsers
+    card = document.querySelector('.opp-card[data-opp-id="' + String(oid).replace(/"/g, '') + '"]');
+  }
+  if (!card) return;
+  var chk = card.querySelector('.opp-select');
+  if (chk) {
+    chk.checked = true;
+    onOppSelectChange(chk);
+  }
+  openComposePanel(true);
+}
+
+function selectAllInBrief(containerId, on) {
+  var root = document.getElementById(containerId);
+  if (!root) return;
+  root.querySelectorAll('.opp-select').forEach(function (chk) {
+    chk.checked = !!on;
+    onOppSelectChange(chk);
+  });
+}
+
+function clearOppSelection() {
+  document.querySelectorAll('.opp-select').forEach(function (chk) {
+    chk.checked = false;
+    var card = chk.closest('.opp-card');
+    if (card) card.classList.remove('selected');
+  });
+  refreshSelectionBar();
+}
+
+function refreshSelectionBar() {
+  var list = getSelectedList();
+  var bar = document.getElementById('composeBar');
+  var countEl = document.getElementById('selCount');
+  var plural = document.getElementById('selPlural');
+  var preview = document.getElementById('selPreview');
+  if (!bar) return;
+  if (!list.length) {
+    bar.classList.add('hidden');
+    return;
+  }
+  bar.classList.remove('hidden');
+  if (countEl) countEl.textContent = String(list.length);
+  if (plural) plural.textContent = list.length === 1 ? '' : 'es';
+  if (preview) {
+    preview.textContent = list.map(function (o) {
+      return (o.title || 'match') + (o.score != null ? ' ' + o.score + '%' : '');
+    }).slice(0, 6).join(' · ');
+  }
+}
+
+function renderComposeContext(list) {
+  var needs = [];
+  list.forEach(function (o) {
+    if (o.brief_title && needs.indexOf(o.brief_title) < 0) needs.push(o.brief_title);
+  });
+  var nEl = document.getElementById('ctxNeeds');
+  var cEl = document.getElementById('ctxMatchCount');
+  var ul = document.getElementById('ctxMatchesList');
+  if (nEl) nEl.textContent = needs.join(', ') || '—';
+  if (cEl) cEl.textContent = String(list.length);
+  if (ul) {
+    ul.innerHTML = '';
+    list.forEach(function (o, i) {
+      var li = document.createElement('li');
+      li.className = 'text-xs text-on-surface flex gap-2 items-start';
+      var sc = (o.score != null && o.score !== '') ? (' · ' + o.score + '%') : '';
+      var need = o.brief_title ? (' · ' + o.brief_title) : '';
+      li.innerHTML =
+        '<span class="font-semibold text-brand-deep-blue tabular-nums">' + (i + 1) + '.</span>' +
+        '<span><span class="font-medium text-primary">' + escapeHtml(o.title || 'Listing') + '</span>' +
+        '<span class="text-secondary">' + escapeHtml(sc + need) +
+        (o.subtitle ? ' · ' + escapeHtml(String(o.subtitle).slice(0, 48)) : '') +
+        '</span></span>';
+      ul.appendChild(li);
+    });
+  }
+}
+
+function escapeHtml(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function recommendedTemplateId(list) {
+  if (!list || !list.length) return 'soft_nudge';
+  if (list.length >= 3) return 'shortlist_detail';
+  if (list.length > 1) return 'shortlist';
+  var kind = (list[0].kind || '').toLowerCase();
+  if (kind === 'seller') return 'seller_comp';
+  if (kind === 'exchange') return 'exchange';
+  return 'single_match';
+}
+
+async function openComposePanel(forceRefresh) {
+  var list = getSelectedList();
+  if (!list.length) {
+    alert('Select at least one match first.');
+    return;
+  }
+  var panel = document.getElementById('composePanel');
+  if (panel) panel.classList.remove('hidden');
+  renderComposeContext(list);
+  setComposeStatus('Loading templates…');
+  try {
+    await loadTemplates();
+    // Pre-select recommended multi/single template
+    var sel = document.getElementById('composeTemplate');
+    var rec = recommendedTemplateId(list);
+    if (sel && window.__templateBodies[rec]) {
+      sel.value = rec;
+    }
+    // Always rebuild message from current multi selection
+    if (forceRefresh || true) {
+      await composeWithDefault();
+    }
+  } catch (e) {
+    setComposeStatus(e.message || 'Could not open compose', true);
+  }
+}
+
+function closeComposePanel() {
+  var panel = document.getElementById('composePanel');
+  if (panel) panel.classList.add('hidden');
+}
+
+function updateCharCount() {
+  var body = document.getElementById('composeBody');
+  var el = document.getElementById('composeChar');
+  var n = body ? body.value.length : 0;
+  var lines = body ? (body.value.match(/\n/g) || []).length + 1 : 0;
+  if (el) {
+    el.textContent = n + ' chars' + (n > 160 ? ' · multi-part SMS' : '') +
+      (lines > 1 ? ' · ' + lines + ' lines' : '');
+  }
+}
+
+function setComposeStatus(text, isError) {
+  var el = document.getElementById('composeStatus');
+  if (!el) return;
+  el.textContent = text || '';
+  el.className = 'text-xs mb-3 min-h-[1rem] ' + (isError ? 'text-error' : 'text-secondary');
+}
+
+async function loadTemplates() {
+  var cid = window.__selectedCustomerId;
+  if (!cid) return;
+  try {
+    var res = await fetch('/api/opportunities/message-templates?customer_id=' + cid, {
+      headers: { Accept: 'application/json' }
+    });
+    var data = await res.json();
+    if (!data.ok) throw new Error('Templates failed');
+    window.__templateBodies = {};
+    var defGroup = document.getElementById('tplDefaults');
+    var priorGroup = document.getElementById('tplPrior');
+    if (defGroup) {
+      defGroup.innerHTML = '';
+      (data.defaults || []).forEach(function (t) {
+        window.__templateBodies[t.id] = t.body;
+        var opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.label + (t.id.indexOf('shortlist') === 0 ? ' ★ multi' : '');
+        defGroup.appendChild(opt);
+      });
+    }
+    if (priorGroup) {
+      priorGroup.innerHTML = '';
+      (data.prior || []).forEach(function (t) {
+        window.__templateBodies[t.id] = t.body;
+        var opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.label;
+        priorGroup.appendChild(opt);
+      });
+      if (!(data.prior || []).length) {
+        var empty = document.createElement('option');
+        empty.disabled = true;
+        empty.textContent = 'No prior messages yet';
+        priorGroup.appendChild(empty);
+      }
+    }
+    window.__templatesLoaded = true;
+  } catch (e) {
+    console.warn('templates load failed', e);
+    window.__templatesLoaded = false;
+    throw e;
+  }
+}
+
+function onTemplatePicked() {
+  // Auto-apply when user changes dropdown for better UX
+  applyTemplateFill();
+}
+
+async function applyTemplateFill() {
+  var list = getSelectedList();
+  if (!list.length) {
+    setComposeStatus('Select at least one property first.', true);
+    return;
+  }
+  if (!window.__templatesLoaded) {
+    try { await loadTemplates(); } catch (e) { /* continue with smart default */ }
+  }
+  var sel = document.getElementById('composeTemplate');
+  var tid = sel && sel.value;
+  if (!tid) {
+    // No pick → recommended multi/single
+    tid = recommendedTemplateId(list);
+    if (sel && window.__templateBodies[tid]) sel.value = tid;
+  }
+  var body = window.__templateBodies[tid] || '';
+  if (!body && tid) {
+    // Prior body missing — fall through to smart default
+    setComposeStatus('Template body missing; using smart default…');
+    return composeWithDefault();
+  }
+  await fillCompose({ template_id: tid, template_body: body, use_ai: false, mode: 'template' });
+}
+
+async function composeWithDefault() {
+  var list = getSelectedList();
+  if (!list.length) {
+    setComposeStatus('Select at least one property first.', true);
+    return;
+  }
+  // Clear template_id so server picks multi-aware smart default
+  var sel = document.getElementById('composeTemplate');
+  var rec = recommendedTemplateId(list);
+  if (sel && window.__templateBodies[rec]) {
+    sel.value = rec;
+  }
+  await fillCompose({
+    use_ai: false,
+    template_id: '',
+    template_body: '',
+    mode: 'smart'
+  });
+}
+
+async function composeWithAI() {
+  var list = getSelectedList();
+  if (!list.length) {
+    setComposeStatus('Select at least one property first.', true);
+    return;
+  }
+  var btn = document.getElementById('aiComposeBtn');
+  if (btn) { btn.disabled = true; btn.classList.add('opacity-70'); }
+  setComposeStatus('Generating AI draft for ' + list.length + ' propert' + (list.length === 1 ? 'y' : 'ies') + '…');
+  try {
+    await fillCompose({ use_ai: true, mode: 'ai' });
+  } finally {
+    if (btn) { btn.disabled = false; btn.classList.remove('opacity-70'); }
+  }
+}
+
+async function fillCompose(opts) {
+  if (window.__composeBusy) return;
+  window.__composeBusy = true;
+  opts = opts || {};
+  var list = getSelectedList();
+  var cid = window.__selectedCustomerId;
+  var phoneEl = document.getElementById('composePhone');
+
+  if (!list.length) {
+    setComposeStatus('Select at least one property first.', true);
+    window.__composeBusy = false;
+    return;
+  }
+  if (!cid) {
+    setComposeStatus('Missing customer id.', true);
+    window.__composeBusy = false;
+    return;
+  }
+
+  renderComposeContext(list);
+  setComposeStatus('Composing for ' + list.length + ' selection' + (list.length === 1 ? '' : 's') + '…');
+
+  var payload = {
+    customer_id: cid,
+    phone: phoneEl ? phoneEl.value : '',
+    selected: list,
+    use_ai: !!opts.use_ai,
+    template_id: opts.template_id || '',
+    template_body: opts.template_body || ''
+  };
+
+  try {
+    var res = await fetch('/api/opportunities/compose-message', {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    var data = await res.json().catch(function () { return {}; });
+    if (!res.ok || !data.ok) throw new Error((data && data.error) || ('Compose failed (' + res.status + ')'));
+
+    var ta = document.getElementById('composeBody');
+    if (ta) ta.value = data.message || '';
+    updateCharCount();
+
+    // Sync dropdown to recommended if smart mode
+    if (opts.mode === 'smart' && data.recommended_template_id) {
+      var sel = document.getElementById('composeTemplate');
+      if (sel && window.__templateBodies[data.recommended_template_id]) {
+        sel.value = data.recommended_template_id;
+      }
+    }
+
+    var titles = (data.context && data.context.selected_titles) || list.map(function (o) { return o.title; });
+    var hint = (opts.mode === 'ai' ? 'AI draft' : (opts.mode === 'template' ? 'Template' : 'Smart default')) +
+      ' · ' + list.length + ' propert' + (list.length === 1 ? 'y' : 'ies') +
+      ' · ' + (data.source || '');
+    if (titles && titles.length) {
+      hint += ' · ' + titles.slice(0, 4).join(', ') + (titles.length > 4 ? '…' : '');
+    }
+    setComposeStatus(hint);
+  } catch (e) {
+    console.error('fillCompose', e);
+    setComposeStatus(e.message || 'Compose failed', true);
+  } finally {
+    window.__composeBusy = false;
+  }
+}
+
+async function sendSelectedSms() {
+  var cid = window.__selectedCustomerId;
+  var phoneEl = document.getElementById('composePhone');
+  var bodyEl = document.getElementById('composeBody');
+  var provEl = document.getElementById('composeProvider');
+  var btn = document.getElementById('sendSmsBtn');
+  var phone = phoneEl ? phoneEl.value.trim() : '';
+  var message = bodyEl ? bodyEl.value.trim() : '';
+  var list = getSelectedList();
+  if (!phone) { setComposeStatus('Enter a contact number.', true); return; }
+  if (!message) { setComposeStatus('Message is empty — use Smart default or a template first.', true); return; }
+  if (btn) { btn.disabled = true; btn.classList.add('opacity-70'); }
+  setComposeStatus('Sending…');
+  try {
+    var res = await fetch('/api/opportunities/send-sms', {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customer_id: cid,
+        phone: phone,
+        message: message,
+        provider: provEl ? provEl.value : 'log',
+        selected: list,
+        also_log_thread: true
+      })
+    });
+    var data = await res.json();
+    if (!res.ok || !data.ok) throw new Error((data && data.error) || 'Send failed');
+    var st = data.stats || {};
+    var failed = st.failed || 0;
+    var sent = st.sent || 0;
+    var msg =
+      'Queued to ' + (data.phone || phone) +
+      ' · processed ' + (st.processed || 0) +
+      ' (sent ' + sent + ', failed ' + failed + ').';
+    if (data.error_detail) {
+      msg += ' Error: ' + data.error_detail;
+    } else if (failed && sent === 0) {
+      msg += ' Check Melipayamak env (USERNAME / PASSWORD / LINE_NUMBER) or credits.';
+    }
+    setComposeStatus(msg, failed > 0 && sent === 0);
+    try { await loadTemplates(); } catch (e2) {}
+  } catch (e) {
+    setComposeStatus(e.message || 'Send failed', true);
+  } finally {
+    if (btn) { btn.disabled = false; btn.classList.remove('opacity-70'); }
+  }
+}
+
+// Close drawer on backdrop click
+document.addEventListener('click', function (ev) {
+  var panel = document.getElementById('composePanel');
+  if (panel && !panel.classList.contains('hidden') && ev.target === panel) closeComposePanel();
 });
+document.addEventListener('keydown', function (ev) {
+  if (ev.key === 'Escape') closeComposePanel();
+});
+
+refreshMatchingStatus();
+if (window.__selectedCustomerId) {
+  loadTemplates().catch(function () {});
+}
 </script>
 {% endblock %}

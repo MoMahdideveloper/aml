@@ -298,6 +298,19 @@ class GeminiService:
                 else:
                     analysis_data = self._fallback_reasoning(hybrid_score, reasons)
 
+                breakdown = rec.get("score_breakdown") or {}
+                if not breakdown and property_obj is not None:
+                    try:
+                        from services.vector_service import vector_service
+
+                        breakdown = vector_service.score_breakdown(
+                            customer,
+                            property_obj,
+                            float(rec.get("semantic_score") or 50.0),
+                        )
+                    except Exception:
+                        breakdown = {}
+
                 formatted.append(
                     {
                         "property": property_obj,
@@ -305,9 +318,25 @@ class GeminiService:
                         "pros": analysis_data.get("pros", []),
                         "cons": analysis_data.get("cons", []),
                         "match_score": int(round(hybrid_score)),
+                        "match_reasons": reasons,
+                        "score_breakdown": breakdown,
                         "hybrid_breakdown": {
-                            "semantic": rec.get("semantic_score", 0),
+                            "semantic": rec.get("semantic_score", 0)
+                            or (breakdown.get("semantic") if breakdown else 0),
                             "keyword": rec.get("keyword_score", 0),
+                            **{
+                                k: breakdown.get(k)
+                                for k in (
+                                    "budget",
+                                    "location",
+                                    "type",
+                                    "rooms",
+                                    "amenities",
+                                    "size",
+                                    "hybrid",
+                                )
+                                if breakdown
+                            },
                         },
                     }
                 )
@@ -413,6 +442,19 @@ class GeminiService:
                 else:
                     analysis_data = self._fallback_reasoning(hybrid_score, reasons)
 
+                breakdown = rec.get("score_breakdown") or {}
+                if not breakdown and property_obj is not None:
+                    try:
+                        from services.vector_service import vector_service
+
+                        breakdown = vector_service.score_breakdown(
+                            customer,
+                            property_obj,
+                            float(rec.get("semantic_score") or 50.0),
+                        )
+                    except Exception:
+                        breakdown = {}
+
                 formatted.append(
                     {
                         "property": property_obj,
@@ -420,9 +462,25 @@ class GeminiService:
                         "pros": analysis_data.get("pros", []),
                         "cons": analysis_data.get("cons", []),
                         "match_score": int(round(hybrid_score)),
+                        "match_reasons": reasons,
+                        "score_breakdown": breakdown,
                         "hybrid_breakdown": {
-                            "semantic": rec.get("semantic_score", 0),
+                            "semantic": rec.get("semantic_score", 0)
+                            or (breakdown.get("semantic") if breakdown else 0),
                             "keyword": rec.get("keyword_score", 0),
+                            **{
+                                k: breakdown.get(k)
+                                for k in (
+                                    "budget",
+                                    "location",
+                                    "type",
+                                    "rooms",
+                                    "amenities",
+                                    "size",
+                                    "hybrid",
+                                )
+                                if breakdown
+                            },
                         },
                     }
                 )

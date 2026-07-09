@@ -1,4 +1,5 @@
 import logging
+import os
 import statistics
 from collections import Counter
 from typing import Any, Dict, List, Optional
@@ -128,6 +129,23 @@ def dashboard():
         _bento("Total Clients", "group", "total_customers"),
     ]
 
+    # Background match feed for dashboard (always visible)
+    latest_matches = []
+    match_stats = {"total": 0, "high": 0}
+    try:
+        from sqlalchemy_models import PropertyMatch
+
+        match_stats["total"] = PropertyMatch.query.filter(
+            PropertyMatch.status != "dismissed"
+        ).count()
+        match_stats["high"] = PropertyMatch.query.filter(
+            PropertyMatch.status != "dismissed",
+            PropertyMatch.match_score >= 0.7,
+        ).count()
+        latest_matches = _load_global_matches(6)
+    except Exception:
+        logging.debug("dashboard matches skipped", exc_info=True)
+
     recent_activities = []
     for prop in recent_properties[:3]:
         recent_activities.append({
@@ -210,20 +228,588 @@ def dashboard():
         recent_properties=recent_properties,
         recent_deals=recent_deals,
         pending_tasks=pending_tasks,
+        latest_matches=latest_matches,
+        match_stats=match_stats,
     )
+
+
+from utils.match_profile import customer_preference_profile as _customer_preference_profile
+
+
+def _serialize_property_matches(rows, limit: int = 20) -> List[Dict[str, Any]]:
+    """Human-readable match rows for Match Center / dashboard / APIs."""
+    from database import db
+    from sqlalchemy_models import Customer, Property
+
+    out: List[Dict[str, Any]] = []
+    for m in rows[:limit]:
+        prop = db.session.get(Property, m.property_id)
+        cust = db.session.get(Customer, m.customer_id)
+        if prop is None or getattr(prop, "is_deleted", False):
+            continue
+        score_pct = int(round(float(m.match_score or 0) * 100))
+        reasons = []
+        try:
+            import json
+
+            raw = m.match_reasons
+            if raw:
+                parsed = json.loads(raw) if isinstance(raw, str) else raw
+                if isinstance(parsed, list):
+                    reasons = [str(x) for x in parsed if x and not str(x).startswith("Score mix:")][:3]
+        except Exception:
+            reasons = []
+        try:
+            recs_url = url_for(
+                "main.get_customer_recommendations", customer_id=m.customer_id
+            )
+            property_url = url_for(
+                "properties.property_detail", property_id=prop.id
+            )
+        except RuntimeError:
+            # Outside request context (scripts / tests)
+            recs_url = f"/get_customer_recommendations/{m.customer_id}"
+            property_url = f"/properties/{prop.id}"
+        out.append(
+            {
+                "id": m.id,
+                "customer_id": m.customer_id,
+                "customer_name": cust.name if cust else f"Client #{m.customer_id}",
+                "property_id": m.property_id,
+                "property_title": prop.title or f"Property #{prop.id}",
+                "property_address": prop.address or prop.neighborhood or "",
+                "property_type": prop.property_type or "",
+                "property_price": prop.price,
+                "match_score": score_pct,
+                "status": m.status or "pending",
+                "priority": m.priority or "normal",
+                "reasons": reasons,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+                "recs_url": recs_url,
+                "property_url": property_url,
+            }
+        )
+    return out
+
+
+def _load_global_matches(limit: int = 24) -> List[Dict[str, Any]]:
+    from sqlalchemy_models import PropertyMatch
+
+    rows = (
+        PropertyMatch.query.filter(PropertyMatch.status != "dismissed")
+        .order_by(PropertyMatch.match_score.desc(), PropertyMatch.created_at.desc())
+        .limit(limit * 2)
+        .all()
+    )
+    return _serialize_property_matches(rows, limit=limit)
 
 
 @bp.route("/recommendations")
 def recommendations():
     customers = database_service.get_customers()
     agents = database_service.get_agents()
+    global_matches = []
+    try:
+        global_matches = _load_global_matches(24)
+    except Exception:
+        logging.debug("global matches load failed", exc_info=True)
     return render_template(
         "recommendations.html",
         customers=customers,
         agents=agents,
         selected_customer=None,
+        preference_profile=None,
         recommendations=None,
+        saved_matches=None,
+        global_matches=global_matches,
     )
+
+
+def _probe_redis() -> Dict[str, Any]:
+    """Best-effort Redis reachability (Celery broker)."""
+    url = (
+        os.environ.get("REDIS_URL")
+        or os.environ.get("CELERY_BROKER_URL")
+        or "redis://localhost:6379/0"
+    )
+    try:
+        import redis
+
+        client = redis.from_url(url, socket_connect_timeout=0.8, socket_timeout=0.8)
+        client.ping()
+        return {"ok": True, "url_host": url.split("@")[-1] if "@" in url else url.replace("redis://", "")}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)[:160], "url_host": url.split("@")[-1] if "@" in url else url}
+
+
+@bp.route("/api/matching/status")
+def matching_system_status():
+    """
+    Frontend observability for background matching.
+    Does not require Celery — reads DB queue/job tables and probes Redis.
+    """
+    import json
+    from datetime import datetime, timedelta
+
+    from sqlalchemy_models import (
+        AgentNotification,
+        MatchingJobRun,
+        PropertyMatch,
+        RematchQueue,
+    )
+    from celery_app import _rematch_queue_interval_seconds
+
+    now = datetime.utcnow()
+    redis_info = _probe_redis()
+
+    pending = RematchQueue.query.filter_by(status="pending").count()
+    processing = RematchQueue.query.filter_by(status="processing").count()
+    failed = RematchQueue.query.filter_by(status="failed").count()
+    done_24h = RematchQueue.query.filter(
+        RematchQueue.status == "done",
+        RematchQueue.updated_at >= now - timedelta(hours=24),
+    ).count()
+
+    last_run = (
+        MatchingJobRun.query.order_by(MatchingJobRun.started_at.desc()).first()
+    )
+    last_completed = (
+        MatchingJobRun.query.filter(
+            MatchingJobRun.status.in_(["completed", "skipped"]),
+            MatchingJobRun.finished_at.isnot(None),
+        )
+        .order_by(MatchingJobRun.finished_at.desc())
+        .first()
+    )
+
+    matches_total = PropertyMatch.query.filter(
+        PropertyMatch.status != "dismissed"
+    ).count()
+    matches_24h = PropertyMatch.query.filter(
+        PropertyMatch.created_at >= now - timedelta(hours=24),
+        PropertyMatch.status != "dismissed",
+    ).count()
+    unread_alerts = AgentNotification.query.filter_by(
+        status="unread", notification_type="property_match"
+    ).count()
+
+    last_run_dict = None
+    if last_run:
+        summary = {}
+        if last_run.result_summary:
+            try:
+                summary = json.loads(last_run.result_summary)
+            except Exception:
+                summary = {"raw": (last_run.result_summary or "")[:200]}
+        last_run_dict = {
+            **last_run.to_dict(),
+            "summary": summary,
+            "age_seconds": int((now - last_run.started_at).total_seconds())
+            if last_run.started_at
+            else None,
+        }
+
+    last_completed_dict = None
+    if last_completed:
+        last_completed_dict = last_completed.to_dict()
+        if last_completed.finished_at:
+            last_completed_dict["age_seconds"] = int(
+                (now - last_completed.finished_at).total_seconds()
+            )
+
+    # "Active" means recent completed work OR redis up with pending queue being drained.
+    # Without Celery, redis may be up but jobs never run — surface that clearly.
+    recent_ok = bool(
+        last_completed
+        and last_completed.finished_at
+        and (now - last_completed.finished_at) < timedelta(minutes=20)
+    )
+    if last_run and last_run.status == "running" and last_run.started_at:
+        recent_ok = recent_ok or (now - last_run.started_at) < timedelta(minutes=10)
+
+    worker_hint = "unknown"
+    if redis_info.get("ok") and recent_ok:
+        worker_hint = "likely_active"
+    elif redis_info.get("ok") and pending > 0 and not recent_ok:
+        worker_hint = "redis_ok_but_queue_stuck"  # Celery worker/beat probably not running
+    elif redis_info.get("ok") and not recent_ok:
+        worker_hint = "redis_ok_idle"
+    elif not redis_info.get("ok"):
+        worker_hint = "redis_down"
+
+    return jsonify(
+        {
+            "redis": redis_info,
+            "worker_hint": worker_hint,
+            "frontend_can_run_now": True,
+            "schedule": {
+                "rematch_queue_seconds": _rematch_queue_interval_seconds(),
+                "full_matching_minutes": int(
+                    os.environ.get("MATCHING_INTERVAL_MINUTES", "15")
+                ),
+            },
+            "queue": {
+                "pending": pending,
+                "processing": processing,
+                "failed": failed,
+                "done_24h": done_24h,
+            },
+            "matches": {
+                "active_total": matches_total,
+                "created_24h": matches_24h,
+            },
+            "alerts_unread": unread_alerts,
+            "last_run": last_run_dict,
+            "last_completed": last_completed_dict,
+            "active": recent_ok or worker_hint == "likely_active",
+            "message": {
+                "likely_active": "Background matching looks active (recent job + Redis up).",
+                "redis_ok_but_queue_stuck": "Redis is up but the rematch queue is not draining — start Celery worker + beat, or click Run matching now.",
+                "redis_ok_idle": "Redis is up; no recent matching job. Queue may be empty, or beat has not fired yet.",
+                "redis_down": "Redis is not reachable. Always-on Celery matching is offline — use Run matching now, or start Redis + worker + beat.",
+                "unknown": "Could not determine worker status.",
+            }.get(worker_hint, ""),
+        }
+    )
+
+
+@bp.route("/api/matching/run-now", methods=["POST"])
+def matching_run_now():
+    """
+    Run rematch queue + optional full cycle in-process (no Celery required).
+    Powers the frontend "Run matching now" control.
+    """
+    from background_matcher import background_matcher
+    from services.scheduler_service import process_rematch_queue_job
+    from sqlalchemy_models import PropertyMatch, RematchQueue
+
+    body = request.get_json(silent=True) or {}
+    mode = (body.get("mode") or request.form.get("mode") or "queue_and_sweep").strip()
+    customer_id = body.get("customer_id") or request.form.get("customer_id")
+    try:
+        customer_id = int(customer_id) if customer_id not in (None, "") else None
+    except (TypeError, ValueError):
+        customer_id = None
+
+    results = {"mode": mode, "queue": None, "cycle": None, "hint": None}
+    pending_before = RematchQueue.query.filter_by(status="pending").count()
+
+    try:
+        # Drain pending rematch items first (batch-sized)
+        process_rematch_queue_job()
+        pending_after = RematchQueue.query.filter_by(status="pending").count()
+        results["queue"] = {
+            "status": "processed",
+            "pending_before": pending_before,
+            "pending_after": pending_after,
+            "drained": max(0, pending_before - pending_after),
+        }
+    except Exception as exc:
+        logging.exception("run-now queue drain failed")
+        results["queue"] = {"status": "error", "error": str(exc)}
+
+    if mode in ("queue_and_sweep", "sweep", "full"):
+        try:
+            import time
+
+            # Unique key per click — avoid hourly idempotency making the button a no-op
+            run_key = f"ui_run_now_{customer_id or 'all'}_{int(time.time())}"
+            results["cycle"] = background_matcher.run_matching_cycle(
+                customer_ids=[customer_id] if customer_id else None,
+                trigger_source="ui_run_now",
+                idempotency_key=run_key,
+            )
+        except Exception as exc:
+            logging.exception("run-now matching cycle failed")
+            results["cycle"] = {"status": "error", "error": str(exc)}
+
+    cycle = results.get("cycle") or {}
+    saved = int(cycle.get("matches_saved") or 0)
+    found = int(cycle.get("matches_found") or 0)
+    status = cycle.get("status")
+    if status == "skipped":
+        results["hint"] = "Matching was skipped (duplicate). Click Run matching now again."
+    elif saved == 0 and found == 0:
+        results["hint"] = (
+            "No matches above the score threshold. Align client prefs with inventory "
+            "(apartment vs Persian listing types), then try again or use Get recommendations."
+        )
+    elif found > 0 and saved == 0:
+        results["hint"] = (
+            f"Found {found} candidates; none newly written (may already exist). "
+            "Open a client to view saved background matches."
+        )
+    else:
+        results["hint"] = (
+            f"Handled {saved} match(es) (found {found}). "
+            "Open a client — see “Saved background matches”."
+        )
+
+    # Full feed for Match Center (names + scores) — global so results always show
+    recent_q = PropertyMatch.query.filter(PropertyMatch.status != "dismissed").order_by(
+        PropertyMatch.match_score.desc(), PropertyMatch.created_at.desc()
+    )
+    recent = recent_q.limit(24).all()
+    results["recent_matches"] = _serialize_property_matches(recent, limit=24)
+    results["matches_total"] = PropertyMatch.query.filter(
+        PropertyMatch.status != "dismissed"
+    ).count()
+
+    return jsonify({"status": "ok", "results": results})
+
+
+@bp.route("/api/matching/recent")
+def matching_recent_feed():
+    """Always-on Match Center feed (no client selection required)."""
+    limit = min(int(request.args.get("limit", 24)), 50)
+    customer_id = request.args.get("customer_id", type=int)
+    from sqlalchemy_models import PropertyMatch
+
+    q = PropertyMatch.query.filter(PropertyMatch.status != "dismissed")
+    if customer_id:
+        q = q.filter_by(customer_id=customer_id)
+    rows = q.order_by(
+        PropertyMatch.match_score.desc(), PropertyMatch.created_at.desc()
+    ).limit(limit * 2).all()
+    items = _serialize_property_matches(rows, limit=limit)
+    return jsonify(
+        {
+            "count": len(items),
+            "total": PropertyMatch.query.filter(PropertyMatch.status != "dismissed").count(),
+            "matches": items,
+        }
+    )
+
+
+@bp.route(
+    "/api/customers/<int:customer_id>/matches/<int:property_id>/dismiss",
+    methods=["POST"],
+)
+def dismiss_customer_match(customer_id, property_id):
+    """Mark a property–customer match as dismissed (excluded from future ranking)."""
+    from sqlalchemy_models import PropertyMatch
+    from database import db
+
+    customer = database_service.get_customer(customer_id)
+    if not customer or getattr(customer, "is_deleted", False):
+        return jsonify({"error": "Customer not found"}), 404
+
+    match = (
+        PropertyMatch.query.filter_by(
+            customer_id=customer_id,
+            property_id=property_id,
+        ).first()
+    )
+    if match:
+        match.status = "dismissed"
+        db.session.commit()
+    else:
+        # Create a dismissed shell so hard prefilter excludes it next time
+        match = PropertyMatch(
+            property_id=property_id,
+            customer_id=customer_id,
+            match_score=0.0,
+            confidence_level="low",
+            priority="low",
+            status="dismissed",
+            match_reasons="[]",
+        )
+        db.session.add(match)
+        db.session.commit()
+
+    return jsonify(
+        {
+            "status": "ok",
+            "customer_id": customer_id,
+            "property_id": property_id,
+            "match_id": match.id,
+        }
+    )
+
+
+def _parse_brief_form(form) -> Dict[str, Any]:
+    from utils.customer_opportunities import normalize_brief_role
+
+    def _int(name, default=0):
+        try:
+            return int(form.get(name) or default)
+        except (TypeError, ValueError):
+            return default
+
+    def _float(name, default=0):
+        try:
+            return float(form.get(name) or default)
+        except (TypeError, ValueError):
+            return default
+
+    rel = form.get("related_property_id")
+    try:
+        related_property_id = int(rel) if rel not in (None, "", "0") else None
+    except (TypeError, ValueError):
+        related_property_id = None
+
+    return {
+        "title": (form.get("title") or "Opportunity").strip()[:160],
+        "role": normalize_brief_role(form.get("role")),
+        "budget_min": _float("budget_min"),
+        "budget_max": _float("budget_max"),
+        "preferred_bedrooms": _int("preferred_bedrooms"),
+        "preferred_bathrooms": _int("preferred_bathrooms"),
+        "preferred_type": (form.get("preferred_type") or "").strip()[:50],
+        "location_preference": (form.get("location_preference") or "").strip()[:255],
+        "preferences": (form.get("preferences") or "").strip(),
+        "exchange_notes": (form.get("exchange_notes") or "").strip(),
+        "related_property_id": related_property_id,
+        "is_active": form.get("is_active", "1") not in ("0", "false", "off"),
+    }
+
+
+@bp.route("/customers/<int:customer_id>/briefs", methods=["POST"])
+def create_customer_brief(customer_id):
+    """Add a new opportunity need for this client (buy / sell / exchange / invest)."""
+    from database import db
+    from sqlalchemy_models import CustomerOpportunityBrief
+    from utils.customer_opportunities import normalize_brief_role
+
+    customer = database_service.get_customer(customer_id)
+    if not customer or getattr(customer, "is_deleted", False):
+        flash("Customer not found", "error")
+        return redirect(url_for("main.recommendations"))
+
+    data = _parse_brief_form(request.form)
+    if data["budget_min"] and data["budget_max"] and data["budget_min"] > data["budget_max"]:
+        flash("Minimum budget cannot be greater than maximum.", "error")
+        return redirect(url_for("main.get_customer_recommendations", customer_id=customer_id))
+
+    count = CustomerOpportunityBrief.query.filter_by(customer_id=customer_id).count()
+    brief = CustomerOpportunityBrief(
+        customer_id=customer_id,
+        title=data["title"] or f"{data['role'].title()} need",
+        role=data["role"],
+        budget_min=int(data["budget_min"] or 0),
+        budget_max=int(data["budget_max"] or 0),
+        preferred_bedrooms=data["preferred_bedrooms"],
+        preferred_bathrooms=data["preferred_bathrooms"],
+        preferred_type=data["preferred_type"],
+        location_preference=data["location_preference"],
+        preferences=data["preferences"],
+        exchange_notes=data["exchange_notes"],
+        related_property_id=data["related_property_id"],
+        is_active=True,
+        sort_order=count,
+    )
+    db.session.add(brief)
+    db.session.commit()
+    flash(f'Added opportunity “{brief.title}”.', "success")
+    return redirect(
+        url_for("main.get_customer_recommendations", customer_id=customer_id)
+        + f"#brief-{brief.id}"
+    )
+
+
+@bp.route("/customers/<int:customer_id>/briefs/<int:brief_id>/edit", methods=["POST"])
+def edit_customer_brief(customer_id, brief_id):
+    from database import db
+    from sqlalchemy_models import CustomerOpportunityBrief
+
+    customer = database_service.get_customer(customer_id)
+    brief = db.session.get(CustomerOpportunityBrief, brief_id)
+    if (
+        not customer
+        or getattr(customer, "is_deleted", False)
+        or not brief
+        or brief.customer_id != customer_id
+    ):
+        flash("Opportunity not found", "error")
+        return redirect(url_for("main.recommendations"))
+
+    data = _parse_brief_form(request.form)
+    if data["budget_min"] and data["budget_max"] and data["budget_min"] > data["budget_max"]:
+        flash("Minimum budget cannot be greater than maximum.", "error")
+        return redirect(url_for("main.get_customer_recommendations", customer_id=customer_id))
+
+    brief.title = data["title"] or brief.title
+    brief.role = data["role"]
+    brief.budget_min = int(data["budget_min"] or 0)
+    brief.budget_max = int(data["budget_max"] or 0)
+    brief.preferred_bedrooms = data["preferred_bedrooms"]
+    brief.preferred_bathrooms = data["preferred_bathrooms"]
+    brief.preferred_type = data["preferred_type"]
+    brief.location_preference = data["location_preference"]
+    brief.preferences = data["preferences"]
+    brief.exchange_notes = data["exchange_notes"]
+    brief.related_property_id = data["related_property_id"]
+    brief.is_active = data["is_active"]
+    db.session.commit()
+    flash(f'Updated “{brief.title}”.', "success")
+    return redirect(
+        url_for("main.get_customer_recommendations", customer_id=customer_id)
+        + f"#brief-{brief.id}"
+    )
+
+
+@bp.route("/customers/<int:customer_id>/briefs/<int:brief_id>/delete", methods=["POST"])
+def delete_customer_brief(customer_id, brief_id):
+    from database import db
+    from sqlalchemy_models import CustomerOpportunityBrief
+
+    brief = db.session.get(CustomerOpportunityBrief, brief_id)
+    if not brief or brief.customer_id != customer_id:
+        flash("Opportunity not found", "error")
+        return redirect(url_for("main.recommendations"))
+    title = brief.title
+    brief.is_active = False
+    db.session.commit()
+    flash(f'Archived “{title}”.', "success")
+    return redirect(url_for("main.get_customer_recommendations", customer_id=customer_id))
+
+
+@bp.route(
+    "/customers/<int:customer_id>/match-preferences",
+    methods=["POST"],
+)
+def update_match_preferences(customer_id):
+    """Update client matching preferences from the recommendations page, then re-rank."""
+    customer = database_service.get_customer(customer_id)
+    if not customer or getattr(customer, "is_deleted", False):
+        flash("Customer not found", "error")
+        return redirect(url_for("main.recommendations"))
+
+    try:
+        budget_min = float(request.form.get("budget_min") or 0)
+        budget_max = float(request.form.get("budget_max") or 0)
+        preferred_bedrooms = int(request.form.get("preferred_bedrooms") or 0)
+        preferred_bathrooms = int(request.form.get("preferred_bathrooms") or 0)
+        preferred_type = (request.form.get("preferred_type") or "").strip()
+        location_preference = (request.form.get("location_preference") or "").strip()
+        preferences = (request.form.get("preferences") or "").strip()
+        status = (request.form.get("status") or customer.status or "active").strip()
+        from utils.customer_opportunities import normalize_customer_type
+
+        customer_type = normalize_customer_type(request.form.get("customer_type"))
+
+        if budget_min > 0 and budget_max > 0 and budget_min > budget_max:
+            flash("Minimum budget cannot be greater than maximum budget.", "error")
+            return redirect(url_for("main.get_customer_recommendations", customer_id=customer_id))
+
+        database_service.update_customer(
+            customer_id,
+            budget_min=budget_min,
+            budget_max=budget_max,
+            preferred_bedrooms=preferred_bedrooms,
+            preferred_bathrooms=preferred_bathrooms,
+            preferred_type=preferred_type,
+            location_preference=location_preference,
+            preferences=preferences,
+            customer_type=customer_type,
+            status=status if status in ("active", "prospect", "lead", "inactive") else customer.status,
+        )
+        flash("Client match preferences saved. Re-ranking properties…", "success")
+    except Exception as exc:
+        logging.exception("Failed to update match preferences for customer %s", customer_id)
+        flash(f"Could not save preferences: {exc}", "error")
+
+    return redirect(url_for("main.get_customer_recommendations", customer_id=customer_id))
 
 
 @bp.route("/get_customer_recommendations/<int:customer_id>")
@@ -240,6 +826,7 @@ def get_customer_recommendations(customer_id):
     customers = database_service.get_customers()
     agents = database_service.get_agents()
     properties = database_service.get_properties()
+    preference_profile = _customer_preference_profile(customer)
 
     error_message = None
     recommendations = []
@@ -271,29 +858,154 @@ def get_customer_recommendations(customer_id):
             match_score = 0
         match_score = max(0, min(100, match_score))
 
-        reasons = rec.get("reasons") or rec.get("match_reasons") or []
+        reasons = rec.get("reasons") or rec.get("match_reasons") or rec.get("pros") or []
         if not isinstance(reasons, list):
             reasons = [str(reasons)] if reasons else []
+
+        # Multi-parameter score mix for UI bars (0–100 each)
+        breakdown = rec.get("score_breakdown") or rec.get("hybrid_breakdown") or {}
+        if not isinstance(breakdown, dict):
+            breakdown = {}
+        # Normalize keys agents see on the card
+        param_keys = (
+            "semantic",
+            "budget",
+            "location",
+            "type",
+            "rooms",
+            "amenities",
+            "size",
+        )
+        score_mix = []
+        for key in param_keys:
+            raw = breakdown.get(key)
+            if raw is None:
+                continue
+            try:
+                val = float(raw)
+            except (TypeError, ValueError):
+                continue
+            # semantic sometimes arrives 0–1 from older paths
+            if key == "semantic" and val <= 1.0:
+                val = val * 100.0
+            val = max(0.0, min(100.0, val))
+            score_mix.append(
+                {
+                    "key": key,
+                    "label": {
+                        "semantic": "Semantic",
+                        "budget": "Budget",
+                        "location": "Location",
+                        "type": "Type",
+                        "rooms": "Rooms",
+                        "amenities": "Amenities",
+                        "size": "Size",
+                    }.get(key, key.title()),
+                    "value": int(round(val)),
+                }
+            )
+
+        # If engine didn't return breakdown, compute live so UI still shows mix
+        if not score_mix:
+            try:
+                from services.vector_service import vector_service
+
+                live = vector_service.score_breakdown(
+                    customer, property_obj, float(match_score)
+                )
+                for key in param_keys:
+                    if key not in live:
+                        continue
+                    score_mix.append(
+                        {
+                            "key": key,
+                            "label": {
+                                "semantic": "Semantic",
+                                "budget": "Budget",
+                                "location": "Location",
+                                "type": "Type",
+                                "rooms": "Rooms",
+                                "amenities": "Amenities",
+                                "size": "Size",
+                            }.get(key, key.title()),
+                            "value": int(round(float(live[key]))),
+                        }
+                    )
+                if live.get("hybrid") is not None and match_score == 0:
+                    match_score = max(0, min(100, int(round(float(live["hybrid"])))))
+            except Exception:
+                logging.debug("score_mix fallback skipped", exc_info=True)
+
+        # Human reasons: drop internal "Score mix:" lines from chips (shown as bars)
+        display_reasons = [
+            r for r in reasons if r and not str(r).startswith("Score mix:")
+        ][:5]
 
         recommendations.append(
             {
                 "property": property_obj,
                 "match_score": match_score,
                 "analysis": rec.get("analysis") or "AI analysis not available",
-                "reasons": reasons,
+                "reasons": display_reasons,
                 "pros": rec.get("pros") or [],
                 "cons": rec.get("cons") or [],
+                "score_mix": score_mix,
             }
         )
 
     recommendations.sort(key=lambda item: item["match_score"], reverse=True)
+
+    # Multiple opportunity briefs per client (buy / sell / exchange / invest)
+    saved_matches = []
+    global_matches = []
+    customer_opportunities = None
+    opportunity_sections = []
+    try:
+        from sqlalchemy_models import PropertyMatch
+        from utils.customer_opportunities import build_customer_briefs_with_opportunities
+
+        rows = (
+            PropertyMatch.query.filter_by(customer_id=customer.id)
+            .filter(PropertyMatch.status != "dismissed")
+            .order_by(PropertyMatch.match_score.desc())
+            .limit(12)
+            .all()
+        )
+        saved_matches = _serialize_property_matches(rows, limit=12)
+        customer_opportunities = build_customer_briefs_with_opportunities(
+            customer, limit_per_brief=6
+        )
+        opportunity_sections = customer_opportunities.get("sections") or []
+        global_matches = _load_global_matches(24)
+    except Exception:
+        logging.exception("opportunities load failed")
+
+    # Properties for linking seller/exchange briefs
+    linkable_properties = []
+    try:
+        from sqlalchemy_models import Property
+
+        linkable_properties = (
+            Property.query.filter_by(is_deleted=False)
+            .order_by(Property.updated_at.desc())
+            .limit(80)
+            .all()
+        )
+    except Exception:
+        pass
 
     return render_template(
         "recommendations.html",
         customers=customers,
         agents=agents,
         selected_customer=customer,
+        preference_profile=preference_profile,
         recommendations=recommendations,
+        saved_matches=saved_matches,
+        customer_opportunities=customer_opportunities,
+        opportunity_sections=opportunity_sections,
+        linkable_properties=linkable_properties,
+        global_matches=global_matches,
         error_message=error_message,
     )
 
@@ -552,6 +1264,254 @@ def messaging_send(customer_id: int):
         flash(f"Could not save message: {exc}", "error")
 
     return redirect(url_for("main.messaging", customer_id=customer_id))
+
+
+@bp.route("/api/opportunities/message-templates")
+def api_opportunity_message_templates():
+    """Default SMS templates + prior messages the agent can reuse."""
+    from utils.outreach_templates import list_default_templates
+    from services.sms_service import sms_service
+
+    customer_id = request.args.get("customer_id", type=int)
+    defaults = list_default_templates()
+
+    prior: List[Dict[str, Any]] = []
+    seen = set()
+
+    # Prior SMS bodies (global recent, then same-phone if customer known)
+    try:
+        history = sms_service.get_history(limit=40) or []
+        phone = None
+        if customer_id:
+            cust = database_service.get_customer(customer_id)
+            phone = getattr(cust, "phone", None) if cust else None
+        for msg in history:
+            body = (getattr(msg, "message", None) or "").strip()
+            if not body or body in seen or len(body) < 12:
+                continue
+            # Prefer same recipient when phone known
+            if phone and getattr(msg, "recipient", None):
+                rec = str(msg.recipient)
+                # soft match digits
+                if phone.replace(" ", "") not in rec and rec not in phone.replace(" ", ""):
+                    # still allow as general prior below
+                    pass
+            seen.add(body)
+            prior.append(
+                {
+                    "id": f"prior-sms-{getattr(msg, 'id', len(prior))}",
+                    "label": f"Prior SMS · {(body[:42] + '…') if len(body) > 42 else body}",
+                    "body": body,
+                    "source": "sms_history",
+                }
+            )
+            if len(prior) >= 12:
+                break
+    except Exception:
+        logging.debug("prior SMS templates unavailable", exc_info=True)
+
+    # Prior in-app outbound messages for this customer
+    if customer_id:
+        try:
+            from sqlalchemy_models import ClientMessage
+
+            rows = (
+                ClientMessage.query.filter_by(customer_id=customer_id, direction="outbound")
+                .order_by(ClientMessage.created_at.desc())
+                .limit(20)
+                .all()
+            )
+            for msg in rows:
+                body = (msg.body or "").strip()
+                if not body or body in seen:
+                    continue
+                seen.add(body)
+                prior.append(
+                    {
+                        "id": f"prior-app-{msg.id}",
+                        "label": f"Prior note · {(body[:42] + '…') if len(body) > 42 else body}",
+                        "body": body,
+                        "source": "client_message",
+                    }
+                )
+                if len(prior) >= 20:
+                    break
+        except Exception:
+            logging.debug("prior app messages unavailable", exc_info=True)
+
+    return jsonify({"ok": True, "defaults": defaults, "prior": prior})
+
+
+@bp.route("/api/opportunities/compose-message", methods=["POST"])
+def api_opportunity_compose_message():
+    """
+    Build an outreach SMS for selected opportunities.
+    body: {
+      customer_id, phone?, template_id? | template_body?,
+      use_ai?: bool, selected: [{id,title,subtitle,score,reasons,kind,brief_title,...}]
+    }
+    """
+    from utils.outreach_templates import compose_message, build_ai_prompt
+
+    data = request.get_json(silent=True) or {}
+    customer_id = data.get("customer_id")
+    try:
+        customer_id = int(customer_id)
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "customer_id required"}), 400
+
+    customer = database_service.get_customer(customer_id)
+    if not customer:
+        return jsonify({"ok": False, "error": "Customer not found"}), 404
+
+    selected = data.get("selected") or []
+    if not isinstance(selected, list):
+        selected = []
+    clean_selected: List[Dict[str, Any]] = []
+    for item in selected[:12]:
+        if isinstance(item, dict) and (item.get("title") or item.get("id") or item.get("property_id")):
+            clean_selected.append(item)
+
+    if not clean_selected:
+        return jsonify({"ok": False, "error": "Select at least one opportunity"}), 400
+
+    phone = (data.get("phone") or getattr(customer, "phone", None) or "").strip()
+
+    def _ai_generate(cust, sels, ctx):
+        from services.gemini_service import gemini_service as gs
+        from database import db
+        from sqlalchemy_models import Property
+
+        # Single property: use matchmaker pitch
+        if len(sels) == 1 and sels[0].get("property_id"):
+            try:
+                prop = db.session.get(Property, int(sels[0]["property_id"]))
+                if prop:
+                    score = int(sels[0].get("score") or 0)
+                    reasons = sels[0].get("reasons") or []
+                    benefits = [{"benefit": r} for r in reasons[:2]] if reasons else None
+                    return gs.generate_matchmaker_pitch(
+                        cust, prop, score, score, score, smart_benefits=benefits
+                    )
+            except Exception as exc:
+                logging.debug("single matchmaker pitch failed: %s", exc)
+
+        # Multi (or fallback): prompt that lists ALL selections
+        prompt = build_ai_prompt(cust, sels, ctx)
+        if getattr(gs, "provider", None) and getattr(gs.provider, "is_available", False):
+            return (gs.provider.generate_market_analysis(prompt) or "").strip()
+        return ""
+
+    try:
+        result = compose_message(
+            customer,
+            clean_selected,
+            phone=phone,
+            use_ai=bool(data.get("use_ai")),
+            template_id=(data.get("template_id") or "").strip(),
+            template_body=(data.get("template_body") or "").strip(),
+            ai_generate_fn=_ai_generate if data.get("use_ai") else None,
+        )
+    except Exception as exc:
+        logging.exception("compose-message failed")
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+    return jsonify({"ok": True, **result})
+
+
+@bp.route("/api/opportunities/send-sms", methods=["POST"])
+def api_opportunity_send_sms():
+    """Send / queue SMS for selected opportunities to the client phone."""
+    import os
+    from services.sms_service import sms_service
+    from database import db
+
+    data = request.get_json(silent=True) or {}
+    customer_id = data.get("customer_id")
+    try:
+        customer_id = int(customer_id)
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "customer_id required"}), 400
+
+    customer = database_service.get_customer(customer_id)
+    if not customer:
+        return jsonify({"ok": False, "error": "Customer not found"}), 404
+
+    message = (data.get("message") or "").strip()
+    if not message:
+        return jsonify({"ok": False, "error": "Message body required"}), 400
+
+    phone = (data.get("phone") or customer.phone or "").strip()
+    if not phone:
+        return jsonify({"ok": False, "error": "No phone number for this client"}), 400
+
+    provider = (
+        data.get("provider")
+        or os.environ.get("SMS_PROVIDER")
+        or "log"
+    ).strip().lower()
+    also_log = data.get("also_log_thread", True)
+    selected = data.get("selected") or []
+
+    try:
+        queued = sms_service.queue_messages([phone], message, provider=provider)
+        stats = {"processed": 0, "sent": 0, "failed": 0}
+        try:
+            stats = sms_service.process_queue(batch_size=min(5, len(queued)))
+        except Exception:
+            logging.debug("SMS process_queue deferred", exc_info=True)
+
+        # Optional: log into client messaging thread for history / prior templates
+        if also_log:
+            try:
+                from sqlalchemy_models import ClientMessage
+
+                note = ClientMessage()
+                note.customer_id = customer_id
+                note.body = message
+                note.direction = "outbound"
+                note.channel = "sms"
+                note.is_read = True
+                # Attach short selection summary when present
+                if isinstance(selected, list) and selected:
+                    titles = [
+                        str(s.get("title"))
+                        for s in selected[:5]
+                        if isinstance(s, dict) and s.get("title")
+                    ]
+                    if titles:
+                        note.body = message  # keep SMS text pure; summary unused
+                db.session.add(note)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                logging.debug("client message log skipped", exc_info=True)
+
+        # Surface provider error text when send failed (e.g. missing Melipayamak config)
+        last_error = None
+        try:
+            for q in queued:
+                db.session.refresh(q)
+                if getattr(q, "status", None) == "failed" and getattr(q, "error_message", None):
+                    last_error = q.error_message
+                    break
+        except Exception:
+            pass
+
+        return jsonify(
+            {
+                "ok": True,
+                "queued": len(queued),
+                "phone": phone,
+                "provider": provider,
+                "stats": stats,
+                "message": message,
+                "error_detail": last_error,
+            }
+        )
+    except Exception as exc:
+        logging.exception("opportunity SMS send failed")
+        return jsonify({"ok": False, "error": str(exc)}), 500
 
 
 @bp.route("/sms")

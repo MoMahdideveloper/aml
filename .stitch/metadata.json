@@ -1,0 +1,23 @@
+{
+  "projectId": "1843282501813018645",
+  "title": "KPI Performance Dashboard",
+  "designSystemAsset": "assets/1dee9814aeab494b99629a9fe04852bd",
+  "designSystemName": "Platinum Heritage",
+  "designMd": ".stitch/DESIGN.md",
+  "tasteDesign": {
+    "density": 6,
+    "variance": 5,
+    "motion": 4,
+    "creativity": 7
+  },
+  "syncedScreens": {
+    "ai_smart_property_matcher": "157fc6ef6577430c881d17b7139af48d",
+    "clients_management": "3a97d783c4b54b7badc0f9276effa878",
+    "client_messaging": "e42f33f376bc4bd3be57c358fdfe8a47",
+    "deals_pipeline": "2c42cf6722154f5ea74a6752770553b5",
+    "tasks_management": "cd9cb221c3634f26ba57303474441da2",
+    "agent_management": "c95b5a8d7284468fb1fd4c1929093d0d",
+    "property_inventory": "014e9d15ce3b49adb8fcdb5421a296c7"
+  },
+  "syncedAt": "2026-07-10"
+}

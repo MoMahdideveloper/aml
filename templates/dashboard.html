@@ -44,6 +44,46 @@
     {% endfor %}
 </section>
 
+{# Background matching strip — always visible #}
+<section class="mb-8 md:mb-10 bg-surface-container-lowest rounded-lg border border-outline-variant p-5 md:p-6" aria-label="Background matches">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 border-b border-outline-variant pb-3">
+        <div>
+            <h2 class="text-xl font-semibold text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined text-[22px]">hub</span>
+                Background matches
+            </h2>
+            <p class="text-xs text-on-surface-variant mt-0.5">
+                {{ match_stats.total|default(0) }} stored
+                {% if match_stats.high %} · {{ match_stats.high }} high-confidence (70%+){% endif %}
+            </p>
+        </div>
+        <a href="{{ url_for('main.recommendations') }}"
+           class="inline-flex items-center gap-1.5 text-sm font-medium bg-primary text-on-primary rounded-lg px-4 py-2 hover:opacity-90">
+            <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+            Open Match Center
+        </a>
+    </div>
+    {% if latest_matches %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {% for m in latest_matches %}
+        <a href="{{ m.recs_url }}" class="rounded-lg border border-outline-variant bg-background p-3 hover:border-primary transition-colors no-underline block">
+            <div class="flex items-center justify-between gap-2 mb-1">
+                <span class="text-xs font-semibold text-primary tabular-nums">{{ m.match_score }}%</span>
+                <span class="text-[10px] text-on-surface-variant uppercase">{{ m.status }}</span>
+            </div>
+            <div class="text-sm font-medium text-primary truncate">{{ m.property_title }}</div>
+            <div class="text-xs text-on-surface-variant truncate">{{ m.customer_name }}</div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-on-surface-variant">
+        No background matches yet.
+        <a href="{{ url_for('main.recommendations') }}" class="text-primary font-medium hover:underline">Go to AI Match → Run matching now</a>
+    </p>
+    {% endif %}
+</section>
+
 <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-10">
     <div class="lg:col-span-2 bg-surface-container-lowest rounded-lg p-5 md:p-6 border border-outline-variant">
         <div class="flex items-center justify-between mb-6 border-b border-outline-variant pb-3">

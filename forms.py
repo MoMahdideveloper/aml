@@ -27,6 +27,18 @@ class CustomerForm(BaseNoCSRFForm):
     preferred_bathrooms = IntegerField("Bathrooms", validators=[Optional(), NumberRange(min=0)])
     preferred_type = StringField("Property Type", validators=[Optional(), Length(max=50)])
     location_preference = StringField("Location", validators=[Optional(), Length(max=255)])
+    preferences = TextAreaField("Notes / features", validators=[Optional(), Length(max=4000)])
+    customer_type = SelectField(
+        "Client role",
+        choices=[
+            ("buyer", "Buyer"),
+            ("seller", "Seller"),
+            ("both", "Buyer & seller"),
+            ("investor", "Investor"),
+        ],
+        validators=[Optional()],
+        default="buyer",
+    )
 
 
 class PropertyForm(BaseNoCSRFForm):
@@ -54,6 +66,12 @@ class PropertyForm(BaseNoCSRFForm):
     sale_price = FloatField("Sale Price", validators=[Optional(), NumberRange(min=0)])
     rahn = FloatField("Rahn", validators=[Optional(), NumberRange(min=0)])
     ejare = FloatField("Ejare", validators=[Optional(), NumberRange(min=0)])
+    # Optional cover image — used by views/property_crud.add_property
+    image = FileField(
+        "Property Image",
+        validators=[Optional(), FileAllowed(["jpg", "png", "jpeg", "webp"], "Images only!")],
+    )
+    status = StringField("Status", validators=[Optional(), Length(max=50)])
 
 
 class DealForm(BaseNoCSRFForm):

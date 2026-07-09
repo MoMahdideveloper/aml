@@ -216,6 +216,54 @@ def create_system_notification():
         return jsonify({'error': 'Failed to create system notification'}), 500
 
 
+@bp.route("/api/notifications/inbox")
+@log_execution
+def notifications_inbox():
+    """
+    Global match-alert inbox for the PH shell bell.
+    Optional ?agent_id= — default: most recent notifications across agents.
+    """
+    try:
+        agent_id = request.args.get("agent_id", type=int)
+        limit = min(int(request.args.get("limit", 15)), 50)
+        status = request.args.get("status", "unread")
+
+        q = db.session.query(AgentNotification).order_by(
+            AgentNotification.created_at.desc()
+        )
+        if agent_id:
+            q = q.filter(AgentNotification.agent_id == agent_id)
+        if status and status != "all":
+            q = q.filter(AgentNotification.status == status)
+
+        rows = q.limit(limit).all()
+        unread_q = db.session.query(AgentNotification).filter(
+            AgentNotification.status == "unread"
+        )
+        if agent_id:
+            unread_q = unread_q.filter(AgentNotification.agent_id == agent_id)
+        unread_count = unread_q.count()
+
+        # Default agent for mark-read actions: first agent with unread, else first agent
+        default_agent_id = agent_id
+        if not default_agent_id and rows:
+            default_agent_id = rows[0].agent_id
+        if not default_agent_id:
+            first = db.session.query(Agent).order_by(Agent.id.asc()).first()
+            default_agent_id = first.id if first else None
+
+        return jsonify(
+            {
+                "unread_count": unread_count,
+                "default_agent_id": default_agent_id,
+                "notifications": [n.to_dict() for n in rows],
+            }
+        )
+    except Exception as e:
+        logger.error("Error loading notification inbox: %s", e)
+        return jsonify({"error": "Failed to load inbox", "unread_count": 0, "notifications": []}), 500
+
+
 @bp.route('/admin/notifications')
 @log_execution
 def admin_notifications_dashboard():
