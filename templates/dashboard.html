@@ -23,7 +23,12 @@
     {% for card in stats %}
     {% set trend_is_down = card.trend_direction == 'down' %}
     {% set metric_value = card.value|default(0) %}
+    {% if card.href %}
+    <a href="{{ card.href }}"
+       class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant hover:shadow-[0_8px_30px_rgba(27,38,49,0.12)] transition-all duration-300 block no-underline">
+    {% else %}
     <article class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant hover:shadow-[0_8px_30px_rgba(27,38,49,0.12)] transition-all duration-300">
+    {% endif %}
         <div class="flex justify-between items-start mb-4">
             <span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">{{ card.label }}</span>
             <span class="material-symbols-outlined text-primary" data-icon="{{ card.icon }}">{{ card.icon }}</span>
@@ -39,16 +44,23 @@
             <span class="material-symbols-outlined text-[16px] mr-1" data-icon="{{ card.trend_icon }}">{{ card.trend_icon }}</span>
             {{ card.trend_sign }}{{ card.trend_percent }}% vs last month
         </div>
-    </article>
+    {% if card.href %}</a>{% else %}</article>{% endif %}
     {% endfor %}
 </section>
 
 <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
     <div class="lg:col-span-2 bg-surface-container-lowest rounded-xl p-6 border border-outline-variant">
-        <h2 class="font-headline-md text-headline-md text-primary mb-6 border-b border-outline-variant pb-2">Recent Activity</h2>
+        <div class="flex items-center justify-between mb-6 border-b border-outline-variant pb-2">
+            <h2 class="font-headline-md text-headline-md text-primary">Recent Activity</h2>
+            <a href="{{ url_for('properties') }}" class="font-label-sm text-label-sm text-primary hover:underline">View properties</a>
+        </div>
         <div class="space-y-4">
             {% for activity in recent_activities %}
-            <article class="flex items-start gap-4 p-4 rounded-lg border border-outline-variant bg-background hover:border-primary transition-colors">
+            {% if activity.href %}
+            <a href="{{ activity.href }}" class="flex items-start gap-4 p-4 rounded-lg border border-outline-variant bg-background hover:border-primary transition-colors no-underline block">
+            {% else %}
+            <article class="flex items-start gap-4 p-4 rounded-lg border border-outline-variant bg-background">
+            {% endif %}
                 <div class="flex items-center justify-center w-10 h-10 rounded-full bg-surface-container-low text-primary shrink-0">
                     <span class="material-symbols-outlined" data-icon="{{ activity.icon }}">{{ activity.icon }}</span>
                 </div>
@@ -59,11 +71,28 @@
                     </div>
                     <p class="font-body-md text-body-md text-on-surface">{{ activity.description }}</p>
                 </div>
-            </article>
+            {% if activity.href %}</a>{% else %}</article>{% endif %}
             {% else %}
             <p class="font-body-md text-on-surface-variant">No recent activity yet.</p>
             {% endfor %}
         </div>
+
+        {% if recent_properties %}
+        <div class="mt-8 pt-6 border-t border-outline-variant">
+            <h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide mb-3">Latest listings</h3>
+            <ul class="space-y-2">
+                {% for prop in recent_properties[:5] %}
+                <li>
+                    <a href="{{ url_for('properties.property_detail', property_id=prop.id) }}"
+                       class="flex items-center justify-between gap-3 p-3 rounded-lg border border-outline-variant hover:border-primary transition-colors">
+                        <span class="font-label-md text-label-md text-primary truncate">{{ prop.title }}</span>
+                        <span class="font-label-sm text-label-sm text-on-surface-variant shrink-0">${{ "{:,.0f}".format(prop.price or 0) }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
     </div>
 
     <aside class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant flex flex-col">

@@ -58,14 +58,20 @@ def dashboard():
             "icon": "add_home",
             "type": "New Property Listed",
             "time": prop.created_at.strftime("%b %d") if getattr(prop, "created_at", None) else "Recently",
-            "description": f"Listed {prop.title} for ${prop.price:,.0f}" if getattr(prop, "price", 0) else f"Listed {prop.title}"
+            "description": f"Listed {prop.title} for ${prop.price:,.0f}" if getattr(prop, "price", 0) else f"Listed {prop.title}",
+            "href": url_for("properties.property_detail", property_id=prop.id) if getattr(prop, "id", None) else None,
         })
     for deal in recent_deals[:3]:
+        deal_href = None
+        prop_id = getattr(getattr(deal, "property", None), "id", None) or getattr(deal, "property_id", None)
+        if prop_id:
+            deal_href = url_for("properties.property_detail", property_id=prop_id)
         recent_activities.append({
             "icon": "handshake",
             "type": f"Deal {getattr(deal, 'status', 'Updated').title()}",
             "time": deal.created_at.strftime("%b %d") if getattr(deal, "created_at", None) else "Recently",
-            "description": f"Offer ${getattr(deal, 'offer_amount', 0):,.0f} with {getattr(deal, 'customer_name', 'Client')}" if getattr(deal, "offer_amount", 0) else f"Deal with {getattr(deal, 'customer_name', 'Client')}"
+            "description": f"Offer ${getattr(deal, 'offer_amount', 0):,.0f} with {getattr(deal, 'customer_name', 'Client')}" if getattr(deal, "offer_amount", 0) else f"Deal with {getattr(deal, 'customer_name', 'Client')}",
+            "href": deal_href,
         })
     if not recent_activities:
         recent_activities = [
@@ -74,8 +80,14 @@ def dashboard():
                 "type": "System Welcome",
                 "time": "Just now",
                 "description": "Welcome to your Real Estate CRM Dashboard.",
+                "href": url_for("properties"),
             }
         ]
+
+    bento_stats[0]["href"] = url_for("properties")
+    bento_stats[1]["href"] = url_for("deals")
+    bento_stats[2]["href"] = url_for("deals")
+    bento_stats[3]["href"] = url_for("customers")
 
     todays_schedule = [
         {"icon": "meeting_room", "title": "Client Private Viewing", "time": "10:30 AM - Penthouse Suite"},
