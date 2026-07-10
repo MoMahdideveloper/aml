@@ -123,24 +123,36 @@ def nominatim_geocode(query: str, *, timeout: float = 4.0) -> Optional[Tuple[flo
         },
     )
     try:
-        _LAST_NOMINATIM_CALL = time.time()
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            raw = resp.read().decode("utf-8", errors="replace")
-        data = json.loads(raw)
-        if not data:
-            _NOMINATIM_CACHE[cache_key] = None
-            return None
-        lat = float(data[0]["lat"])
-        lon = float(data[0]["lon"])
-        result = (lat, lon)
-        _NOMINATIM_CACHE[cache_key] = result
-        return result
-    except (urllib.error.URLError, TimeoutError, ValueError, KeyError, json.JSONDecodeError) as exc:
-        logger.debug("Nominatim geocode failed for %r: %s", q[:80], exc)
+        from utils.observability import timed_provider
+
+        with timed_provider("nominatim", "geocode") as _obs:
+            try:
+                _LAST_NOMINATIM_CALL = time.time()
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    raw = resp.read().decode("utf-8", errors="replace")
+                data = json.loads(raw)
+                if not data:
+                    _NOMINATIM_CACHE[cache_key] = None
+                    return None
+                lat = float(data[0]["lat"])
+                lon = float(data[0]["lon"])
+                result = (lat, lon)
+                _NOMINATIM_CACHE[cache_key] = result
+                return result
+            except TimeoutError:
+                _obs["outcome"] = "timeout"
+                _obs["error_category"] = "timeout"
+                raise
+            except (urllib.error.URLError, ValueError, KeyError, json.JSONDecodeError) as exc:
+                _obs["outcome"] = "error"
+                _obs["error_category"] = "dependency"
+                logger.debug("Nominatim geocode failed: %s", type(exc).__name__)
+                return None
+    except TimeoutError:
         _NOMINATIM_CACHE[cache_key] = None
         return None
     except Exception as exc:  # pragma: no cover
-        logger.warning("Nominatim unexpected error: %s", exc)
+        logger.warning("Nominatim unexpected error: %s", type(exc).__name__)
         _NOMINATIM_CACHE[cache_key] = None
         return None
 

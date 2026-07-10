@@ -116,8 +116,11 @@ Volumes: `postgres_data` (DB), `uploads_data` (property media). Redis is include
 
 | Path | Purpose |
 |------|---------|
-| `GET /healthz` | Process up (liveness) |
-| `GET /readyz` | DB reachable (readiness) |
+| `GET /healthz` | Process up (liveness only) |
+| `GET /readyz` | Dependencies ready (DB required; Redis if `READYZ_REQUIRE_REDIS=1`) |
+| `GET /metrics` | Prometheus text (HTTP RED, jobs, providers) |
+
+Observability contract: `docs/OBSERVABILITY_CONTRACT.md`. Alerts (proposal only): `docs/ALERTS.md`. Runbooks: `docs/runbooks/`.
 
 Wire these into load balancers / Kubernetes probes.
 

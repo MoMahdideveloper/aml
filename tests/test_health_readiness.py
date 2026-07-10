@@ -18,21 +18,31 @@ def test_readyz_ok_when_db_available(client, app, db_setup):
     with app.app_context():
         resp = client.get("/readyz")
         assert resp.status_code == 200
-        assert resp.get_json() == {"status": "ready"}
+        payload = resp.get_json()
+        assert payload["status"] == "ready"
+        assert payload["components"]["database"]["status"] == "ok"
 
 
 def test_readyz_503_sanitized_when_db_fails(client, app, db_setup):
     with app.app_context():
-        with patch("database.db.session.execute", side_effect=RuntimeError("secret connection string leaked")):
-            resp = client.get("/readyz")
+        with patch(
+            "utils.observability.check_database",
+            return_value={"status": "error", "detail": "unavailable"},
+        ):
+            with patch(
+                "app.check_database",
+                return_value={"status": "error", "detail": "unavailable"},
+            ):
+                resp = client.get("/readyz")
         assert resp.status_code == 503
         payload = resp.get_json()
         assert payload["status"] == "not_ready"
-        assert payload["error"] == "database_unavailable"
-        # Must not echo internal exception text
+        assert payload["components"]["database"]["status"] == "error"
+        # Must not echo internal exception text / connection secrets
         body = resp.get_data(as_text=True)
         assert "secret connection string" not in body
         assert "RuntimeError" not in body
+        assert "postgresql://" not in body
 
 
 def test_healthz_still_ok_when_db_execute_would_fail(client, app, db_setup):

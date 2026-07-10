@@ -65,7 +65,19 @@ class MonitoringService:
         
         self.metrics_buffer.append(metric)
         self.logger.info(f"Matching job started: {job_id} (session: {session_id})")
-        
+        try:
+            from utils.observability import log_event, record_job_event
+
+            record_job_event(job_type="matching", outcome="started")
+            log_event(
+                "job_started",
+                component="job",
+                job_type="matching",
+                attempt=1,
+            )
+        except Exception:
+            pass
+
         return session_id
     
     @log_execution
@@ -116,7 +128,26 @@ class MonitoringService:
                 'matches_saved': result.get('matches_saved', 0),
                 'timestamp': datetime.utcnow().isoformat()
             })
-            
+            try:
+                from utils.observability import log_event, record_job_event
+
+                status = str(result.get("status") or "unknown")
+                outcome = "ok" if status in ("success", "ok", "completed") else "error"
+                record_job_event(
+                    job_type="matching",
+                    outcome=outcome,
+                    duration_seconds=float(duration or 0),
+                )
+                log_event(
+                    "job_succeeded" if outcome == "ok" else "job_failed",
+                    component="job",
+                    job_type="matching",
+                    duration_ms=int(float(duration or 0) * 1000),
+                    error_category=None if outcome == "ok" else "internal",
+                )
+            except Exception:
+                pass
+
             # Check for performance issues
             if duration > self.slow_job_threshold:
                 self.logger.warning(f"Slow matching job detected: {duration:.2f}s (session: {session_id})")

@@ -140,6 +140,7 @@ jobs:
             tests/test_security_secret_scan.py \
             tests/test_security_events.py \
             tests/test_csrf_frontend_contract.py \
+            tests/test_observability.py \
             --tb=short
 
       - name: Secret pattern scan (path+pattern only)

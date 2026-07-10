@@ -87,35 +87,51 @@ class KieProvider(LLMProvider):
             "Content-Type": "application/json",
         }
 
-        try:
-            response = requests.post(
-                self.chat_url,
-                headers=headers,
-                json=request_payload,
-                timeout=self.timeout_seconds,
-            )
-        except requests.RequestException as exc:
-            self.logger.warning("KIE request failed: %s", exc)
-            return ""
-
-        if response.status_code >= 400:
-            snippet = response.text[:300]
-            self.logger.warning(
-                "KIE request returned status %s: %s",
-                response.status_code,
-                snippet,
-            )
-            return ""
+        from utils.observability import timed_provider
 
         try:
-            body = response.json()
-        except Exception as exc:
-            self.logger.warning("KIE response JSON parse failed: %s", exc)
-            return ""
+            with timed_provider("kie", "chat") as _obs:
+                try:
+                    response = requests.post(
+                        self.chat_url,
+                        headers=headers,
+                        json=request_payload,
+                        timeout=self.timeout_seconds,
+                    )
+                except requests.Timeout:
+                    _obs["outcome"] = "timeout"
+                    _obs["error_category"] = "timeout"
+                    self.logger.warning("KIE request timed out")
+                    return ""
+                except requests.RequestException as exc:
+                    _obs["outcome"] = "error"
+                    _obs["error_category"] = "dependency"
+                    self.logger.warning("KIE request failed: %s", type(exc).__name__)
+                    return ""
 
-        if not isinstance(body, dict):
+                if response.status_code >= 400:
+                    _obs["outcome"] = "error"
+                    _obs["error_category"] = "dependency"
+                    self.logger.warning(
+                        "KIE request returned status %s",
+                        response.status_code,
+                    )
+                    return ""
+
+                try:
+                    body = response.json()
+                except Exception:
+                    _obs["outcome"] = "error"
+                    _obs["error_category"] = "dependency"
+                    self.logger.warning("KIE response JSON parse failed")
+                    return ""
+
+                if not isinstance(body, dict):
+                    _obs["outcome"] = "error"
+                    return ""
+                return self._extract_text_from_response(body)
+        except Exception:
             return ""
-        return self._extract_text_from_response(body)
 
     def _chat_completion_with_tools(
         self,

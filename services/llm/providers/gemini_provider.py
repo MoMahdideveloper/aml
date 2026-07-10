@@ -64,19 +64,34 @@ class GeminiProvider(LLMProvider):
     def _generate_text(self, prompt: str) -> str:
         if not self.client:
             return ""
+        from utils.observability import timed_provider
+
         attempts = self.max_retries + 1
-        for attempt in range(1, attempts + 1):
-            try:
-                return self._generate_text_once(prompt, include_timeout=True)
-            except TypeError:
-                # Some SDK versions do not accept request_options; retry without it.
+        with timed_provider("gemini", "generate") as _obs:
+            for attempt in range(1, attempts + 1):
                 try:
-                    return self._generate_text_once(prompt, include_timeout=False)
+                    return self._generate_text_once(prompt, include_timeout=True)
+                except TypeError:
+                    # Some SDK versions do not accept request_options; retry without it.
+                    try:
+                        return self._generate_text_once(prompt, include_timeout=False)
+                    except Exception as exc:
+                        self.logger.warning(
+                            "Gemini text generation failed (attempt %s/%s): %s",
+                            attempt,
+                            attempts,
+                            type(exc).__name__,
+                        )
                 except Exception as exc:
-                    self.logger.warning("Gemini text generation failed (attempt %s/%s): %s", attempt, attempts, exc)
-            except Exception as exc:
-                self.logger.warning("Gemini text generation failed (attempt %s/%s): %s", attempt, attempts, exc)
-        return ""
+                    self.logger.warning(
+                        "Gemini text generation failed (attempt %s/%s): %s",
+                        attempt,
+                        attempts,
+                        type(exc).__name__,
+                    )
+            _obs["outcome"] = "error"
+            _obs["error_category"] = "dependency"
+            return ""
 
     def generate_recommendation_reasoning(
         self,

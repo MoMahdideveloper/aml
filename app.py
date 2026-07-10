@@ -4,13 +4,23 @@ Flask application factory with device detection implementation.
 
 import os
 import logging
-import uuid
-from flask import Flask, g, jsonify, redirect, request, session, url_for
+import time
+from flask import Flask, Response, g, jsonify, redirect, request, session, url_for
 from flask_wtf import CSRFProtect
 from jinja2 import ChoiceLoader, FileSystemLoader
 
 from database import init_db
 from utils.device_detector import detect_device_type, is_mobile_device, is_desktop_device
+from utils.observability import (
+    METRICS,
+    check_database,
+    check_redis,
+    log_event,
+    normalize_request_id,
+    normalize_route,
+    record_http_request,
+    status_class,
+)
 from utils.security_events import log_security_event
 
 
@@ -44,6 +54,7 @@ def register_auth_middleware(flask_app: Flask) -> None:
         "favicon",
         "healthz",
         "readyz",
+        "metrics",
     }
     flask_app.config["PUBLIC_ENDPOINTS"] = public_endpoints
 
@@ -175,13 +186,13 @@ def create_app(test_config=None):
     if os.environ.get("ENABLE_CSRF", csrf_default) == "1":
         CSRFProtect(app)
 
-    # Correlation id + device detection
+    # Correlation id + request timer + device detection
     @app.before_request
     def detect_device():
-        """Detect device type and store in Flask g object before each request."""
-        incoming = (request.headers.get("X-Request-ID") or "").strip()
-        g.request_id = incoming[:64] if incoming else uuid.uuid4().hex
-        user_agent = request.headers.get('User-Agent')
+        """Attach request_id, start timer, and detect device type."""
+        g.request_id = normalize_request_id(request.headers.get("X-Request-ID"))
+        g.request_start = time.perf_counter()
+        user_agent = request.headers.get("User-Agent")
         g.device_type = detect_device_type(user_agent)
         g.is_mobile = is_mobile_device(user_agent)
         g.is_desktop = is_desktop_device(user_agent)
@@ -281,7 +292,7 @@ def create_app(test_config=None):
         if view is not None and endpoint_name not in app.view_functions:
             app.add_url_rule(rule, endpoint=endpoint_name, view_func=view, methods=methods)
 
-    # Security headers (production-oriented defaults)
+    # Security headers + HTTP RED telemetry
     @app.after_request
     def _set_security_headers(resp):
         resp.headers.setdefault("X-Content-Type-Options", "nosniff")
@@ -319,13 +330,41 @@ def create_app(test_config=None):
         rid = getattr(g, "request_id", None)
         if rid:
             resp.headers.setdefault("X-Request-ID", rid)
+
+        # HTTP RED metrics + structured request log (skip /metrics self-scrape noise).
+        if path != "/metrics" and not path.startswith("/static/"):
+            started = getattr(g, "request_start", None)
+            duration = (time.perf_counter() - started) if started else 0.0
+            route = normalize_route(request.endpoint, path)
+            code = resp.status_code or 0
+            record_http_request(
+                route=route,
+                method=request.method or "GET",
+                status_code=code,
+                duration_seconds=duration,
+            )
+            err_cat = None
+            if code >= 500:
+                err_cat = "internal"
+            elif code == 401 or code == 403:
+                err_cat = "auth"
+            elif code == 400 or code == 422:
+                err_cat = "validation"
+            log_event(
+                "http_request",
+                component="http",
+                route=route,
+                method=(request.method or "GET").upper(),
+                status_class=status_class(code),
+                status_code=code,
+                duration_ms=int(duration * 1000),
+                error_category=err_cat,
+            )
         return resp
 
     @app.route("/healthz")
     def healthz():
-        """Liveness probe for load balancers / containers."""
-        from flask import jsonify
-
+        """Liveness: process is up (no dependency checks)."""
         return jsonify(
             {
                 "status": "ok",
@@ -336,19 +375,40 @@ def create_app(test_config=None):
 
     @app.route("/readyz")
     def readyz():
-        """Readiness: verifies DB connectivity (no internal details in response)."""
-        from flask import jsonify
-        from database import db
-        from sqlalchemy import text
+        """Readiness: required dependencies with safe component statuses."""
+        components = {
+            "database": check_database(),
+        }
+        # Redis is required for readiness only when explicitly configured as critical.
+        require_redis = os.environ.get("READYZ_REQUIRE_REDIS", "0") == "1"
+        redis_status = check_redis(timeout=0.4)
+        components["redis"] = redis_status
 
-        try:
-            db.session.execute(text("SELECT 1"))
-            return jsonify({"status": "ready"}), 200
-        except Exception:
-            logging.exception("readyz failed")
-            return jsonify(
-                {"status": "not_ready", "error": "database_unavailable"}
-            ), 503
+        ready = components["database"].get("status") == "ok"
+        if require_redis and redis_status.get("status") not in ("ok", "skipped"):
+            ready = False
+
+        body = {
+            "status": "ready" if ready else "not_ready",
+            "components": components,
+        }
+        if not ready:
+            log_event(
+                "health_readyz",
+                component="health",
+                outcome="not_ready",
+                error_category="dependency",
+            )
+            return jsonify(body), 503
+        return jsonify(body), 200
+
+    @app.route("/metrics")
+    def metrics():
+        """Prometheus text exposition (in-process; no external backend required)."""
+        return Response(
+            METRICS.render_prometheus(),
+            mimetype="text/plain; version=0.0.4; charset=utf-8",
+        )
 
     # Warn if using default secret in non-dev
     if (not app.debug or is_production) and app.secret_key in (
