@@ -52,6 +52,14 @@ FLAG_CATALOG: List[Dict[str, Any]] = [
         "recommended": False,
     },
     {
+        "key": "ai_answer",
+        "env": "ENABLE_AI_ANSWER",
+        "label": "Grounded AI answers",
+        "description": "POST /api/context/.../answer uses context packets only. Falls back to deterministic summary if LLM is down. Requires AI context ON.",
+        "default": False,
+        "recommended": False,
+    },
+    {
         "key": "derived_edges",
         "env": "ENABLE_DERIVED_EDGES",
         "label": "Related entities graph",
@@ -60,6 +68,7 @@ FLAG_CATALOG: List[Dict[str, Any]] = [
         "recommended": False,
     },
 ]
+
 
 _KEY_TO_ATTR = {f["key"]: f["key"] for f in FLAG_CATALOG}
 
@@ -86,9 +95,11 @@ def get_or_create_settings() -> IntelligenceSettings:
         vocab_occurrences=_env_bool("ENABLE_VOCAB_OCCURRENCES", False),
         hybrid_search=_env_bool("ENABLE_HYBRID_SEARCH", False),
         ai_context=_env_bool("ENABLE_AI_CONTEXT", False),
+        ai_answer=_env_bool("ENABLE_AI_ANSWER", False),
         derived_edges=_env_bool("ENABLE_DERIVED_EDGES", False),
         updated_by="system",
     )
+
     db.session.add(row)
     db.session.commit()
     log_event("intelligence_settings_seeded", component="intelligence_settings")
@@ -185,7 +196,9 @@ def apply_to_app_config(app, row: Optional[IntelligenceSettings] = None) -> None
     app.config["ENABLE_VOCAB_OCCURRENCES"] = bool(row.vocab_occurrences)
     app.config["ENABLE_HYBRID_SEARCH"] = bool(row.hybrid_search)
     app.config["ENABLE_AI_CONTEXT"] = bool(row.ai_context)
+    app.config["ENABLE_AI_ANSWER"] = bool(getattr(row, "ai_answer", False))
     app.config["ENABLE_DERIVED_EDGES"] = bool(row.derived_edges)
+
 
 
 def sync_app_from_db(app) -> None:

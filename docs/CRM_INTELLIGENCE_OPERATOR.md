@@ -34,7 +34,9 @@ SQLite and Postgres both supported for these tables.
 | 2 | `ENABLE_VOCAB_OCCURRENCES` | `0` | Extract/index term occurrences (Celery reindex) |
 | 3 | `ENABLE_HYBRID_SEARCH` | `0` | Full `/search` property hybrid re-rank + evidence |
 | 4 | `ENABLE_AI_CONTEXT` | `0` | `/api/context/...` (customer/property/deal/task/agent) |
-| 5 | `ENABLE_DERIVED_EDGES` | `0` | Related panel + `/api/related/...` |
+| 5 | `ENABLE_AI_ANSWER` | `0` | Grounded answers `POST .../answer` (needs context ON) |
+| 6 | `ENABLE_DERIVED_EDGES` | `0` | Related panel + `/api/related/...` |
+
 
 
 Optional: `AI_CONTEXT_MAX_CHARS=8000`.

@@ -31,5 +31,16 @@ Each scalar field is wrapped: `{ "value", "source", "as_of" }`.
 ## Telemetry
 Log entity_type, entity_id, purpose, char_count. **Never** log packet body or free-text content.
 
+## Grounded answers (optional)
+`POST /api/context/<entity_type>/<id>/answer` with JSON `{"question":"..."}`.
+
+- Flag: `ENABLE_AI_ANSWER` / admin toggle **Grounded AI answers** (default off).
+- Requires AI context capability.
+- Builds the same allowlisted packet, then optionally calls configured `LLM_PROVIDER`.
+- On provider failure: deterministic summary from packet identity/listing fields only.
+- Response includes `evidence` (source paths + value previews) — never logs the question body.
+- Context JSON is delimited as untrusted data in the prompt.
+
 ## Non-goals
-LLM generation of the packet, auto-including note bodies, multi-tenant row ACLs beyond global staff model.
+Auto-including note bodies, multi-tenant row ACLs beyond global staff model, persisting prompts.
+

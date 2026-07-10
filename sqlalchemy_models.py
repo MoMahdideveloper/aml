@@ -1719,6 +1719,7 @@ class IntelligenceSettings(db.Model):
     vocab_occurrences: Mapped[bool] = mapped_column(Boolean, default=False)
     hybrid_search: Mapped[bool] = mapped_column(Boolean, default=False)
     ai_context: Mapped[bool] = mapped_column(Boolean, default=False)
+    ai_answer: Mapped[bool] = mapped_column(Boolean, default=False)
     derived_edges: Mapped[bool] = mapped_column(Boolean, default=False)
     global_search: Mapped[bool] = mapped_column(Boolean, default=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
@@ -1730,11 +1731,13 @@ class IntelligenceSettings(db.Model):
             "vocab_occurrences": bool(self.vocab_occurrences),
             "hybrid_search": bool(self.hybrid_search),
             "ai_context": bool(self.ai_context),
+            "ai_answer": bool(self.ai_answer),
             "derived_edges": bool(self.derived_edges),
             "global_search": bool(self.global_search),
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "updated_by": self.updated_by,
         }
+
 
 
 

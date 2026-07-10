@@ -298,10 +298,14 @@ def create_app(test_config=None):
     app.config["ENABLE_AI_CONTEXT"] = (
         os.environ.get("ENABLE_AI_CONTEXT", "0").strip() == "1"
     )
+    app.config["ENABLE_AI_ANSWER"] = (
+        os.environ.get("ENABLE_AI_ANSWER", "0").strip() == "1"
+    )
     # Derived SQL relationship edges / related panel (default off).
     app.config["ENABLE_DERIVED_EDGES"] = (
         os.environ.get("ENABLE_DERIVED_EDGES", "0").strip() == "1"
     )
+
     # Vocabulary occurrence extraction index (default off).
     app.config["ENABLE_VOCAB_OCCURRENCES"] = (
         os.environ.get("ENABLE_VOCAB_OCCURRENCES", "0").strip() == "1"
