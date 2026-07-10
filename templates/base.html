@@ -193,6 +193,15 @@
         <main id="main-content" class="flex-1 min-w-0 flex flex-col overflow-hidden bg-brand-cream" tabindex="-1">
             {% include 'components/_mobile_header.html' %}
 
+            {# Desktop global search strip (does not shift sidebar) #}
+            {% if config.get('ENABLE_GLOBAL_SEARCH', True) and session.get('user_id') %}
+            <div class="hidden lg:flex items-center gap-3 px-4 lg:px-6 py-2 border-b border-outline-variant bg-surface-white shrink-0">
+                {% include 'components/_global_search.html' %}
+                <a href="{{ url_for('search.search_page') }}" class="text-xs text-primary whitespace-nowrap">Full results</a>
+                <span class="text-[10px] text-on-surface-variant whitespace-nowrap" title="Keyboard: focus search with /">/</span>
+            </div>
+            {% endif %}
+
             <div class="flex-1 overflow-y-auto ph-main-canvas">
                 <div class="p-4 lg:p-6 max-w-[1280px] mx-auto w-full ph-page">
                     {% block content %}{% endblock %}
@@ -201,7 +210,20 @@
         </main>
     </div>
 
+    {% if config.get('ENABLE_GLOBAL_SEARCH', True) and session.get('user_id') %}
+    <div id="ph-search-mobile-dialog" class="hidden fixed inset-0 z-[70] lg:hidden" role="dialog" aria-modal="true" aria-label="Search">
+      <div class="absolute inset-0 bg-black/40" data-search-mobile-backdrop></div>
+      <div class="absolute top-0 left-0 right-0 bg-surface-white border-b border-outline-variant p-3 shadow-ph">
+        {% include 'components/_global_search.html' %}
+        <button type="button" class="mt-2 text-sm text-primary" data-search-mobile-close>Close</button>
+      </div>
+    </div>
+    {% endif %}
+
     <script src="{{ url_for('static', filename='js/app-core.js') }}" defer></script>
+    {% if config.get('ENABLE_GLOBAL_SEARCH', True) %}
+    <script src="{{ url_for('static', filename='js/global-search.js') }}" defer></script>
+    {% endif %}
     {% block scripts %}{% endblock %}
     {% block extra_js %}{% endblock %}
 </body>

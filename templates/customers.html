@@ -27,6 +27,18 @@
 
 <!-- Search & Filters Panel -->
 <section class="ph-page-panel p-6 mb-8">
+    {% if saved_views is defined and saved_views %}
+    <div class="flex flex-wrap gap-2 mb-4 items-center">
+      <span class="text-xs uppercase tracking-wide text-on-surface-variant">Saved views:</span>
+      {% for v in saved_views %}
+      <a href="{{ url_for('search.apply_saved_view', view_id=v.id) }}"
+         class="text-xs px-2 py-1 rounded-full border border-outline-variant hover:bg-surface-container {% if v.is_default %}bg-primary/10 text-primary{% endif %}">
+        {{ v.name }}{% if v.is_default %} ★{% endif %}
+      </a>
+      {% endfor %}
+      <a href="{{ url_for('search.saved_views', entity='customers') }}" class="text-xs text-primary underline ml-1">Manage</a>
+    </div>
+    {% endif %}
     <form method="GET" action="{{ url_for('customers') }}" id="customerSearchForm">
         <div class="flex flex-col xl:flex-row gap-6 mb-6">
             <!-- Text Search -->
@@ -55,9 +67,11 @@
                     <label class="block text-label-sm font-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Status</label>
                     <select name="status"
                             class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 text-body-md font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
+                        <option value="" {{ 'selected' if not status }}>All statuses</option>
                         <option value="active" {{ 'selected' if status == 'active' }}>Active</option>
                         <option value="lead" {{ 'selected' if status == 'lead' }}>Lead</option>
                         <option value="inactive" {{ 'selected' if status == 'inactive' }}>Inactive</option>
+                        <option value="prospect" {{ 'selected' if status == 'prospect' }}>Prospect</option>
                     </select>
                 </div>
                 <div class="w-full md:w-48">
@@ -88,7 +102,28 @@
                 Commercial
             </button>
         </div>
+        <div class="mt-4 flex flex-wrap gap-2">
+            <button type="submit" class="ph-btn-primary text-sm">Apply filters</button>
+        </div>
     </form>
+    {% if session.get('user_id') %}
+    <form method="post" action="{{ url_for('search.saved_views') }}" class="mt-4 flex flex-wrap items-end gap-2 border-t border-outline-variant pt-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+        <input type="hidden" name="action" value="create">
+        <input type="hidden" name="entity_scope" value="customers">
+        <input type="hidden" name="q" value="{{ search_query or '' }}">
+        <input type="hidden" name="status" value="{{ status or '' }}">
+        <input type="hidden" name="customer_type" value="{{ customer_type or '' }}">
+        <div>
+          <label class="block text-xs text-on-surface-variant mb-1" for="save-view-name">Save current view</label>
+          <input id="save-view-name" name="name" required maxlength="80" class="border border-outline-variant rounded-lg px-3 py-2 text-sm" placeholder="View name">
+        </div>
+        <label class="text-xs flex items-center gap-1 mb-2">
+          <input type="checkbox" name="is_default" value="1"> Default
+        </label>
+        <button type="submit" class="px-3 py-2 rounded-lg border border-outline-variant text-sm">Save view</button>
+    </form>
+    {% endif %}
 </section>
 
 <!-- Clients Grid -->

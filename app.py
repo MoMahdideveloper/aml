@@ -236,6 +236,7 @@ def create_app(test_config=None):
     from views.automations import bp as automations_bp
     from views.auth import bp as auth_bp
     from views.imports import bp as imports_bp
+    from views.search import bp as search_bp
 
     for bp in (
         main_bp,
@@ -250,8 +251,14 @@ def create_app(test_config=None):
         automations_bp,
         auth_bp,
         imports_bp,
+        search_bp,
     ):
         app.register_blueprint(bp)
+
+    # Global search shell flag (default on; set ENABLE_GLOBAL_SEARCH=0 to disable).
+    app.config["ENABLE_GLOBAL_SEARCH"] = (
+        os.environ.get("ENABLE_GLOBAL_SEARCH", "1").strip() != "0"
+    )
 
     # Default-deny session gate (AUTH_DEFAULT_DENY_ENABLED, default on).
     register_auth_middleware(app)

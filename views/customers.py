@@ -1,6 +1,6 @@
 import logging
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, session, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
 
 from database_service import database_service
 from forms import CustomerForm
@@ -13,7 +13,31 @@ bp = Blueprint("customers", __name__)
 def customers():
     from utils.match_profile import customer_preference_profile
 
+    search_query = (request.args.get("search") or request.args.get("q") or "").strip()
+    status = (request.args.get("status") or "").strip()
+    customer_type = (request.args.get("customer_type") or "").strip()
+    highlight = request.args.get("highlight")
+
     customers = database_service.get_customers()
+    # Apply allowlisted list filters (saved views + form)
+    if search_query:
+        sq = search_query.lower()
+        customers = [
+            c
+            for c in customers
+            if sq in (c.name or "").lower()
+            or sq in (c.email or "").lower()
+            or sq in (c.phone or "")
+        ]
+    if status:
+        customers = [c for c in customers if (c.status or "") == status]
+    if customer_type:
+        customers = [
+            c
+            for c in customers
+            if (getattr(c, "customer_type", None) or "") == customer_type
+        ]
+
     for customer in customers:
         setattr(customer, "total_deals", len(customer.deals))
         setattr(
@@ -23,11 +47,27 @@ def customers():
         )
         setattr(customer, "match_profile", customer_preference_profile(customer))
     agents = database_service.get_agents()
+
+    saved_views = []
+    uid = session.get("user_id")
+    if uid:
+        try:
+            from services.saved_views_service import saved_views_service
+
+            saved_views = saved_views_service.list_for_user(uid, "customers")
+        except Exception:
+            logging.exception("saved views list failed")
+
     return render_template(
         "customers.html",
         customers=customers,
         agents=agents,
         agents_list=agents,
+        search_query=search_query,
+        status=status,
+        customer_type=customer_type,
+        saved_views=saved_views,
+        highlight=highlight,
     )
 
 

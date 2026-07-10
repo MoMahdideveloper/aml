@@ -1453,3 +1453,36 @@ class ImportRowResult(db.Model):
             "created_record_id": self.created_record_id,
             "decision": self.decision,
         }
+
+
+class SavedView(db.Model):
+    """User-owned saved list/search filters (allowlisted JSON, never SQL)."""
+
+    __tablename__ = "saved_views"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner_user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(80), nullable=False)
+    entity_scope: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    filter_json: Mapped[str] = mapped_column(Text, default="{}")
+    sort_spec: Mapped[str] = mapped_column(String(32), default="relevance")
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=_utcnow_naive, onupdate=_utcnow_naive
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "owner_user_id": self.owner_user_id,
+            "name": self.name,
+            "entity_scope": self.entity_scope,
+            "filter_json": self.filter_json,
+            "sort_spec": self.sort_spec,
+            "is_default": self.is_default,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }

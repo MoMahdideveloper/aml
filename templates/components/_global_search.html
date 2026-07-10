@@ -1,0 +1,25 @@
+{# Global search shell control — Platinum Heritage (desktop + mobile roots) #}
+<div class="relative w-full max-w-md ph-global-search" data-search-root
+     data-api="{{ url_for('search.search_api') }}"
+     data-results="{{ url_for('search.search_page') }}">
+  <label class="sr-only">Search CRM</label>
+  <div class="relative">
+    <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] pointer-events-none" aria-hidden="true">search</span>
+    <input type="search"
+           autocomplete="off"
+           maxlength="100"
+           class="ph-search-input w-full bg-surface border border-outline-variant rounded-lg pl-9 pr-8 py-2 text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+           placeholder="Search…"
+           role="combobox"
+           aria-expanded="false"
+           aria-autocomplete="list"
+           aria-haspopup="listbox">
+    <button type="button" class="ph-search-clear hidden absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant p-1" aria-label="Clear search">
+      <span class="material-symbols-outlined text-[18px]">close</span>
+    </button>
+  </div>
+  <div class="ph-search-listbox hidden absolute left-0 right-0 mt-1 max-h-80 overflow-y-auto bg-surface-white border border-outline-variant shadow-ph rounded-lg z-50"
+       role="listbox"
+       aria-label="Search suggestions"></div>
+  <p class="ph-search-status sr-only" role="status" aria-live="polite"></p>
+</div>

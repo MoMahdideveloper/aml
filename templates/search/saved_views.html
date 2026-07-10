@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Saved views{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto">
+  <h1 class="text-2xl font-semibold text-primary mb-4">Saved views · {{ entity }}</h1>
+  <ul class="space-y-2 mb-6">
+    {% for v in views %}
+    <li class="border border-outline-variant rounded-lg p-3 flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <a class="font-medium text-primary" href="{{ url_for('search.apply_saved_view', view_id=v.id) }}">{{ v.name }}</a>
+        {% if v.is_default %}<span class="text-xs ml-2 text-on-surface-variant">default</span>{% endif %}
+      </div>
+      <div class="flex gap-2 text-xs">
+        <form method="post" action="{{ url_for('search.saved_views') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+          <input type="hidden" name="entity_scope" value="{{ entity }}">
+          <input type="hidden" name="action" value="default">
+          <input type="hidden" name="view_id" value="{{ v.id }}">
+          <button type="submit" class="underline">Set default</button>
+        </form>
+        <form method="post" action="{{ url_for('search.saved_views') }}" onsubmit="return confirm('Delete this view?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+          <input type="hidden" name="entity_scope" value="{{ entity }}">
+          <input type="hidden" name="action" value="delete">
+          <input type="hidden" name="view_id" value="{{ v.id }}">
+          <button type="submit" class="text-error underline">Delete</button>
+        </form>
+      </div>
+    </li>
+    {% else %}
+    <li class="text-sm text-on-surface-variant">No saved views yet.</li>
+    {% endfor %}
+  </ul>
+  <a href="{{ url_for('customers.customers') }}" class="text-sm text-primary">Back to customers</a>
+</div>
+{% endblock %}
