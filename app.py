@@ -237,6 +237,7 @@ def create_app(test_config=None):
     from views.auth import bp as auth_bp
     from views.imports import bp as imports_bp
     from views.search import bp as search_bp
+    from views.reports import bp as reports_bp
 
     for bp in (
         main_bp,
@@ -252,12 +253,16 @@ def create_app(test_config=None):
         auth_bp,
         imports_bp,
         search_bp,
+        reports_bp,
     ):
         app.register_blueprint(bp)
 
     # Global search shell flag (default on; set ENABLE_GLOBAL_SEARCH=0 to disable).
     app.config["ENABLE_GLOBAL_SEARCH"] = (
         os.environ.get("ENABLE_GLOBAL_SEARCH", "1").strip() != "0"
+    )
+    app.config["ENABLE_SALES_REPORTS"] = (
+        os.environ.get("ENABLE_SALES_REPORTS", "1").strip() != "0"
     )
 
     # Default-deny session gate (AUTH_DEFAULT_DENY_ENABLED, default on).

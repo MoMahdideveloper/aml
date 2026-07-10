@@ -996,8 +996,33 @@ class DatabaseService:
                 if hasattr(deal, key):
                     if key == "offer_amount" and value is not None:
                         value = self._to_toman_int(value)
+                    if key == "status" and value is not None:
+                        from services.deal_pipeline import normalize_deal_status
+
+                        value = normalize_deal_status(value)
                     setattr(deal, key, value)
             deal.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+
+            # Atomic stage history when status changes
+            try:
+                if "status" in kwargs:
+                    from services.deal_pipeline import normalize_deal_status
+                    from services.deal_stage_history import record_stage_change
+
+                    new_status = deal.status
+                    if normalize_deal_status(old_status) != normalize_deal_status(
+                        new_status
+                    ):
+                        record_stage_change(
+                            deal,
+                            from_stage=old_status,
+                            to_stage=new_status,
+                            changed_by="system:update_deal",
+                            event_type="transition",
+                        )
+            except Exception as e:
+                self.logger.warning(f"Deal stage history failed for deal {deal_id}: {e}")
+
             db.session.commit()
             self._invalidate_market_cache()
 
@@ -1227,9 +1252,20 @@ class DatabaseService:
             linked_property = self.get_property(property_id)
             agent_id = linked_property.agent_id if linked_property else None
         deal.agent_id = agent_id
-        deal.status = status
+        from services.deal_pipeline import normalize_deal_status
+        from services.deal_stage_history import record_stage_change
+
+        deal.status = normalize_deal_status(status)
         deal.offer_amount = self._to_toman_int(offer_amount)
         db.session.add(deal)
+        db.session.flush()
+        record_stage_change(
+            deal,
+            from_stage=None,
+            to_stage=deal.status,
+            changed_by="system:add_deal",
+            event_type="create",
+        )
         db.session.commit()
         self._invalidate_market_cache()
         return deal

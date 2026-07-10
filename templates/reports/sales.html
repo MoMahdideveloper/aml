@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Sales report{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto">
+  <header class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">
+    <div>
+      <p class="text-xs uppercase tracking-wide text-on-surface-variant">Decision support</p>
+      <h1 class="text-2xl font-semibold text-primary">Sales pipeline &amp; forecast</h1>
+      <p class="text-xs text-on-surface-variant mt-1">
+        Generated {{ report.generated_at }} · Weighted forecast uses configured stage probabilities (not ML).
+      </p>
+    </div>
+    <a class="px-3 py-2 rounded-lg border border-outline-variant text-sm"
+       href="{{ url_for('reports.sales_export', **args) }}">Export CSV</a>
+  </header>
+
+  <form method="get" class="mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 border border-outline-variant rounded-lg p-4 bg-surface-container-lowest">
+    <div>
+      <label class="block text-xs mb-1" for="days">Period (days)</label>
+      <input id="days" name="days" type="number" min="1" max="366" value="{{ args.get('days', 30) }}"
+             class="w-full border border-outline-variant rounded-lg px-3 py-2 text-sm">
+    </div>
+    <div>
+      <label class="block text-xs mb-1" for="start">Start (optional ISO)</label>
+      <input id="start" name="start" value="{{ args.get('start','') }}"
+             class="w-full border border-outline-variant rounded-lg px-3 py-2 text-sm" placeholder="YYYY-MM-DD">
+    </div>
+    <div>
+      <label class="block text-xs mb-1" for="end">End exclusive</label>
+      <input id="end" name="end" value="{{ args.get('end','') }}"
+             class="w-full border border-outline-variant rounded-lg px-3 py-2 text-sm" placeholder="YYYY-MM-DD">
+    </div>
+    <div>
+      <label class="block text-xs mb-1" for="agent_id">Agent</label>
+      <select id="agent_id" name="agent_id" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-sm">
+        <option value="">All agents</option>
+        {% for a in agents %}
+        <option value="{{ a.id }}" {% if args.get('agent_id')==a.id|string %}selected{% endif %}>{{ a.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="flex items-end gap-2">
+      <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm">Apply</button>
+      <a href="{{ url_for('reports.sales_report') }}" class="px-3 py-2 text-sm underline">Reset</a>
+    </div>
+  </form>
+
+  {# KPI cards #}
+  <section aria-labelledby="kpi-heading" class="mb-8">
+    <h2 id="kpi-heading" class="sr-only">Key metrics</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {% set cards = [
+        ('Pipeline value', report.summary.pipeline_value, report.comparison.pipeline_value, 'currency'),
+        ('Weighted forecast', report.summary.weighted_forecast, report.comparison.weighted_forecast, 'currency'),
+        ('Won value', report.summary.won_value, report.comparison.won_value, 'currency'),
+        ('Win rate', report.summary.win_rate, report.comparison.win_rate, 'pct'),
+      ] %}
+      {% for label, val, cmp, kind in cards %}
+      <div class="border border-outline-variant rounded-lg p-4 bg-surface-container-lowest">
+        <p class="text-xs uppercase tracking-wide text-on-surface-variant">{{ label }}</p>
+        <p class="text-xl font-semibold mt-1">
+          {% if val is none %}—{% elif kind == 'pct' %}{{ val }}%{% else %}{{ '{:,}'.format(val) }}{% endif %}
+        </p>
+        {% if cmp %}
+        <p class="text-xs mt-2 text-on-surface-variant">
+          Prior:
+          {% if cmp.prior is none %}—{% elif kind == 'pct' %}{{ cmp.prior }}%{% else %}{{ '{:,}'.format(cmp.prior) }}{% endif %}
+          {% if cmp.pct_change is not none %}
+            · <span class="{% if cmp.pct_change > 0 %}text-green-700{% elif cmp.pct_change < 0 %}text-red-700{% endif %}">
+              {{ '%+.1f'|format(cmp.pct_change) }}%
+            </span>
+            <span class="sr-only">{% if cmp.pct_change > 0 %}up{% elif cmp.pct_change < 0 %}down{% else %}unchanged{% endif %}</span>
+          {% else %}
+            · change n/a
+          {% endif %}
+        </p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <p class="text-xs text-on-surface-variant mt-3">
+      Open deals: {{ report.summary.open_count }} ·
+      Won/lost counts: {{ report.summary.won_count }}/{{ report.summary.lost_count }} ·
+      Avg deal size: {% if report.summary.avg_deal_size is not none %}{{ '{:,}'.format(report.summary.avg_deal_size) }}{% else %}—{% endif %} ·
+      Avg cycle (days): {% if report.summary.avg_sales_cycle_days is not none %}{{ report.summary.avg_sales_cycle_days }}{% else %}—{% endif %}
+    </p>
+  </section>
+
+  {# Funnel table (canonical accessible representation) #}
+  <section class="mb-8" aria-labelledby="funnel-heading">
+    <h2 id="funnel-heading" class="text-lg font-semibold text-primary mb-3">Pipeline by stage</h2>
+    <div class="overflow-x-auto border border-outline-variant rounded-lg">
+      <table class="min-w-full text-sm">
+        <thead class="bg-surface-container">
+          <tr>
+            <th scope="col" class="text-left p-2">Stage</th>
+            <th scope="col" class="text-right p-2">Deals</th>
+            <th scope="col" class="text-right p-2">Value</th>
+            <th scope="col" class="text-right p-2">P</th>
+            <th scope="col" class="text-right p-2">Weighted</th>
+            <th scope="col" class="text-right p-2">Observed conversion</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in report.funnel %}
+          <tr class="border-t border-outline-variant">
+            <td class="p-2">{{ row.label }}</td>
+            <td class="p-2 text-right">{{ row.count }}</td>
+            <td class="p-2 text-right">{{ '{:,}'.format(row.value) }}</td>
+            <td class="p-2 text-right">{{ '%.0f'|format(row.probability * 100) }}%</td>
+            <td class="p-2 text-right">{{ '{:,}'.format(row.weighted) }}</td>
+            <td class="p-2 text-right">
+              {% if row.stage_conversion_pct is not none %}{{ row.stage_conversion_pct }}%{% else %}—{% endif %}
+              <span class="block text-[10px] text-on-surface-variant">in {{ row.observed_entries }} / out {{ row.forward_exits }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-on-surface-variant mt-2">{{ report.limitations.stage_conversion_requires_observed_history and 'Stage conversion uses observed transitions only; baseline history is excluded.' }}</p>
+  </section>
+
+  {# Agent table #}
+  <section aria-labelledby="agent-heading">
+    <h2 id="agent-heading" class="text-lg font-semibold text-primary mb-3">Agent performance</h2>
+    <div class="overflow-x-auto border border-outline-variant rounded-lg">
+      <table class="min-w-full text-sm">
+        <thead class="bg-surface-container">
+          <tr>
+            <th scope="col" class="text-left p-2">Agent</th>
+            <th scope="col" class="text-right p-2">Pipeline</th>
+            <th scope="col" class="text-right p-2">Forecast</th>
+            <th scope="col" class="text-right p-2">Won value</th>
+            <th scope="col" class="text-right p-2">Win rate</th>
+            <th scope="col" class="text-right p-2">Overdue tasks</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in report.agents %}
+          <tr class="border-t border-outline-variant">
+            <td class="p-2">{{ a.agent_name }}</td>
+            <td class="p-2 text-right">{{ '{:,}'.format(a.pipeline_value) }}</td>
+            <td class="p-2 text-right">{{ '{:,}'.format(a.weighted_forecast) }}</td>
+            <td class="p-2 text-right">{{ '{:,}'.format(a.won_value) }}</td>
+            <td class="p-2 text-right">{% if a.win_rate is not none %}{{ a.win_rate }}%{% else %}—{% endif %}</td>
+            <td class="p-2 text-right">{{ a.overdue_tasks }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="p-4 text-on-surface-variant">No agents</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <form method="post" action="{{ url_for('reports.sales_snapshot') }}" class="mt-6">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+    <input type="hidden" name="days" value="{{ args.get('days', 30) }}">
+    <input type="hidden" name="agent_id" value="{{ args.get('agent_id','') }}">
+    <input type="hidden" name="start" value="{{ args.get('start','') }}">
+    <input type="hidden" name="end" value="{{ args.get('end','') }}">
+    <button type="submit" class="text-sm underline text-primary">Snapshot current forecast</button>
+  </form>
+</div>
+{% endblock %}

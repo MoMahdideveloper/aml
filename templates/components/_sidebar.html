@@ -80,6 +80,21 @@
             <span>Import CSV</span>
         </a>
 
+        {% if config.get('ENABLE_SALES_REPORTS', True) %}
+        {% set reports_active = ep and ep.startswith('reports.') %}
+        <a href="{{ url_for('reports.sales_report') }}"
+           class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                  {% if reports_active %}
+                      bg-primary text-on-primary
+                  {% else %}
+                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
+                  {% endif %}"
+           {% if reports_active %}aria-current="page"{% endif %}>
+            <i class="fas fa-chart-pie mr-3 w-4 text-center opacity-90" aria-hidden="true"></i>
+            <span>Sales report</span>
+        </a>
+        {% endif %}
+
         <a href="{{ url_for('properties.map_view') }}"
            class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
                   {% if ep == 'properties.map_view' %}

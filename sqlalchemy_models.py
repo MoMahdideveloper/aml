@@ -1486,3 +1486,59 @@ class SavedView(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
+
+
+class DealStageHistory(db.Model):
+    """Observed deal stage transitions (baseline events are not true history)."""
+
+    __tablename__ = "deal_stage_history"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    deal_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("deals.id"), nullable=False, index=True
+    )
+    from_stage: Mapped[str] = mapped_column(String(50), default="")
+    to_stage: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    changed_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive, index=True)
+    changed_by: Mapped[str] = mapped_column(String(120), default="")
+    event_type: Mapped[str] = mapped_column(
+        String(32), default="transition", index=True
+    )  # transition|baseline|create
+    reason_code: Mapped[str] = mapped_column(String(64), default="")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "deal_id": self.deal_id,
+            "from_stage": self.from_stage,
+            "to_stage": self.to_stage,
+            "changed_at": self.changed_at.isoformat() if self.changed_at else None,
+            "event_type": self.event_type,
+        }
+
+
+class ForecastSnapshot(db.Model):
+    """Period forecast snapshot for later accuracy comparison (no deal PII)."""
+
+    __tablename__ = "forecast_snapshots"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    scope_key: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    period_start: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    period_end: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    as_of: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+    weighted_forecast: Mapped[int] = mapped_column(BigInteger, default=0)
+    open_pipeline: Mapped[int] = mapped_column(BigInteger, default=0)
+    open_count: Mapped[int] = mapped_column(Integer, default=0)
+    agent_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "scope_key": self.scope_key,
+            "weighted_forecast": self.weighted_forecast,
+            "open_pipeline": self.open_pipeline,
+            "open_count": self.open_count,
+            "as_of": self.as_of.isoformat() if self.as_of else None,
+        }
