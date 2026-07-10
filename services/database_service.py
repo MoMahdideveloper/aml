@@ -1023,10 +1023,51 @@ class DatabaseService:
             except Exception as e:
                 self.logger.warning(f"Deal stage history failed for deal {deal_id}: {e}")
 
+            # Outbox events for stage change / close (same transaction)
+            try:
+                if "status" in kwargs:
+                    from services.deal_pipeline import (
+                        TERMINAL_STAGES,
+                        normalize_deal_status,
+                    )
+                    from services.automation_engine import emit_event
+
+                    new_status = normalize_deal_status(deal.status)
+                    old_n = normalize_deal_status(old_status)
+                    if new_status != old_n:
+                        emit_event(
+                            event_type="deal.stage_changed",
+                            aggregate_type="deal",
+                            aggregate_id=deal.id,
+                            context={
+                                "deal_id": deal.id,
+                                "agent_id": deal.agent_id,
+                                "stage": new_status,
+                                "old_stage": old_n,
+                                "offer_amount": deal.offer_amount or 0,
+                            },
+                            changed_fields=["status"],
+                        )
+                        if new_status in TERMINAL_STAGES:
+                            emit_event(
+                                event_type="deal.closed",
+                                aggregate_type="deal",
+                                aggregate_id=deal.id,
+                                context={
+                                    "deal_id": deal.id,
+                                    "agent_id": deal.agent_id,
+                                    "stage": new_status,
+                                    "offer_amount": deal.offer_amount or 0,
+                                },
+                                changed_fields=["status"],
+                            )
+            except Exception as e:
+                self.logger.warning(f"automation emit deal stage failed: {e}")
+
             db.session.commit()
             self._invalidate_market_cache()
 
-            # Trigger workflow automation for stage changes.
+            # Legacy sync automation path (kept for high_match / overdue)
             try:
                 if "status" in kwargs and kwargs.get("status") != old_status:
                     from services.automation_service import automation_service
@@ -1038,6 +1079,12 @@ class DatabaseService:
                     )
             except Exception as e:
                 self.logger.warning(f"Deal stage automation failed for deal {deal_id}: {e}")
+            try:
+                from services.automation_engine import process_pending_outbox
+
+                process_pending_outbox(limit=10)
+            except Exception as e:
+                self.logger.warning(f"automation process after deal update failed: {e}")
         return deal if deal and not deal.is_deleted else None
 
     # Agent operations
@@ -1152,7 +1199,26 @@ class DatabaseService:
         customer.preferred_type = preferred_type
         customer.location_preference = location_preference
         db.session.add(customer)
+        db.session.flush()
+        try:
+            from services.automation_engine import emit_event
+
+            emit_event(
+                event_type="customer.created",
+                aggregate_type="customer",
+                aggregate_id=customer.id,
+                context={"customer_id": customer.id, "entity_type": "customer"},
+                changed_fields=["name", "email", "phone"],
+            )
+        except Exception as e:
+            self.logger.warning(f"automation emit customer.created failed: {e}")
         db.session.commit()
+        try:
+            from services.automation_engine import process_pending_outbox
+
+            process_pending_outbox(limit=5)
+        except Exception as e:
+            self.logger.warning(f"automation process after customer failed: {e}")
         self._invalidate_customer_caches(customer.id)
         return customer
 
@@ -1266,7 +1332,30 @@ class DatabaseService:
             changed_by="system:add_deal",
             event_type="create",
         )
+        try:
+            from services.automation_engine import emit_event
+
+            emit_event(
+                event_type="deal.created",
+                aggregate_type="deal",
+                aggregate_id=deal.id,
+                context={
+                    "deal_id": deal.id,
+                    "agent_id": deal.agent_id,
+                    "stage": deal.status,
+                    "offer_amount": deal.offer_amount or 0,
+                },
+                changed_fields=["status", "offer_amount", "agent_id"],
+            )
+        except Exception as e:
+            self.logger.warning(f"automation emit deal.created failed: {e}")
         db.session.commit()
+        try:
+            from services.automation_engine import process_pending_outbox
+
+            process_pending_outbox(limit=5)
+        except Exception as e:
+            self.logger.warning(f"automation process after deal create failed: {e}")
         self._invalidate_market_cache()
         return deal
 
@@ -1437,7 +1526,29 @@ class DatabaseService:
         if task and not task.is_deleted:
             task.status = "completed"
             task.completed_at = datetime.now(timezone.utc).replace(tzinfo=None)
+            try:
+                from services.automation_engine import emit_event
+
+                emit_event(
+                    event_type="task.completed",
+                    aggregate_type="task",
+                    aggregate_id=task.id,
+                    context={
+                        "task_id": task.id,
+                        "agent_id": task.agent_id,
+                        "status": "completed",
+                    },
+                    changed_fields=["status"],
+                )
+            except Exception as e:
+                self.logger.warning(f"automation emit task.completed failed: {e}")
             db.session.commit()
+            try:
+                from services.automation_engine import process_pending_outbox
+
+                process_pending_outbox(limit=5)
+            except Exception:
+                pass
         return task
 
     # Export operations

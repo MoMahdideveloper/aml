@@ -565,6 +565,12 @@ class Task(db.Model):
 
     # Foreign Keys
     agent_id: Mapped[int] = mapped_column(Integer, ForeignKey("agents.id"), nullable=False)
+    # Automation provenance (nullable — manual tasks leave blank)
+    automation_run_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True)
+    automation_rule_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True)
+    automation_title_key: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
+    source_entity_type: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    source_entity_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     # Relationships
     agent = relationship("Agent", back_populates="tasks")
@@ -582,6 +588,8 @@ class Task(db.Model):
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
             "is_deleted": self.is_deleted,
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
+            "automation_run_id": self.automation_run_id,
+            "automation_rule_id": self.automation_rule_id,
         }
 
 
@@ -969,6 +977,12 @@ class AutomationRule(db.Model):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=_utcnow_naive, onupdate=_utcnow_naive
     )
+    # Follow-up automation extensions
+    rule_key: Mapped[Optional[str]] = mapped_column(String(80), nullable=True, unique=True)
+    cooldown_hours: Mapped[int] = mapped_column(Integer, default=24)
+    priority: Mapped[int] = mapped_column(Integer, default=100)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    is_template: Mapped[bool] = mapped_column(Boolean, default=False)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -981,6 +995,11 @@ class AutomationRule(db.Model):
             "created_by": self.created_by,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "rule_key": self.rule_key,
+            "cooldown_hours": self.cooldown_hours,
+            "priority": self.priority,
+            "version": self.version,
+            "is_template": self.is_template,
         }
 
 
@@ -1542,3 +1561,63 @@ class ForecastSnapshot(db.Model):
             "open_count": self.open_count,
             "as_of": self.as_of.isoformat() if self.as_of else None,
         }
+
+
+class AutomationOutboxEvent(db.Model):
+    """Transactional outbox for business events (allowlisted context only)."""
+
+    __tablename__ = "automation_outbox_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
+    event_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    aggregate_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    aggregate_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    actor_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive, index=True)
+    correlation_id: Mapped[str] = mapped_column(String(64), default="")
+    changed_fields: Mapped[str] = mapped_column(String(255), default="")  # comma names only
+    schema_version: Mapped[int] = mapped_column(Integer, default=1)
+    context_json: Mapped[str] = mapped_column(Text, default="{}")
+    status: Mapped[str] = mapped_column(
+        String(20), default="pending", index=True
+    )  # pending|processing|processed|failed|dead
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    last_error: Mapped[str] = mapped_column(String(255), default="")
+    processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+
+class AutomationRun(db.Model):
+    """Per rule evaluation/action attempt with idempotency key."""
+
+    __tablename__ = "automation_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rule_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("automation_rules.id"), nullable=True, index=True
+    )
+    rule_version: Mapped[int] = mapped_column(Integer, default=1)
+    event_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(
+        String(20), default="matched", index=True
+    )  # matched|suppressed|succeeded|failed|skipped
+    reason_code: Mapped[str] = mapped_column(String(64), default="")
+    action_type: Mapped[str] = mapped_column(String(40), default="")
+    action_ref: Mapped[str] = mapped_column(String(120), default="")  # task:id / notif:id
+    idempotency_key: Mapped[str] = mapped_column(String(160), unique=True, nullable=False)
+    dry_run: Mapped[bool] = mapped_column(Boolean, default=False)
+    attempt_count: Mapped[int] = mapped_column(Integer, default=1)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    failure_category: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
+
+
+class AutomationSettings(db.Model):
+    """Singleton-ish global automation controls (id=1)."""
+
+    __tablename__ = "automation_settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    global_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+    updated_by: Mapped[str] = mapped_column(String(120), default="")

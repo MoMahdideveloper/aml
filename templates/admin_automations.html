@@ -1,148 +1,142 @@
 {% extends 'base.html' %}
-
-{% block title %}Automations Engine - Platinum Heritage{% endblock %}
-
-{% block extra_css %}
-<style>
-    .material-symbols-outlined {
-        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        font-family: 'Material Symbols Outlined';
-    }
-</style>
-{% endblock %}
-
+{% block title %}Automations - Platinum Heritage{% endblock %}
 {% block content %}
-<!-- Page Header -->
-<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+<div class="max-w-5xl mx-auto">
+  <header class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-        <h1 class="font-headline-lg text-headline-lg text-primary mb-2">AI Workflow Automations</h1>
-        <p class="font-body-md text-body-md text-secondary">Configure event-driven CRM triggers and instant client routing</p>
+      <h1 class="text-2xl font-semibold text-primary">Follow-up automations</h1>
+      <p class="text-sm text-on-surface-variant">Constrained rules · outbox · dry-run · kill switch</p>
     </div>
-    <button onclick="document.getElementById('createRuleModal').classList.remove('hidden')"
-            class="bg-primary text-on-primary font-label-md text-label-md px-6 py-3 rounded-lg hover:opacity-90 transition-opacity shadow-sm flex items-center gap-2">
-        <span class="material-symbols-outlined text-[18px]">add</span>
-        Create Rule
-    </button>
-</div>
+    <p class="text-sm font-medium {% if automation_on %}text-green-700{% else %}text-red-700{% endif %}">
+      Global: {{ 'ON' if automation_on else 'OFF' }}
+    </p>
+  </header>
 
-<!-- Automation Rules List -->
-<div class="space-y-4">
-    {% for rule in automation_rules %}
-    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0
-                        {{ 'bg-emerald-100 text-emerald-700' if rule.is_active else 'bg-surface-container text-secondary' }}">
-                <span class="material-symbols-outlined text-[20px]">{{ rule.icon or 'bolt' }}</span>
-            </div>
-            <div>
-                <h3 class="font-body-lg font-semibold text-primary mb-1">{{ rule.name }}</h3>
-                <p class="font-label-md text-label-md text-secondary">
-                    Trigger: {{ rule.trigger_desc or rule.trigger }} → Action: {{ rule.action_desc or rule.action }}
-                </p>
-            </div>
-        </div>
-        <div class="flex items-center gap-4 ml-0 sm:ml-auto">
-            <span class="px-3 py-1 rounded-full text-xs font-bold
-                         {{ 'bg-emerald-50 text-emerald-700 border border-emerald-200' if rule.is_active else 'bg-surface-container text-secondary border border-outline-variant' }}">
-                {{ 'ACTIVE' if rule.is_active else 'PAUSED' }}
+  <section class="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+      <input type="hidden" name="action" value="seed_templates">
+      <button class="w-full px-3 py-2 border rounded-lg text-sm" type="submit">Seed disabled templates</button>
+    </form>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+      <input type="hidden" name="action" value="process_outbox">
+      <button class="w-full px-3 py-2 border rounded-lg text-sm" type="submit">Process outbox</button>
+    </form>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+      <input type="hidden" name="action" value="kill_switch">
+      <input type="hidden" name="global_enabled" value="{{ '0' if automation_on else '1' }}">
+      <button class="w-full px-3 py-2 border rounded-lg text-sm" type="submit">
+        {{ 'Activate kill switch' if automation_on else 'Resume automation' }}
+      </button>
+    </form>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+      <input type="hidden" name="action" value="scan_overdue">
+      <button class="w-full px-3 py-2 border rounded-lg text-sm" type="submit">Scan overdue tasks</button>
+    </form>
+  </section>
+
+  <section class="mb-8" aria-labelledby="rules-h">
+    <h2 id="rules-h" class="text-lg font-semibold mb-3">Rules</h2>
+    <div class="space-y-3">
+      {% for rule in rules %}
+      <div class="border border-outline-variant rounded-lg p-4 bg-surface-container-lowest">
+        <div class="flex flex-wrap justify-between gap-2">
+          <div>
+            <p class="font-medium">{{ rule.name }}
+              {% if rule.is_template %}<span class="text-xs text-on-surface-variant">(template)</span>{% endif %}
+            </p>
+            <p class="text-xs text-on-surface-variant">{{ rule.trigger_type }} · cooldown {{ rule.cooldown_hours or 0 }}h · v{{ rule.version or 1 }}</p>
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="text-xs px-2 py-0.5 rounded-full border {% if rule.enabled %}border-green-600 text-green-700{% else %}border-outline-variant{% endif %}">
+              {{ 'enabled' if rule.enabled else 'disabled' }}
             </span>
-            <button class="text-secondary hover:text-primary transition-colors" title="Configure rule">
-                <span class="material-symbols-outlined">settings</span>
-            </button>
+            <form method="post" class="inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+              <input type="hidden" name="action" value="toggle_rule">
+              <input type="hidden" name="rule_id" value="{{ rule.id }}">
+              <button type="submit" class="text-xs underline">Toggle</button>
+            </form>
+            <form method="post" class="inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+              <input type="hidden" name="action" value="dry_run">
+              <input type="hidden" name="rule_id" value="{{ rule.id }}">
+              <button type="submit" class="text-xs underline">Dry-run</button>
+            </form>
+          </div>
         </div>
+      </div>
+      {% else %}
+      <p class="text-sm text-on-surface-variant">No rules yet. Seed templates (they stay disabled until you toggle).</p>
+      {% endfor %}
     </div>
-    {% else %}
-    <!-- Default static rules when no DB entries exist -->
-    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 text-xl">⚡</div>
-            <div>
-                <h3 class="font-body-lg font-semibold text-primary mb-1">Instant Open House Brochure Routing</h3>
-                <p class="font-label-md text-label-md text-secondary">Trigger: Kiosk Check-In → Action: Send SMS brochure &amp; assign lead to agent</p>
-            </div>
-        </div>
-        <div class="flex items-center gap-4 ml-auto">
-            <span class="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold">ACTIVE</span>
-            <button class="text-secondary hover:text-primary transition-colors"><span class="material-symbols-outlined">settings</span></button>
-        </div>
-    </div>
-    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0 text-xl">🤖</div>
-            <div>
-                <h3 class="font-body-lg font-semibold text-primary mb-1">AI Smart Match Email Alert</h3>
-                <p class="font-label-md text-label-md text-secondary">Trigger: New listing matches buyer profile &gt; 90% → Action: Draft personalized email</p>
-            </div>
-        </div>
-        <div class="flex items-center gap-4 ml-auto">
-            <span class="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold">ACTIVE</span>
-            <button class="text-secondary hover:text-primary transition-colors"><span class="material-symbols-outlined">settings</span></button>
-        </div>
-    </div>
-    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:shadow-[0_8px_30px_rgba(27,38,49,0.06)] transition-shadow">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 text-xl">📋</div>
-            <div>
-                <h3 class="font-body-lg font-semibold text-primary mb-1">Deal Stage Change Follow-up Task</h3>
-                <p class="font-label-md text-label-md text-secondary">Trigger: Deal status moves to Negotiation → Action: Auto-create follow-up task for assigned agent</p>
-            </div>
-        </div>
-        <div class="flex items-center gap-4 ml-auto">
-            <span class="px-3 py-1 bg-surface-container text-secondary border border-outline-variant rounded-full text-xs font-bold">PAUSED</span>
-            <button class="text-secondary hover:text-primary transition-colors"><span class="material-symbols-outlined">settings</span></button>
-        </div>
-    </div>
-    {% endfor %}
-</div>
+  </section>
 
-<!-- Create Rule Modal -->
-<div id="createRuleModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50" data-modal>
-    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl w-full max-w-lg mx-4 p-8" role="dialog" aria-modal="true">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="font-headline-md text-headline-md text-primary">Create Automation Rule</h2>
-            <button data-modal-close onclick="document.getElementById('createRuleModal').classList.add('hidden')"
-                    class="text-secondary hover:text-primary transition-colors">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
-        <form method="POST" action="#" class="space-y-4">
-            <div>
-                <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Rule Name</label>
-                <input type="text" name="name"
-                       class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                       placeholder="e.g. New Lead Auto-Assignment">
-            </div>
-            <div>
-                <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Trigger Event</label>
-                <select name="trigger"
-                        class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
-                    <option>New property listing created</option>
-                    <option>Lead match score &gt; 90%</option>
-                    <option>Deal status changed</option>
-                    <option>Customer inquiry received</option>
-                </select>
-            </div>
-            <div>
-                <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Action</label>
-                <select name="action"
-                        class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
-                    <option>Send email notification</option>
-                    <option>Send SMS alert</option>
-                    <option>Assign to agent</option>
-                    <option>Create follow-up task</option>
-                </select>
-            </div>
-            <div class="flex items-center gap-3 pt-2">
-                <button type="button" onclick="document.getElementById('createRuleModal').classList.add('hidden')"
-                        class="flex-1 border border-outline-variant text-primary rounded-lg py-2.5 font-label-md text-label-md hover:bg-surface-container-low transition-colors">
-                    Cancel
-                </button>
-                <button type="submit"
-                        class="flex-1 bg-primary text-on-primary rounded-lg py-2.5 font-label-md text-label-md hover:opacity-90 transition-opacity">
-                    Create Rule
-                </button>
-            </div>
-        </form>
+  <section class="mb-8" aria-labelledby="runs-h">
+    <h2 id="runs-h" class="text-lg font-semibold mb-3">Recent runs</h2>
+    <div class="overflow-x-auto border rounded-lg">
+      <table class="min-w-full text-sm">
+        <thead class="bg-surface-container"><tr>
+          <th class="text-left p-2">ID</th>
+          <th class="text-left p-2">Rule</th>
+          <th class="text-left p-2">Status</th>
+          <th class="text-left p-2">Action</th>
+          <th class="text-left p-2">Reason</th>
+        </tr></thead>
+        <tbody>
+          {% for r in runs %}
+          <tr class="border-t">
+            <td class="p-2">{{ r.id }}</td>
+            <td class="p-2">{{ r.rule_id }}</td>
+            <td class="p-2">{{ r.status }}{% if r.dry_run %} (dry){% endif %}</td>
+            <td class="p-2">{{ r.action_type }} {{ r.action_ref }}</td>
+            <td class="p-2">{{ r.reason_code }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="p-3 text-on-surface-variant">No runs yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+  </section>
+
+  <section aria-labelledby="outbox-h">
+    <h2 id="outbox-h" class="text-lg font-semibold mb-3">Outbox (safe fields only)</h2>
+    <div class="overflow-x-auto border rounded-lg">
+      <table class="min-w-full text-sm">
+        <thead class="bg-surface-container"><tr>
+          <th class="text-left p-2">Event</th>
+          <th class="text-left p-2">Type</th>
+          <th class="text-left p-2">Aggregate</th>
+          <th class="text-left p-2">Status</th>
+          <th class="text-left p-2">Replay</th>
+        </tr></thead>
+        <tbody>
+          {% for e in outbox %}
+          <tr class="border-t">
+            <td class="p-2 font-mono text-xs">{{ e.event_id[:12] }}…</td>
+            <td class="p-2">{{ e.event_type }}</td>
+            <td class="p-2">{{ e.aggregate_type }}#{{ e.aggregate_id }}</td>
+            <td class="p-2">{{ e.status }} ({{ e.attempts }})</td>
+            <td class="p-2">
+              <form method="post" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+                <input type="hidden" name="action" value="replay">
+                <input type="hidden" name="event_id" value="{{ e.event_id }}">
+                <input type="hidden" name="dry_run" value="1">
+                <button type="submit" class="text-xs underline">Dry</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="p-3 text-on-surface-variant">Empty outbox</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
 </div>
 {% endblock %}
