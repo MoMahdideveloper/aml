@@ -177,6 +177,24 @@ class VocabService:
         invalidate_lexicon_cache()
         log_event("vocab_synonym_archived", component="vocab", synonym_id=synonym_id)
 
+    def _replacement_would_cycle(self, from_key: str, to_key: str) -> bool:
+        """True if adding from→to creates a cycle in active replacements."""
+        graph: Dict[str, str] = {}
+        for r in VocabReplacement.query.filter_by(status="active").all():
+            if r.from_key and r.to_key:
+                graph[r.from_key] = r.to_key
+        graph[from_key] = to_key
+        seen = set()
+        cur = to_key
+        for _ in range(32):
+            if cur == from_key:
+                return True
+            if cur in seen or cur not in graph:
+                break
+            seen.add(cur)
+            cur = graph[cur]
+        return False
+
     def create_replacement(
         self, from_text: str, to_text: str, *, priority: int = 0
     ) -> VocabReplacement:
@@ -186,9 +204,13 @@ class VocabService:
             raise VocabError("empty", "Both from and to are required")
         if fk == tk:
             raise VocabError("same", "from and to must differ")
+        if self._replacement_would_cycle(fk, tk):
+            raise VocabError("cycle", "Replacement would create a cycle")
         existing = VocabReplacement.query.filter_by(from_key=fk, to_key=tk).first()
         if existing:
             if existing.status == "archived":
+                if self._replacement_would_cycle(fk, tk):
+                    raise VocabError("cycle", "Replacement would create a cycle")
                 existing.status = "active"
                 existing.priority = int(priority or 0)
                 db.session.commit()
@@ -215,6 +237,7 @@ class VocabService:
             replacement_id=row.id,
         )
         return row
+
 
     def archive_replacement(self, replacement_id: int) -> None:
         row = db.session.get(VocabReplacement, replacement_id)

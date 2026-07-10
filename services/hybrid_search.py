@@ -306,6 +306,16 @@ class HybridSearchService:
         end = start + per_page
         page_ids = [pid for pid, _ in merged[start:end]]
         new_props: List[Dict[str, Any]] = []
+        # Expanded keys used (normalized keys only — never raw query log)
+        expanded_keys: List[str] = []
+        try:
+            from services.vocab.service import expand_for_search, feature_enabled as vocab_on
+
+            if vocab_on() and req.normalized_query:
+                expanded_keys = expand_for_search(req.normalized_query)[:12]
+        except Exception:
+            expanded_keys = []
+
         for pid in page_ids:
             h = by_id.get(pid)
             if not h:
@@ -315,11 +325,31 @@ class HybridSearchService:
                 h["semantic_score"] = round(semantic_scores[pid], 4)
             if pid in keyword_scores:
                 h["keyword_score"] = round(keyword_scores[pid], 4)
+            why_parts: List[str] = []
+            if pid in keyword_scores:
+                why_parts.append(f"keyword field={h.get('matched_field') or 'text'}")
+            if pid in semantic_scores:
+                why_parts.append("semantic similarity")
+            if hard:
+                why_parts.append("hard filters applied")
             if use_semantic and pid in semantic_scores and pid not in keyword_scores:
                 h["matched_field"] = h.get("matched_field") or "semantic"
                 h["explain"] = "semantic"
             elif use_semantic and pid in semantic_scores and pid in keyword_scores:
                 h["explain"] = "keyword+semantic"
+            elif h.get("matched_field") == "constraint":
+                h["explain"] = "constraint"
+            h["evidence"] = {
+                "matched_field": h.get("matched_field") or "",
+                "keyword_score": h.get("keyword_score"),
+                "semantic_score": h.get("semantic_score"),
+                "filters_hard": hard,
+                "filters_soft": constraints.soft_filters(),
+                "expanded_term_count": len(expanded_keys),
+                # keys only if short; avoid dumping large expansions
+                "expanded_terms_sample": expanded_keys[:6],
+                "why": "; ".join(why_parts) if why_parts else "ranked result",
+            }
             new_props.append(h)
 
         base.setdefault("groups", {})["properties"] = new_props
@@ -328,7 +358,7 @@ class HybridSearchService:
         base["total_count"] = sum(len(base["groups"].get(k) or []) for k in base["groups"])
 
         if constraints.chips():
-            chips = list(dict.fromkeys(chips))  # dedupe preserve order
+            chips = list(dict.fromkeys(chips + constraints.chips()))
 
         hybrid_meta = {
             "enabled": True,
@@ -339,8 +369,10 @@ class HybridSearchService:
             "constraints": constraints.to_public_dict(),
             "semantic_hit_count": len(semantic_scores),
             "keyword_hit_count": len(keyword_scores),
+            "expanded_term_count": len(expanded_keys),
         }
         base["hybrid"] = hybrid_meta
+
 
         duration_ms = int((time.perf_counter() - t0) * 1000)
         log_event(

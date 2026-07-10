@@ -11,6 +11,7 @@ Incremental capabilities on the Flask CRM only (ADR-001 Track A). Track B / Neo4
 | AI context packets | **PR3 shipped** | `ENABLE_AI_CONTEXT` (default `0`) |
 | Derived relationship edges (SQL) | **PR4 shipped** | `ENABLE_DERIVED_EDGES` (default `0`) |
 | Operator guide / rollout polish | **PR5** | (docs; flags remain default `0`) |
+| Intelligence v2 (occurrences, evidence, task/agent context, edges) | **in progress** | `ENABLE_VOCAB_OCCURRENCES` + existing flags |
 | LLM query parse | Optional later | `ENABLE_NL_QUERY_PARSE` |
 
 ## Privacy

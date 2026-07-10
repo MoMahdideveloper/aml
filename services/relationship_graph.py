@@ -17,11 +17,15 @@ from sqlalchemy_models import (
     Deal,
     Property,
     RelationshipEdge,
+    Task,
+    VocabOccurrence,
+    VocabTerm,
     _utcnow_naive,
 )
+
 from utils.observability import log_event
 
-ENTITY_TYPES = frozenset({"customer", "property", "deal", "agent"})
+ENTITY_TYPES = frozenset({"customer", "property", "deal", "agent", "task", "concept"})
 EDGE_TYPES = frozenset(
     {
         "customer_deal",
@@ -29,8 +33,11 @@ EDGE_TYPES = frozenset(
         "customer_agent",
         "property_agent",
         "deal_agent",
+        "task_relates_to",
+        "entity_mentions_concept",
     }
 )
+
 
 
 def feature_enabled() -> bool:
@@ -50,7 +57,10 @@ def _norm_type(entity_type: str) -> str:
         "properties": "property",
         "deals": "deal",
         "agents": "agent",
+        "tasks": "task",
+        "concepts": "concept",
     }
+
     t = (entity_type or "").strip().lower()
     t = aliases.get(t, t)
     if t not in ENTITY_TYPES:
@@ -72,8 +82,10 @@ def _upsert_edge(
     dst_id: int,
     edge_type: str,
     weight: float = 1.0,
+    confidence: float = 1.0,
     evidence: Optional[Dict[str, Any]] = None,
     run_id: str = "",
+    derivation_version: str = "2",
 ) -> RelationshipEdge:
     if edge_type not in EDGE_TYPES:
         raise GraphError("bad_edge", f"Unknown edge_type: {edge_type}")
@@ -88,6 +100,8 @@ def _upsert_edge(
     payload = _evidence(**(evidence or {}))
     if row:
         row.weight = float(weight)
+        row.confidence = float(confidence)
+        row.derivation_version = (derivation_version or "2")[:20]
         row.evidence_json = payload
         row.computed_at = now
         row.source_run_id = (run_id or "")[:64]
@@ -99,12 +113,39 @@ def _upsert_edge(
             dst_id=int(dst_id),
             edge_type=edge_type,
             weight=float(weight),
+            confidence=float(confidence),
+            derivation_version=(derivation_version or "2")[:20],
             evidence_json=payload,
             computed_at=now,
             source_run_id=(run_id or "")[:64],
         )
         db.session.add(row)
     return row
+
+
+def _add_mention_edges(entity_type: str, entity_id: int, *, run_id: str) -> int:
+    """entity_mentions_concept from active vocab occurrences with term_id."""
+    n = 0
+    rows = VocabOccurrence.query.filter_by(
+        entity_type=entity_type, entity_id=entity_id, status="active"
+    ).limit(40).all()
+    for o in rows:
+        if not o.term_id:
+            continue
+        _upsert_edge(
+            src_type=entity_type,
+            src_id=entity_id,
+            dst_type="concept",
+            dst_id=int(o.term_id),
+            edge_type="entity_mentions_concept",
+            weight=float(o.confidence or 1.0),
+            confidence=float(o.confidence or 1.0),
+            evidence={"field": o.field, "key": o.normalized_key},
+            run_id=run_id,
+        )
+        n += 1
+    return n
+
 
 
 def _delete_edges_touching(entity_type: str, entity_id: int, edge_types: Optional[Sequence[str]] = None) -> int:
@@ -179,8 +220,10 @@ def rebuild_for_entity(entity_type: str, entity_id: int) -> Dict[str, Any]:
                     run_id=run_id,
                 )
                 created += 1
+        created += _add_mention_edges("customer", eid, run_id=run_id)
 
     elif et == "property":
+
         p = Property.query.filter_by(id=eid, is_deleted=False).first()
         if not p:
             raise GraphError("not_found", "Property not found")
@@ -229,12 +272,50 @@ def rebuild_for_entity(entity_type: str, entity_id: int) -> Dict[str, Any]:
                     run_id=run_id,
                 )
                 created += 1
+        created += _add_mention_edges("property", eid, run_id=run_id)
+
+    elif et == "task":
+        t = Task.query.filter_by(id=eid, is_deleted=False).first()
+        if not t:
+            raise GraphError("not_found", "Task not found")
+        if t.source_entity_type and t.source_entity_id:
+            st = (t.source_entity_type or "").strip().lower()
+            aliases = {
+                "customers": "customer",
+                "properties": "property",
+                "deals": "deal",
+                "agents": "agent",
+            }
+            st = aliases.get(st, st)
+            if st in ("customer", "property", "deal", "agent"):
+                _upsert_edge(
+                    src_type="task",
+                    src_id=eid,
+                    dst_type=st,
+                    dst_id=int(t.source_entity_id),
+                    edge_type="task_relates_to",
+                    evidence={"task_status": t.status},
+                    run_id=run_id,
+                )
+                created += 1
+        if t.agent_id:
+            _upsert_edge(
+                src_type="task",
+                src_id=eid,
+                dst_type="agent",
+                dst_id=int(t.agent_id),
+                edge_type="task_relates_to",
+                evidence={"via": "agent_id"},
+                run_id=run_id,
+            )
+            created += 1
 
     elif et == "deal":
         d = Deal.query.filter_by(id=eid, is_deleted=False).first()
         if not d:
             raise GraphError("not_found", "Deal not found")
         if d.customer_id:
+
             _upsert_edge(
                 src_type="customer",
                 src_id=d.customer_id,
@@ -341,7 +422,14 @@ def _label_for(entity_type: str, entity_id: int) -> str:
     if entity_type == "agent":
         a = Agent.query.filter_by(id=entity_id).first()
         return (a.name if a else None) or f"Agent #{entity_id}"
+    if entity_type == "task":
+        t = Task.query.filter_by(id=entity_id).first()
+        return (t.title if t else None) or f"Task #{entity_id}"
+    if entity_type == "concept":
+        term = VocabTerm.query.filter_by(id=entity_id).first()
+        return (term.canonical if term else None) or f"Concept #{entity_id}"
     return f"{entity_type}#{entity_id}"
+
 
 
 def _url_for(entity_type: str, entity_id: int) -> str:

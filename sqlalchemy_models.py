@@ -1847,6 +1847,25 @@ class VocabReplacement(db.Model):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
 
 
+class VocabOccurrence(db.Model):
+    """Term occurrence on an entity field (extraction index; does not store source text)."""
+
+    __tablename__ = "vocab_occurrences"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    entity_type: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    entity_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    field: Mapped[str] = mapped_column(String(40), nullable=False)
+    term_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("vocab_terms.id"), nullable=True
+    )
+    normalized_key: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    confidence: Mapped[float] = mapped_column(Float, default=1.0)
+    status: Mapped[str] = mapped_column(String(20), default="active", index=True)
+    source_hash: Mapped[str] = mapped_column(String(64), default="")
+    extracted_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+
+
 class RelationshipEdge(db.Model):
     """Derived CRM relationship edge (SQL graph; not Neo4j)."""
 
@@ -1859,6 +1878,8 @@ class RelationshipEdge(db.Model):
     dst_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     edge_type: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
     weight: Mapped[float] = mapped_column(Float, default=1.0)
+    confidence: Mapped[float] = mapped_column(Float, default=1.0)
+    derivation_version: Mapped[str] = mapped_column(String(20), default="1")
     evidence_json: Mapped[str] = mapped_column(Text, default="")  # small JSON, no PII bodies
     computed_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     source_run_id: Mapped[str] = mapped_column(String(64), default="")
@@ -1872,9 +1893,11 @@ class RelationshipEdge(db.Model):
             "dst_id": self.dst_id,
             "edge_type": self.edge_type,
             "weight": self.weight,
+            "confidence": self.confidence,
+            "derivation_version": self.derivation_version,
             "computed_at": self.computed_at.isoformat() if self.computed_at else None,
             "source_run_id": self.source_run_id,
-            # evidence_json optional; callers parse if needed
         }
+
 
 

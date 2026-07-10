@@ -10,8 +10,10 @@ flask db upgrade
 # Heads used by this epic:
 #   r3s4t5u6v7w8  vocab tables (PR1)
 #   s4t5u6v7w8x9  relationship_edges (PR4)
+#   t5u6v7w8x9y0  vocab_occurrences + edge confidence (v2)
 flask db current
 ```
+
 
 SQLite and Postgres both supported for these tables.
 
@@ -20,9 +22,11 @@ SQLite and Postgres both supported for these tables.
 | Order | Flag | Default | What turns on |
 |------:|------|---------|----------------|
 | 1 | `ENABLE_VOCAB_ENRICHMENT` | `0` | Property search synonym/replacement expand |
-| 2 | `ENABLE_HYBRID_SEARCH` | `0` | Full `/search` property hybrid re-rank + constraint filters |
-| 3 | `ENABLE_AI_CONTEXT` | `0` | `/api/context/...` + Customer 360 JSON link |
-| 4 | `ENABLE_DERIVED_EDGES` | `0` | Related panel + `/api/related/...` |
+| 2 | `ENABLE_VOCAB_OCCURRENCES` | `0` | Extract/index term occurrences (Celery reindex) |
+| 3 | `ENABLE_HYBRID_SEARCH` | `0` | Full `/search` property hybrid re-rank + evidence |
+| 4 | `ENABLE_AI_CONTEXT` | `0` | `/api/context/...` (customer/property/deal/task/agent) |
+| 5 | `ENABLE_DERIVED_EDGES` | `0` | Related panel + `/api/related/...` |
+
 
 Optional: `AI_CONTEXT_MAX_CHARS=8000`.
 

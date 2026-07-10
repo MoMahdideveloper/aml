@@ -60,7 +60,8 @@
         <li>
           <a href="{{ hit.url }}" class="block px-4 py-3 hover:bg-surface-container focus:bg-surface-container focus:outline-none">
             <span class="font-medium text-on-surface">{{ hit.title }}</span>
-            <span class="block text-xs text-on-surface-variant mt-0.5">{{ hit.subtitle }}{% if hit.status %} · {{ hit.status }}{% endif %}{% if hit.matched_field %} · matched {{ hit.matched_field }}{% endif %}{% if hit.explain %} · {{ hit.explain }}{% endif %}</span>
+            <span class="block text-xs text-on-surface-variant mt-0.5">{{ hit.subtitle }}{% if hit.status %} · {{ hit.status }}{% endif %}{% if hit.matched_field %} · matched {{ hit.matched_field }}{% endif %}{% if hit.explain %} · {{ hit.explain }}{% endif %}{% if hit.evidence and hit.evidence.why %} · {{ hit.evidence.why }}{% endif %}</span>
+
           </a>
         </li>
         {% endfor %}

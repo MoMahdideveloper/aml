@@ -8,17 +8,21 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from sqlalchemy_models import (
+    Agent,
     Customer,
     CustomerInteraction,
     Deal,
     DealStageHistory,
     Property,
+    Task,
     _utcnow_naive,
 )
+
 from utils.observability import log_event
 
-ENTITY_TYPES = frozenset({"customer", "property", "deal"})
+ENTITY_TYPES = frozenset({"customer", "property", "deal", "task", "agent"})
 PURPOSES = frozenset({"match", "brief", "search_explain"})
+
 
 # Default global char budget for serialized packet values
 DEFAULT_MAX_CHARS = 8000
@@ -173,6 +177,8 @@ class ContextBuilder:
             "customers": "customer",
             "properties": "property",
             "deals": "deal",
+            "tasks": "task",
+            "agents": "agent",
         }
         et = aliases.get(et, et)
         if et not in ENTITY_TYPES:
@@ -186,8 +192,33 @@ class ContextBuilder:
             packet = self._build_customer(entity_id, purpose=purp)
         elif et == "property":
             packet = self._build_property(entity_id, purpose=purp)
-        else:
+        elif et == "deal":
             packet = self._build_deal(entity_id, purpose=purp)
+        elif et == "task":
+            packet = self._build_task(entity_id, purpose=purp)
+        else:
+            packet = self._build_agent(entity_id, purpose=purp)
+
+        # Attach vocabulary concepts when occurrence index is enabled
+        try:
+            from services.vocab.occurrences import list_for_entity, occurrences_feature_enabled
+
+            if occurrences_feature_enabled():
+                concepts = list_for_entity(et, entity_id, active_only=True)[:15]
+                if concepts:
+                    packet.sections["concepts"] = {
+                        "items": [
+                            {
+                                "key": _field(c["normalized_key"], "vocab_occurrence.normalized_key"),
+                                "field": _field(c["field"], "vocab_occurrence.field"),
+                                "confidence": _field(c["confidence"], "vocab_occurrence.confidence"),
+                            }
+                            for c in concepts
+                        ],
+                        "untrusted_text": _field(False, "context_builder.policy"),
+                    }
+        except Exception:
+            pass
 
         data = packet.to_dict()
         _assert_no_forbidden(data)
@@ -195,6 +226,7 @@ class ContextBuilder:
         data["meta"]["char_count"] = _estimate_chars(data)
         data["meta"]["char_budget"] = max_chars()
         data["meta"]["actor_id"] = actor_id
+
 
         log_event(
             "ai_context_built",
@@ -345,6 +377,7 @@ class ContextBuilder:
                     as_of=now,
                 ),
                 "truncated": _field(True, "context_builder.policy", as_of=now),
+                "untrusted_text": _field(True, "context_builder.policy", as_of=now),
             },
             "features": {
                 "text": _field(
@@ -352,6 +385,7 @@ class ContextBuilder:
                     "property.property_features",
                     as_of=now,
                 ),
+                "untrusted_text": _field(True, "context_builder.policy", as_of=now),
             },
         }
         return ContextPacket(
@@ -361,6 +395,80 @@ class ContextBuilder:
             sections=sections,
             meta={"schema_version": 1},
         )
+
+    def _build_task(self, task_id: int, *, purpose: str) -> ContextPacket:
+        t = Task.query.filter_by(id=task_id, is_deleted=False).first()
+        if not t:
+            raise ContextError("not_found", "Task not found")
+        now = t.created_at or _utcnow_naive()
+        sections: Dict[str, Any] = {
+            "identity": {
+                "id": _field(t.id, "task.id", as_of=now),
+                "title": _field(t.title, "task.title", as_of=now),
+                "status": _field(t.status, "task.status", as_of=now),
+                "priority": _field(t.priority, "task.priority", as_of=now),
+            },
+            "assignment": {
+                "agent_id": _field(t.agent_id, "task.agent_id", as_of=now),
+                "due_date": _field(
+                    t.due_date.isoformat() if t.due_date else None,
+                    "task.due_date",
+                    as_of=now,
+                ),
+                "source_entity_type": _field(
+                    t.source_entity_type, "task.source_entity_type", as_of=now
+                ),
+                "source_entity_id": _field(
+                    t.source_entity_id, "task.source_entity_id", as_of=now
+                ),
+            },
+            "description": {
+                "text": _field(
+                    _truncate(t.description or "", 200),
+                    "task.description",
+                    as_of=now,
+                ),
+                "truncated": _field(True, "context_builder.policy", as_of=now),
+                "untrusted_text": _field(True, "context_builder.policy", as_of=now),
+            },
+        }
+        return ContextPacket(
+            entity_type="task",
+            entity_id=t.id,
+            purpose=purpose,
+            sections=sections,
+            meta={"schema_version": 1},
+        )
+
+    def _build_agent(self, agent_id: int, *, purpose: str) -> ContextPacket:
+        a = Agent.query.filter_by(id=agent_id, is_deleted=False).first()
+        if not a:
+            raise ContextError("not_found", "Agent not found")
+        now = a.created_at or _utcnow_naive()
+        sections: Dict[str, Any] = {
+            "identity": {
+                "id": _field(a.id, "agent.id", as_of=now),
+                "name": _field(a.name, "agent.name", as_of=now),
+                "specialization": _field(
+                    a.specialization, "agent.specialization", as_of=now
+                ),
+            },
+            "stats": {
+                "active_listings": _field(
+                    a.active_listings, "agent.active_listings", as_of=now
+                ),
+                "total_sales": _field(a.total_sales, "agent.total_sales", as_of=now),
+            },
+            # deliberately omit email, phone, bio
+        }
+        return ContextPacket(
+            entity_type="agent",
+            entity_id=a.id,
+            purpose=purpose,
+            sections=sections,
+            meta={"schema_version": 1, "include_contact_pii": False},
+        )
+
 
     def _build_deal(self, deal_id: int, *, purpose: str) -> ContextPacket:
         d = Deal.query.filter_by(id=deal_id, is_deleted=False).first()

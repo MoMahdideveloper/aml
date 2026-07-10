@@ -326,9 +326,40 @@ def sync_property_embedding_task(property_id: int, action: str = "upsert") -> Di
         return {"status": "error", "message": str(exc)}
 
 
+@celery_app.task(name="crm.reindex_vocab_occurrences")
+@log_execution
+def reindex_vocab_occurrences_task(
+    entity_type: str = "property",
+    entity_id: int | None = None,
+    batch_limit: int = 50,
+) -> Dict[str, Any]:
+    """Idempotent vocab occurrence reindex (counts only in logs)."""
+    try:
+        from services.vocab import occurrences as occ
+
+        if entity_id is not None:
+            if entity_type == "customer":
+                return occ.reindex_customer(int(entity_id))
+            return occ.reindex_property(int(entity_id))
+        if entity_type == "property":
+            return occ.reindex_batch_properties(limit=batch_limit)
+        return {"status": "error", "message": "unsupported batch entity_type"}
+    except Exception as exc:
+        logger.error(
+            "vocab occurrence reindex failed",
+            extra={
+                "task": "reindex_vocab_occurrences",
+                "status": "error",
+                "error_type": type(exc).__name__,
+            },
+        )
+        return {"status": "error", "message": str(exc)}
+
+
 @celery_app.task(name="crm.handle_environment_variable_change")
 @log_execution
 def handle_environment_variable_change(entity_type: str, entity_id: int, reason: str) -> Dict[str, Any]:
+
     """
     Handle environment variable changes by performing any necessary background work.
     This includes logging the change and potentially sending notifications for critical changes.

@@ -299,6 +299,11 @@ def create_app(test_config=None):
     app.config["ENABLE_DERIVED_EDGES"] = (
         os.environ.get("ENABLE_DERIVED_EDGES", "0").strip() == "1"
     )
+    # Vocabulary occurrence extraction index (default off).
+    app.config["ENABLE_VOCAB_OCCURRENCES"] = (
+        os.environ.get("ENABLE_VOCAB_OCCURRENCES", "0").strip() == "1"
+    )
+
 
 
 

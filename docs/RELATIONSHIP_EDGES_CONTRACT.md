@@ -16,6 +16,8 @@ Not Neo4j / Track B.
 | `customer_agent` | via deal.agent_id |
 | `property_agent` | property.agent_id |
 | `deal_agent` | deal.agent_id |
+| `task_relates_to` | task source entity / agent |
+| `entity_mentions_concept` | vocab occurrence → term_id as concept |
 
 ## API
 - `GET /api/related/<entity_type>/<id>?depth=1` — neighbors (rebuild-if-empty)

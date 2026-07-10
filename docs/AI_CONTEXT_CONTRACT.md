@@ -11,7 +11,7 @@ Build **complete, allowlisted** context packets for CRM entities so agents/tools
 
 - Auth: session staff (`user_id`) required (401 if anonymous).
 - Soft-deleted entities: 404.
-- entity_type: `customer`|`property`|`deal` (plurals accepted).
+- entity_type: `customer`|`property`|`deal`|`task`|`agent` (plurals accepted).
 
 ## Field policy
 

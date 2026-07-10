@@ -11,7 +11,7 @@ Does **not** rewrite stored listing text. Does **not** auto-create synonyms from
 | Normalize | text → key | No | N/A |
 | Synonym | bidirectional expand (default) | No | **No** |
 | Replacement | directional from → to on query tokens | No | No |
-| Occurrence | deferred (not in PR1) | No | No |
+| Occurrence | entity field index (v2) | No | No |
 
 ## Normalize rules
 1. Unicode NFKC  
@@ -42,5 +42,11 @@ Does **not** rewrite stored listing text. Does **not** auto-create synonyms from
 Log `vocab_expanded`, `expanded_term_count`, duration, hit counts.  
 **Never** log raw query text or synonym free-text payloads beyond staff lexicon ids.
 
+## Occurrences (v2)
+- Flag: `ENABLE_VOCAB_OCCURRENCES` (default `0`).
+- Table `vocab_occurrences`: entity_type, entity_id, field, normalized_key, term_id, source_hash, confidence, status.
+- Extract from allowlisted fields only; never rewrites description text.
+- Celery: `crm.reindex_vocab_occurrences`.
+
 ## Non-goals
-Neo4j, embedding-mined synonyms, hybrid semantic merge, context packets, occurrence tables.
+Neo4j, embedding-mined synonyms, auto-synonym from similarity.

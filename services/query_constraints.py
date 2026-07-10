@@ -74,9 +74,29 @@ class QueryConstraints:
                 out[key] = val
         return out
 
+    def soft_filters(self) -> Dict[str, Any]:
+        """Detected constraints below hard threshold — evidence/boost only, never SQL filter."""
+        out: Dict[str, Any] = {}
+        mapping = {
+            "property_type": self.property_type,
+            "bedrooms_min": self.bedrooms_min,
+            "price_max": self.price_max,
+            "price_min": self.price_min,
+            "listing_type": self.listing_type,
+        }
+        hard = self.hard_filters()
+        for key, val in mapping.items():
+            if val is None or key in hard:
+                continue
+            conf = self.confidences.get(key, 0.0)
+            if conf > 0:
+                out[key] = val
+        return out
+
     def chips(self) -> List[str]:
         chips: List[str] = []
         hard = self.hard_filters()
+        soft = self.soft_filters()
         if "property_type" in hard:
             chips.append(f"Type: {hard['property_type']}")
         if "bedrooms_min" in hard:
@@ -87,6 +107,8 @@ class QueryConstraints:
             chips.append(f"Price ≥ {int(hard['price_min']):,}")
         if "listing_type" in hard:
             chips.append(f"Listing: {hard['listing_type']}")
+        for key, val in soft.items():
+            chips.append(f"Soft signal: {key}={val}")
         return chips
 
     def to_public_dict(self) -> Dict[str, Any]:
@@ -97,8 +119,10 @@ class QueryConstraints:
             "price_min": self.price_min,
             "listing_type": self.listing_type,
             "hard": self.hard_filters(),
+            "soft": self.soft_filters(),
             "chips": self.chips(),
         }
+
 
 
 def _parse_money(num_s: str, suffix: Optional[str]) -> float:
