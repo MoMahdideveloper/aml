@@ -49,8 +49,18 @@ def vocab_dashboard():
                     int(request.form.get("replacement_id") or 0)
                 )
                 flash("Replacement archived.", "success")
+            elif action == "add_related":
+                vocab_service.add_related(
+                    int(request.form.get("term_id") or 0),
+                    request.form.get("related") or "",
+                )
+                flash("Related term added (not used for search expand).", "success")
+            elif action == "archive_related":
+                vocab_service.archive_related(int(request.form.get("related_id") or 0))
+                flash("Related term archived.", "success")
             else:
                 flash("Unknown action.", "error")
+
         except VocabError as e:
             flash(e.message, "error")
         except (TypeError, ValueError):

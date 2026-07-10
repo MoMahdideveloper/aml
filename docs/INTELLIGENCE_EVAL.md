@@ -17,9 +17,15 @@ Synthetic fixtures only. Never use production customer text.
 pytest -q tests/test_intelligence_eval_baseline.py -s
 ```
 
-## Targets (post Phase 2)
+## Targets (post residual R0)
 - Flag-off path: zero regression vs baseline zero_result_rate on fixture ids
 - Hybrid+constraints on: hard-filter cases must exclude known false positives
 - Provider-down: same as keyword path (degraded)
+- Shadow mode: display order matches keyword_top_ids while hybrid_top_ids may differ
+
+## Residual flags (admin `/admin/intelligence`)
+- `search_shadow` — hybrid compute, keyword display
+- `description_search` — optional description keyword (default off)
 
 Record numbers from local runs in PR notes; do not commit production metrics.
+

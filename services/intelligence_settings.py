@@ -67,7 +67,24 @@ FLAG_CATALOG: List[Dict[str, Any]] = [
         "default": False,
         "recommended": False,
     },
+    {
+        "key": "search_shadow",
+        "env": "ENABLE_SEARCH_SHADOW",
+        "label": "Hybrid shadow ranking",
+        "description": "When hybrid is ON, compute hybrid order for metrics but keep user-visible property order as keyword. Safe staging.",
+        "default": False,
+        "recommended": True,
+    },
+    {
+        "key": "description_search",
+        "env": "ENABLE_DESCRIPTION_SEARCH",
+        "label": "Search property descriptions",
+        "description": "Include property description in global keyword search (noise/PII risk). Default OFF.",
+        "default": False,
+        "recommended": False,
+    },
 ]
+
 
 
 _KEY_TO_ATTR = {f["key"]: f["key"] for f in FLAG_CATALOG}
@@ -97,8 +114,11 @@ def get_or_create_settings() -> IntelligenceSettings:
         ai_context=_env_bool("ENABLE_AI_CONTEXT", False),
         ai_answer=_env_bool("ENABLE_AI_ANSWER", False),
         derived_edges=_env_bool("ENABLE_DERIVED_EDGES", False),
+        search_shadow=_env_bool("ENABLE_SEARCH_SHADOW", False),
+        description_search=_env_bool("ENABLE_DESCRIPTION_SEARCH", False),
         updated_by="system",
     )
+
 
     db.session.add(row)
     db.session.commit()
@@ -198,6 +218,11 @@ def apply_to_app_config(app, row: Optional[IntelligenceSettings] = None) -> None
     app.config["ENABLE_AI_CONTEXT"] = bool(row.ai_context)
     app.config["ENABLE_AI_ANSWER"] = bool(getattr(row, "ai_answer", False))
     app.config["ENABLE_DERIVED_EDGES"] = bool(row.derived_edges)
+    app.config["ENABLE_SEARCH_SHADOW"] = bool(getattr(row, "search_shadow", False))
+    app.config["ENABLE_DESCRIPTION_SEARCH"] = bool(
+        getattr(row, "description_search", False)
+    )
+
 
 
 

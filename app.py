@@ -305,6 +305,13 @@ def create_app(test_config=None):
     app.config["ENABLE_DERIVED_EDGES"] = (
         os.environ.get("ENABLE_DERIVED_EDGES", "0").strip() == "1"
     )
+    app.config["ENABLE_SEARCH_SHADOW"] = (
+        os.environ.get("ENABLE_SEARCH_SHADOW", "0").strip() == "1"
+    )
+    app.config["ENABLE_DESCRIPTION_SEARCH"] = (
+        os.environ.get("ENABLE_DESCRIPTION_SEARCH", "0").strip() == "1"
+    )
+
 
     # Vocabulary occurrence extraction index (default off).
     app.config["ENABLE_VOCAB_OCCURRENCES"] = (

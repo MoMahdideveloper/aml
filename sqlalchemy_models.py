@@ -1722,6 +1722,8 @@ class IntelligenceSettings(db.Model):
     ai_answer: Mapped[bool] = mapped_column(Boolean, default=False)
     derived_edges: Mapped[bool] = mapped_column(Boolean, default=False)
     global_search: Mapped[bool] = mapped_column(Boolean, default=True)
+    search_shadow: Mapped[bool] = mapped_column(Boolean, default=False)
+    description_search: Mapped[bool] = mapped_column(Boolean, default=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     updated_by: Mapped[str] = mapped_column(String(120), default="")
 
@@ -1734,9 +1736,12 @@ class IntelligenceSettings(db.Model):
             "ai_answer": bool(self.ai_answer),
             "derived_edges": bool(self.derived_edges),
             "global_search": bool(self.global_search),
+            "search_shadow": bool(self.search_shadow),
+            "description_search": bool(self.description_search),
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "updated_by": self.updated_by,
         }
+
 
 
 
@@ -1879,10 +1884,25 @@ class VocabReplacement(db.Model):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
 
 
+class VocabRelatedTerm(db.Model):
+    """Non-equivalent related concept (must NOT be used as synonym expansion)."""
+
+    __tablename__ = "vocab_related_terms"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    term_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("vocab_terms.id"), nullable=False, index=True
+    )
+    related_key: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(20), default="active", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+
+
 class VocabOccurrence(db.Model):
     """Term occurrence on an entity field (extraction index; does not store source text)."""
 
     __tablename__ = "vocab_occurrences"
+
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     entity_type: Mapped[str] = mapped_column(String(20), nullable=False, index=True)

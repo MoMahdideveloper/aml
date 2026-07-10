@@ -5,7 +5,8 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, FrozenSet
+
 
 from sqlalchemy_models import (
     Agent,
@@ -26,6 +27,35 @@ from utils.observability import log_event
 
 ENTITY_TYPES = frozenset({"customer", "property", "deal", "task", "agent"})
 PURPOSES = frozenset({"match", "brief", "search_explain"})
+
+# purpose → sections to keep (after full build); empty means keep all
+PURPOSE_SECTION_PROFILES: Dict[str, Optional[Set[str]]] = {
+    "brief": None,  # full packet subject to budget trim
+    "match": frozenset(
+        {
+            "identity",
+            "requirements",
+            "listing",
+            "matches",
+            "opportunity_briefs",
+            "deals",
+            "concepts",
+            "favorites",
+        }
+    ),
+    "search_explain": frozenset(
+        {
+            "identity",
+            "listing",
+            "requirements",
+            "matches",
+            "concepts",
+            "description",
+            "features",
+        }
+    ),
+}
+
 
 
 # Default global char budget for serialized packet values
@@ -235,12 +265,27 @@ class ContextBuilder:
         except Exception:
             pass
 
+        # Purpose profiles: drop non-priority sections before budget trim
+        profile = PURPOSE_SECTION_PROFILES.get(purp)
+        omitted: List[str] = []
+        if profile is not None:
+            keep = {}
+            for sk, sv in packet.sections.items():
+                if sk in profile or sk == "identity":
+                    keep[sk] = sv
+                else:
+                    omitted.append(sk)
+            packet.sections = keep
+            packet.meta["purpose_profile"] = purp
+            packet.meta["omitted_sections"] = omitted
+
         data = packet.to_dict()
         _assert_no_forbidden(data)
         data = _trim_packet(data, max_chars())
         data["meta"]["char_count"] = _estimate_chars(data)
         data["meta"]["char_budget"] = max_chars()
         data["meta"]["actor_id"] = actor_id
+
 
 
         log_event(

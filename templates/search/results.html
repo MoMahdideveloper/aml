@@ -40,11 +40,14 @@
     {% endfor %}
     {% if result.hybrid.degraded %}
     <span class="text-xs px-2 py-1 rounded-full border border-outline-variant text-on-surface-variant">Keyword only (semantic unavailable)</span>
-    {% elif result.hybrid.mode == 'hybrid' %}
+    {% elif result.hybrid.mode == 'hybrid' and not result.hybrid.shadow %}
     <span class="text-xs px-2 py-1 rounded-full border border-green-700 text-green-800">Hybrid ranking</span>
+    {% elif result.hybrid.shadow %}
+    <span class="text-xs px-2 py-1 rounded-full border border-amber-600 text-amber-800">Shadow hybrid (order unchanged)</span>
     {% endif %}
   </div>
   {% endif %}
+
 
 
   {% set order = ['customers','properties','deals','agents','tasks'] %}
@@ -61,6 +64,14 @@
           <a href="{{ hit.url }}" class="block px-4 py-3 hover:bg-surface-container focus:bg-surface-container focus:outline-none">
             <span class="font-medium text-on-surface">{{ hit.title }}</span>
             <span class="block text-xs text-on-surface-variant mt-0.5">{{ hit.subtitle }}{% if hit.status %} · {{ hit.status }}{% endif %}{% if hit.matched_field %} · matched {{ hit.matched_field }}{% endif %}{% if hit.explain %} · {{ hit.explain }}{% endif %}{% if hit.evidence and hit.evidence.why %} · {{ hit.evidence.why }}{% endif %}</span>
+            {% if hit.evidence %}
+            <span class="block text-xs text-on-surface-variant/80 mt-0.5">
+              Why: {{ hit.evidence.why or 'ranked' }}
+              {% if hit.evidence.keyword_score is not none %} · kw {{ hit.evidence.keyword_score }}{% endif %}
+              {% if hit.evidence.semantic_score is not none %} · sem {{ hit.evidence.semantic_score }}{% endif %}
+            </span>
+            {% endif %}
+
 
           </a>
         </li>

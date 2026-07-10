@@ -75,7 +75,31 @@
           </label>
           <button type="submit" class="text-sm underline">Add synonym</button>
         </form>
+        <p class="text-xs text-on-surface-variant mt-3 mb-1">Related (not synonyms — never expand search):</p>
+        <ul class="text-sm mb-2 space-y-1">
+          {% for r in term.related or [] %}
+          <li class="flex gap-2 items-center">
+            <span>{{ r.related_key }}</span>
+            <form method="post" class="inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+              <input type="hidden" name="action" value="archive_related">
+              <input type="hidden" name="related_id" value="{{ r.id }}">
+              <button type="submit" class="text-xs underline">Archive</button>
+            </form>
+          </li>
+          {% else %}
+          <li class="text-xs text-on-surface-variant">None</li>
+          {% endfor %}
+        </ul>
+        <form method="post" class="flex flex-wrap gap-2 items-end">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+          <input type="hidden" name="action" value="add_related">
+          <input type="hidden" name="term_id" value="{{ term.id }}">
+          <input name="related" required maxlength="120" class="border rounded-lg px-3 py-1.5 text-sm" placeholder="related concept">
+          <button type="submit" class="text-sm underline">Add related</button>
+        </form>
       </div>
+
       {% else %}
       <p class="text-sm text-on-surface-variant">No terms yet. Add a canonical term above.</p>
       {% endfor %}

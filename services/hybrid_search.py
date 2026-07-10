@@ -192,6 +192,14 @@ class HybridSearchService:
             base["hybrid"] = hybrid_meta
             return base
 
+        shadow = False
+        try:
+            from services.intelligence_settings import is_enabled
+
+            shadow = is_enabled("search_shadow")
+        except Exception:
+            shadow = os.environ.get("ENABLE_SEARCH_SHADOW", "0").strip() == "1"
+
         # Typed intent (rule-based) for evidence + hard/soft filters
         try:
             from services.search_intent import interpret_query
@@ -210,9 +218,16 @@ class HybridSearchService:
             hard = constraints.hard_filters()
             chips = list(constraints.chips())
 
+        # Keyword order preserved for shadow mode
+        keyword_order_ids: List[int] = [
+            int(h["id"])
+            for h in (base.get("groups", {}).get("properties") or [])
+            if h.get("id") is not None
+        ]
 
         # Start from keyword property hits
         kw_hits: List[Dict[str, Any]] = list(base.get("groups", {}).get("properties") or [])
+
         kw_ids = [int(h["id"]) for h in kw_hits if h.get("id") is not None]
         keyword_scores: Dict[int, float] = {}
         for i, h in enumerate(kw_hits):
@@ -320,6 +335,15 @@ class HybridSearchService:
                     p, matched_field="semantic", rank_tier=3
                 )
 
+        hybrid_order_ids = [pid for pid, _ in merged]
+        if shadow and keyword_order_ids:
+            score_map = {pid: sc for pid, sc in merged}
+            display_order = [pid for pid in keyword_order_ids if pid in score_map]
+            for pid, _ in merged:
+                if pid not in display_order:
+                    display_order.append(pid)
+            merged = [(pid, score_map.get(pid, 0.0)) for pid in display_order]
+            chips.append("Shadow ranking (display=keyword)")
 
         per_page = req.per_page
         page = req.page
@@ -329,6 +353,7 @@ class HybridSearchService:
         new_props: List[Dict[str, Any]] = []
         # Expanded keys used (normalized keys only — never raw query log)
         expanded_keys: List[str] = []
+
         try:
             from services.vocab.service import expand_for_search, feature_enabled as vocab_on
 
@@ -392,8 +417,12 @@ class HybridSearchService:
             "keyword_hit_count": len(keyword_scores),
             "expanded_term_count": len(expanded_keys),
             "intent": intent.to_public_dict() if intent is not None else {},
+            "shadow": shadow,
+            "hybrid_top_ids": hybrid_order_ids[:20],
+            "keyword_top_ids": keyword_order_ids[:20],
         }
         base["hybrid"] = hybrid_meta
+
 
 
 

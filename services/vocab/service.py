@@ -9,8 +9,9 @@ from database import db
 from services.vocab.expand import expand_query_terms, MAX_EXPANDED_KEYS
 from services.vocab.lexicon import invalidate_lexicon_cache, load_lexicon_maps
 from services.vocab.normalize import normalize_display, normalize_key
-from sqlalchemy_models import VocabReplacement, VocabSynonym, VocabTerm
+from sqlalchemy_models import VocabRelatedTerm, VocabReplacement, VocabSynonym, VocabTerm
 from utils.observability import log_event
+
 
 
 class VocabError(ValueError):
@@ -258,6 +259,37 @@ class VocabService:
             replacement_id=replacement_id,
         )
 
+    def add_related(self, term_id: int, related: str) -> VocabRelatedTerm:
+        """Non-equivalent association — never used for query expansion."""
+        term = db.session.get(VocabTerm, term_id)
+        if not term or term.status != "active":
+            raise VocabError("not_found", "Active term not found")
+        rk = normalize_key(related)
+        if not rk:
+            raise VocabError("empty", "Related term cannot be empty")
+        if rk == term.normalized_key:
+            raise VocabError("same_as_term", "Related must differ from term")
+        existing = VocabRelatedTerm.query.filter_by(term_id=term_id, related_key=rk).first()
+        if existing:
+            if existing.status == "archived":
+                existing.status = "active"
+                db.session.commit()
+                return existing
+            raise VocabError("duplicate", "Related term already exists")
+        row = VocabRelatedTerm(term_id=term_id, related_key=rk, status="active")
+        db.session.add(row)
+        db.session.commit()
+        log_event("vocab_related_created", component="vocab", term_id=term_id, related_id=row.id)
+        return row
+
+    def archive_related(self, related_id: int) -> None:
+        row = db.session.get(VocabRelatedTerm, related_id)
+        if not row:
+            raise VocabError("not_found", "Related term not found")
+        row.status = "archived"
+        db.session.commit()
+        log_event("vocab_related_archived", component="vocab", related_id=related_id)
+
     def _term_dict(self, term: VocabTerm) -> Dict[str, Any]:
         syns = [
             {
@@ -269,6 +301,10 @@ class VocabService:
             for s in (term.synonyms or [])
             if s.status == "active"
         ]
+        related = [
+            {"id": r.id, "related_key": r.related_key, "status": r.status}
+            for r in VocabRelatedTerm.query.filter_by(term_id=term.id, status="active").all()
+        ]
         return {
             "id": term.id,
             "canonical": term.canonical,
@@ -276,7 +312,9 @@ class VocabService:
             "lang": term.lang,
             "status": term.status,
             "synonyms": syns,
+            "related": related,
         }
+
 
 
 vocab_service = VocabService()

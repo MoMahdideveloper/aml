@@ -336,26 +336,45 @@ class SearchRepository:
             clauses = []
             if q.isdigit():
                 clauses.append(Property.id == int(q))
+            desc_search = False
+            try:
+                from services.intelligence_settings import is_enabled
+
+                desc_search = is_enabled("description_search")
+            except Exception:
+                import os
+
+                desc_search = os.environ.get("ENABLE_DESCRIPTION_SEARCH", "0").strip() == "1"
             for term in terms:
                 if not term:
                     continue
                 like = f"%{term}%"
                 prefix = f"{term}%"
-                clauses.extend(
-                    [
-                        Property.file_code == term,
-                        Property.file_code.ilike(prefix),
-                        Property.title.ilike(prefix),
-                        Property.title.ilike(like),
-                        Property.address.ilike(like),
-                        Property.neighborhood.ilike(like),
-                    ]
-                )
+                field_clauses = [
+                    Property.file_code == term,
+                    Property.file_code.ilike(prefix),
+                    Property.title.ilike(prefix),
+                    Property.title.ilike(like),
+                    Property.address.ilike(like),
+                    Property.neighborhood.ilike(like),
+                ]
+                if desc_search:
+                    field_clauses.append(Property.description.ilike(like))
+                clauses.extend(field_clauses)
             if clauses:
                 query = query.filter(or_(*clauses))
         rows = query.order_by(Property.id.asc()).limit(req.per_page * 3).all()
         hits = []
         rank_terms = terms or ([q] if q else [])
+        desc_search = False
+        try:
+            from services.intelligence_settings import is_enabled
+
+            desc_search = is_enabled("description_search")
+        except Exception:
+            import os
+
+            desc_search = os.environ.get("ENABLE_DESCRIPTION_SEARCH", "0").strip() == "1"
         for p in rows:
             if q and str(p.id) == q:
                 tier, matched = 0, "id"
@@ -364,12 +383,25 @@ class SearchRepository:
             ):
                 tier, matched = 1, "file_code"
             else:
+                contains_vals = [p.title or "", p.address or "", p.neighborhood or ""]
+                if desc_search:
+                    contains_vals.append(p.description or "")
                 tier, matched = _best_tier_for_terms(
                     rank_terms,
                     exact_vals=[p.file_code or ""],
                     prefix_vals=[p.title or "", p.file_code or ""],
-                    contains_vals=[p.title or "", p.address or "", p.neighborhood or ""],
+                    contains_vals=contains_vals,
                 )
+                if desc_search and tier == 3 and matched == "contains":
+                    # distinguish description match when only description hits
+                    for t in rank_terms:
+                        if t and (p.description or "").lower().find(t.lower()) >= 0:
+                            if t.lower() not in (p.title or "").lower() and t.lower() not in (
+                                p.address or ""
+                            ).lower() and t.lower() not in (p.neighborhood or "").lower():
+                                matched = "description"
+                                break
+
             sub = p.address or ""
             if p.file_code:
                 sub = f"{p.file_code} · {sub}"

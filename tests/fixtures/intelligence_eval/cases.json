@@ -1,10 +1,13 @@
 {
+  "meta": {
+    "version": 2,
+    "notes": "Synthetic only. Expand as needed for staging baselines."
+  },
   "cases": [
     {
       "id": "prop_title_keyword",
       "query": "Waterfront",
       "scope": "properties",
-      "seed": "waterfront_villa",
       "expect_seeds": ["waterfront_villa"],
       "k": 5
     },
@@ -12,7 +15,6 @@
       "id": "beds_hard_filter",
       "query": "3 bedroom apartment",
       "scope": "properties",
-      "seed": "big_apartment",
       "expect_seeds": ["big_apartment"],
       "reject_seeds": ["tiny_apartment"],
       "k": 10
@@ -21,8 +23,30 @@
       "id": "customer_name",
       "query": "Eval Customer",
       "scope": "customers",
-      "seed": "eval_customer",
       "expect_seeds": ["eval_customer"],
+      "k": 5
+    },
+    {
+      "id": "abbrev_style",
+      "query": "villa",
+      "scope": "properties",
+      "expect_seeds": ["waterfront_villa"],
+      "k": 5
+    },
+    {
+      "id": "price_under",
+      "query": "apartment under 300k",
+      "scope": "properties",
+      "expect_seeds": ["tiny_apartment"],
+      "reject_seeds": ["waterfront_villa"],
+      "k": 10,
+      "needs_hybrid": true
+    },
+    {
+      "id": "no_result_noise",
+      "query": "zzzxnotfound999",
+      "scope": "properties",
+      "expect_seeds": [],
       "k": 5
     }
   ]
