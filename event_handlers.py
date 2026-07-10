@@ -119,6 +119,29 @@ class EventHandlers:
             # Fallback to immediate dispatch if no SQLAlchemy session is available.
             self._dispatch_vector_sync_task(property_id, action)
 
+    def _dispatch_vocab_occurrence_task(self, entity_type: str, entity_id: int) -> None:
+        try:
+            from services.celery_tasks import reindex_vocab_occurrences_task
+
+            reindex_vocab_occurrences_task.delay(entity_type=entity_type, entity_id=entity_id)
+        except Exception as exc:
+            self.logger.warning(
+                "Failed to enqueue vocab occurrence reindex for %s:%s: %s",
+                entity_type,
+                entity_id,
+                exc,
+            )
+
+    def _enqueue_vocab_occurrence_task(
+        self, entity_type: str, entity_id: int, target=None
+    ) -> None:
+        session = object_session(target) if target is not None else db.session
+        try:
+            pending = session.info.setdefault("pending_vocab_occurrence_tasks", [])
+            pending.append((entity_type, entity_id))
+        except Exception:
+            self._dispatch_vocab_occurrence_task(entity_type, entity_id)
+
     def _on_session_after_commit(self, session: Session) -> None:
         # Handle pending vector sync tasks
         pending_vector_sync = session.info.pop("pending_vector_sync_tasks", [])
@@ -143,19 +166,33 @@ class EventHandlers:
             for entity_id, (entity_type, reason) in last_actions.items():
                 self._dispatch_environment_variable_task(entity_type, entity_id, reason)
 
+        pending_vocab = session.info.pop("pending_vocab_occurrence_tasks", [])
+        if pending_vocab:
+            seen = set()
+            for entity_type, entity_id in pending_vocab:
+                key = (entity_type, entity_id)
+                if key in seen:
+                    continue
+                seen.add(key)
+                self._dispatch_vocab_occurrence_task(entity_type, entity_id)
+
     def _on_session_after_rollback(self, session: Session) -> None:
         session.info.pop("pending_vector_sync_tasks", None)
         session.info.pop("pending_environment_variable_tasks", None)
+        session.info.pop("pending_vocab_occurrence_tasks", None)
+
 
     def _on_property_created(self, mapper, connection, target: Property):
         try:
             if target.status == "active" and not target.is_deleted:
                 self._enqueue_rematch(connection, "property", target.id, "property_created")
                 self._enqueue_vector_sync_task(target.id, "upsert", target=target)
+                self._enqueue_vocab_occurrence_task("property", target.id, target=target)
             else:
                 self._enqueue_vector_sync_task(target.id, "delete", target=target)
         except Exception as exc:
             self.logger.error(f"Error handling property creation event: {exc}")
+
 
     def _on_property_updated(self, mapper, connection, target: Property):
         try:
@@ -179,10 +216,21 @@ class EventHandlers:
             if target.status == "active" and not target.is_deleted and significant.intersection(changes.keys()):
                 self._enqueue_rematch(connection, "property", target.id, "property_updated")
                 self._enqueue_vector_sync_task(target.id, "upsert", target=target)
+                text_fields = {
+                    "description",
+                    "neighborhood",
+                    "title",
+                    "property_features",
+                    "property_type",
+                }
+                if text_fields.intersection(changes.keys()):
+                    self._enqueue_vocab_occurrence_task("property", target.id, target=target)
             elif {"status", "is_deleted"}.intersection(changes.keys()) or target.is_deleted or target.status != "active":
                 self._enqueue_vector_sync_task(target.id, "delete", target=target)
+
         except Exception as exc:
             self.logger.error(f"Error handling property update event: {exc}")
+
 
     def _on_property_deleted(self, mapper, connection, target: Property):
         try:

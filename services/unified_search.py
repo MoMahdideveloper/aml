@@ -80,7 +80,13 @@ class SearchHit:
 def feature_enabled() -> bool:
     import os
 
-    return os.environ.get("ENABLE_GLOBAL_SEARCH", "1").strip() != "0"
+    try:
+        from services.intelligence_settings import is_enabled
+
+        return is_enabled("global_search")
+    except Exception:
+        return os.environ.get("ENABLE_GLOBAL_SEARCH", "1").strip() != "0"
+
 
 
 def parse_search_request(

@@ -11,12 +11,16 @@ from sqlalchemy_models import (
     Agent,
     Customer,
     CustomerInteraction,
+    CustomerOpportunityBrief,
     Deal,
     DealStageHistory,
     Property,
+    PropertyFavorite,
+    PropertyMatch,
     Task,
     _utcnow_naive,
 )
+
 
 from utils.observability import log_event
 
@@ -58,7 +62,13 @@ class ContextError(ValueError):
 
 
 def feature_enabled() -> bool:
-    return os.environ.get("ENABLE_AI_CONTEXT", "0").strip() == "1"
+    try:
+        from services.intelligence_settings import is_enabled
+
+        return is_enabled("ai_context")
+    except Exception:
+        return os.environ.get("ENABLE_AI_CONTEXT", "0").strip() == "1"
+
 
 
 def max_chars() -> int:
@@ -116,13 +126,18 @@ def _trim_packet(packet: Dict[str, Any], budget: int) -> Dict[str, Any]:
     drop_order = [
         "stage_history",
         "timeline",
+        "matches",
+        "opportunity_briefs",
+        "favorites",
         "deals",
+        "concepts",
         "description",
         "features",
         "listing",
         "links",
         "requirements",
     ]
+
     sections = packet.get("sections")
     if isinstance(sections, dict):
         for inner in drop_order:
@@ -305,6 +320,51 @@ class ContextBuilder:
         if deal_rows:
             sections["deals"] = deal_rows
 
+        # Property matches (scores only — no free-text reasons dump if large)
+        matches = (
+            PropertyMatch.query.filter_by(customer_id=c.id)
+            .order_by(PropertyMatch.match_score.desc())
+            .limit(8)
+            .all()
+        )
+        if matches:
+            mrows = []
+            for m in matches:
+                ptitle = None
+                prop = Property.query.filter_by(id=m.property_id).first()
+                if prop and not prop.is_deleted:
+                    ptitle = prop.title
+                mrows.append(
+                    {
+                        "property_id": _field(m.property_id, "property_match.property_id", as_of=m.created_at),
+                        "property_title": _field(ptitle, "property.title", as_of=m.created_at),
+                        "match_score": _field(m.match_score, "property_match.match_score", as_of=m.created_at),
+                        "status": _field(m.status, "property_match.status", as_of=m.created_at),
+                    }
+                )
+            sections["matches"] = mrows
+
+        briefs = (
+            CustomerOpportunityBrief.query.filter_by(customer_id=c.id, is_active=True)
+            .order_by(CustomerOpportunityBrief.sort_order.asc())
+            .limit(6)
+            .all()
+        )
+        if briefs:
+            sections["opportunity_briefs"] = [
+                {
+                    "id": _field(b.id, "customer_opportunity_brief.id", as_of=b.updated_at),
+                    "title": _field(b.title, "customer_opportunity_brief.title", as_of=b.updated_at),
+                    "role": _field(b.role, "customer_opportunity_brief.role", as_of=b.updated_at),
+                    "budget_max": _field(b.budget_max, "customer_opportunity_brief.budget_max", as_of=b.updated_at),
+                    "preferred_type": _field(
+                        b.preferred_type, "customer_opportunity_brief.preferred_type", as_of=b.updated_at
+                    ),
+                    # omit preferences free text
+                }
+                for b in briefs
+            ]
+
         # Timeline: types/dates only — never body/subject content
         interactions = (
             CustomerInteraction.query.filter_by(customer_id=c.id, is_deleted=False)
@@ -312,6 +372,7 @@ class ContextBuilder:
             .limit(MAX_INTERACTIONS)
             .all()
         )
+
         if interactions:
             sections["timeline"] = [
                 {
@@ -388,6 +449,25 @@ class ContextBuilder:
                 "untrusted_text": _field(True, "context_builder.policy", as_of=now),
             },
         }
+        matches = (
+            PropertyMatch.query.filter_by(property_id=p.id)
+            .order_by(PropertyMatch.match_score.desc())
+            .limit(8)
+            .all()
+        )
+        if matches:
+            sections["matches"] = [
+                {
+                    "customer_id": _field(m.customer_id, "property_match.customer_id", as_of=m.created_at),
+                    "match_score": _field(m.match_score, "property_match.match_score", as_of=m.created_at),
+                    "status": _field(m.status, "property_match.status", as_of=m.created_at),
+                }
+                for m in matches
+            ]
+        fav_count = PropertyFavorite.query.filter_by(property_id=p.id).count()
+        sections["favorites"] = {
+            "count": _field(fav_count, "property_favorite.count", as_of=now),
+        }
         return ContextPacket(
             entity_type="property",
             entity_id=p.id,
@@ -397,6 +477,7 @@ class ContextBuilder:
         )
 
     def _build_task(self, task_id: int, *, purpose: str) -> ContextPacket:
+
         t = Task.query.filter_by(id=task_id, is_deleted=False).first()
         if not t:
             raise ContextError("not_found", "Task not found")

@@ -20,7 +20,13 @@ RRF_K = 60
 
 
 def feature_enabled() -> bool:
-    return os.environ.get("ENABLE_HYBRID_SEARCH", "0").strip() == "1"
+    try:
+        from services.intelligence_settings import is_enabled
+
+        return is_enabled("hybrid_search")
+    except Exception:
+        return os.environ.get("ENABLE_HYBRID_SEARCH", "0").strip() == "1"
+
 
 
 def _cosine(a: Sequence[float], b: Sequence[float]) -> float:
@@ -186,9 +192,24 @@ class HybridSearchService:
             base["hybrid"] = hybrid_meta
             return base
 
-        constraints = extract_constraints(req.normalized_query)
-        hard = constraints.hard_filters()
-        chips = list(constraints.chips())
+        # Typed intent (rule-based) for evidence + hard/soft filters
+        try:
+            from services.search_intent import interpret_query
+
+            intent = interpret_query(
+                req.normalized_query, requested_scopes=req.scopes
+            )
+            constraints = intent.constraints or extract_constraints(req.normalized_query)
+            hard = intent.hard_filters or constraints.hard_filters()
+            chips = list(constraints.chips())
+            if intent.unresolved_phrases:
+                chips.append(f"Open phrases: {len(intent.unresolved_phrases)}")
+        except Exception:
+            intent = None
+            constraints = extract_constraints(req.normalized_query)
+            hard = constraints.hard_filters()
+            chips = list(constraints.chips())
+
 
         # Start from keyword property hits
         kw_hits: List[Dict[str, Any]] = list(base.get("groups", {}).get("properties") or [])
@@ -370,8 +391,10 @@ class HybridSearchService:
             "semantic_hit_count": len(semantic_scores),
             "keyword_hit_count": len(keyword_scores),
             "expanded_term_count": len(expanded_keys),
+            "intent": intent.to_public_dict() if intent is not None else {},
         }
         base["hybrid"] = hybrid_meta
+
 
 
         duration_ms = int((time.perf_counter() - t0) * 1000)

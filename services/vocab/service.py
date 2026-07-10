@@ -21,7 +21,13 @@ class VocabError(ValueError):
 
 
 def feature_enabled() -> bool:
-    return os.environ.get("ENABLE_VOCAB_ENRICHMENT", "0").strip() == "1"
+    try:
+        from services.intelligence_settings import is_enabled
+
+        return is_enabled("vocab_enrichment")
+    except Exception:
+        return os.environ.get("ENABLE_VOCAB_ENRICHMENT", "0").strip() == "1"
+
 
 
 def expand_for_search(query: str) -> List[str]:

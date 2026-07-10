@@ -242,6 +242,7 @@ def create_app(test_config=None):
     from views.vocab_admin import bp as vocab_admin_bp
     from views.context_api import bp as context_api_bp
     from views.related import bp as related_bp
+    from views.intelligence_settings import bp as intelligence_settings_bp
 
     for bp in (
         main_bp,
@@ -262,8 +263,10 @@ def create_app(test_config=None):
         vocab_admin_bp,
         context_api_bp,
         related_bp,
+        intelligence_settings_bp,
     ):
         app.register_blueprint(bp)
+
 
 
     # Private document store (never under static/)
@@ -304,12 +307,17 @@ def create_app(test_config=None):
         os.environ.get("ENABLE_VOCAB_OCCURRENCES", "0").strip() == "1"
     )
 
+    # Prefer DB intelligence settings when table exists (admin toggles).
+    try:
+        from services.intelligence_settings import sync_app_from_db
 
-
-
+        sync_app_from_db(app)
+    except Exception:
+        pass
 
     # Default-deny session gate (AUTH_DEFAULT_DENY_ENABLED, default on).
     register_auth_middleware(app)
+
 
     # App-level HTML/JSON error pages (404/500 PH shells). Blueprint handlers
     # remain for in-blueprint not-found redirects on list CRUD flows.

@@ -17,11 +17,13 @@ from sqlalchemy_models import (
     Deal,
     Property,
     RelationshipEdge,
+    PropertyMatch,
     Task,
     VocabOccurrence,
     VocabTerm,
     _utcnow_naive,
 )
+
 
 from utils.observability import log_event
 
@@ -35,13 +37,21 @@ EDGE_TYPES = frozenset(
         "deal_agent",
         "task_relates_to",
         "entity_mentions_concept",
+        "customer_matched_property",
     }
 )
 
 
 
+
 def feature_enabled() -> bool:
-    return os.environ.get("ENABLE_DERIVED_EDGES", "0").strip() == "1"
+    try:
+        from services.intelligence_settings import is_enabled
+
+        return is_enabled("derived_edges")
+    except Exception:
+        return os.environ.get("ENABLE_DERIVED_EDGES", "0").strip() == "1"
+
 
 
 class GraphError(ValueError):
@@ -221,8 +231,29 @@ def rebuild_for_entity(entity_type: str, entity_id: int) -> Dict[str, Any]:
                 )
                 created += 1
         created += _add_mention_edges("customer", eid, run_id=run_id)
+        # High-scoring property matches for this customer
+        for m in (
+            PropertyMatch.query.filter_by(customer_id=eid)
+            .filter(PropertyMatch.status != "dismissed")
+            .order_by(PropertyMatch.match_score.desc())
+            .limit(40)
+            .all()
+        ):
+            _upsert_edge(
+                src_type="customer",
+                src_id=eid,
+                dst_type="property",
+                dst_id=m.property_id,
+                edge_type="customer_matched_property",
+                weight=float(m.match_score or 0.0),
+                confidence=float(m.match_score or 0.0),
+                evidence={"match_id": m.id, "status": m.status},
+                run_id=run_id,
+            )
+            created += 1
 
     elif et == "property":
+
 
         p = Property.query.filter_by(id=eid, is_deleted=False).first()
         if not p:
@@ -273,8 +304,28 @@ def rebuild_for_entity(entity_type: str, entity_id: int) -> Dict[str, Any]:
                 )
                 created += 1
         created += _add_mention_edges("property", eid, run_id=run_id)
+        for m in (
+            PropertyMatch.query.filter_by(property_id=eid)
+            .filter(PropertyMatch.status != "dismissed")
+            .order_by(PropertyMatch.match_score.desc())
+            .limit(40)
+            .all()
+        ):
+            _upsert_edge(
+                src_type="customer",
+                src_id=m.customer_id,
+                dst_type="property",
+                dst_id=eid,
+                edge_type="customer_matched_property",
+                weight=float(m.match_score or 0.0),
+                confidence=float(m.match_score or 0.0),
+                evidence={"match_id": m.id, "status": m.status},
+                run_id=run_id,
+            )
+            created += 1
 
     elif et == "task":
+
         t = Task.query.filter_by(id=eid, is_deleted=False).first()
         if not t:
             raise GraphError("not_found", "Task not found")

@@ -6,9 +6,12 @@
     <h1 class="text-2xl font-semibold text-primary">Description vocabulary</h1>
     <p class="text-sm text-on-surface-variant">
       Normalize · synonyms · directional replacements. Query expand only when
-      <code class="text-xs">ENABLE_VOCAB_ENRICHMENT=1</code>. Never rewrites listing text.
+      vocabulary enrichment is ON in
+      <a class="text-primary underline" href="{{ url_for('intelligence_settings.intelligence_settings_page') }}">Intelligence settings</a>.
+      Never rewrites listing text.
     </p>
   </header>
+
 
   <section class="mb-8 border border-outline-variant rounded-lg p-4 bg-surface-container-lowest" aria-labelledby="new-term-h">
     <h2 id="new-term-h" class="text-lg font-semibold mb-3">Add term</h2>

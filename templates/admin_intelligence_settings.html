@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Intelligence settings - Platinum Heritage{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <header class="mb-6">
+    <p class="text-xs uppercase tracking-wide text-on-surface-variant">Admin</p>
+    <h1 class="text-2xl font-semibold text-primary">CRM intelligence settings</h1>
+    <p class="text-sm text-on-surface-variant mt-1">
+      Turn intelligence features on or off without redeploying. Defaults are safe (most off).
+      Environment variables seed the first database row only; admin values then win.
+    </p>
+    <p class="text-sm mt-2 flex flex-wrap gap-3">
+      <a class="text-primary underline" href="{{ url_for('vocab_admin.vocab_dashboard') }}">Vocabulary admin</a>
+      <a class="text-primary underline" href="{{ url_for('admin_environment.environment') }}">Environment variables</a>
+      <a class="text-primary underline" href="{{ url_for('automations.automations_dashboard') }}">Automations</a>
+    </p>
+  </header>
+
+  <form method="post" class="space-y-4 border border-outline-variant rounded-xl p-5 bg-surface-container-lowest">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+    <input type="hidden" name="updated_by" value="admin">
+
+    {% for f in flags %}
+    <label class="flex gap-3 items-start p-3 rounded-lg border border-outline-variant hover:bg-surface-container">
+      <input type="checkbox" name="{{ f.key }}" value="1" class="mt-1"
+             {% if f.enabled %}checked{% endif %}
+             aria-describedby="desc-{{ f.key }}">
+      <span class="min-w-0">
+        <span class="font-medium text-on-surface block">{{ f.label }}</span>
+        <span id="desc-{{ f.key }}" class="text-xs text-on-surface-variant block mt-0.5">{{ f.description }}</span>
+        <span class="text-xs text-on-surface-variant mt-1 inline-block">
+          Env seed: <code>{{ f.env }}</code>
+          · Default {{ 'ON' if f.default else 'OFF' }}
+          {% if f.recommended %} · <span class="text-green-700">Recommended ON</span>{% else %} · Start OFF{% endif %}
+        </span>
+      </span>
+    </label>
+    {% endfor %}
+
+    <div class="flex flex-wrap gap-3 pt-2">
+      <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium">
+        Save settings
+      </button>
+      <a href="{{ url_for('search.search_page') }}" class="px-4 py-2 rounded-lg border text-sm">Open search</a>
+    </div>
+  </form>
+
+  {% if settings %}
+  <p class="text-xs text-on-surface-variant mt-4">
+    Last updated:
+    {{ settings.updated_at }} · by {{ settings.updated_by or '—' }}
+  </p>
+  {% endif %}
+
+  <section class="mt-8 text-sm text-on-surface-variant space-y-2" aria-labelledby="help-h">
+    <h2 id="help-h" class="font-semibold text-on-surface">Suggested rollout</h2>
+    <ol class="list-decimal list-inside space-y-1">
+      <li>Keep <strong>Global CRM search</strong> on.</li>
+      <li>Add terms under Vocabulary admin, then enable <strong>Vocabulary synonym expand</strong>.</li>
+      <li>Enable <strong>Hybrid / NL search</strong> after embeddings are available (optional).</li>
+      <li>Enable <strong>AI context</strong> and <strong>Related graph</strong> when staff need them.</li>
+      <li><strong>Occurrences index</strong> is for concept extraction / graph mentions — run reindex jobs after enabling.</li>
+    </ol>
+  </section>
+</div>
+{% endblock %}

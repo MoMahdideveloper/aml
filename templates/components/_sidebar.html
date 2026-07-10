@@ -171,6 +171,18 @@
     </nav>
 
     <div class="mt-auto border-t border-outline-variant px-3 py-3 space-y-1">
+        {% set intel_active = ep and ep.startswith('intelligence_settings.') %}
+        <a href="{{ url_for('intelligence_settings.intelligence_settings_page') }}"
+           class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                  {% if intel_active %}
+                      bg-primary/10 text-primary
+                  {% else %}
+                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
+                  {% endif %}"
+           {% if intel_active %}aria-current="page"{% endif %}>
+            <i class="fas fa-brain mr-3 w-4 text-center" aria-hidden="true"></i>
+            <span>Intelligence</span>
+        </a>
         {% set settings_active = ep and (ep.startswith('auth.') or ep == 'settings') %}
         <a href="/settings"
            class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
@@ -183,6 +195,7 @@
             <i class="fas fa-cog mr-3 w-4 text-center" aria-hidden="true"></i>
             <span>Settings</span>
         </a>
+
         <div class="flex items-center px-3 py-2 space-x-3">
             <div class="flex-shrink-0 h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center">
                 <i class="fas fa-user-circle text-primary text-xl"></i>

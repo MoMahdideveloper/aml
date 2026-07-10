@@ -18,7 +18,13 @@ from utils.observability import log_event
 
 
 def occurrences_feature_enabled() -> bool:
-    return os.environ.get("ENABLE_VOCAB_OCCURRENCES", "0").strip() == "1"
+    try:
+        from services.intelligence_settings import is_enabled
+
+        return is_enabled("vocab_occurrences")
+    except Exception:
+        return os.environ.get("ENABLE_VOCAB_OCCURRENCES", "0").strip() == "1"
+
 
 
 def _lexicon_key_set() -> Set[str]:

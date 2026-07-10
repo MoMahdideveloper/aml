@@ -1,6 +1,15 @@
 # CRM intelligence — operator guide
 
-Track A only. All intelligence flags default **off** so production stays safe until you opt in.
+Track A only. All intelligence flags default **off** (except global search) so production stays safe until you opt in.
+
+## Admin UI toggles
+
+Use **`/admin/intelligence`** (admin auth) to turn features on/off without redeploying.
+
+- First DB row is **seeded from environment** variables.
+- After that, **admin UI values win** (runtime `app.config` is updated on save).
+- Vocabulary term management remains at `/admin/vocab`.
+
 
 ## Migrations
 
