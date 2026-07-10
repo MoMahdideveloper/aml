@@ -102,6 +102,14 @@ def customer_360(customer_id: int):
         except Exception:
             related = {"neighbors": [], "error": True}
 
+    match_explanations = []
+    try:
+        from services.match_explain import list_customer_matches
+
+        match_explanations = list_customer_matches(customer_id, limit=8)
+    except Exception:
+        match_explanations = []
+
     return render_template(
         "customers/customer_360.html",
         customer=customer,
@@ -111,7 +119,9 @@ def customer_360(customer_id: int):
         filter_type=itype or "",
         config=current_app.config,
         related=related,
+        match_explanations=match_explanations,
     )
+
 
 
 

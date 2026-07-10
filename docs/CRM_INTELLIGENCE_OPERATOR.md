@@ -2,9 +2,14 @@
 
 Track A only. All intelligence flags default **off** (except global search) so production stays safe until you opt in.
 
+## Staging enablement
+
+See **`docs/INTELLIGENCE_STAGING_CHECKLIST.md`** for a step-by-step go-live sequence (shadow hybrid, vocab, context, rollback).
+
 ## Admin UI toggles
 
 Use **`/admin/intelligence`** (admin auth) to turn features on/off without redeploying.
+
 
 - First DB row is **seeded from environment** variables.
 - After that, **admin UI values win** (runtime `app.config` is updated on save).

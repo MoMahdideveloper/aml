@@ -16,12 +16,43 @@
       <a class="text-primary underline" href="{{ url_for('documents.entity_documents', entity='customers', owner_id=customer.id) }}">Documents</a>
       {% if config.get('ENABLE_AI_CONTEXT') %}
       <a class="text-primary underline" href="{{ url_for('context_api.get_context', entity_type='customer', entity_id=customer.id) }}?purpose=brief" target="_blank" rel="noopener">AI context (JSON)</a>
+      <a class="text-primary underline" href="{{ url_for('context_api.get_context', entity_type='customer', entity_id=customer.id) }}?purpose=match" target="_blank" rel="noopener">Match context (JSON)</a>
       {% endif %}
     </p>
   </header>
 
+  {% if match_explanations %}
+  <section class="mb-8 border border-outline-variant rounded-lg p-4 bg-surface-container-lowest" aria-labelledby="why-match-h">
+    <h2 id="why-match-h" class="text-lg font-semibold mb-3">Why these properties matched</h2>
+    <p class="text-xs text-on-surface-variant mb-3">From background matching scores (not LLM ranking).</p>
+    <ul class="space-y-3">
+      {% for m in match_explanations %}
+      <li class="border border-outline-variant rounded-lg p-3">
+        <div class="flex flex-wrap justify-between gap-2">
+          <a class="font-medium text-primary underline" href="{{ url_for('properties.property_detail', property_id=m.property_id) }}">{{ m.property_title }}</a>
+          <span class="text-xs text-on-surface-variant">
+            score {{ '%.0f'|format(m.match_score * 100) }}%
+            {% if m.confidence_level %} · {{ m.confidence_level }}{% endif %}
+            {% if m.status %} · {{ m.status }}{% endif %}
+          </span>
+        </div>
+        {% if m.why %}
+        <ul class="mt-2 text-sm text-on-surface-variant list-disc list-inside">
+          {% for reason in m.why %}
+          <li>{{ reason }}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-xs text-on-surface-variant mt-1">No structured reasons stored for this match.</p>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
 
   {# Log activity #}
+
   <section class="mb-8 border border-outline-variant rounded-lg p-4 bg-surface-container-lowest" aria-labelledby="log-h">
     <h2 id="log-h" class="text-lg font-semibold mb-3">Log activity</h2>
     <form method="post" action="{{ url_for('customers.create_interaction', customer_id=customer.id) }}" class="space-y-3">
