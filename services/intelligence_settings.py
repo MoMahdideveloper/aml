@@ -83,7 +83,16 @@ FLAG_CATALOG: List[Dict[str, Any]] = [
         "default": False,
         "recommended": False,
     },
+    {
+        "key": "nl_query_parse",
+        "env": "ENABLE_NL_QUERY_PARSE",
+        "label": "Optional LLM query parse",
+        "description": "Use LLM only to fill soft constraints when rules are thin. Fail-open if provider down. Never ranks results.",
+        "default": False,
+        "recommended": False,
+    },
 ]
+
 
 
 
@@ -116,8 +125,10 @@ def get_or_create_settings() -> IntelligenceSettings:
         derived_edges=_env_bool("ENABLE_DERIVED_EDGES", False),
         search_shadow=_env_bool("ENABLE_SEARCH_SHADOW", False),
         description_search=_env_bool("ENABLE_DESCRIPTION_SEARCH", False),
+        nl_query_parse=_env_bool("ENABLE_NL_QUERY_PARSE", False),
         updated_by="system",
     )
+
 
 
     db.session.add(row)
@@ -222,6 +233,8 @@ def apply_to_app_config(app, row: Optional[IntelligenceSettings] = None) -> None
     app.config["ENABLE_DESCRIPTION_SEARCH"] = bool(
         getattr(row, "description_search", False)
     )
+    app.config["ENABLE_NL_QUERY_PARSE"] = bool(getattr(row, "nl_query_parse", False))
+
 
 
 

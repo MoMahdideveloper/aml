@@ -1,9 +1,15 @@
-"""Phase 0: synthetic eval baseline (keyword path, flags off)."""
+"""Search eval: P@K, recall, MRR, latency percentiles (synthetic)."""
 
 import json
 import time
 from pathlib import Path
 
+from services.intelligence_eval import (
+    mrr,
+    precision_at_k,
+    recall_at_k,
+    summarize_run,
+)
 from services.unified_search import parse_search_request, unified_search_service
 from sqlalchemy_models import Customer, Property
 
@@ -12,7 +18,6 @@ FIXTURE = Path(__file__).parent / "fixtures" / "intelligence_eval" / "cases.json
 
 
 def _seed(db):
-    """Return map seed_name -> entity id."""
     ids = {}
     p1 = Property(
         title="Eval Waterfront Villa",
@@ -54,6 +59,7 @@ def _seed(db):
 def test_eval_baseline_keyword_metrics(db_setup, app, monkeypatch):
     monkeypatch.setenv("ENABLE_HYBRID_SEARCH", "0")
     monkeypatch.setenv("ENABLE_VOCAB_ENRICHMENT", "0")
+    monkeypatch.setenv("ENABLE_NL_QUERY_PARSE", "0")
     cases = json.loads(FIXTURE.read_text(encoding="utf-8"))["cases"]
     with app.app_context():
         from database import db
@@ -61,8 +67,13 @@ def test_eval_baseline_keyword_metrics(db_setup, app, monkeypatch):
         seed_ids = _seed(db)
         zero = 0
         precisions = []
+        recalls = []
+        mrrs = []
         latencies = []
         for case in cases:
+            # skip hybrid-only cases on keyword baseline
+            if case.get("needs_hybrid"):
+                continue
             req = parse_search_request(
                 q=case["query"], scope=case["scope"], mode="full"
             )
@@ -73,14 +84,38 @@ def test_eval_baseline_keyword_metrics(db_setup, app, monkeypatch):
             hit_ids = [h["id"] for h in hits[: case.get("k", 5)]]
             if result["total_count"] == 0:
                 zero += 1
-            expect = {seed_ids[s] for s in case.get("expect_seeds", [])}
+            expect = {seed_ids[s] for s in case.get("expect_seeds", []) if s in seed_ids}
+            k = case.get("k", 5)
             if expect:
-                top = set(hit_ids)
-                precisions.append(len(top & expect) / max(1, min(len(expect), case.get("k", 5))))
+                precisions.append(precision_at_k(hit_ids, expect, k))
+                recalls.append(recall_at_k(hit_ids, expect, k))
+                mrrs.append(mrr(hit_ids, expect))
             for bad in case.get("reject_seeds", []):
-                # keyword-only may still return tiny apt for "apartment" — note only
-                pass
-        assert len(cases) >= 1
-        # At least title keyword and customer name should hit
-        assert precisions and sum(precisions) / len(precisions) > 0
-        assert zero < len(cases)
+                bid = seed_ids.get(bad)
+                if bid is not None and case.get("needs_hybrid"):
+                    # hard-filter cases only enforced under hybrid
+                    pass
+
+        summary = summarize_run(
+            precisions=precisions,
+            recalls=recalls,
+            mrrs=mrrs,
+            latencies_ms=latencies,
+            zero_results=zero,
+            n_queries=len(latencies),
+        )
+        assert summary["n_queries"] >= 1
+        assert summary["precision_at_k_mean"] > 0
+        assert summary["mrr_mean"] > 0
+        assert summary["latency_p50_ms"] >= 0
+        assert summary["latency_p95_ms"] >= summary["latency_p50_ms"]
+        assert summary["zero_result_rate"] < 1.0
+
+
+def test_metric_helpers_unit():
+    assert precision_at_k([1, 2, 3], {2}, 3) == 1 / 3
+    assert recall_at_k([1, 2, 3], {2, 9}, 3) == 0.5
+    assert mrr([9, 2, 1], {2}) == 0.5
+    from services.intelligence_eval import percentile
+
+    assert percentile([10, 20, 30, 40], 50) == 20 or percentile([10, 20, 30, 40], 50) == 30

@@ -61,8 +61,16 @@ def interpret_query(
     q = re.sub(r"\s+", " ", (query or "").strip())
     scopes = detect_scopes(q, requested_scopes)
     constraints = extract_constraints(q)
+    # Optional LLM soft-fill (fail-open); never required for search
+    try:
+        from services.nl_query_parse import try_llm_fill_soft_constraints
+
+        constraints = try_llm_fill_soft_constraints(q, constraints)
+    except Exception:
+        pass
     hard = constraints.hard_filters()
     soft = constraints.soft_filters()
+
 
     # Unresolved: tokens not used in hard filters (heuristic)
     used = set()

@@ -36,6 +36,10 @@ SQLite and Postgres both supported for these tables.
 | 4 | `ENABLE_AI_CONTEXT` | `0` | `/api/context/...` (customer/property/deal/task/agent) |
 | 5 | `ENABLE_AI_ANSWER` | `0` | Grounded answers `POST .../answer` (needs context ON) |
 | 6 | `ENABLE_DERIVED_EDGES` | `0` | Related panel + `/api/related/...` |
+| 7 | `ENABLE_SEARCH_SHADOW` | `0` | Hybrid compute, keyword display order |
+| 8 | `ENABLE_DESCRIPTION_SEARCH` | `0` | Keyword search in property description |
+| 9 | `ENABLE_NL_QUERY_PARSE` | `0` | Optional LLM soft-constraint parse (fail-open) |
+
 
 
 

@@ -9,13 +9,18 @@ Synthetic fixtures only. Never use production customer text.
 | Metric | Definition |
 |--------|------------|
 | precision@k | fraction of top-k hits in expected id set |
+| recall@k | fraction of relevant ids found in top-k |
+| MRR | mean reciprocal rank of first relevant hit |
 | zero_result_rate | queries with total_count == 0 |
-| latency_ms | wall time for `unified_search` / hybrid path |
+| latency p50/p95 | wall time for `unified_search` / hybrid path |
+
+Helpers: `services/intelligence_eval.py`
 
 ## Baseline command
 ```bash
 pytest -q tests/test_intelligence_eval_baseline.py -s
 ```
+
 
 ## Targets (post residual R0)
 - Flag-off path: zero regression vs baseline zero_result_rate on fixture ids

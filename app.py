@@ -311,6 +311,10 @@ def create_app(test_config=None):
     app.config["ENABLE_DESCRIPTION_SEARCH"] = (
         os.environ.get("ENABLE_DESCRIPTION_SEARCH", "0").strip() == "1"
     )
+    app.config["ENABLE_NL_QUERY_PARSE"] = (
+        os.environ.get("ENABLE_NL_QUERY_PARSE", "0").strip() == "1"
+    )
+
 
 
     # Vocabulary occurrence extraction index (default off).

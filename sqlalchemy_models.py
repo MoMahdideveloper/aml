@@ -1724,6 +1724,7 @@ class IntelligenceSettings(db.Model):
     global_search: Mapped[bool] = mapped_column(Boolean, default=True)
     search_shadow: Mapped[bool] = mapped_column(Boolean, default=False)
     description_search: Mapped[bool] = mapped_column(Boolean, default=False)
+    nl_query_parse: Mapped[bool] = mapped_column(Boolean, default=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     updated_by: Mapped[str] = mapped_column(String(120), default="")
 
@@ -1738,9 +1739,11 @@ class IntelligenceSettings(db.Model):
             "global_search": bool(self.global_search),
             "search_shadow": bool(self.search_shadow),
             "description_search": bool(self.description_search),
+            "nl_query_parse": bool(self.nl_query_parse),
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "updated_by": self.updated_by,
         }
+
 
 
 
