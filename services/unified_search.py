@@ -209,6 +209,46 @@ def _tier_for_text(q: str, *, exact_vals: Sequence[str], prefix_vals: Sequence[s
     return 99, ""
 
 
+def _best_tier_for_terms(
+    terms: Sequence[str],
+    *,
+    exact_vals: Sequence[str],
+    prefix_vals: Sequence[str],
+    contains_vals: Sequence[str],
+) -> Tuple[int, str]:
+    best_tier, best_field = 99, ""
+    for t in terms:
+        if not t:
+            continue
+        tier, field = _tier_for_text(
+            t, exact_vals=exact_vals, prefix_vals=prefix_vals, contains_vals=contains_vals
+        )
+        if tier < best_tier:
+            best_tier, best_field = tier, field
+            if best_tier <= 1:
+                break
+    return best_tier, best_field
+
+
+def _property_search_terms(q: str) -> Tuple[List[str], bool, int]:
+    """
+    Terms used for property keyword OR match.
+    When vocab enrichment is off, returns [q] only (legacy behavior).
+    """
+    if not q:
+        return [], False, 0
+    try:
+        from services.vocab.service import expand_for_search, feature_enabled
+
+        if not feature_enabled():
+            return [q], False, 0
+        terms = expand_for_search(q)
+        return terms, True, max(0, len(terms) - 1)
+    except Exception:
+        return [q], False, 0
+
+
+
 class SearchRepository:
     """Bounded entity queries; only allowlisted columns selected via model attrs."""
 
@@ -280,6 +320,7 @@ class SearchRepository:
 
     def search_properties(self, req: SearchRequest) -> List[SearchHit]:
         q = req.normalized_query
+        terms, _vocab_on, _extra = _property_search_terms(q)
         query = Property.query.filter(Property.is_deleted.is_(False))
         if req.status:
             query = query.filter(Property.status == req.status)
@@ -289,29 +330,36 @@ class SearchRepository:
             clauses = []
             if q.isdigit():
                 clauses.append(Property.id == int(q))
-            like = f"%{q}%"
-            prefix = f"{q}%"
-            clauses.extend(
-                [
-                    Property.file_code == q,
-                    Property.file_code.ilike(prefix),
-                    Property.title.ilike(prefix),
-                    Property.title.ilike(like),
-                    Property.address.ilike(like),
-                    Property.neighborhood.ilike(like),
-                ]
-            )
-            query = query.filter(or_(*clauses))
+            for term in terms:
+                if not term:
+                    continue
+                like = f"%{term}%"
+                prefix = f"{term}%"
+                clauses.extend(
+                    [
+                        Property.file_code == term,
+                        Property.file_code.ilike(prefix),
+                        Property.title.ilike(prefix),
+                        Property.title.ilike(like),
+                        Property.address.ilike(like),
+                        Property.neighborhood.ilike(like),
+                    ]
+                )
+            if clauses:
+                query = query.filter(or_(*clauses))
         rows = query.order_by(Property.id.asc()).limit(req.per_page * 3).all()
         hits = []
+        rank_terms = terms or ([q] if q else [])
         for p in rows:
             if q and str(p.id) == q:
                 tier, matched = 0, "id"
-            elif q and (p.file_code or "").lower() == q.lower():
+            elif q and any(
+                (p.file_code or "").lower() == (t or "").lower() for t in rank_terms
+            ):
                 tier, matched = 1, "file_code"
             else:
-                tier, matched = _tier_for_text(
-                    q,
+                tier, matched = _best_tier_for_terms(
+                    rank_terms,
                     exact_vals=[p.file_code or ""],
                     prefix_vals=[p.title or "", p.file_code or ""],
                     contains_vals=[p.title or "", p.address or "", p.neighborhood or ""],
@@ -332,6 +380,7 @@ class SearchRepository:
                 )
             )
         return self._finalize(hits, req)
+
 
     def search_deals(self, req: SearchRequest) -> List[SearchHit]:
         q = req.normalized_query
@@ -529,6 +578,12 @@ class UnifiedSearchService:
 
         total = sum(counts.values())
         duration_ms = int((time.perf_counter() - t0) * 1000)
+        vocab_expanded = False
+        expanded_term_count = 0
+        if "properties" in req.scopes and req.normalized_query:
+            _terms, vocab_expanded, expanded_term_count = _property_search_terms(
+                req.normalized_query
+            )
         log_event(
             "search_completed",
             component="search",
@@ -537,6 +592,8 @@ class UnifiedSearchService:
             zero_results=total == 0,
             scope_count=len(req.scopes),
             mode=req.mode,
+            vocab_expanded=vocab_expanded,
+            expanded_term_count=expanded_term_count,
             # deliberately no query text
         )
         record_business_counter("crm_search_total", outcome="ok" if total else "zero")
@@ -549,6 +606,8 @@ class UnifiedSearchService:
             "per_page": req.per_page,
             "sort": req.sort,
             "scopes": sorted(req.scopes),
+            "vocab_expanded": vocab_expanded,
+            "expanded_term_count": expanded_term_count,
         }
 
 

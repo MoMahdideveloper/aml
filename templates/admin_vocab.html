@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Vocabulary - Platinum Heritage{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto">
+  <header class="mb-6">
+    <h1 class="text-2xl font-semibold text-primary">Description vocabulary</h1>
+    <p class="text-sm text-on-surface-variant">
+      Normalize · synonyms · directional replacements. Query expand only when
+      <code class="text-xs">ENABLE_VOCAB_ENRICHMENT=1</code>. Never rewrites listing text.
+    </p>
+  </header>
+
+  <section class="mb-8 border border-outline-variant rounded-lg p-4 bg-surface-container-lowest" aria-labelledby="new-term-h">
+    <h2 id="new-term-h" class="text-lg font-semibold mb-3">Add term</h2>
+    <form method="post" class="flex flex-wrap gap-2 items-end">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+      <input type="hidden" name="action" value="create_term">
+      <label class="text-sm">
+        <span class="block text-on-surface-variant mb-1">Canonical</span>
+        <input name="canonical" required maxlength="120" class="border rounded-lg px-3 py-2 text-sm" placeholder="villa">
+      </label>
+      <label class="text-sm">
+        <span class="block text-on-surface-variant mb-1">Lang</span>
+        <input name="lang" value="en" maxlength="8" class="border rounded-lg px-3 py-2 text-sm w-20">
+      </label>
+      <button type="submit" class="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm">Create</button>
+    </form>
+  </section>
+
+  <section class="mb-8" aria-labelledby="terms-h">
+    <h2 id="terms-h" class="text-lg font-semibold mb-3">Terms &amp; synonyms</h2>
+    <div class="space-y-4">
+      {% for term in terms %}
+      <div class="border border-outline-variant rounded-lg p-4 bg-surface-container-lowest">
+        <div class="flex flex-wrap justify-between gap-2 mb-2">
+          <div>
+            <p class="font-medium">{{ term.canonical }}
+              <span class="text-xs text-on-surface-variant">({{ term.normalized_key }})</span>
+            </p>
+            <p class="text-xs text-on-surface-variant">{{ term.lang }} · {{ term.status }}</p>
+          </div>
+          <form method="post" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+            <input type="hidden" name="action" value="archive_term">
+            <input type="hidden" name="term_id" value="{{ term.id }}">
+            <button type="submit" class="text-xs underline text-red-700">Archive term</button>
+          </form>
+        </div>
+        <ul class="text-sm mb-3 space-y-1">
+          {% for s in term.synonyms %}
+          <li class="flex gap-2 items-center">
+            <span>{{ s.synonym_key }}{% if not s.bidirectional %} <span class="text-xs">(one-way)</span>{% endif %}</span>
+            <form method="post" class="inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+              <input type="hidden" name="action" value="archive_synonym">
+              <input type="hidden" name="synonym_id" value="{{ s.id }}">
+              <button type="submit" class="text-xs underline">Archive</button>
+            </form>
+          </li>
+          {% else %}
+          <li class="text-on-surface-variant text-xs">No synonyms yet.</li>
+          {% endfor %}
+        </ul>
+        <form method="post" class="flex flex-wrap gap-2 items-end">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+          <input type="hidden" name="action" value="add_synonym">
+          <input type="hidden" name="term_id" value="{{ term.id }}">
+          <input name="synonym" required maxlength="120" class="border rounded-lg px-3 py-1.5 text-sm" placeholder="synonym">
+          <label class="text-xs flex items-center gap-1">
+            <input type="checkbox" name="bidirectional" value="1" checked>
+            Bidirectional
+          </label>
+          <button type="submit" class="text-sm underline">Add synonym</button>
+        </form>
+      </div>
+      {% else %}
+      <p class="text-sm text-on-surface-variant">No terms yet. Add a canonical term above.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="mb-8 border border-outline-variant rounded-lg p-4 bg-surface-container-lowest" aria-labelledby="repl-h">
+    <h2 id="repl-h" class="text-lg font-semibold mb-3">Directional replacements</h2>
+    <form method="post" class="flex flex-wrap gap-2 items-end mb-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+      <input type="hidden" name="action" value="create_replacement">
+      <label class="text-sm">
+        <span class="block text-on-surface-variant mb-1">From</span>
+        <input name="from_text" required maxlength="120" class="border rounded-lg px-3 py-2 text-sm" placeholder="sqm">
+      </label>
+      <label class="text-sm">
+        <span class="block text-on-surface-variant mb-1">To</span>
+        <input name="to_text" required maxlength="120" class="border rounded-lg px-3 py-2 text-sm" placeholder="square meters">
+      </label>
+      <label class="text-sm">
+        <span class="block text-on-surface-variant mb-1">Priority</span>
+        <input name="priority" type="number" value="0" class="border rounded-lg px-3 py-2 text-sm w-20">
+      </label>
+      <button type="submit" class="px-4 py-2 border rounded-lg text-sm">Add</button>
+    </form>
+    <ul class="text-sm space-y-2">
+      {% for r in replacements %}
+      <li class="flex flex-wrap gap-2 items-center">
+        <code>{{ r.from_key }}</code> → <code>{{ r.to_key }}</code>
+        <span class="text-xs text-on-surface-variant">p={{ r.priority }}</span>
+        <form method="post" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+          <input type="hidden" name="action" value="archive_replacement">
+          <input type="hidden" name="replacement_id" value="{{ r.id }}">
+          <button type="submit" class="text-xs underline">Archive</button>
+        </form>
+      </li>
+      {% else %}
+      <li class="text-on-surface-variant text-xs">No replacements.</li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

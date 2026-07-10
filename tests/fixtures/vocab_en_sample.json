@@ -1,0 +1,19 @@
+{
+  "terms": [
+    {
+      "canonical": "villa",
+      "synonyms": ["house", "home"]
+    },
+    {
+      "canonical": "apartment",
+      "synonyms": ["apt", "flat"]
+    },
+    {
+      "canonical": "condo",
+      "synonyms": ["condominium"]
+    }
+  ],
+  "replacements": [
+    {"from": "sqm", "to": "square meters", "priority": 10}
+  ]
+}

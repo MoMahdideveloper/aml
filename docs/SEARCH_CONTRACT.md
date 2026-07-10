@@ -31,3 +31,6 @@ Log duration, counts, zero-result flag, failure category. **Never log raw query 
 ## Feature flag
 `ENABLE_GLOBAL_SEARCH` — default `1`. Set `0` to hide shell control and deny routes.
 Cleanup: remove flag after one stable release cycle.
+
+## Vocabulary expand (optional)
+`ENABLE_VOCAB_ENRICHMENT` — default `0`. When `1`, **property** free-text search may OR-match up to 8 expanded keys (synonyms / replacements). See `docs/VOCAB_CONTRACT.md`. Other entity scopes unchanged. Flag off = legacy keyword-only behavior.

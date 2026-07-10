@@ -1797,3 +1797,52 @@ class DocumentAuditLog(db.Model):
             "result": self.result,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
+
+class VocabTerm(db.Model):
+    """Canonical vocabulary term for search synonym expansion (query-side only)."""
+
+    __tablename__ = "vocab_terms"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    canonical: Mapped[str] = mapped_column(String(120), nullable=False)
+    normalized_key: Mapped[str] = mapped_column(String(120), nullable=False, unique=True, index=True)
+    lang: Mapped[str] = mapped_column(String(8), default="en")
+    status: Mapped[str] = mapped_column(String(20), default="active", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=_utcnow_naive, onupdate=_utcnow_naive
+    )
+
+    synonyms = relationship("VocabSynonym", back_populates="term", lazy="selectin")
+
+
+class VocabSynonym(db.Model):
+    """Synonym of a vocab term; bidirectional by default."""
+
+    __tablename__ = "vocab_synonyms"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    term_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("vocab_terms.id"), nullable=False, index=True
+    )
+    synonym_key: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    bidirectional: Mapped[bool] = mapped_column(Boolean, default=True)
+    status: Mapped[str] = mapped_column(String(20), default="active", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+
+    term = relationship("VocabTerm", back_populates="synonyms")
+
+
+class VocabReplacement(db.Model):
+    """Directional token replacement applied to queries only (never mutates listings)."""
+
+    __tablename__ = "vocab_replacements"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    from_key: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    to_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    priority: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(20), default="active", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+

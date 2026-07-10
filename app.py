@@ -239,6 +239,7 @@ def create_app(test_config=None):
     from views.search import bp as search_bp
     from views.reports import bp as reports_bp
     from views.documents import bp as documents_bp
+    from views.vocab_admin import bp as vocab_admin_bp
 
     for bp in (
         main_bp,
@@ -256,6 +257,7 @@ def create_app(test_config=None):
         search_bp,
         reports_bp,
         documents_bp,
+        vocab_admin_bp,
     ):
         app.register_blueprint(bp)
 
@@ -275,6 +277,10 @@ def create_app(test_config=None):
     )
     app.config["ENABLE_SALES_REPORTS"] = (
         os.environ.get("ENABLE_SALES_REPORTS", "1").strip() != "0"
+    )
+    # Vocab synonym expand on property search (default off; admin UI always available).
+    app.config["ENABLE_VOCAB_ENRICHMENT"] = (
+        os.environ.get("ENABLE_VOCAB_ENRICHMENT", "0").strip() == "1"
     )
 
     # Default-deny session gate (AUTH_DEFAULT_DENY_ENABLED, default on).

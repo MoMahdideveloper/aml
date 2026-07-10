@@ -1,0 +1,46 @@
+# Vocabulary contract (Track A, PR1)
+
+## Purpose
+Staff-managed lexicon for **query-side** expansion of property keyword search.
+Does **not** rewrite stored listing text. Does **not** auto-create synonyms from embeddings.
+
+## Layers
+
+| Layer | Direction | Mutates DB text? | Auto from embeddings? |
+|-------|-----------|------------------|------------------------|
+| Normalize | text → key | No | N/A |
+| Synonym | bidirectional expand (default) | No | **No** |
+| Replacement | directional from → to on query tokens | No | No |
+| Occurrence | deferred (not in PR1) | No | No |
+
+## Normalize rules
+1. Unicode NFKC  
+2. Strip / collapse whitespace  
+3. Casefold  
+4. Strip edge punctuation  
+
+## Expand algorithm
+1. Tokenize query on whitespace; also treat full query as a token.  
+2. Normalize each token.  
+3. Apply active **replacement** (highest priority wins per `from_key`).  
+4. Expand via active **synonym** groups (bidirectional membership).  
+5. Cap at **8** keys total (including original query string when used for search).  
+
+## Search integration
+- Flag: `ENABLE_VOCAB_ENRICHMENT` (default `0`).  
+- When on: property scope only (`title`, `address`, `neighborhood`, `file_code`, id).  
+- When off: identical to pre-vocab keyword search.  
+- Customers / deals / agents / tasks: **no** expand in PR1.  
+- Description body: **not** newly searchable.  
+
+## Admin
+- `/admin/vocab` — create/archive terms, synonyms, replacements.  
+- Soft archive only.  
+- Admin CRUD available regardless of expand flag.  
+
+## Telemetry
+Log `vocab_expanded`, `expanded_term_count`, duration, hit counts.  
+**Never** log raw query text or synonym free-text payloads beyond staff lexicon ids.
+
+## Non-goals
+Neo4j, embedding-mined synonyms, hybrid semantic merge, context packets, occurrence tables.
