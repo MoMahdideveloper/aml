@@ -1707,3 +1707,93 @@ class AutomationSettings(db.Model):
     global_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     updated_by: Mapped[str] = mapped_column(String(120), default="")
+
+
+class Document(db.Model):
+    """Secure CRM document metadata (bytes live in private storage, not DB)."""
+
+    __tablename__ = "documents"
+    __table_args__ = (
+        # logical group + version uniqueness
+        # enforced via unique index in migration too
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner_type: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    # customer|property|deal|agent
+    owner_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    category: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    display_name: Mapped[str] = mapped_column(String(200), default="")
+    original_filename: Mapped[str] = mapped_column(String(255), default="")
+    storage_key: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
+    media_type: Mapped[str] = mapped_column(String(80), default="")
+    byte_size: Mapped[int] = mapped_column(Integer, default=0)
+    sha256: Mapped[str] = mapped_column(String(64), default="", index=True)
+    status: Mapped[str] = mapped_column(
+        String(20), default="pending_scan", index=True
+    )  # pending_scan|available|quarantined|archived|failed
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    document_group_id: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    is_latest: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    uploaded_by: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    uploaded_by_label: Mapped[str] = mapped_column(String(120), default="")
+    uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive, index=True)
+    archived_by: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    archived_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    retention_until: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    scan_engine: Mapped[str] = mapped_column(String(40), default="")
+    scan_result: Mapped[str] = mapped_column(String(40), default="")
+    metadata_version: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=_utcnow_naive, onupdate=_utcnow_naive
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Safe metadata for API/UI — never storage path."""
+        return {
+            "id": self.id,
+            "owner_type": self.owner_type,
+            "owner_id": self.owner_id,
+            "category": self.category,
+            "display_name": self.display_name,
+            "media_type": self.media_type,
+            "byte_size": self.byte_size,
+            "status": self.status,
+            "version": self.version,
+            "document_group_id": self.document_group_id,
+            "is_latest": self.is_latest,
+            "uploaded_by_label": self.uploaded_by_label,
+            "uploaded_at": self.uploaded_at.isoformat() if self.uploaded_at else None,
+            "archived_at": self.archived_at.isoformat() if self.archived_at else None,
+            "scan_result": self.scan_result,
+            # intentionally omit: storage_key, sha256 (not for end users), original_filename optional
+        }
+
+
+class DocumentAuditLog(db.Model):
+    """Document access audit — no content, no paths."""
+
+    __tablename__ = "document_audit_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    document_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True)
+    actor_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    actor_label: Mapped[str] = mapped_column(String(120), default="")
+    action: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    result: Mapped[str] = mapped_column(String(20), default="ok")  # ok|denied|failed
+    request_id: Mapped[str] = mapped_column(String(64), default="")
+    owner_type: Mapped[str] = mapped_column(String(20), default="")
+    category: Mapped[str] = mapped_column(String(40), default="")
+    size_band: Mapped[str] = mapped_column(String(20), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive, index=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "document_id": self.document_id,
+            "actor_id": self.actor_id,
+            "action": self.action,
+            "result": self.result,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }

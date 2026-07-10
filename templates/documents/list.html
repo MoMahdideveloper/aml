@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Documents · {{ owner_type }} #{{ owner_id }}{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto">
+  <nav class="text-xs mb-2">
+    <a href="{{ back_url }}" class="underline text-primary">Back</a>
+  </nav>
+  <header class="mb-6">
+    <h1 class="text-2xl font-semibold text-primary">Documents</h1>
+    <p class="text-sm text-on-surface-variant">{{ owner_type|capitalize }} #{{ owner_id }} · private storage · PDF/JPEG/PNG/WebP · max 10MB</p>
+  </header>
+
+  <section class="mb-8 border border-outline-variant rounded-lg p-4 bg-surface-container-lowest" aria-labelledby="up-h">
+    <h2 id="up-h" class="text-lg font-semibold mb-3">Upload</h2>
+    <form method="post" enctype="multipart/form-data" class="space-y-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+      <div>
+        <label class="block text-xs mb-1" for="file">File</label>
+        <input id="file" name="file" type="file" required accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,application/pdf,image/*"
+               class="w-full text-sm">
+        <p class="text-xs text-on-surface-variant mt-1">Allowed: PDF, JPEG, PNG, WebP, plain text. Max 10 MB.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs mb-1" for="category">Category</label>
+          <select id="category" name="category" class="w-full border rounded-lg px-3 py-2 text-sm" required>
+            {% for c in categories %}
+            <option value="{{ c }}">{{ c.replace('_',' ')|title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs mb-1" for="display_name">Display name</label>
+          <input id="display_name" name="display_name" maxlength="200" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Optional label">
+        </div>
+      </div>
+      <label class="text-xs flex items-center gap-1">
+        <input type="checkbox" name="force_duplicate" value="1"> Allow separate document if checksum matches existing
+      </label>
+      <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm">Upload</button>
+    </form>
+  </section>
+
+  <section aria-labelledby="list-h">
+    <h2 id="list-h" class="text-lg font-semibold mb-3">Files</h2>
+    <div class="overflow-x-auto border border-outline-variant rounded-lg">
+      <table class="min-w-full text-sm">
+        <thead class="bg-surface-container">
+          <tr>
+            <th scope="col" class="text-left p-2">Name</th>
+            <th scope="col" class="text-left p-2">Category</th>
+            <th scope="col" class="text-left p-2">Status</th>
+            <th scope="col" class="text-right p-2">Ver</th>
+            <th scope="col" class="text-right p-2">Size</th>
+            <th scope="col" class="text-left p-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in documents %}
+          <tr class="border-t border-outline-variant">
+            <td class="p-2 break-all max-w-[12rem]">{{ d.display_name or 'document' }}</td>
+            <td class="p-2">{{ d.category }}</td>
+            <td class="p-2">
+              <span class="sr-only">Status:</span>
+              {{ d.status }}
+              {% if d.status == 'available' %}<span aria-hidden="true"> ✓</span>{% endif %}
+              {% if d.status == 'quarantined' %}<span aria-hidden="true"> ⚠</span>{% endif %}
+            </td>
+            <td class="p-2 text-right">v{{ d.version }}</td>
+            <td class="p-2 text-right">{{ d.byte_size }}</td>
+            <td class="p-2 space-x-2 whitespace-nowrap">
+              {% if d.status == 'available' %}
+              <a class="underline text-primary" href="{{ url_for('documents.download', document_id=d.id) }}">Download</a>
+              <details class="inline">
+                <summary class="underline cursor-pointer inline">New version</summary>
+                <form method="post" action="{{ url_for('documents.new_version', document_id=d.id) }}" enctype="multipart/form-data" class="mt-1">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+                  <input type="file" name="file" required class="text-xs">
+                  <button type="submit" class="text-xs underline">Upload version</button>
+                </form>
+              </details>
+              <form method="post" action="{{ url_for('documents.archive', document_id=d.id) }}" class="inline" onsubmit="return confirm('Archive this document?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+                <input type="hidden" name="confirm" value="yes">
+                <button type="submit" class="underline text-xs">Archive</button>
+              </form>
+              {% else %}
+              <span class="text-on-surface-variant text-xs">No download</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="p-4 text-on-surface-variant">No documents yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

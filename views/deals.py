@@ -106,6 +106,7 @@ def deals():
         pipeline_stats[k]["value"] for k, _ in PIPELINE_STAGES
     )
 
+    highlight = request.args.get("highlight")
     return render_template(
         "deals.html",
         deals=deals_list,
@@ -118,6 +119,7 @@ def deals():
         pipeline_stats=pipeline_stats,
         total_open_deals=total_open,
         total_pipeline_value=total_value,
+        highlight=highlight,
     )
 
 

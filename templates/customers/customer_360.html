@@ -12,6 +12,9 @@
     <p class="text-sm text-on-surface-variant">
       {{ customer.email }} · {{ customer.phone }} · {{ customer.status }} · {{ customer.customer_type or 'buyer' }}
     </p>
+    <p class="text-sm mt-2">
+      <a class="text-primary underline" href="{{ url_for('documents.entity_documents', entity='customers', owner_id=customer.id) }}">Documents</a>
+    </p>
   </header>
 
   {# Log activity #}

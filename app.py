@@ -238,6 +238,7 @@ def create_app(test_config=None):
     from views.imports import bp as imports_bp
     from views.search import bp as search_bp
     from views.reports import bp as reports_bp
+    from views.documents import bp as documents_bp
 
     for bp in (
         main_bp,
@@ -254,8 +255,19 @@ def create_app(test_config=None):
         imports_bp,
         search_bp,
         reports_bp,
+        documents_bp,
     ):
         app.register_blueprint(bp)
+
+    # Private document store (never under static/)
+    import os as _os
+    app.config.setdefault(
+        "DOCUMENT_STORAGE_ROOT",
+        _os.environ.get(
+            "DOCUMENT_STORAGE_ROOT",
+            _os.path.join(app.instance_path, "document_store"),
+        ),
+    )
 
     # Global search shell flag (default on; set ENABLE_GLOBAL_SEARCH=0 to disable).
     app.config["ENABLE_GLOBAL_SEARCH"] = (

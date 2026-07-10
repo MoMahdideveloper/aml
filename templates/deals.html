@@ -38,6 +38,9 @@
     <div>
         <p class="ph-page-kicker">Pipeline</p>
         <h1 class="ph-page-title">Deals Pipeline</h1>
+        {% if highlight is defined and highlight %}
+        <p class="text-sm mt-1"><a class="text-primary underline" href="{{ url_for('documents.entity_documents', entity='deals', owner_id=highlight) }}">Documents for deal #{{ highlight }}</a></p>
+        {% endif %}
         <p class="ph-page-subtitle">Track and manage transactions from prospecting to closing.</p>
     </div>
     <div class="flex items-center gap-3 flex-wrap">
