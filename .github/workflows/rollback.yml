@@ -1,0 +1,68 @@
+name: Application rollback (manual)
+
+# Rolls back to a known-good immutable image. Database downgrade is NOT automatic.
+on:
+  workflow_dispatch:
+    inputs:
+      target_image_tag:
+        description: "Known-good image tag (must already exist; no arbitrary digests from untrusted sources)"
+        required: true
+        type: string
+      environment:
+        description: "Target environment"
+        type: choice
+        options:
+          - staging
+          - production
+        default: staging
+      dry_run:
+        description: "Plan only"
+        type: boolean
+        default: true
+      confirm_schema_compatible:
+        description: "Confirm target app is schema-compatible with current DB (required for live)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rollback-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    name: Rollback ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: python scripts/ci/assert_workflow_safety.py
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          TAG="${{ inputs.target_image_tag }}"
+          echo "target=${TAG}"
+          # Reject obviously unsafe references
+          case "$TAG" in
+            *..*|*[[:space:]]*|*'${{'* ) echo "invalid tag"; exit 1 ;;
+          esac
+          if [ "${{ inputs.dry_run }}" != "true" ] && [ "${{ inputs.confirm_schema_compatible }}" != "true" ]; then
+            echo "Live rollback requires confirm_schema_compatible=true"
+            exit 1
+          fi
+      - name: Apply rollback
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          TAG: ${{ inputs.target_image_tag }}
+          ENV_NAME: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          echo "Rollback Track A web to ${TAG} on ${ENV_NAME}"
+          if [ "${DRY_RUN}" = "true" ]; then
+            echo "DRY_RUN — no infrastructure changes."
+            exit 0
+          fi
+          echo "ERROR: Live rollback adapter not configured. Keep dry_run=true until approved."
+          exit 1

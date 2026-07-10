@@ -74,3 +74,15 @@ chatbot
 !README.md
 MEMORY.md
 AI_PROMPT_TEMPLATE.md
+
+# Extra bulk / local caches
+backups
+uploads
+static/uploads/**
+!static/uploads/.gitkeep
+deep_think
+n8n_workflows
+attached_assets
+.playwright-mcp
+server.pid
+*.log

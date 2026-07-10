@@ -1,0 +1,88 @@
+name: Deploy staging (manual)
+
+# Manual only. Does not run on push. Requires repository Environment "staging"
+# secrets when real deploy is configured. Default path is dry-run.
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Immutable image tag (git SHA or registry tag already tested)"
+        required: true
+        type: string
+      dry_run:
+        description: "Plan only — do not mutate staging infrastructure"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    name: Preflight
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Workflow safety
+        run: python scripts/ci/assert_workflow_safety.py
+      - name: Migration preflight (offline)
+        run: python scripts/ci/migration_preflight.py --allow-destructive
+      - name: Record intended artifact
+        run: |
+          echo "image_tag=${{ inputs.image_tag }}"
+          echo "sha=${{ github.sha }}"
+          echo "dry_run=${{ inputs.dry_run }}"
+
+  deploy:
+    name: Deploy to staging
+    runs-on: ubuntu-latest
+    needs: [preflight]
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy steps
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          # Real deploy would use secrets: STAGING_HOST, STAGING_DEPLOY_TOKEN — never commit them
+        run: |
+          set -euo pipefail
+          echo "Deploying Track A only (web image)."
+          echo "Image: ${IMAGE_TAG}"
+          if [ "${DRY_RUN}" = "true" ]; then
+            echo "DRY_RUN=true — skipping remote apply. Configure Environment secrets to enable."
+            echo "Planned: pull ${IMAGE_TAG}, migrate with approval, wait /readyz, smoke."
+            exit 0
+          fi
+          echo "ERROR: Live staging deploy is not configured in this repository yet."
+          echo "Set dry_run=true or implement host-specific deploy using Environment secrets."
+          exit 1
+
+  verify:
+    name: Staging verification
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: ${{ inputs.dry_run == false }}
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Post-deploy verify
+        env:
+          BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+        run: |
+          if [ -z "${BASE_URL:-}" ]; then
+            echo "STAGING_BASE_URL secret not set — cannot verify live staging"
+            exit 1
+          fi
+          python scripts/ci/post_deploy_verify.py --base-url "$BASE_URL" --json

@@ -122,6 +122,8 @@ Volumes: `postgres_data` (DB), `uploads_data` (property media). Redis is include
 
 Observability contract: `docs/OBSERVABILITY_CONTRACT.md`. Alerts (proposal only): `docs/ALERTS.md`. Runbooks: `docs/runbooks/`.
 
+CI/CD delivery: `docs/DELIVERY_CONTRACT.md`, `docs/RELEASE_RUNBOOK.md`, `docs/BRANCH_PROTECTION.md` (settings not applied automatically). Staging/production GitHub Actions are **manual + dry_run by default**.
+
 Wire these into load balancers / Kubernetes probes.
 
 ## 5. Image packaging boundary

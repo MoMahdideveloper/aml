@@ -1,0 +1,88 @@
+name: Promote production (manual approval)
+
+# NEVER triggered by ordinary branch push.
+# Requires GitHub Environment "production" protection rules (configure in repo settings).
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Exact immutable image tag previously verified on staging"
+        required: true
+        type: string
+      staging_run_url:
+        description: "URL/ID of staging verification run (audit)"
+        required: false
+        type: string
+        default: ""
+      dry_run:
+        description: "Plan only — do not mutate production"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    name: Guardrails
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python scripts/ci/assert_workflow_safety.py
+      - name: Refuse empty image tag
+        if: ${{ inputs.image_tag == '' }}
+        run: exit 1
+      - name: Audit record
+        run: |
+          echo "production_promote image=${{ inputs.image_tag }}"
+          echo "requested_by=${{ github.actor }}"
+          echo "staging_ref=${{ inputs.staging_run_url }}"
+          echo "dry_run=${{ inputs.dry_run }}"
+
+  promote:
+    name: Production deploy
+    runs-on: ubuntu-latest
+    needs: [guard]
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy exact artifact
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          echo "Promoting Track A image only: ${IMAGE_TAG}"
+          if [ "${DRY_RUN}" = "true" ]; then
+            echo "DRY_RUN=true — no production mutation."
+            echo "Planned: deploy ${IMAGE_TAG}, operator-managed migration if needed, verify, monitor."
+            exit 0
+          fi
+          echo "ERROR: Live production deploy adapter not configured."
+          echo "Keep dry_run=true until Environment secrets + host runner are approved."
+          exit 1
+
+  verify:
+    name: Production post-deploy verification
+    runs-on: ubuntu-latest
+    needs: [promote]
+    if: ${{ inputs.dry_run == false }}
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify
+        env:
+          BASE_URL: ${{ secrets.PRODUCTION_BASE_URL }}
+        run: |
+          if [ -z "${BASE_URL:-}" ]; then
+            echo "PRODUCTION_BASE_URL not configured"
+            exit 1
+          fi
+          python scripts/ci/post_deploy_verify.py --base-url "$BASE_URL" --timeout 120 --json
