@@ -13,6 +13,7 @@ const App = {
         this.initDropdowns();
         this.initFlashMessages();
         this.initForms();
+        this.initFormAccessibility();
         this.initModals();
         console.log('✅ App initialized successfully');
     },
@@ -150,6 +151,8 @@ const App = {
     initForms() {
         document.querySelectorAll('form[data-loading]').forEach(form => {
             form.addEventListener('submit', () => {
+                // Only show loading state when form is valid (a11y path may cancel submit)
+                if (!form.checkValidity()) return;
                 const button = form.querySelector('[type="submit"]');
                 if (button) {
                     button.disabled = true;
@@ -158,6 +161,116 @@ const App = {
             });
         });
         console.log('✓ Forms initialized');
+    },
+
+    /**
+     * Wire labels to controls, aria-invalid / aria-describedby, first invalid focus.
+     * Does not rename form fields (name= attributes stay unchanged).
+     */
+    initFormAccessibility() {
+        const fieldSelector = 'input:not([type="hidden"]):not([type="submit"]):not([type="button"]), select, textarea';
+
+        document.querySelectorAll('form').forEach((form, formIndex) => {
+            form.setAttribute('novalidate', 'novalidate'); // use our messages + focus path
+
+            form.querySelectorAll(fieldSelector).forEach((field) => {
+                if (!field.id && field.name) {
+                    const safe = String(field.name).replace(/[^a-zA-Z0-9_-]/g, '_');
+                    field.id = `ph-field-${formIndex}-${safe}`;
+                }
+
+                const wrap = field.closest('div');
+                if (field.id && wrap) {
+                    const label = wrap.querySelector('label');
+                    if (label && !label.getAttribute('for')) {
+                        label.setAttribute('for', field.id);
+                    }
+                }
+
+                if (field.required || field.hasAttribute('required')) {
+                    field.setAttribute('aria-required', 'true');
+                }
+
+                const clear = () => {
+                    if (field.validity.valid) this._clearFieldInvalid(field);
+                };
+                field.addEventListener('input', clear);
+                field.addEventListener('change', clear);
+            });
+
+            form.addEventListener('submit', (e) => {
+                if (form.checkValidity()) return;
+                e.preventDefault();
+                e.stopPropagation();
+
+                const invalids = Array.from(form.querySelectorAll(fieldSelector)).filter(
+                    (el) => !el.validity.valid
+                );
+                invalids.forEach((el) => this._markFieldInvalid(el));
+
+                const first = invalids[0] || form.querySelector(':invalid');
+                if (first) {
+                    try {
+                        first.focus({ preventScroll: false });
+                    } catch (_) {
+                        first.focus();
+                    }
+                    // Native tooltip as extra cue where supported
+                    try {
+                        first.reportValidity();
+                    } catch (_) { /* ignore */ }
+                }
+            });
+        });
+        console.log('✓ Form accessibility initialized');
+    },
+
+    _markFieldInvalid(field) {
+        if (!field) return;
+        if (!field.id) {
+            field.id = `ph-field-tmp-${Math.random().toString(36).slice(2, 9)}`;
+        }
+        field.setAttribute('aria-invalid', 'true');
+        const errId = `${field.id}-error`;
+        let err = document.getElementById(errId);
+        if (!err) {
+            err = document.createElement('p');
+            err.id = errId;
+            err.className = 'ph-field-error text-xs text-error mt-1';
+            err.setAttribute('role', 'alert');
+            const parent = field.parentElement || field;
+            parent.appendChild(err);
+        }
+        err.textContent = field.validationMessage || 'Please complete this field.';
+        err.hidden = false;
+
+        const described = (field.getAttribute('aria-describedby') || '')
+            .split(/\s+/)
+            .filter(Boolean);
+        if (!described.includes(errId)) {
+            described.push(errId);
+            field.setAttribute('aria-describedby', described.join(' '));
+        }
+    },
+
+    _clearFieldInvalid(field) {
+        if (!field) return;
+        field.removeAttribute('aria-invalid');
+        if (!field.id) return;
+        const errId = `${field.id}-error`;
+        const err = document.getElementById(errId);
+        if (err) {
+            err.textContent = '';
+            err.hidden = true;
+        }
+        const described = (field.getAttribute('aria-describedby') || '')
+            .split(/\s+/)
+            .filter((id) => id && id !== errId);
+        if (described.length) {
+            field.setAttribute('aria-describedby', described.join(' '));
+        } else {
+            field.removeAttribute('aria-describedby');
+        }
     },
 
     /**
@@ -176,16 +289,33 @@ const App = {
             '[tabindex]:not([tabindex="-1"])',
         ].join(',');
 
+        const isVisible = (el) => {
+            // offsetParent is null for position:fixed — use client rects instead
+            if (el.hasAttribute('disabled') || el.getAttribute('aria-hidden') === 'true') {
+                return false;
+            }
+            const style = window.getComputedStyle(el);
+            if (style.visibility === 'hidden' || style.display === 'none') return false;
+            return el.getClientRects().length > 0;
+        };
+
         const getFocusable = (root) =>
-            Array.from(root.querySelectorAll(focusableSelector)).filter(
-                (el) => !el.hasAttribute('disabled') && el.offsetParent !== null
-            );
+            Array.from(root.querySelectorAll(focusableSelector)).filter(isVisible);
 
         const releaseTrap = () => {
             if (trapHandler) {
                 document.removeEventListener('keydown', trapHandler, true);
                 trapHandler = null;
             }
+        };
+
+        const setBackgroundInert = (active) => {
+            // Sidebar only: core modals render inside #main-content, so inert on
+            // main would make the dialog itself unfocusable. Focus trap covers main.
+            const el = document.getElementById('sidebar');
+            if (!el) return;
+            if (active) el.setAttribute('inert', '');
+            else el.removeAttribute('inert');
         };
 
         const hideModal = (modal) => {
@@ -199,6 +329,8 @@ const App = {
             document.body.style.overflow = '';
             document.querySelectorAll('.modal-backdrop').forEach((b) => b.remove());
             releaseTrap();
+            const stillOpen = document.querySelector('[data-modal]:not(.hidden)');
+            if (!stillOpen) setBackgroundInert(false);
             if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
                 try {
                     const inst = bootstrap.Modal.getInstance(modal);
@@ -226,6 +358,7 @@ const App = {
             modal.classList.remove('hidden');
             modal.style.display = '';
             document.body.style.overflow = 'hidden';
+            setBackgroundInert(true);
 
             if (modal.classList.contains('modal') && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
                 try {
@@ -248,11 +381,19 @@ const App = {
                 focusables.find((el) => el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') ||
                 focusables[0] ||
                 panel;
-            window.setTimeout(() => {
+            // Make panel programmatically focusable as fallback
+            if (initial === panel && panel && !panel.hasAttribute('tabindex')) {
+                panel.setAttribute('tabindex', '-1');
+            }
+            window.requestAnimationFrame(() => {
                 try {
-                    initial.focus();
-                } catch (_) { /* ignore */ }
-            }, 0);
+                    initial.focus({ preventScroll: true });
+                } catch (_) {
+                    try {
+                        initial.focus();
+                    } catch (__) { /* ignore */ }
+                }
+            });
 
             releaseTrap();
             trapHandler = (e) => {

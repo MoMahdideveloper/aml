@@ -10,13 +10,25 @@ from functools import wraps
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for, session, abort
 from werkzeug.exceptions import BadRequest
 
+from application.result import PermanentError, RetryableError, Success
 from application.services.environment_config_service import EnvironmentConfigService
 from forms import EnvironmentVariableForm
 from utils.execution_tracer import log_execution
+from utils.security_events import log_security_event
 
 bp = Blueprint("admin_environment", __name__, url_prefix="/admin")
 
 env_config_service = EnvironmentConfigService()
+
+
+def _unwrap_config_result(result):
+    """Normalize EnvironmentConfigService Result types to (ok, value_or_message)."""
+    if isinstance(result, Success):
+        return True, result.value
+    if isinstance(result, (RetryableError, PermanentError)):
+        return False, result.message
+    # Legacy plain dict/bool returns
+    return True, result
 
 
 @log_execution
@@ -99,7 +111,7 @@ def environment():
         )
     except Exception as e:
         logging.error(f"Error loading environment variables: {e}")
-        flash(f"Critical Error: Unable to load environment variables. {str(e)}", "error")
+        flash("Critical Error: Unable to load environment variables. See server logs.", "error")
         
         # Provide fallback empty state with error context
         return render_template(
@@ -133,7 +145,6 @@ def create_environment_variable():
         return redirect(url_for("admin_environment.environment"))
     
     try:
-        # Attempt to create the variable
         result = env_config_service.create_variable(
             key=form.key.data,
             value=form.value.data,
@@ -141,41 +152,62 @@ def create_environment_variable():
             is_required=form.is_required.data,
             created_by=get_current_admin_user()
         )
-        
-        # Build success message with warnings if any
+        ok, payload = _unwrap_config_result(result)
+        if not ok:
+            error_msg = str(payload)
+            if "already exists" in error_msg.lower():
+                flash(
+                    f"Variable Creation Failed: Environment variable '{form.key.data}' already exists. "
+                    "Use the edit function to modify it.",
+                    "error",
+                )
+            elif "invalid key" in error_msg.lower():
+                flash(f"Invalid Key Format: {error_msg}", "error")
+            elif "invalid value" in error_msg.lower():
+                flash(f"Invalid Value: {error_msg}", "error")
+            else:
+                flash(f"Validation Error: {error_msg}", "error")
+            logging.warning(
+                f"Validation error creating variable {form.key.data}: {error_msg}"
+            )
+            return redirect(url_for("admin_environment.environment"))
+
         success_msg = f'Environment variable "{form.key.data}" created successfully!'
-        
-        if 'security_warnings' in result and result['security_warnings']:
-            flash(f"Security Warning: {'; '.join(result['security_warnings'])}", "warning")
-        
+        if isinstance(payload, dict) and payload.get("security_warnings"):
+            flash(
+                f"Security Warning: {'; '.join(payload['security_warnings'])}",
+                "warning",
+            )
         flash(success_msg, "success")
-        logging.info(f"Successfully created environment variable {form.key.data} by {get_current_admin_user()}")
-        
-    except ValueError as e:
-        # Handle validation errors with specific feedback
-        error_msg = str(e)
-        if "already exists" in error_msg.lower():
-            flash(f"Variable Creation Failed: Environment variable '{form.key.data}' already exists. Use the edit function to modify it.", "error")
-        elif "invalid key" in error_msg.lower():
-            flash(f"Invalid Key Format: {error_msg}", "error")
-        elif "invalid value" in error_msg.lower():
-            flash(f"Invalid Value: {error_msg}", "error")
-        else:
-            flash(f"Validation Error: {error_msg}", "error")
-        
-        logging.warning(f"Validation error creating variable {form.key.data}: {e}")
-        
+        log_security_event(
+            "admin_config_change",
+            outcome="ok",
+            action="create",
+            key=form.key.data,
+            admin_user=get_current_admin_user(),
+            # never log value
+        )
+        logging.info(
+            f"Successfully created environment variable {form.key.data} by {get_current_admin_user()}"
+        )
+
     except RuntimeError as e:
-        # Handle runtime environment application errors
-        flash(f"Runtime Error: Failed to apply environment variable to system. {str(e)}", "error")
+        # Do not echo exception text to the browser (may contain paths/secrets).
+        flash(
+            "Runtime Error: Failed to apply environment variable to the system. "
+            "See server logs for details.",
+            "error",
+        )
         logging.error(f"Runtime error creating variable {form.key.data}: {e}")
-        
+
     except Exception as e:
-        # Handle unexpected errors
-        error_msg = f"Unexpected error creating environment variable '{form.key.data}': {str(e)}"
-        flash(f"System Error: {error_msg}", "error")
+        flash(
+            f'System Error: Could not create environment variable "{form.key.data}". '
+            "See server logs for details.",
+            "error",
+        )
         logging.error(f"Unexpected error creating environment variable: {e}", exc_info=True)
-    
+
     return redirect(url_for("admin_environment.environment"))
 
 
@@ -218,60 +250,64 @@ def update_environment_variable(key):
             }), 400
         
         # Attempt to update the variable
-        updated_variable = env_config_service.update_variable(
+        result = env_config_service.update_variable(
             key=key,
             value=data['value'],
             description=data.get('description'),
             is_required=data.get('is_required'),
             updated_by=get_current_admin_user()
         )
-        
-        # Build successful response
+        ok, payload = _unwrap_config_result(result)
+        if not ok:
+            error_msg = str(payload)
+            error_type = "validation_error"
+            if "not found" in error_msg.lower():
+                error_type = "not_found"
+                status_code = 404
+            elif "invalid value" in error_msg.lower():
+                error_type = "invalid_value"
+                status_code = 400
+            elif "critical system variable" in error_msg.lower() or "protected" in error_msg.lower():
+                error_type = "protected_variable"
+                status_code = 403
+            else:
+                status_code = 400
+            logging.warning(f"Validation error updating variable {key}: {error_msg}")
+            return jsonify({
+                "success": False,
+                "error": error_msg,
+                "error_type": error_type,
+            }), status_code
+
+        updated_variable = payload if isinstance(payload, dict) else {}
         response_data = {
             "success": True,
             "message": f"Environment variable '{key}' updated successfully",
             "variable": updated_variable,
             "timestamp": datetime.utcnow().isoformat()
         }
-        
-        # Add warnings if present
-        if 'security_warnings' in updated_variable and updated_variable['security_warnings']:
-            response_data['warnings'] = updated_variable['security_warnings']
-            response_data['message'] += f" (with {len(updated_variable['security_warnings'])} security warnings)"
-        
+
+        warnings = updated_variable.get("security_warnings") if isinstance(updated_variable, dict) else None
+        if warnings:
+            response_data['warnings'] = warnings
+            response_data['message'] += f" (with {len(warnings)} security warnings)"
+
+        log_security_event(
+            "admin_config_change",
+            outcome="ok",
+            action="update",
+            key=key,
+            admin_user=get_current_admin_user(),
+        )
         logging.info(f"Successfully updated environment variable {key} by {get_current_admin_user()}")
         return jsonify(response_data)
-        
-    except ValueError as e:
-        # Handle validation and business logic errors
-        error_msg = str(e)
-        error_type = "validation_error"
-        
-        if "not found" in error_msg.lower():
-            error_type = "not_found"
-            status_code = 404
-        elif "invalid value" in error_msg.lower():
-            error_type = "invalid_value"
-            status_code = 400
-        elif "critical system variable" in error_msg.lower():
-            error_type = "protected_variable"
-            status_code = 403
-        else:
-            status_code = 400
-        
-        logging.warning(f"Validation error updating variable {key}: {e}")
-        return jsonify({
-            "success": False, 
-            "error": error_msg,
-            "error_type": error_type
-        }), status_code
-        
+
     except RuntimeError as e:
         # Handle runtime environment errors
         logging.error(f"Runtime error updating variable {key}: {e}")
         return jsonify({
             "success": False, 
-            "error": f"Failed to apply changes to runtime environment: {str(e)}",
+            "error": "Failed to apply changes to runtime environment",
             "error_type": "runtime_error"
         }), 500
         
@@ -279,13 +315,13 @@ def update_environment_variable(key):
         # Handle request format errors
         return jsonify({
             "success": False, 
-            "error": str(e),
+            "error": "Invalid request format",
             "error_type": "bad_request"
         }), 400
         
     except Exception as e:
         # Handle unexpected errors
-        error_msg = f"Unexpected error updating environment variable '{key}': {str(e)}"
+        error_msg = f"Unexpected error updating environment variable '{key}': {e}"
         logging.error(error_msg, exc_info=True)
         return jsonify({
             "success": False, 
@@ -310,54 +346,58 @@ def delete_environment_variable(key):
             }), 400
         
         # Attempt to delete the variable
-        env_config_service.delete_variable(
+        result = env_config_service.delete_variable(
             key=key,
             deleted_by=get_current_admin_user()
         )
-        
+        ok, payload = _unwrap_config_result(result)
+        if not ok:
+            error_msg = str(payload)
+            error_type = "validation_error"
+            if "not found" in error_msg.lower():
+                error_type = "not_found"
+                status_code = 404
+            elif "required" in error_msg.lower():
+                error_type = "protected_variable"
+                status_code = 403
+            elif "critical system variable" in error_msg.lower() or "protected" in error_msg.lower():
+                error_type = "critical_variable"
+                status_code = 403
+            else:
+                status_code = 400
+            logging.warning(f"Validation error deleting variable {key}: {error_msg}")
+            return jsonify({
+                "success": False,
+                "error": error_msg,
+                "error_type": error_type,
+            }), status_code
+
+        log_security_event(
+            "admin_config_change",
+            outcome="ok",
+            action="delete",
+            key=key,
+            admin_user=get_current_admin_user(),
+        )
         logging.info(f"Successfully deleted environment variable {key} by {get_current_admin_user()}")
         return jsonify({
             "success": True,
             "message": f"Environment variable '{key}' deleted successfully",
             "timestamp": datetime.utcnow().isoformat()
         })
-        
-    except ValueError as e:
-        # Handle validation and business logic errors
-        error_msg = str(e)
-        error_type = "validation_error"
-        
-        if "not found" in error_msg.lower():
-            error_type = "not_found"
-            status_code = 404
-        elif "required" in error_msg.lower():
-            error_type = "protected_variable"
-            status_code = 403
-        elif "critical system variable" in error_msg.lower():
-            error_type = "critical_variable"
-            status_code = 403
-        else:
-            status_code = 400
-        
-        logging.warning(f"Validation error deleting variable {key}: {e}")
-        return jsonify({
-            "success": False, 
-            "error": error_msg,
-            "error_type": error_type
-        }), status_code
-        
+
     except RuntimeError as e:
         # Handle runtime environment errors
         logging.error(f"Runtime error deleting variable {key}: {e}")
         return jsonify({
             "success": False, 
-            "error": f"Failed to remove variable from runtime environment: {str(e)}",
+            "error": "Failed to remove variable from runtime environment",
             "error_type": "runtime_error"
         }), 500
         
     except Exception as e:
         # Handle unexpected errors
-        error_msg = f"Unexpected error deleting environment variable '{key}': {str(e)}"
+        error_msg = f"Unexpected error deleting environment variable '{key}': {e}"
         logging.error(error_msg, exc_info=True)
         return jsonify({
             "success": False, 
@@ -389,7 +429,7 @@ def environment_history():
         
     except Exception as e:
         logging.error(f"Error loading environment history: {e}")
-        flash(f"Error loading change history: {str(e)}", "error")
+        flash("Error loading change history. See server logs for details.", "error")
         return render_template("admin_environment_history.html", history=[], variable_key=None)
 
 
@@ -410,7 +450,7 @@ def get_environment_variable_details(key):
         
     except Exception as e:
         logging.error(f"Error getting variable details for {key}: {e}")
-        return jsonify({"success": False, "error": f"Internal server error: {str(e)}"}), 500
+        return jsonify({"success": False, "error": "Internal server error"}), 500
 
 
 @bp.route("/environment/validation")
@@ -427,7 +467,7 @@ def get_validation_summary():
         
     except Exception as e:
         logging.error(f"Error getting validation summary: {e}")
-        return jsonify({"success": False, "error": f"Internal server error: {str(e)}"}), 500
+        return jsonify({"success": False, "error": "Internal server error"}), 500
 
 
 @bp.route("/login", methods=["GET", "POST"])
@@ -494,8 +534,7 @@ def rollback_environment_changes():
             }), 400
             
     except Exception as e:
-        error_msg = f"Unexpected error during rollback: {str(e)}"
-        flash(f"Rollback failed: {error_msg}", "error")
+        flash("Rollback failed. See server logs for details.", "error")
         logging.error(f"Rollback error by {get_current_admin_user()}: {e}", exc_info=True)
         return jsonify({
             "success": False,
@@ -523,7 +562,7 @@ def check_environment_health():
         logging.error(f"Health check error: {e}")
         return jsonify({
             "success": False,
-            "error": f"Health check failed: {str(e)}",
+            "error": "Health check failed",
             "error_type": "health_check_error"
         }), 500
 

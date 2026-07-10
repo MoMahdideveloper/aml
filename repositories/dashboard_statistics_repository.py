@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta
 from typing import Dict, List, Optional, TypedDict, Union
 
 from sqlalchemy import desc, func
+from sqlalchemy.orm import joinedload
 
 from database import db
 from repositories.base_repository import BaseRepository
@@ -303,6 +304,11 @@ class DashboardStatisticsRepository(BaseRepository):
         )
         recent_deals = (
             Deal.query.filter(Deal.is_deleted.is_(False))
+            .options(
+                joinedload(Deal.property),
+                joinedload(Deal.customer),
+                joinedload(Deal.agent),
+            )
             .order_by(desc(Deal.created_at))
             .limit(5)
             .all()

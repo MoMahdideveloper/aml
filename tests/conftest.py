@@ -6,6 +6,10 @@ import pytest
 
 # Use in-memory SQLite for tests and avoid touching local files
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+# Most legacy tests hit CRM routes without login. Force default-deny off for the
+# session-scoped app (setdefault is not enough if the shell already exported 1).
+# Security tests that need deny rebuild the app after monkeypatch.setenv(...="1").
+os.environ["AUTH_DEFAULT_DENY_ENABLED"] = "0"
 
 
 # Provide a lightweight stub to prevent heavy vector service initialization
@@ -49,7 +53,13 @@ if "gemini_service" not in sys.modules:
 def app():
     from app import app as flask_app
 
-    flask_app.config.update(TESTING=True)
+    # Ensure session-scoped app stays open for legacy CRM tests even if the
+    # process imported create_app while AUTH_DEFAULT_DENY_ENABLED was on.
+    flask_app.config.update(
+        TESTING=True,
+        AUTH_DEFAULT_DENY_ENABLED=False,
+        WTF_CSRF_ENABLED=False,
+    )
     return flask_app
 
 

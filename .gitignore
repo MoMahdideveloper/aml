@@ -120,6 +120,9 @@ Thumbs.db
 
 # Project specific
 *.db
+# Explicit backup dumps (PII risk) — never commit
+backups/**
+!backups/.gitignore
 chroma_db/
 .local/
 .claude/

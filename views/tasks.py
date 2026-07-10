@@ -1,10 +1,11 @@
 import logging
 from datetime import datetime
 
-from flask import Blueprint, flash, redirect, render_template, url_for
+from flask import Blueprint, flash, redirect, render_template, session, url_for
 
 from database_service import database_service
 from forms import TaskForm
+from utils.security_events import log_security_event
 
 bp = Blueprint("tasks", __name__)
 
@@ -131,6 +132,13 @@ def delete_task(task_id):
 
     try:
         database_service.delete_task(task_id)
+        log_security_event(
+            "destructive_action",
+            outcome="ok",
+            action="delete_task",
+            resource_id=task_id,
+            user_id=session.get("user_id"),
+        )
         flash("Task deleted successfully!", "success")
     except Exception as e:
         logging.exception("Error deleting task")

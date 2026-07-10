@@ -4,8 +4,13 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Register · Platinum Heritage</title>
+    {% if config.get('USE_TAILWIND_CDN') %}
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    {% else %}
+    <link href="{{ url_for('static', filename='css/tailwind-ph.css') }}" rel="stylesheet"/>
+    {% endif %}
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    {% if config.get('USE_TAILWIND_CDN') %}
     <script>
       tailwind.config = {
         theme: {
@@ -30,6 +35,7 @@
         }
       };
     </script>
+    {% endif %}
 </head>
 <body class="min-h-screen flex items-center justify-center bg-background text-on-surface font-sans p-4">
     <div class="w-full max-w-md p-6 md:p-8 bg-surface-white rounded-lg shadow-ph border border-outline-variant">

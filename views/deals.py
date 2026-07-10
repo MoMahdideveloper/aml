@@ -1,10 +1,11 @@
 import logging
 from typing import Any, Dict, List, Tuple
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 from database_service import database_service
 from forms import DealForm
+from utils.security_events import log_security_event
 
 bp = Blueprint("deals", __name__)
 
@@ -195,9 +196,9 @@ def add_deal_note(deal_id):
         return redirect(url_for("deals"))
 
     try:
-        from datetime import datetime
+        from datetime import UTC, datetime
 
-        stamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
+        stamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M")
         existing = deal.notes or ""
         new_notes = (existing + "\n" if existing else "") + f"[{stamp}] {note}"
         database_service.update_deal(deal_id, notes=new_notes)
@@ -217,6 +218,13 @@ def delete_deal(deal_id):
 
     try:
         database_service.delete_deal(deal_id)
+        log_security_event(
+            "destructive_action",
+            outcome="ok",
+            action="delete_deal",
+            resource_id=deal_id,
+            user_id=session.get("user_id"),
+        )
         flash("Deal deleted successfully!", "success")
     except Exception as e:
         logging.exception("Error deleting deal")

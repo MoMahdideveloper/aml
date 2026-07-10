@@ -120,7 +120,83 @@ jobs:
             tests/test_template_references.py \
             tests/test_docker_context.py \
             tests/test_accessibility_shell.py \
+            tests/test_query_counts.py \
+            tests/test_backup_sqlite.py \
+            tests/test_restore_sqlite.py \
+            tests/test_verify_recovery.py \
+            tests/test_backup_postgres.py \
+            tests/test_backup_retention.py \
+            tests/test_restore_postgres.py \
+            tests/test_destructive_ops.py \
+            tests/test_backup_uploads.py \
+            tests/test_auth_default_deny.py \
+            tests/test_auth_lifecycle.py \
+            tests/test_authz_deny_first.py \
+            tests/test_security_csrf.py \
+            tests/test_security_input_validation.py \
+            tests/test_security_xss.py \
+            tests/test_security_sensitive_data.py \
+            tests/test_security_headers.py \
+            tests/test_security_secret_scan.py \
+            tests/test_security_events.py \
+            tests/test_csrf_frontend_contract.py \
             --tb=short
+
+      - name: Secret pattern scan (path+pattern only)
+        run: python scripts/scan_secrets.py --out artifacts/SECRET_SCAN.json
+
+      - name: Synthetic SQLite backup/restore drill
+        run: |
+          python - <<'PY'
+          import sqlite3, subprocess, sys, json
+          from pathlib import Path
+          root = Path(".").resolve()
+          drill = root / "backups" / "ci-drill"
+          drill.mkdir(parents=True, exist_ok=True)
+          src = drill / "fixture.db"
+          conn = sqlite3.connect(src)
+          conn.executescript(
+              """
+              CREATE TABLE agents (id INTEGER PRIMARY KEY, name TEXT);
+              CREATE TABLE properties (id INTEGER PRIMARY KEY, title TEXT);
+              CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT);
+              CREATE TABLE deals (id INTEGER PRIMARY KEY);
+              CREATE TABLE tasks (id INTEGER PRIMARY KEY);
+              CREATE TABLE property_images (id INTEGER PRIMARY KEY);
+              CREATE TABLE dashboard_stat_snapshots (id INTEGER PRIMARY KEY, timestamp TEXT);
+              CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL);
+              INSERT INTO alembic_version VALUES ('ci-synthetic');
+              INSERT INTO agents (name) VALUES ('CI Agent');
+              INSERT INTO properties (title) VALUES ('CI Property');
+              INSERT INTO customers (name) VALUES ('CI Customer');
+              """
+          )
+          conn.commit()
+          conn.close()
+          bak = subprocess.run(
+              [sys.executable, "scripts/backup_sqlite.py", "--source", str(src), "--dest-dir", str(drill / "out"), "--json"],
+              check=False, capture_output=True, text=True,
+          )
+          print(bak.stdout)
+          assert bak.returncode == 0, bak.stderr
+          dump = next((drill / "out").glob("*.db"))
+          dest = drill / "restored.db"
+          rest = subprocess.run(
+              [sys.executable, "scripts/restore_sqlite.py", "--backup", str(dump), "--destination", str(dest), "--json"],
+              check=False, capture_output=True, text=True,
+          )
+          print(rest.stdout)
+          assert rest.returncode == 0, rest.stderr
+          ver = subprocess.run(
+              [sys.executable, "scripts/verify_recovery.py", "--database", str(dest), "--expected-alembic", "ci-synthetic"],
+              check=False, capture_output=True, text=True,
+          )
+          print(ver.stdout)
+          assert ver.returncode == 0, ver.stderr
+          data = json.loads(ver.stdout)
+          assert data.get("ok") is True
+          print("CI SQLite drill OK")
+          PY
 
   postgres-migrations:
     name: Postgres migrations + readiness
@@ -170,6 +246,26 @@ jobs:
       - name: App readiness against Postgres
         run: |
           pytest -q tests/test_migrations_postgres.py --tb=short
+
+      - name: Install PostgreSQL client tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Disposable Postgres backup validate (pg_dump -Fc + pg_restore --list)
+        env:
+          DATABASE_URL: postgresql://gptvli:ci_postgres_password@localhost:5432/gptvli
+        run: |
+          mkdir -p backups/ci-pg
+          python scripts/backup_postgres.py --dest-dir backups/ci-pg --json
+          test -n "$(ls backups/ci-pg/*.dump 2>/dev/null)"
+          python scripts/restore_postgres.py \
+            --dump "$(ls backups/ci-pg/*.dump | head -n1)" \
+            --target-db gptvli_restore_drill \
+            --drop-target-if-exists \
+            --json
+          # Original DB name still reachable
+          PGPASSWORD=ci_postgres_password psql -h localhost -U gptvli -d gptvli -c 'SELECT 1;'
 
   full-tests:
     name: Full test suite (informational)

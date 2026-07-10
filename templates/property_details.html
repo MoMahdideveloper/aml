@@ -3,7 +3,6 @@
 {% block title %}{{ property.title }} - Platinum Heritage{% endblock %}
 
 {% block extra_css %}
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
     .material-symbols-outlined {
         font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -48,7 +47,8 @@
                 <img id="heroGalleryImg"
                      src="{{ url_for('static', filename='uploads/' + hero_src) }}"
                      alt="{{ property.title }}"
-                     class="w-full h-full object-cover">
+                     class="w-full h-full object-cover"
+                     width="1280" height="720" decoding="async" fetchpriority="high">
                 {% else %}
                 <div class="w-full h-full flex flex-col items-center justify-center gap-2 text-secondary">
                     <span class="material-symbols-outlined text-5xl opacity-50">domain</span>
@@ -72,7 +72,7 @@
                         data-src="{{ url_for('static', filename='uploads/' + img.filename) }}"
                         aria-label="View photo {{ loop.index }}">
                     <img src="{{ url_for('static', filename='uploads/' + img.filename) }}"
-                         alt="" class="w-full h-full object-cover" loading="lazy">
+                         alt="" class="w-full h-full object-cover" width="160" height="90" loading="lazy" decoding="async">
                 </button>
                 {% endfor %}
             </div>
@@ -419,6 +419,26 @@
 <script src="{{ url_for('static', filename='js/property-edit-modal.js') }}"></script>
 <script>
 (function () {
+    // CSRF helper for AI / mutating property fetches (header contract for ENABLE_CSRF=1).
+    function getCsrfToken() {
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta && meta.content) return meta.content;
+        var input = document.querySelector('input[name="csrf_token"]');
+        return input && input.value ? input.value : '';
+    }
+    function propertyAiFetch(url, options) {
+        options = options || {};
+        var headers = Object.assign({
+            "X-Requested-With": "XMLHttpRequest",
+            "X-CSRFToken": getCsrfToken()
+        }, options.headers || {});
+        return fetch(url, Object.assign({
+            credentials: "same-origin",
+            headers: headers
+        }, options, { headers: headers }));
+    }
+    window.propertyAiFetch = propertyAiFetch;
+
     var shareData = {
         title: {{ property.title|tojson }},
         address: {{ (property.address or '')|tojson }},

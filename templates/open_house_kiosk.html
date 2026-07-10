@@ -4,9 +4,14 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Open House · {{ property.title if property else 'Kiosk' }} · Platinum Heritage</title>
+    {% if config.get('USE_TAILWIND_CDN') %}
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    {% else %}
+    <link href="{{ url_for('static', filename='css/tailwind-ph.css') }}" rel="stylesheet"/>
+    {% endif %}
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    {% if config.get('USE_TAILWIND_CDN') %}
     <script>
         tailwind.config = {
             theme: {
@@ -27,6 +32,7 @@
             },
         };
     </script>
+    {% endif %}
     <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;

@@ -157,6 +157,7 @@ After template class changes, re-run `npm run build:css` before shipping.
 - [ ] No API keys in git; rotate leaked keys
 - [ ] Review CSP if you add new third-party scripts
 - [ ] Backups for `DATABASE_URL` / upload volume (`static/uploads`)
+- [ ] Recovery drills documented and tested — see [BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md) and [BACKUP_RECOVERY_CONTRACT.md](BACKUP_RECOVERY_CONTRACT.md)
 
 ## 8. Post-deploy smoke
 
@@ -170,8 +171,19 @@ curl -fsSI https://your-host/ | head
 ## 9. Rollback
 
 1. Redeploy previous app image / git tag  
-2. `flask db downgrade -1` only if the failed release added a migration you must reverse  
-3. Restore DB snapshot if data migrations were destructive  
+2. `flask db downgrade -1` only if the failed release added a migration you must reverse — prefer **explicit revision** targets when heads were merged  
+3. Restore DB snapshot if data migrations were destructive — **disposable restore first**, then switch `DATABASE_URL` only after approval (see [BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md))  
+
+### Backup commands (quick reference)
+
+```bash
+# SQLite (explicit paths; online backup API)
+python scripts/backup_sqlite.py --source ./real_estate_crm.db --dest-dir ./backups
+
+# Postgres (credentials from env only — never on CLI)
+# export DATABASE_URL=postgresql://...
+python scripts/backup_postgres.py --dest-dir ./backups
+```
 
 ## 10. CI (GitHub Actions)
 

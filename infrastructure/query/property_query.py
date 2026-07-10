@@ -18,8 +18,11 @@ def build_property_search_query(search_request):
     Returns:
         SQLAlchemy query object for Property model
     """
-    # Start with base query excluding deleted properties and eager loading agent
-    query = Property.query.options(selectinload(Property.agent)).filter(Property.is_deleted.is_(False))
+    # Base query: exclude deleted; eager-load agent + images (list cards).
+    query = Property.query.options(
+        selectinload(Property.agent),
+        selectinload(Property.images),
+    ).filter(Property.is_deleted.is_(False))
 
     # Text search
     if search_request.query:

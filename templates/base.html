@@ -132,9 +132,33 @@
         outline: 2px solid #fff;
         outline-offset: 2px;
       }
+      /* Prefer :focus-visible so mouse clicks do not leave thick rings */
+      :focus:not(:focus-visible) {
+        outline: none;
+      }
       :focus-visible {
         outline: 2px solid #142435;
         outline-offset: 2px;
+      }
+      /* Placeholder / disabled: keep text readable (WCAG AA ~4.5:1 on light surfaces) */
+      ::placeholder {
+        color: #5d5e5f;
+        opacity: 1;
+      }
+      :disabled,
+      [aria-disabled="true"] {
+        color: #5d5e5f;
+        border-color: #c4c6cc;
+        cursor: not-allowed;
+        opacity: 1;
+      }
+      /* Prevent accidental page-level horizontal scroll at narrow widths */
+      img, video, canvas, svg {
+        max-width: 100%;
+        height: auto;
+      }
+      .ph-page {
+        max-width: 100%;
       }
       @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after {

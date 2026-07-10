@@ -3,7 +3,6 @@
 {% block title %}Customers - Platinum Heritage{% endblock %}
 
 {% block extra_css %}
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
     .material-symbols-outlined {
         font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -235,14 +234,15 @@
 </div>
 
 <!-- Add Customer Modal -->
-<div id="addCustomerModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50" data-modal>
-    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl w-full max-w-lg mx-4 p-8 max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="addCustomerTitle">
+<div id="addCustomerModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50" data-modal role="dialog" aria-modal="true" aria-labelledby="addCustomerTitle" aria-hidden="true">
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl w-full max-w-lg mx-4 p-8 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-6">
             <h2 id="addCustomerTitle" class="font-headline-md text-headline-md text-primary">Add New Client</h2>
-            <button data-modal-close
-                    data-modal-close onclick="window.PHModal ? PHModal.hide('addCustomerModal') : document.getElementById('addCustomerModal').classList.add('hidden')"
-                    class="text-secondary hover:text-primary transition-colors">
-                <span class="material-symbols-outlined">close</span>
+            <button type="button" data-modal-close
+                    onclick="window.PHModal ? PHModal.hide('addCustomerModal') : document.getElementById('addCustomerModal').classList.add('hidden')"
+                    class="text-secondary hover:text-primary transition-colors"
+                    aria-label="Close">
+                <span class="material-symbols-outlined" aria-hidden="true">close</span>
             </button>
         </div>
 

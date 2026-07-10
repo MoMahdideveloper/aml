@@ -29,11 +29,118 @@
         // Initialize auto-refresh
         initializeAutoRefresh();
 
-        // Initialize AI autofill
+        // Initialize AI autofill (property extract forms)
         initializeAIAutofill();
 
         console.log('Real Estate CRM initialized successfully');
     }
+
+/**
+ * AI text autofill for property forms. Sends CSRF when ENABLE_CSRF=1.
+ */
+function initializeAIAutofill() {
+    const btn = document.getElementById('ai_autofill_btn');
+    if (!btn) return;
+
+    btn.addEventListener('click', async () => {
+        const blobEl = document.getElementById('ai_blob');
+        const status = document.getElementById('ai_autofill_status');
+        const text = blobEl ? blobEl.value.trim() : '';
+
+        if (!text) {
+            if (status) {
+                status.textContent = 'Please paste some text.';
+                status.className = 'text-warning small';
+            }
+            return;
+        }
+
+        if (status) {
+            status.textContent = 'Asking AI...';
+            status.className = 'text-info small';
+        }
+        btn.disabled = true;
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ||
+                document.querySelector('input[name="csrf_token"]')?.value ||
+                '';
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+            if (csrfToken) {
+                headers['X-CSRFToken'] = csrfToken;
+            }
+
+            // Prefer Track A extract endpoint; fall back to legacy path if present.
+            let res = await fetch('/properties/extract-from-text', {
+                method: 'POST',
+                headers: headers,
+                credentials: 'same-origin',
+                body: JSON.stringify({ text: text })
+            });
+            if (res.status === 404) {
+                res = await fetch('/api/ai/parse/property', {
+                    method: 'POST',
+                    headers: headers,
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ text: text })
+                });
+            }
+
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Request failed');
+
+            const d = payload.data || payload || {};
+            const fieldMap = {
+                title: 'title',
+                address: 'address',
+                price: 'sale_price',
+                property_type: 'property_type',
+                bedrooms: 'bedrooms',
+                bathrooms: 'bathrooms',
+                square_feet: 'square_feet',
+                description: 'description',
+                year_built: 'year_built',
+                parking_spaces: 'parking_spaces',
+                floors: 'floors',
+                units: 'units',
+                property_condition: 'property_condition',
+                neighborhood: 'neighborhood',
+                property_category: 'category',
+                listing_type: 'listing_type',
+                rahn: 'rahn',
+                ejare: 'ejare'
+            };
+
+            Object.entries(fieldMap).forEach(([dataKey, fieldName]) => {
+                if (d[dataKey] === null || d[dataKey] === undefined || d[dataKey] === '') return;
+                const element = document.getElementById(fieldName) ||
+                    document.querySelector(`[name="${fieldName}"]`);
+                if (!element) return;
+                element.value = d[dataKey];
+                if (element.tagName === 'SELECT' || element.type === 'radio') {
+                    element.dispatchEvent(new Event('change'));
+                }
+            });
+
+            if (status) {
+                const confidence = Math.round((payload.confidence || 0) * 100);
+                status.textContent = `Autofilled (${confidence}% confidence)`;
+                status.className = 'text-success small';
+            }
+        } catch (e) {
+            if (status) {
+                status.textContent = 'AI autofill failed. Please try again.';
+                status.className = 'text-danger small';
+            }
+            console.error('AI Autofill error:', e);
+        } finally {
+            btn.disabled = false;
+        }
+    });
+}
 
 /**
  * Initialize Bootstrap tooltips

@@ -17,7 +17,9 @@
                 </span>
             </div>
             <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium leading-snug">{{ message }}</p>
+                <p class="text-sm font-medium leading-snug">
+                    <span class="sr-only">{{ cat|capitalize }}: </span>{{ message }}
+                </p>
             </div>
             <button type="button" data-dismiss
                     class="flex-shrink-0 p-1 rounded hover:bg-black/5 transition-colors opacity-70 hover:opacity-100"

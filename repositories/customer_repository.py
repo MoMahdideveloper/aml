@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from sqlalchemy import desc
+from sqlalchemy.orm import selectinload
 
 from database import db
 from repositories.base_repository import BaseRepository
@@ -12,8 +13,10 @@ class CustomerRepository(BaseRepository[Customer]):
         super().__init__(Customer)
 
     def list_all(self) -> List[Customer]:
+        # Eager-load deals so list pages can count pipeline without N+1.
         return (
             db.session.query(Customer)
+            .options(selectinload(Customer.deals))
             .filter(Customer.is_deleted.is_(False))
             .order_by(Customer.name)
             .all()

@@ -531,6 +531,16 @@ def delete_property(property_id, property_obj):
         if not success:
             raise PropertyOperationError("Failed to delete property")
 
+        from flask import session
+        from utils.security_events import log_security_event
+
+        log_security_event(
+            "destructive_action",
+            outcome="ok",
+            action="delete_property",
+            resource_id=property_id,
+            user_id=session.get("user_id"),
+        )
         flash(f'Property "{property_obj.title}" deleted successfully!', "success")
         return redirect(url_for("properties.properties"))
     except Exception as e:

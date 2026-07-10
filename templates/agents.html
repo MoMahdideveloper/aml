@@ -3,7 +3,6 @@
 {% block title %}Agent Management - Platinum Heritage{% endblock %}
 
 {% block extra_css %}
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
     .material-symbols-outlined {
         font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -322,8 +321,15 @@ async function openAgentEdit(agentId) {
   if (window.PHModal) PHModal.show(modal);
   else { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
   try {
+    var csrfEl = document.querySelector('meta[name="csrf-token"], input[name="csrf_token"]');
+    var csrfToken = csrfEl ? (csrfEl.getAttribute('content') || csrfEl.value || '') : '';
     var res = await fetch('/api/agents/' + agentId, {
-      headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+      credentials: 'same-origin',
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': csrfToken
+      }
     });
     if (!res.ok) throw new Error('Failed to load agent');
     var data = await res.json();

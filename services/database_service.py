@@ -1236,8 +1236,19 @@ class DatabaseService:
 
     @log_execution
     def get_deals(self) -> List[Deal]:
-        """Get all deals"""
-        return Deal.query.filter(Deal.is_deleted.is_(False)).order_by(desc(Deal.created_at)).all()
+        """Get all deals with relations for pipeline/list rendering."""
+        from sqlalchemy.orm import joinedload
+
+        return (
+            Deal.query.filter(Deal.is_deleted.is_(False))
+            .options(
+                joinedload(Deal.property),
+                joinedload(Deal.customer),
+                joinedload(Deal.agent),
+            )
+            .order_by(desc(Deal.created_at))
+            .all()
+        )
 
     @log_execution
     def get_deal(self, deal_id: int) -> Optional[Deal]:
@@ -1306,8 +1317,12 @@ class DatabaseService:
 
     @log_execution
     def get_tasks(self, agent_id: Optional[int] = None, status: Optional[str] = None) -> List[Task]:
-        """Get tasks with optional filtering"""
-        query = Task.query.filter(Task.is_deleted.is_(False))
+        """Get tasks with optional filtering (eager-load agent for list/dashboard)."""
+        from sqlalchemy.orm import selectinload
+
+        query = Task.query.options(selectinload(Task.agent)).filter(
+            Task.is_deleted.is_(False)
+        )
 
         if agent_id:
             query = query.filter(Task.agent_id == agent_id)

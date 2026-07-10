@@ -4,12 +4,107 @@ Flask application factory with device detection implementation.
 
 import os
 import logging
-from flask import Flask, g, request
+import uuid
+from flask import Flask, g, jsonify, redirect, request, session, url_for
 from flask_wtf import CSRFProtect
 from jinja2 import ChoiceLoader, FileSystemLoader
 
 from database import init_db
 from utils.device_detector import detect_device_type, is_mobile_device, is_desktop_device
+from utils.security_events import log_security_event
+
+
+def _is_api_request() -> bool:
+    """True when the client expects a JSON/API response rather than HTML."""
+    path = request.path or ""
+    if path.startswith("/api/"):
+        return True
+    accept = (request.headers.get("Accept") or "").lower()
+    return "application/json" in accept
+
+
+def register_auth_middleware(flask_app: Flask) -> None:
+    """Global default-deny session auth middleware.
+
+    When AUTH_DEFAULT_DENY_ENABLED=1 (default), unauthenticated requests to
+    non-public endpoints are redirected to login (HTML) or return 401 (API).
+    Set AUTH_DEFAULT_DENY_ENABLED=0 to disable (legacy open-CRM / most tests).
+    """
+    auth_enabled = os.environ.get("AUTH_DEFAULT_DENY_ENABLED", "1") == "1"
+    flask_app.config["AUTH_DEFAULT_DENY_ENABLED"] = auth_enabled
+
+    public_endpoints = {
+        "auth.login",
+        "auth.register",
+        "auth.logout",
+        "admin_environment.admin_login",
+        "admin_environment.admin_logout",
+        "main.set_language",
+        "static",
+        "favicon",
+        "healthz",
+        "readyz",
+    }
+    flask_app.config["PUBLIC_ENDPOINTS"] = public_endpoints
+
+    @flask_app.before_request
+    def _enforce_login():
+        if not flask_app.config.get("AUTH_DEFAULT_DENY_ENABLED", True):
+            return None
+
+        if request.method == "OPTIONS":
+            return None
+
+        endpoint = request.endpoint or ""
+        if endpoint in flask_app.config.get("PUBLIC_ENDPOINTS", public_endpoints):
+            return None
+
+        # Static assets sometimes lack a resolved endpoint early in dispatch.
+        if request.path.startswith("/static/"):
+            return None
+
+        # Admin session may access admin + admin-adjacent API surfaces.
+        if session.get("admin_authenticated") and (
+            request.path.startswith("/admin/")
+            or request.path.startswith("/api/automations")
+            or request.path.startswith("/api/admin/")
+        ):
+            return None
+
+        if request.path.startswith("/admin/"):
+            if session.get("admin_authenticated"):
+                return None
+            log_security_event(
+                "auth_denial",
+                outcome="denied",
+                reason="admin_required",
+                path=request.path,
+                method=request.method,
+                user_id=session.get("user_id"),
+            )
+            if _is_api_request():
+                return jsonify({"error": "Unauthorized. Please log in."}), 401
+            return redirect(url_for("admin_environment.admin_login"))
+
+        if session.get("user_id"):
+            return None
+
+        log_security_event(
+            "auth_denial",
+            outcome="denied",
+            reason="login_required",
+            path=request.path,
+            method=request.method,
+        )
+        if _is_api_request():
+            return jsonify({"error": "Unauthorized. Please log in."}), 401
+
+        # Relative path only — absolute URLs fail _is_safe_next_url after login.
+        next_path = request.path
+        if request.query_string:
+            next_path = f"{request.path}?{request.query_string.decode()}"
+        session["next_url"] = next_path
+        return redirect(url_for("auth.login"))
 
 
 def create_app(test_config=None):
@@ -64,15 +159,28 @@ def create_app(test_config=None):
     # Initialize database and Flask-Migrate (via database.init_db).
     init_db(app)
 
+    # Cache + rate limiter (memory storage by default — see extensions.py)
+    from extensions import init_extensions
+
+    init_extensions(app)
+
+    # Login POST rate limit: on in production, or when ENABLE_LOGIN_RATE_LIMIT=1.
+    _login_rl = os.environ.get("ENABLE_LOGIN_RATE_LIMIT")
+    if _login_rl is None:
+        _login_rl = "1" if is_production else "0"
+    app.config["LOGIN_RATE_LIMIT_ENABLED"] = _login_rl == "1"
+
     # CSRF: on by default in production; opt-in for local via ENABLE_CSRF=1
     csrf_default = "1" if is_production else "0"
     if os.environ.get("ENABLE_CSRF", csrf_default) == "1":
         CSRFProtect(app)
 
-    # Device detection middleware
+    # Correlation id + device detection
     @app.before_request
     def detect_device():
         """Detect device type and store in Flask g object before each request."""
+        incoming = (request.headers.get("X-Request-ID") or "").strip()
+        g.request_id = incoming[:64] if incoming else uuid.uuid4().hex
         user_agent = request.headers.get('User-Agent')
         g.device_type = detect_device_type(user_agent)
         g.is_mobile = is_mobile_device(user_agent)
@@ -131,6 +239,9 @@ def create_app(test_config=None):
         auth_bp,
     ):
         app.register_blueprint(bp)
+
+    # Default-deny session gate (AUTH_DEFAULT_DENY_ENABLED, default on).
+    register_auth_middleware(app)
 
     # App-level HTML/JSON error pages (404/500 PH shells). Blueprint handlers
     # remain for in-blueprint not-found redirects on list CRUD flows.
@@ -200,6 +311,14 @@ def create_app(test_config=None):
                 "Strict-Transport-Security",
                 "max-age=31536000; includeSubDomains",
             )
+        # Avoid caching credential / admin surfaces in shared browsers.
+        path = (request.path or "")
+        if path.startswith(("/admin/", "/auth/")):
+            resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+            resp.headers.setdefault("Pragma", "no-cache")
+        rid = getattr(g, "request_id", None)
+        if rid:
+            resp.headers.setdefault("X-Request-ID", rid)
         return resp
 
     @app.route("/healthz")

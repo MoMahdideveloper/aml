@@ -349,7 +349,7 @@ class TestEnvironmentViews:
         data = json.loads(response.data)
         assert data['error'] == 'Admin authentication required'
 
-    @patch('views.admin_environment.environment_service')
+    @patch('views.admin_environment.env_config_service')
     def test_environment_page_service_error(self, mock_service, authenticated_client):
         """Test environment page when service throws error"""
         mock_service.get_all_variables.side_effect = Exception("Service error")
@@ -360,7 +360,7 @@ class TestEnvironmentViews:
         assert response.status_code == 200
         assert b'Critical Error' in response.data or b'Unable to load' in response.data
 
-    @patch('views.admin_environment.environment_service')
+    @patch('views.admin_environment.env_config_service')
     def test_create_variable_service_error(self, mock_service, authenticated_client):
         """Test creating variable when service throws error"""
         mock_service.create_variable.side_effect = RuntimeError("Runtime error")
@@ -373,7 +373,7 @@ class TestEnvironmentViews:
         assert response.status_code == 200
         assert b'Runtime Error' in response.data
 
-    @patch('views.admin_environment.environment_service')
+    @patch('views.admin_environment.env_config_service')
     def test_update_variable_service_error(self, mock_service, authenticated_client):
         """Test updating variable when service throws error"""
         mock_service.update_variable.side_effect = RuntimeError("Update error")
@@ -388,7 +388,7 @@ class TestEnvironmentViews:
         assert data['success'] is False
         assert 'runtime_error' in data['error_type']
 
-    @patch('views.admin_environment.environment_service')
+    @patch('views.admin_environment.env_config_service')
     def test_delete_variable_service_error(self, mock_service, authenticated_client):
         """Test deleting variable when service throws error"""
         mock_service.delete_variable.side_effect = RuntimeError("Delete error")

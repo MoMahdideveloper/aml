@@ -1,9 +1,10 @@
 import logging
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, session, url_for
 
 from database_service import database_service
 from forms import CustomerForm
+from utils.security_events import log_security_event
 
 bp = Blueprint("customers", __name__)
 
@@ -150,6 +151,13 @@ def delete_customer(customer_id):
 
     try:
         database_service.delete_customer(customer_id)
+        log_security_event(
+            "destructive_action",
+            outcome="ok",
+            action="delete_customer",
+            resource_id=customer_id,
+            user_id=session.get("user_id"),
+        )
         flash(f"Customer '{customer.name}' deleted successfully!", "success")
     except Exception as e:
         logging.exception("Error deleting customer")

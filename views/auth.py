@@ -4,6 +4,7 @@ Handles user registration, login, logout and session management.
 """
 
 import logging
+import os
 from datetime import UTC, datetime
 from urllib.parse import urlparse
 
@@ -16,7 +17,9 @@ from flask import (
     session,
     url_for,
 )
+from extensions import limiter
 from utils.execution_tracer import log_execution
+from utils.security_events import log_security_event
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -36,7 +39,22 @@ def _is_safe_next_url(target: str | None) -> bool:
     return parsed.scheme == "" and parsed.netloc == ""
 
 
+def _login_rate_limit_exempt() -> bool:
+    """Exempt when app config LOGIN_RATE_LIMIT_ENABLED is false (set in create_app)."""
+    try:
+        from flask import current_app
+
+        return not bool(current_app.config.get("LOGIN_RATE_LIMIT_ENABLED", False))
+    except Exception:
+        return True
+
+
 @bp.route("/login", methods=["GET", "POST"])
+@limiter.limit(
+    lambda: os.environ.get("LOGIN_RATE_LIMIT", "10 per 15 minutes"),
+    methods=["POST"],
+    exempt_when=_login_rate_limit_exempt,
+)
 @log_execution
 def login():
     """User login page"""
@@ -61,10 +79,21 @@ def login():
 
         if user and user.check_password(password):
             if not user.is_active:
+                log_security_event(
+                    "login_failure",
+                    outcome="deactivated",
+                    username=username,
+                    path=request.path,
+                )
                 flash("Your account is deactivated. Contact admin.", "error")
                 return render_template("auth_login.html")
 
-            # Set session
+            # Capture post-login target before clearing session (fixation resistance).
+            next_url = request.args.get("next") or session.get("next_url")
+
+            # Session fixation: rotate session id / drop pre-login attacker keys.
+            session.clear()
+            session.permanent = True
             session["user_id"] = user.id
             session["user_role"] = user.role
             session["user_name"] = user.full_name or user.username
@@ -75,13 +104,24 @@ def login():
             user.last_login = _utcnow_naive()
             _db.session.commit()
 
+            log_security_event(
+                "login_success",
+                outcome="ok",
+                user_id=user.id,
+                username=user.username,
+                path=request.path,
+            )
             flash(f"Welcome back, {user.full_name or user.username}!", "success")
-            next_url = request.args.get("next") or session.pop("next_url", None)
             if _is_safe_next_url(next_url):
                 return redirect(next_url)
-            session.pop("next_url", None)
             return redirect(url_for("main.dashboard"))
         else:
+            log_security_event(
+                "login_failure",
+                outcome="invalid_credentials",
+                username=username,
+                path=request.path,
+            )
             flash("Invalid username or password", "error")
 
     return render_template("auth_login.html")
@@ -154,10 +194,15 @@ def register():
 @bp.route("/logout")
 @log_execution
 def logout():
-    """User logout"""
-    session.pop("user_id", None)
-    session.pop("user_role", None)
-    session.pop("user_name", None)
+    """User logout — clear entire session so nothing survives identity change."""
+    prior_user = session.get("user_id")
+    session.clear()
+    log_security_event(
+        "logout",
+        outcome="ok",
+        user_id=prior_user,
+        path=request.path,
+    )
     flash("Logged out successfully", "success")
     return redirect(url_for("auth.login"))
 

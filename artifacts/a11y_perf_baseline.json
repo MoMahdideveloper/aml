@@ -1,0 +1,359 @@
+{
+  "mode": "USE_TAILWIND_CDN=False (test client)",
+  "routes": [
+    {
+      "route": "/",
+      "status": 200,
+      "ttfb_ms": 136.9,
+      "html_bytes": 28069,
+      "title": "Dashboard \u00b7 Platinum Heritage",
+      "h1": [
+        "Estate intelligence, live portfolio motion."
+      ],
+      "heading_levels": [
+        "1",
+        "2",
+        "2",
+        "3",
+        "2",
+        "2"
+      ],
+      "landmarks": {
+        "main": true,
+        "nav": true,
+        "aside": true,
+        "header": true,
+        "footer": false
+      },
+      "has_prod_css": true,
+      "has_cdn": false,
+      "issues": []
+    },
+    {
+      "route": "/dashboard",
+      "status": 200,
+      "ttfb_ms": 8.4,
+      "html_bytes": 28069,
+      "title": "Dashboard \u00b7 Platinum Heritage",
+      "h1": [
+        "Estate intelligence, live portfolio motion."
+      ],
+      "heading_levels": [
+        "1",
+        "2",
+        "2",
+        "3",
+        "2",
+        "2"
+      ],
+      "landmarks": {
+        "main": true,
+        "nav": true,
+        "aside": true,
+        "header": true,
+        "footer": false
+      },
+      "has_prod_css": true,
+      "has_cdn": false,
+      "issues": []
+    },
+    {
+      "route": "/properties",
+      "status": 200,
+      "ttfb_ms": 35.0,
+      "html_bytes": 59275,
+      "title": "Property Inventory - Platinum Heritage",
+      "h1": [
+        "Property Inventory"
+      ],
+      "heading_levels": [
+        "1",
+        "2",
+        "2",
+        "3",
+        "3",
+        "2",
+        "3"
+      ],
+      "landmarks": {
+        "main": true,
+        "nav": true,
+        "aside": true,
+        "header": true,
+        "footer": false
+      },
+      "has_prod_css": true,
+      "has_cdn": false,
+      "issues": []
+    },
+    {
+      "route": "/agents",
+      "status": 200,
+      "ttfb_ms": 17.6,
+      "html_bytes": 36759,
+      "title": "Agent Management - Platinum Heritage",
+      "h1": [
+        "Agent management"
+      ],
+      "heading_levels": [
+        "1",
+        "2",
+        "2"
+      ],
+      "landmarks": {
+        "main": true,
+        "nav": true,
+        "aside": true,
+        "header": true,
+        "footer": false
+      },
+      "has_prod_css": true,
+      "has_cdn": false,
+      "issues": []
+    },
+    {
+      "route": "/customers",
+      "status": 200,
+      "ttfb_ms": 22.9,
+      "html_bytes": 47872,
+      "title": "Customers - Platinum Heritage",
+      "h1": [
+        "Clients"
+      ],
+      "heading_levels": [
+        "1",
+        "2",
+        "2",
+        "3",
+        "4",
+        "4"
+      ],
+      "landmarks": {
+        "main": true,
+        "nav": true,
+        "aside": true,
+        "header": true,
+        "footer": false
+      },
+      "has_prod_css": true,
+      "has_cdn": false,
+      "issues": []
+    },
+    {
+      "route": "/deals",
+      "status": 200,
+      "ttfb_ms": 24.4,
+      "html_bytes": 41758,
+      "title": "Deals Pipeline - Platinum Heritage",
+      "h1": [
+        "Deals Pipeline"
+      ],
+      "heading_levels": [
+        "1",
+        "2",
+        "3",
+        "3",
+        "3",
+        "3",
+        "3",
+        "3",
+        "2",
+        "2"
+      ],
+      "landmarks": {
+        "main": true,
+        "nav": true,
+        "aside": true,
+        "header": true,
+        "footer": false
+      },
+      "has_prod_css": true,
+      "has_cdn": false,
+      "issues": []
+    },
+    {
+      "route": "/tasks",
+      "status": 200,
+      "ttfb_ms": 20.0,
+      "html_bytes": 28784,
+      "title": "Tasks - Platinum Heritage",
+      "h1": [
+        "Tasks"
+      ],
+      "heading_levels": [
+        "1",
+        "2"
+      ],
+      "landmarks": {
+        "main": true,
+        "nav": true,
+        "aside": true,
+        "header": true,
+        "footer": false
+      },
+      "has_prod_css": true,
+      "has_cdn": false,
+      "issues": []
+    },
+    {
+      "route": "/recommendations",
+      "status": 200,
+      "ttfb_ms": 42.2,
+      "html_bytes": 37302,
+      "title": "Client opportunities \u00b7 Platinum Heritage",
+      "h1": [
+        "Client opportunities"
+      ],
+      "heading_levels": [
+        "1"
+      ],
+      "landmarks": {
+        "main": true,
+        "nav": true,
+        "aside": true,
+        "header": true,
+        "footer": false
+      },
+      "has_prod_css": true,
+      "has_cdn": false,
+      "issues": []
+    },
+    {
+      "route": "/market",
+      "status": 200,
+      "ttfb_ms": 15.2,
+      "html_bytes": 26590,
+      "title": "Market Analysis \u00b7 Platinum Heritage",
+      "h1": [
+        "Market Analysis"
+      ],
+      "heading_levels": [
+        "1",
+        "2",
+        "2",
+        "3",
+        "2",
+        "2"
+      ],
+      "landmarks": {
+        "main": true,
+        "nav": true,
+        "aside": true,
+        "header": true,
+        "footer": false
+      },
+      "has_prod_css": true,
+      "has_cdn": false,
+      "issues": []
+    },
+    {
+      "route": "/properties/map",
+      "status": 200,
+      "ttfb_ms": 7.7,
+      "html_bytes": 23562,
+      "title": "Property Map \u00b7 Platinum Heritage",
+      "h1": [
+        "Property Map"
+      ],
+      "heading_levels": [
+        "1"
+      ],
+      "landmarks": {
+        "main": true,
+        "nav": true,
+        "aside": true,
+        "header": true,
+        "footer": false
+      },
+      "has_prod_css": true,
+      "has_cdn": false,
+      "issues": []
+    },
+    {
+      "route": "/settings",
+      "status": 200,
+      "ttfb_ms": 6.1,
+      "html_bytes": 24365,
+      "title": "Settings \u00b7 Platinum Heritage",
+      "h1": [
+        "Settings"
+      ],
+      "heading_levels": [
+        "1",
+        "2",
+        "2"
+      ],
+      "landmarks": {
+        "main": true,
+        "nav": true,
+        "aside": true,
+        "header": true,
+        "footer": false
+      },
+      "has_prod_css": true,
+      "has_cdn": false,
+      "issues": []
+    },
+    {
+      "route": "/auth/login",
+      "status": 200,
+      "ttfb_ms": 4.5,
+      "html_bytes": 3722,
+      "title": "Login - Platinum Heritage",
+      "h1": [
+        "Platinum Heritage"
+      ],
+      "heading_levels": [
+        "1"
+      ],
+      "landmarks": {
+        "main": false,
+        "nav": false,
+        "aside": false,
+        "header": false,
+        "footer": false
+      },
+      "has_prod_css": true,
+      "has_cdn": false,
+      "issues": [
+        "missing_main_content_id",
+        "missing_skip_link",
+        "missing_aria_current"
+      ]
+    },
+    {
+      "route": "/no-such-a11y-404",
+      "status": 404,
+      "ttfb_ms": 2.1,
+      "html_bytes": 18771,
+      "title": "Page Not Found \u00b7 Platinum Heritage",
+      "h1": [
+        "Page not found"
+      ],
+      "heading_levels": [
+        "1"
+      ],
+      "landmarks": {
+        "main": true,
+        "nav": true,
+        "aside": true,
+        "header": true,
+        "footer": false
+      },
+      "has_prod_css": true,
+      "has_cdn": false,
+      "issues": []
+    }
+  ],
+  "static_assets_bytes": {
+    "static/css/tailwind-ph.css": 76237,
+    "static/css/stitch.css": 18615,
+    "static/css/style.css": 5874,
+    "static/js/app-core.js": 20152
+  },
+  "top_issues": [
+    "missing_aria_current",
+    "missing_main_content_id",
+    "missing_skip_link"
+  ]
+}

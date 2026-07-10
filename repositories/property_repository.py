@@ -33,7 +33,10 @@ class PropertyRepository(BaseRepository[Property]):
     ) -> List[Property]:
         query = (
             db.session.query(Property)
-            .options(selectinload(Property.agent))
+            .options(
+                selectinload(Property.agent),
+                selectinload(Property.images),  # avoid N+1 on list cards
+            )
             .filter(Property.is_deleted.is_(False))
         )
 

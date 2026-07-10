@@ -1,10 +1,11 @@
 import logging
 from datetime import datetime, timedelta
 
-from flask import Blueprint, flash, redirect, render_template, url_for, request, jsonify, abort
+from flask import Blueprint, flash, redirect, render_template, url_for, request, jsonify, abort, session
 
 from database_service import database_service
 from forms import AgentForm
+from utils.security_events import log_security_event
 from utils.time_utc import utc_now_naive
 
 bp = Blueprint("agents", __name__)
@@ -210,6 +211,13 @@ def delete_agent(agent_id):
 
     try:
         database_service.delete_agent(agent_id)
+        log_security_event(
+            "destructive_action",
+            outcome="ok",
+            action="delete_agent",
+            resource_id=agent_id,
+            user_id=session.get("user_id"),
+        )
         flash(f"Agent '{agent.name}' deleted successfully!", "success")
     except Exception as e:
         logging.exception("Error deleting agent")
