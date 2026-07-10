@@ -5,6 +5,7 @@ from flask import Blueprint, flash, redirect, render_template, url_for, request,
 
 from database_service import database_service
 from forms import AgentForm
+from utils.time_utc import utc_now_naive
 
 bp = Blueprint("agents", __name__)
 
@@ -31,7 +32,7 @@ def _agent_performance(agent):
         except (TypeError, ValueError):
             pass
 
-    month_ago = datetime.utcnow() - timedelta(days=30)
+    month_ago = utc_now_naive() - timedelta(days=30)
     deals_this_month = []
     for d in deals:
         created = getattr(d, "created_at", None) or getattr(d, "updated_at", None)

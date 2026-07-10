@@ -36,6 +36,9 @@
         </div>
         <div class="text-xs font-medium flex items-center {{ 'text-error' if trend_is_down else 'text-primary' }}">
             <span class="material-symbols-outlined text-[16px] mr-1" aria-hidden="true">{{ card.trend_icon }}</span>
+            <span class="sr-only">
+                {% if card.trend_direction == 'up' %}Trending up{% elif card.trend_direction == 'down' %}Trending down{% else %}Unchanged{% endif %}
+            </span>
             {{ card.trend_sign }}{{ card.trend_percent }}% vs last month
         </div>
     {% if card.href %}</a>{% else %}</article>{% endif %}

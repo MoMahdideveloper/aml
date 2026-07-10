@@ -203,7 +203,16 @@ tests and manual dashboard verification
 - [ ] Human has reviewed migration scope before production deployment.
 
 ## Status (2026-07-10)
-**Implemented (Track A).** Migration `j5k6l7m8n9o0`, repository snapshot + trend helpers, nested bento metrics, tests in `tests/test_dashboard_trends.py`. Remaining open: production migration review and optional manual dashboard spot-check.
+**Implemented + release-verified (Track A).** Migration `j5k6l7m8n9o0`, repository snapshot + trend helpers, nested bento metrics, tests in `tests/test_dashboard_trends.py`.
+
+**Verification evidence (final pass):**
+- Focused: `test_dashboard_trends.py` 17 passed; template+smoke 6 passed; idempotent + 30-day/±3-day fallback covered.
+- Track A gate: **69 passed** (`dashboard_trends` + `dashboard_template` + `platinum_heritage_ui` + smoke + simple + template_replacement), including new PH 404/500 regression.
+- Combined with CI prod extras: **86 passed, 3 skipped**.
+- Manual browser: `/dashboard` desktop **1440×900** and mobile **390×844** — positive / negative / neutral trends correct; core list modals open; map/settings/recommendations 200; PH 404 shell confirmed.
+- **Proven defect fixed:** `create_app()` now calls `register_error_handlers(app)` so `404.html` / `500.html` render (was Werkzeug default).
+- Disposable migration: upgrade/downgrade of `j5k6l7m8n9o0` OK; production **not** upgraded. Workspace `flask db current` may lag head `k6l7m8n9o0p1`.
+- Remaining open: **human production migration review + deploy/commit approval** (do not apply prod migrations, commit, push, or delete `_archive/` without explicit request).
 
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |

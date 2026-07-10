@@ -215,6 +215,35 @@ def test_list_pages_use_data_open_modal(client, db_setup):
         assert f'data-open-modal="{modal_id}"' in html
 
 
+def test_ph_404_and_500_error_pages(client, app, db_setup):
+    """Unknown routes and server errors must render Platinum Heritage error shells."""
+    missing = client.get("/this-route-does-not-exist-ph-404")
+    assert missing.status_code == 404
+    missing_html = missing.get_data(as_text=True)
+    assert "Platinum Heritage" in missing_html
+    assert "Page not found" in missing_html or "Page Not Found" in missing_html
+    assert "Not Found The requested URL was not found on the server" not in missing_html
+
+    # Session-scoped app may already have handled requests, so invoke the
+    # registered 500 handler instead of adding a late test-only route.
+    from werkzeug.exceptions import InternalServerError
+
+    with app.test_request_context("/"):
+        errored = app.handle_http_exception(InternalServerError())
+    if isinstance(errored, tuple):
+        errored_resp, errored_status = errored[0], errored[1]
+    else:
+        errored_resp, errored_status = errored, errored.status_code
+    assert errored_status == 500
+    errored_html = (
+        errored_resp.get_data(as_text=True)
+        if hasattr(errored_resp, "get_data")
+        else str(errored_resp)
+    )
+    assert "Platinum Heritage" in errored_html
+    assert "Server error" in errored_html or "Server Error" in errored_html
+
+
 def test_active_template_url_for_endpoints_exist(app):
     text = ""
     for p in Path("templates").rglob("*.html"):

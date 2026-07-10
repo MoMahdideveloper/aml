@@ -132,6 +132,12 @@ def create_app(test_config=None):
     ):
         app.register_blueprint(bp)
 
+    # App-level HTML/JSON error pages (404/500 PH shells). Blueprint handlers
+    # remain for in-blueprint not-found redirects on list CRUD flows.
+    from error_handlers import register_error_handlers
+
+    register_error_handlers(app)
+
     # Backward-compatible endpoint aliases so existing templates using
     # url_for('properties') etc. keep working without 'main.' prefix.
     alias_rules = [

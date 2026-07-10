@@ -1,7 +1,7 @@
 # schemas.py
 from typing import List, Optional
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 
 
 class PropertyAI(BaseModel):
@@ -30,7 +30,8 @@ class PropertyAI(BaseModel):
     rahn: Optional[float] = None  # for deposit (Iran market)
     ejare: Optional[float] = None  # for monthly rent (Iran market)
 
-    @validator("property_features", pre=True)
+    @field_validator("property_features", mode="before")
+    @classmethod
     def split_features(cls, v):
         if isinstance(v, str):
             return [x.strip() for x in v.split(",") if x.strip()]
@@ -49,7 +50,8 @@ class CustomerAI(BaseModel):
     bedrooms_min: Optional[int] = None
     bathrooms_min: Optional[int] = None
 
-    @validator("desired_neighborhoods", pre=True)
+    @field_validator("desired_neighborhoods", mode="before")
+    @classmethod
     def split_neighborhoods(cls, v):
         if isinstance(v, str):
             return [x.strip() for x in v.split(",") if x.strip()]

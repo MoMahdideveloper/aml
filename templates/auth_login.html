@@ -4,12 +4,16 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Login - Platinum Heritage</title>
+    {% if config.get('USE_TAILWIND_CDN') %}
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    {% else %}
+    <link href="{{ url_for('static', filename='css/tailwind-ph.css') }}" rel="stylesheet"/>
+    {% endif %}
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    {% if config.get('USE_TAILWIND_CDN') %}
     <script id="tailwind-config">
         tailwind.config = {
           darkMode: "class",
@@ -103,6 +107,7 @@
           }
         }
     </script>
+    {% endif %}
     <style>
         body {
             background-color: #F4F2E5; /* Cream background from style guidance */

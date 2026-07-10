@@ -9,7 +9,7 @@
             <i class="fas fa-building text-on-primary text-lg"></i>
         </div>
         <div class="ml-3 min-w-0 flex-1">
-            <h1 class="text-base text-on-surface font-semibold tracking-tight truncate">Platinum Heritage</h1>
+            <p class="text-base text-on-surface font-semibold tracking-tight truncate">Platinum Heritage</p>
             <p class="text-xs text-on-surface-variant uppercase tracking-[0.08em]">CRM</p>
         </div>
         {# Desktop match-alert bell #}
@@ -60,8 +60,9 @@
                       bg-primary text-on-primary
                   {% else %}
                       text-on-surface-variant hover:bg-surface-container hover:text-on-surface
-                  {% endif %}">
-            <i class="fas {{ icon }} mr-3 w-4 text-center opacity-90"></i>
+                  {% endif %}"
+           {% if is_active %}aria-current="page"{% endif %}>
+            <i class="fas {{ icon }} mr-3 w-4 text-center opacity-90" aria-hidden="true"></i>
             <span>{{ label }}</span>
         </a>
         {% endfor %}
@@ -72,97 +73,86 @@
                       bg-primary text-on-primary
                   {% else %}
                       text-on-surface-variant hover:bg-surface-container hover:text-on-surface
-                  {% endif %}">
-            <i class="fas fa-map-marked-alt mr-3 w-4 text-center opacity-90"></i>
+                  {% endif %}"
+           {% if ep == 'properties.map_view' %}aria-current="page"{% endif %}>
+            <i class="fas fa-map-marked-alt mr-3 w-4 text-center opacity-90" aria-hidden="true"></i>
             <span>Map</span>
         </a>
 
         <p class="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/70">Insights</p>
 
+        {% set market_active = ep in ['main.market_analysis', 'market_analysis', 'market'] %}
         <a href="{{ url_for('main.market_analysis') }}"
            class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                  {% if ep in ['main.market_analysis', 'market_analysis', 'market'] %}
-                      bg-primary text-on-primary
-                  {% else %}
-                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
-                  {% endif %}">
-            <i class="fas fa-chart-line mr-3 w-4 text-center opacity-90"></i>
+                  {% if market_active %}bg-primary text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}"
+           {% if market_active %}aria-current="page"{% endif %}>
+            <i class="fas fa-chart-line mr-3 w-4 text-center opacity-90" aria-hidden="true"></i>
             <span>Market</span>
         </a>
+        {% set compare_active = ep in ['main.property_compare', 'property_compare', 'compare'] %}
         <a href="{{ url_for('main.property_compare') }}"
            class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                  {% if ep in ['main.property_compare', 'property_compare', 'compare'] %}
-                      bg-primary text-on-primary
-                  {% else %}
-                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
-                  {% endif %}">
-            <i class="fas fa-columns mr-3 w-4 text-center opacity-90"></i>
+                  {% if compare_active %}bg-primary text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}"
+           {% if compare_active %}aria-current="page"{% endif %}>
+            <i class="fas fa-columns mr-3 w-4 text-center opacity-90" aria-hidden="true"></i>
             <span>Compare</span>
         </a>
+        {% set roi_active = ep in ['main.roi_calculator', 'roi_calculator', 'calculators'] %}
         <a href="{{ url_for('main.roi_calculator') }}"
            class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                  {% if ep in ['main.roi_calculator', 'roi_calculator', 'calculators'] %}
-                      bg-primary text-on-primary
-                  {% else %}
-                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
-                  {% endif %}">
-            <i class="fas fa-calculator mr-3 w-4 text-center opacity-90"></i>
+                  {% if roi_active %}bg-primary text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}"
+           {% if roi_active %}aria-current="page"{% endif %}>
+            <i class="fas fa-calculator mr-3 w-4 text-center opacity-90" aria-hidden="true"></i>
             <span>ROI</span>
         </a>
 
         <p class="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/70">Outreach</p>
 
+        {% set messaging_active = ep and 'messaging' in ep %}
         <a href="{{ url_for('main.messaging') }}"
            class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                  {% if ep and 'messaging' in ep %}
-                      bg-primary text-on-primary
-                  {% else %}
-                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
-                  {% endif %}">
-            <i class="fas fa-comments mr-3 w-4 text-center opacity-90"></i>
+                  {% if messaging_active %}bg-primary text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}"
+           {% if messaging_active %}aria-current="page"{% endif %}>
+            <i class="fas fa-comments mr-3 w-4 text-center opacity-90" aria-hidden="true"></i>
             <span>Messaging</span>
         </a>
+        {% set sms_active = ep and 'sms' in ep %}
         <a href="{{ url_for('main.sms_broadcast') }}"
            class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                  {% if ep and 'sms' in ep %}
-                      bg-primary text-on-primary
-                  {% else %}
-                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
-                  {% endif %}">
-            <i class="fas fa-sms mr-3 w-4 text-center opacity-90"></i>
+                  {% if sms_active %}bg-primary text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}"
+           {% if sms_active %}aria-current="page"{% endif %}>
+            <i class="fas fa-sms mr-3 w-4 text-center opacity-90" aria-hidden="true"></i>
             <span>SMS</span>
         </a>
+        {% set contract_active = ep and 'contract' in ep %}
         <a href="{{ url_for('main.smart_contract') }}"
            class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                  {% if ep and 'contract' in ep %}
-                      bg-primary text-on-primary
-                  {% else %}
-                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
-                  {% endif %}">
-            <i class="fas fa-file-contract mr-3 w-4 text-center opacity-90"></i>
+                  {% if contract_active %}bg-primary text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}"
+           {% if contract_active %}aria-current="page"{% endif %}>
+            <i class="fas fa-file-contract mr-3 w-4 text-center opacity-90" aria-hidden="true"></i>
             <span>Contracts</span>
         </a>
+        {% set kiosk_active = ep and ('kiosk' in ep or 'open_house' in ep) %}
         <a href="{{ url_for('main.open_house_kiosk') }}"
            class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                  {% if ep and ('kiosk' in ep or 'open_house' in ep) %}
-                      bg-primary text-on-primary
-                  {% else %}
-                      text-on-surface-variant hover:bg-surface-container hover:text-on-surface
-                  {% endif %}">
-            <i class="fas fa-tablet-alt mr-3 w-4 text-center opacity-90"></i>
+                  {% if kiosk_active %}bg-primary text-on-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}"
+           {% if kiosk_active %}aria-current="page"{% endif %}>
+            <i class="fas fa-tablet-alt mr-3 w-4 text-center opacity-90" aria-hidden="true"></i>
             <span>Open house</span>
         </a>
     </nav>
 
     <div class="mt-auto border-t border-outline-variant px-3 py-3 space-y-1">
+        {% set settings_active = ep and (ep.startswith('auth.') or ep == 'settings') %}
         <a href="/settings"
            class="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                  {% if ep and (ep.startswith('auth.') or ep == 'settings') %}
+                  {% if settings_active %}
                       bg-primary/10 text-primary
                   {% else %}
                       text-on-surface-variant hover:bg-surface-container hover:text-on-surface
-                  {% endif %}">
-            <i class="fas fa-cog mr-3 w-4 text-center"></i>
+                  {% endif %}"
+           {% if settings_active %}aria-current="page"{% endif %}>
+            <i class="fas fa-cog mr-3 w-4 text-center" aria-hidden="true"></i>
             <span>Settings</span>
         </a>
         <div class="flex items-center px-3 py-2 space-x-3">

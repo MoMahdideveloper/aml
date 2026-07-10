@@ -119,6 +119,7 @@ jobs:
             tests/test_dashboard_trends.py \
             tests/test_template_references.py \
             tests/test_docker_context.py \
+            tests/test_accessibility_shell.py \
             --tb=short
 
   postgres-migrations:

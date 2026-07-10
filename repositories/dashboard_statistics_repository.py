@@ -15,6 +15,7 @@ from sqlalchemy_models import (
     Property,
     Task,
 )
+from utils.time_utc import utc_now_naive
 
 # Bento-card metrics that receive nested {value, trend} on the dashboard.
 TREND_METRIC_KEYS = (
@@ -197,7 +198,7 @@ class DashboardStatisticsRepository(BaseRepository):
         now: Optional[datetime] = None,
     ) -> DashboardStatSnapshot:
         """Create today's snapshot once; return existing row if already present."""
-        now = now or datetime.utcnow()
+        now = now or utc_now_naive()
         day = now.date() if isinstance(now, datetime) else date.today()
         day_start = datetime.combine(day, datetime.min.time())
         day_end = day_start + timedelta(days=1)

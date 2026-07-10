@@ -161,69 +161,153 @@ const App = {
     },
 
     /**
-     * 模态框
+     * PH modal: dialog semantics, focus trap, restore opener focus.
      */
     initModals() {
+        let lastOpener = null;
+        let trapHandler = null;
+
+        const focusableSelector = [
+            'a[href]',
+            'button:not([disabled])',
+            'textarea:not([disabled])',
+            'input:not([disabled]):not([type="hidden"])',
+            'select:not([disabled])',
+            '[tabindex]:not([tabindex="-1"])',
+        ].join(',');
+
+        const getFocusable = (root) =>
+            Array.from(root.querySelectorAll(focusableSelector)).filter(
+                (el) => !el.hasAttribute('disabled') && el.offsetParent !== null
+            );
+
+        const releaseTrap = () => {
+            if (trapHandler) {
+                document.removeEventListener('keydown', trapHandler, true);
+                trapHandler = null;
+            }
+        };
+
         const hideModal = (modal) => {
             if (!modal) return;
             if (typeof modal === 'string') modal = document.getElementById(modal);
             if (!modal) return;
             modal.classList.add('hidden');
             modal.setAttribute('aria-hidden', 'true');
-            // Bootstrap compat
             modal.classList.remove('show');
             modal.style.display = 'none';
             document.body.style.overflow = '';
-            document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+            document.querySelectorAll('.modal-backdrop').forEach((b) => b.remove());
+            releaseTrap();
             if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
                 try {
                     const inst = bootstrap.Modal.getInstance(modal);
                     if (inst) inst.hide();
                 } catch (_) { /* ignore */ }
             }
+            if (lastOpener && typeof lastOpener.focus === 'function') {
+                try {
+                    lastOpener.focus();
+                } catch (_) { /* ignore */ }
+            }
+            lastOpener = null;
         };
 
-        const showModal = (modal) => {
+        const showModal = (modal, opener) => {
             if (!modal) return;
             if (typeof modal === 'string') modal = document.getElementById(modal);
             if (!modal) return;
-            modal.classList.remove('hidden');
+
+            lastOpener = opener || document.activeElement;
+
+            if (!modal.hasAttribute('role')) modal.setAttribute('role', 'dialog');
+            modal.setAttribute('aria-modal', 'true');
             modal.setAttribute('aria-hidden', 'false');
+            modal.classList.remove('hidden');
             modal.style.display = '';
             document.body.style.overflow = 'hidden';
-            // If Bootstrap modal markup, try native show when available
+
             if (modal.classList.contains('modal') && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
                 try {
                     new bootstrap.Modal(modal).show();
-                    return;
-                } catch (_) { /* fall through to PH */ }
+                } catch (_) { /* fall through to PH focus */ }
             }
+
+            // Prefer focus inside the dialog panel if present
+            const panel =
+                modal.querySelector('[role="dialog"]') ||
+                modal.querySelector('.bg-surface-container-lowest, .bg-white, .modal-dialog') ||
+                modal;
+            if (panel !== modal && !panel.hasAttribute('role')) {
+                panel.setAttribute('role', 'document');
+            }
+
+            const focusables = getFocusable(modal);
+            const initial =
+                modal.querySelector('[data-autofocus]') ||
+                focusables.find((el) => el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') ||
+                focusables[0] ||
+                panel;
+            window.setTimeout(() => {
+                try {
+                    initial.focus();
+                } catch (_) { /* ignore */ }
+            }, 0);
+
+            releaseTrap();
+            trapHandler = (e) => {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    hideModal(modal);
+                    return;
+                }
+                if (e.key !== 'Tab') return;
+                const nodes = getFocusable(modal);
+                if (!nodes.length) {
+                    e.preventDefault();
+                    return;
+                }
+                const first = nodes[0];
+                const last = nodes[nodes.length - 1];
+                if (e.shiftKey && document.activeElement === first) {
+                    e.preventDefault();
+                    last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    e.preventDefault();
+                    first.focus();
+                } else if (!modal.contains(document.activeElement)) {
+                    e.preventDefault();
+                    first.focus();
+                }
+            };
+            document.addEventListener('keydown', trapHandler, true);
         };
 
         window.PHModal = {
-            show: showModal,
+            show: (m) => showModal(m),
             hide: hideModal,
-            open: showModal,
+            open: (m) => showModal(m),
             close: hideModal,
         };
 
-        document.querySelectorAll('[data-modal-close]').forEach(button => {
+        document.querySelectorAll('[data-modal-close]').forEach((button) => {
             button.addEventListener('click', () => {
                 hideModal(button.closest('[data-modal]'));
             });
         });
 
-        // Open triggers: <button data-open-modal="addAgentModal">
-        document.querySelectorAll('[data-open-modal]').forEach(button => {
+        document.querySelectorAll('[data-open-modal]').forEach((button) => {
             button.addEventListener('click', (e) => {
                 e.preventDefault();
                 const id = button.getAttribute('data-open-modal');
-                if (id) showModal(id);
+                if (id) showModal(id, button);
             });
         });
 
-        // Backdrop click (on overlay itself, not dialog panel)
-        document.querySelectorAll('[data-modal]').forEach(modal => {
+        document.querySelectorAll('[data-modal]').forEach((modal) => {
+            if (!modal.hasAttribute('aria-hidden')) {
+                modal.setAttribute('aria-hidden', modal.classList.contains('hidden') ? 'true' : 'false');
+            }
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) hideModal(modal);
             });

@@ -12,6 +12,7 @@ from repositories.dashboard_statistics_repository import (
     format_trend,
 )
 from sqlalchemy_models import DashboardStatSnapshot
+from utils.time_utc import utc_now_naive
 
 
 class TestTrendMath:
@@ -240,7 +241,7 @@ class TestGetDashboardStatsTrends:
                 )
             db_setup.session.commit()
 
-            past = datetime.utcnow() - timedelta(days=30)
+            past = utc_now_naive() - timedelta(days=30)
             db_setup.session.add(
                 DashboardStatSnapshot(
                     timestamp=past,
@@ -268,7 +269,7 @@ class TestGetDashboardStatsTrends:
 
     def test_dashboard_route_renders_trend_text(self, client, app, db_setup):
         with app.app_context():
-            past = datetime.utcnow() - timedelta(days=30)
+            past = utc_now_naive() - timedelta(days=30)
             db_setup.session.add(
                 DashboardStatSnapshot(
                     timestamp=past,

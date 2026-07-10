@@ -31,8 +31,8 @@ class AnalysisTemplate(db.Model):
     analysis_type: Mapped[str] = mapped_column(String(50), nullable=False)
     configuration: Mapped[Optional[str]] = mapped_column(Text)  # JSON string
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive, onupdate=_utcnow_naive)
 
     # Relationship
     reports = relationship("AnalysisReport", back_populates="template", cascade="all, delete-orphan")
@@ -57,7 +57,7 @@ class AnalysisReport(db.Model):
     template_id: Mapped[int] = mapped_column(Integer, ForeignKey("analysis_templates.id"), nullable=False)
     # Add other fields as needed by the test
     # For now, we'll keep it simple to satisfy the import
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
 
     # Relationship
     template = relationship("AnalysisTemplate", back_populates="reports")
@@ -135,9 +135,9 @@ class Property(db.Model):
     longitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, default=_utcnow_naive, onupdate=_utcnow_naive
     )
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
@@ -289,7 +289,7 @@ class PropertyImage(db.Model):
     caption: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     display_order: Mapped[int] = mapped_column(Integer, default=0)
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
 
     property = relationship("Property", backref="images")
 
@@ -318,7 +318,7 @@ class PropertyActivityLog(db.Model):
     change_source: Mapped[str] = mapped_column(String(20), default="manual")  # 'sync', 'manual', 'rollback'
     changed_by: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # user email or 'system'
     sync_version: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # links to SyncState.id
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
 
     property = relationship("Property", backref="activity_logs")
 
@@ -350,7 +350,7 @@ class ContactReveal(db.Model):
     property_id: Mapped[int] = mapped_column(Integer, ForeignKey("properties.id"), nullable=False)
     viewer_ip: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
     viewer_user_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
 
     property = relationship("Property", backref="contact_reveals")
 
@@ -371,7 +371,7 @@ class CustomerGroup(db.Model):
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     color: Mapped[str] = mapped_column(String(7), default="#6366f1")  # hex color for badge
     description: Mapped[str] = mapped_column(Text, default="")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
 
     customers = relationship("Customer", back_populates="group")
 
@@ -402,7 +402,7 @@ class Builder(db.Model):
     rating: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # 1-5 stars
     notes: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[str] = mapped_column(String(20), default="active")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
 
     def to_dict(self) -> Dict:
         return {
@@ -433,7 +433,7 @@ class Agent(db.Model):
     bio: Mapped[str] = mapped_column(Text, default="")
     total_sales: Mapped[int] = mapped_column(Integer, default=0)
     active_listings: Mapped[int] = mapped_column(Integer, default=0)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
@@ -474,7 +474,7 @@ class Customer(db.Model):
     status: Mapped[str] = mapped_column(String(20), default="active")
     # buyer = looking to purchase/rent; seller = listing/selling; both = investor or dual-sided
     customer_type: Mapped[str] = mapped_column(String(20), default="buyer")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
@@ -516,9 +516,9 @@ class Deal(db.Model):
     status: Mapped[str] = mapped_column(String(50), default="prospecting")
     offer_amount: Mapped[int] = mapped_column(BigInteger, default=0)
     notes: Mapped[str] = mapped_column(Text, default="")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, default=_utcnow_naive, onupdate=_utcnow_naive
     )
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
@@ -558,7 +558,7 @@ class Task(db.Model):
     priority: Mapped[str] = mapped_column(String(20), default="medium")
     status: Mapped[str] = mapped_column(String(20), default="pending")
     due_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
@@ -594,9 +594,9 @@ class EnvironmentVariable(db.Model):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_sensitive: Mapped[bool] = mapped_column(Boolean, default=False)
     is_required: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, default=_utcnow_naive, onupdate=_utcnow_naive
     )
     created_by: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
@@ -631,7 +631,7 @@ class EnvironmentChangeLog(db.Model):
     old_value: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     new_value: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     changed_by: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    changed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    changed_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
 
     # Foreign Keys
     environment_variable_id: Mapped[Optional[int]] = mapped_column(
@@ -697,9 +697,9 @@ class CustomerOpportunityBrief(db.Model):
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, default=_utcnow_naive, onupdate=_utcnow_naive
     )
 
     customer = relationship("Customer", backref="opportunity_briefs")
@@ -748,7 +748,7 @@ class PropertyMatch(db.Model):
     priority: Mapped[str] = mapped_column(String(20), default="normal")  # low, normal, high, urgent
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     
     # Relationships
@@ -786,9 +786,9 @@ class PropertyFavorite(db.Model):
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, default=_utcnow_naive, onupdate=_utcnow_naive
     )
     
     # Relationships
@@ -835,7 +835,7 @@ class AgentNotification(db.Model):
     email_sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     read_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     
     # Relationships
@@ -879,9 +879,9 @@ class PropertyEmbedding(db.Model):
     source_hash: Mapped[str] = mapped_column(String(64), nullable=False, default="")
     provider: Mapped[str] = mapped_column(String(50), nullable=False, default="gemini")
     dimension: Mapped[int] = mapped_column(Integer, nullable=False, default=768)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, default=_utcnow_naive, onupdate=_utcnow_naive
     )
 
     property = relationship("Property", backref="embedding")
@@ -909,7 +909,7 @@ class MatchingJobRun(db.Model):
     property_ids: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     customer_ids: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     result_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -935,9 +935,9 @@ class RematchQueue(db.Model):
     retries: Mapped[int] = mapped_column(Integer, default=0)
     last_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     dedupe_key: Mapped[str] = mapped_column(String(160), unique=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, default=_utcnow_naive, onupdate=_utcnow_naive
     )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -965,9 +965,9 @@ class AutomationRule(db.Model):
     conditions: Mapped[str] = mapped_column(Text, default="{}")
     actions: Mapped[str] = mapped_column(Text, default="[]")
     created_by: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, default=_utcnow_naive, onupdate=_utcnow_naive
     )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -994,7 +994,7 @@ class AutomationAuditLog(db.Model):
     trigger_ref: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="success")  # success|failed|skipped
     details: Mapped[str] = mapped_column(Text, default="{}")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
 
     rule = relationship("AutomationRule", backref="audit_logs")
 
@@ -1022,7 +1022,7 @@ class User(db.Model):
     phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     role: Mapped[str] = mapped_column(String(20), default="agent")  # admin, agent, viewer
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     last_login: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 
@@ -1073,7 +1073,7 @@ class PublicPropertySubmission(db.Model):
     description: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[str] = mapped_column(String(20), default="pending")  # pending, approved, rejected
     admin_notes: Mapped[str] = mapped_column(Text, default="")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
 
     def to_dict(self) -> Dict:
         return {
@@ -1108,7 +1108,7 @@ class OpenHouseCheckin(db.Model):
     phone: Mapped[str] = mapped_column(String(40), nullable=False)
     status_tags: Mapped[str] = mapped_column(String(255), default="")  # pipe-separated preferences
     customer_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("customers.id"), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive, index=True)
 
     property = relationship("Property", backref="open_house_checkins")
     customer = relationship("Customer", backref="open_house_checkins")
@@ -1138,7 +1138,7 @@ class ClientMessage(db.Model):
     direction: Mapped[str] = mapped_column(String(20), default="outbound")
     channel: Mapped[str] = mapped_column(String(20), default="app")  # app, sms, email
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive, index=True)
 
     customer = relationship("Customer", backref="messages")
     agent = relationship("Agent", backref="client_messages")
@@ -1172,10 +1172,10 @@ class SmsOutboundMessage(db.Model):
     created_by_user_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("users.id"), nullable=True
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, default=_utcnow_naive, onupdate=_utcnow_naive
     )
 
     created_by_user = relationship("User", backref="sms_outbound_messages")
@@ -1207,7 +1207,7 @@ class PropertyAIHistory(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     property_id: Mapped[int] = mapped_column(Integer, ForeignKey('properties.id'), nullable=False)
     raw_data: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     user_note: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     property = relationship('Property', backref='ai_history')
@@ -1230,7 +1230,7 @@ class ModelPerformanceMetric(db.Model):
     model_name: Mapped[str] = mapped_column(String(100), nullable=False, index=True)  # e.g., 'gemini-pro', 'gemini-ultra'
     metric_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)  # latency, token_usage, success_rate, etc.
     metric_value: Mapped[float] = mapped_column(Float, nullable=False)
-    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive, index=True)
     # Optional metadata for context (operation type, request ID, etc.)
     metadata_: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON string
 
@@ -1259,7 +1259,7 @@ class AIMetadata(db.Model):
     latency_ms: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     success: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive, index=True)
     # Related entity IDs for context
     property_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("properties.id"), nullable=True)
     customer_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("customers.id"), nullable=True)
@@ -1309,7 +1309,7 @@ class SyncState(db.Model):
     status: Mapped[str] = mapped_column(String(20), default="idle")  # idle, running, completed, failed
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     duration_seconds: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -1332,7 +1332,7 @@ class DashboardStatSnapshot(db.Model):
     __tablename__ = "dashboard_stat_snapshots"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive, nullable=False)
 
     # Core dashboard metrics
     total_properties: Mapped[int] = mapped_column(Integer, default=0)

@@ -11,9 +11,12 @@
     {% endif %}
 
     <link href="{{ url_for('static', filename='css/stitch.css') }}" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
 
     {# Production: prebuilt Tailwind (npm run build:css). Dev can force CDN with USE_TAILWIND_CDN=1. #}
@@ -109,17 +112,61 @@
         vertical-align: middle;
       }
       body { font-family: "IBM Plex Sans", sans-serif; }
+      /* Skip link: visible on keyboard focus only */
+      .skip-link {
+        position: absolute;
+        left: 0.75rem;
+        top: -3rem;
+        z-index: 100;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        background: #142435;
+        color: #fff;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: top 0.15s ease;
+      }
+      .skip-link:focus {
+        top: 0.75rem;
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+      }
+      :focus-visible {
+        outline: 2px solid #142435;
+        outline-offset: 2px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
     </style>
 
     {% block extra_css %}{% endblock %}
 </head>
 <body class="flex min-h-screen flex-col bg-background text-on-surface">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     {% include 'components/_flash_messages.html' %}
 
     <div class="flex flex-1 overflow-hidden bg-background min-h-0">
         {% include 'components/_sidebar.html' %}
 
-        <main class="flex-1 min-w-0 flex flex-col overflow-hidden bg-brand-cream">
+        <main id="main-content" class="flex-1 min-w-0 flex flex-col overflow-hidden bg-brand-cream" tabindex="-1">
             {% include 'components/_mobile_header.html' %}
 
             <div class="flex-1 overflow-y-auto ph-main-canvas">
@@ -130,7 +177,7 @@
         </main>
     </div>
 
-    <script src="{{ url_for('static', filename='js/app-core.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app-core.js') }}" defer></script>
     {% block scripts %}{% endblock %}
     {% block extra_js %}{% endblock %}
 </body>
