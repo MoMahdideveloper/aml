@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}{{ customer.name }} · Customer 360{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto">
+  <nav class="text-xs text-on-surface-variant mb-2">
+    <a href="{{ url_for('customers.customers') }}" class="underline">Customers</a>
+    <span aria-hidden="true"> / </span>
+    <span>Customer 360</span>
+  </nav>
+  <header class="mb-6">
+    <h1 class="text-2xl font-semibold text-primary">{{ customer.name }}</h1>
+    <p class="text-sm text-on-surface-variant">
+      {{ customer.email }} · {{ customer.phone }} · {{ customer.status }} · {{ customer.customer_type or 'buyer' }}
+    </p>
+  </header>
+
+  {# Log activity #}
+  <section class="mb-8 border border-outline-variant rounded-lg p-4 bg-surface-container-lowest" aria-labelledby="log-h">
+    <h2 id="log-h" class="text-lg font-semibold mb-3">Log activity</h2>
+    <form method="post" action="{{ url_for('customers.create_interaction', customer_id=customer.id) }}" class="space-y-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs mb-1" for="itype">Type</label>
+          <select id="itype" name="interaction_type" class="w-full border rounded-lg px-3 py-2 text-sm" required>
+            <option value="note">Note</option>
+            <option value="call">Call</option>
+            <option value="email">Email</option>
+            <option value="meeting">Meeting</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs mb-1" for="outcome">Outcome</label>
+          <select id="outcome" name="outcome" class="w-full border rounded-lg px-3 py-2 text-sm">
+            <option value="">—</option>
+            <option value="completed">Completed</option>
+            <option value="no_answer">No answer</option>
+            <option value="left_voicemail">Left voicemail</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="interested">Interested</option>
+            <option value="not_interested">Not interested</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs mb-1" for="agent_id">Assign follow-up to</label>
+          <select id="agent_id" name="agent_id" class="w-full border rounded-lg px-3 py-2 text-sm">
+            <option value="">Default agent</option>
+            {% for a in agents %}
+            <option value="{{ a.id }}">{{ a.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs mb-1" for="subject">Subject</label>
+        <input id="subject" name="subject" maxlength="200" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Optional subject">
+      </div>
+      <div>
+        <label class="block text-xs mb-1" for="body">Notes</label>
+        <textarea id="body" name="body" rows="3" maxlength="8000" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Details (not globally searchable)"></textarea>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs mb-1" for="follow_up_at">Follow-up date (ISO)</label>
+          <input id="follow_up_at" name="follow_up_at" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="YYYY-MM-DDTHH:MM:SS">
+        </div>
+        <div class="flex items-end gap-2">
+          <label class="text-xs flex items-center gap-1">
+            <input type="checkbox" name="create_follow_up" value="1" checked>
+            Create follow-up task if date set
+          </label>
+        </div>
+      </div>
+      {% if deals %}
+      <div>
+        <label class="block text-xs mb-1" for="related_deal_id">Related deal</label>
+        <select id="related_deal_id" name="related_deal_id" class="w-full border rounded-lg px-3 py-2 text-sm">
+          <option value="">—</option>
+          {% for d in deals %}
+          <option value="{{ d.id }}">Deal #{{ d.id }} · {{ d.status }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm">Save activity</button>
+    </form>
+  </section>
+
+  {# Filters #}
+  <div class="flex flex-wrap gap-2 mb-4 text-sm">
+    <a href="{{ url_for('customers.customer_360', customer_id=customer.id) }}" class="px-2 py-1 rounded border {% if not filter_type %}bg-primary text-on-primary{% endif %}">All</a>
+    {% for t in ['note','call','email','meeting'] %}
+    <a href="{{ url_for('customers.customer_360', customer_id=customer.id, type=t) }}" class="px-2 py-1 rounded border {% if filter_type==t %}bg-primary text-on-primary{% endif %}">{{ t|capitalize }}</a>
+    {% endfor %}
+  </div>
+
+  {# Timeline #}
+  <section aria-labelledby="tl-h">
+    <h2 id="tl-h" class="text-lg font-semibold mb-3">Activity timeline</h2>
+    <ol class="space-y-3 border border-outline-variant rounded-lg divide-y divide-outline-variant bg-surface-container-lowest">
+      {% for item in timeline.items %}
+      <li class="p-4">
+        <div class="flex flex-wrap justify-between gap-2">
+          <div>
+            <span class="text-xs uppercase tracking-wide text-on-surface-variant">{{ item.interaction_type }} · {{ item.kind }}</span>
+            <p class="font-medium">{{ item.subject or '(no subject)' }}</p>
+            {% if item.body_html %}
+            <div class="text-sm mt-1 text-on-surface whitespace-pre-wrap">{{ item.body_html|safe }}</div>
+            {% endif %}
+            <p class="text-xs text-on-surface-variant mt-1">
+              {{ item.occurred_at }} · {{ item.actor_label }}
+              {% if item.outcome %} · {{ item.outcome }}{% endif %}
+              {% if item.follow_up_task_id %} · task #{{ item.follow_up_task_id }}{% endif %}
+            </p>
+          </div>
+          {% if item.editable and item.kind == 'manual' %}
+          <div class="flex gap-2 text-xs">
+            <details>
+              <summary class="cursor-pointer underline">Edit</summary>
+              <form method="post" action="{{ url_for('customers.edit_interaction', customer_id=customer.id, interaction_id=item.id) }}" class="mt-2 space-y-2">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+                <input name="subject" value="{{ item.subject }}" class="border rounded px-2 py-1 w-full" maxlength="200">
+                <textarea name="body" rows="2" class="border rounded px-2 py-1 w-full" maxlength="8000">{{ item.body or '' }}</textarea>
+                <button type="submit" class="underline">Save</button>
+              </form>
+            </details>
+            <form method="post" action="{{ url_for('customers.delete_interaction', customer_id=customer.id, interaction_id=item.id) }}" onsubmit="return confirm('Delete this activity?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+              <button type="submit" class="text-error underline">Delete</button>
+            </form>
+          </div>
+          {% else %}
+          <span class="text-xs text-on-surface-variant">Read-only</span>
+          {% endif %}
+        </div>
+      </li>
+      {% else %}
+      <li class="p-4 text-sm text-on-surface-variant">No activity yet. Log a note or call above.</li>
+      {% endfor %}
+    </ol>
+    {% if timeline.has_more and timeline.next_cursor %}
+    <p class="mt-3">
+      <a class="text-sm text-primary underline" href="{{ url_for('customers.customer_360', customer_id=customer.id, type=filter_type, cursor=timeline.next_cursor) }}">Load more</a>
+    </p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -121,6 +121,25 @@
     <p class="text-xs text-on-surface-variant mt-2">{{ report.limitations.stage_conversion_requires_observed_history and 'Stage conversion uses observed transitions only; baseline history is excluded.' }}</p>
   </section>
 
+  {% if report.engagement %}
+  <section class="mb-8" aria-labelledby="eng-heading">
+    <h2 id="eng-heading" class="text-lg font-semibold text-primary mb-3">Customer engagement</h2>
+    <p class="text-xs text-on-surface-variant mb-2">Counts only — note bodies never included. Period UTC half-open. {{ report.engagement.timezone }}</p>
+    <ul class="text-sm space-y-1 border border-outline-variant rounded-lg p-4 bg-surface-container-lowest">
+      <li>Interactions by type:
+        {% for t, c in report.engagement.interactions_by_type.items() %}
+          <strong>{{ t }}</strong>={{ c }}{% if not loop.last %}, {% endif %}
+        {% else %}none{% endfor %}
+      </li>
+      <li>Customers without contact in {{ report.engagement.inactive_days }} days: <strong>{{ report.engagement.customers_without_contact }}</strong></li>
+      <li>Overdue follow-up tasks: <strong>{{ report.engagement.overdue_followups }}</strong></li>
+      <li>Avg hours to first follow-up:
+        <strong>{% if report.engagement.avg_hours_to_first_follow_up is not none %}{{ report.engagement.avg_hours_to_first_follow_up }}{% else %}—{% endif %}</strong>
+      </li>
+    </ul>
+  </section>
+  {% endif %}
+
   {# Agent table #}
   <section aria-labelledby="agent-heading">
     <h2 id="agent-heading" class="text-lg font-semibold text-primary mb-3">Agent performance</h2>

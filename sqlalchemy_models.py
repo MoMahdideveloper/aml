@@ -1563,6 +1563,92 @@ class ForecastSnapshot(db.Model):
         }
 
 
+class CustomerInteraction(db.Model):
+    """Manual customer activity (notes/calls/emails/meetings). Bodies not globally searchable."""
+
+    __tablename__ = "customer_interactions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    customer_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("customers.id"), nullable=False, index=True
+    )
+    interaction_type: Mapped[str] = mapped_column(
+        String(32), nullable=False, index=True
+    )  # note|call|email|meeting|other
+    subject: Mapped[str] = mapped_column(String(200), default="")
+    body: Mapped[str] = mapped_column(Text, default="")  # never in global search
+    outcome: Mapped[str] = mapped_column(String(64), default="")  # e.g. no_answer|completed
+    occurred_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive, index=True)
+    follow_up_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
+    actor_user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    actor_label: Mapped[str] = mapped_column(String(120), default="")
+    related_deal_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("deals.id"), nullable=True
+    )
+    related_property_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("properties.id"), nullable=True
+    )
+    follow_up_task_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=_utcnow_naive, onupdate=_utcnow_naive
+    )
+    # immutability: generated events are not stored here; manual only
+    source: Mapped[str] = mapped_column(String(20), default="manual")  # manual only in this table
+
+    def to_dict(self, *, include_body: bool = True) -> Dict[str, Any]:
+        data = {
+            "id": self.id,
+            "customer_id": self.customer_id,
+            "interaction_type": self.interaction_type,
+            "subject": self.subject,
+            "outcome": self.outcome,
+            "occurred_at": self.occurred_at.isoformat() if self.occurred_at else None,
+            "follow_up_at": self.follow_up_at.isoformat() if self.follow_up_at else None,
+            "actor_user_id": self.actor_user_id,
+            "actor_label": self.actor_label,
+            "related_deal_id": self.related_deal_id,
+            "related_property_id": self.related_property_id,
+            "follow_up_task_id": self.follow_up_task_id,
+            "source": self.source,
+            "is_deleted": self.is_deleted,
+        }
+        if include_body:
+            data["body"] = self.body
+        return data
+
+
+class ActivityAuditLog(db.Model):
+    """Redacted audit for customer activity (no note bodies / PII values)."""
+
+    __tablename__ = "activity_audit_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    actor_user_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    actor_label: Mapped[str] = mapped_column(String(120), default="")
+    customer_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True)
+    interaction_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True)
+    action: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    changed_fields: Mapped[str] = mapped_column(String(255), default="")
+    request_id: Mapped[str] = mapped_column(String(64), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive, index=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "actor_user_id": self.actor_user_id,
+            "actor_label": self.actor_label,
+            "customer_id": self.customer_id,
+            "interaction_id": self.interaction_id,
+            "action": self.action,
+            "changed_fields": self.changed_fields,
+            "request_id": self.request_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
 class AutomationOutboxEvent(db.Model):
     """Transactional outbox for business events (allowlisted context only)."""
 

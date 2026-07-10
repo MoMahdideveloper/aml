@@ -173,6 +173,19 @@ class SalesReportService:
             # no raw filter text / names
         )
         record_business_counter("crm_reports_total", outcome="ok")
+        engagement = {}
+        try:
+            from services.customer_timeline_service import customer_timeline_service
+
+            engagement = customer_timeline_service.engagement_metrics(
+                start=filters.start,
+                end=filters.end,
+                agent_ids=filters.agent_ids,
+                inactive_days=14,
+            )
+        except Exception:
+            engagement = {}
+
         return {
             "generated_at": _utcnow_naive().isoformat() + "Z",
             "period": {
@@ -185,11 +198,13 @@ class SalesReportService:
             "comparison": comparison,
             "funnel": funnel,
             "agents": agents,
+            "engagement": engagement,
             "probabilities": {k: float(stage_probability(k)) for k in OPEN_STAGES},
             "limitations": {
                 "stage_conversion_requires_observed_history": True,
                 "baseline_history_excluded_from_conversion": True,
                 "sales_cycle_uses_history_or_updated_proxy": True,
+                "engagement_excludes_note_bodies": True,
             },
         }
 

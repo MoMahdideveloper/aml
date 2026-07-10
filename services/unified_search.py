@@ -165,7 +165,10 @@ def _entity_url(entity: str, entity_id: int) -> str:
     """Server-side destination paths (work outside request context for tests)."""
     try:
         if entity == "customers":
-            return url_for("customers.customers", highlight=entity_id)
+            try:
+                return url_for("customers.customer_360", customer_id=entity_id)
+            except Exception:
+                return f"/customers/{entity_id}"
         if entity == "properties":
             return url_for("properties.view_property", property_id=entity_id)
         if entity == "deals":
@@ -178,7 +181,7 @@ def _entity_url(entity: str, entity_id: int) -> str:
         pass
     # Fallback absolute-path style (deterministic, no host)
     paths = {
-        "customers": f"/customers?highlight={entity_id}",
+        "customers": f"/customers/{entity_id}",
         "properties": f"/properties/{entity_id}",
         "deals": f"/deals?highlight={entity_id}",
         "agents": f"/agents/{entity_id}",

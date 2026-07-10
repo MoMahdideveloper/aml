@@ -16,6 +16,7 @@ EVENT_TYPES = frozenset(
         "scan.inactive_deals",
         "scan.overdue_tasks",
         "scan.high_value_stalled",
+        "interaction.created",
     }
 )
 
@@ -30,6 +31,9 @@ CONDITION_KEYS = frozenset(
         "task_overdue",
         "entity_type",
         "assignee_present",
+        "interaction_type",
+        "outcome",
+        "has_follow_up",
     }
 )
 
@@ -46,6 +50,8 @@ TITLE_KEYS = frozenset(
         "overdue_task_reminder",
         "high_value_stalled",
         "escalation",
+        "interaction_followup",
+        "call_no_answer_followup",
     }
 )
 
@@ -57,6 +63,8 @@ TITLE_TEXT = {
     "overdue_task_reminder": "Overdue task reminder",
     "high_value_stalled": "High-value deal stalled",
     "escalation": "Escalation: needs manager attention",
+    "interaction_followup": "Customer interaction follow-up",
+    "call_no_answer_followup": "Call again — no answer",
 }
 
 MESSAGE_TEXT = {
@@ -67,6 +75,8 @@ MESSAGE_TEXT = {
     "overdue_task_reminder": "A task is past its due date.",
     "high_value_stalled": "High-value deal has not progressed.",
     "escalation": "Escalated automation alert.",
+    "interaction_followup": "Follow up on a logged customer interaction.",
+    "call_no_answer_followup": "Call outcome was no answer; schedule another attempt.",
 }
 
 CONTEXT_ALLOW = frozenset(
@@ -82,6 +92,10 @@ CONTEXT_ALLOW = frozenset(
         "priority",
         "status",
         "entity_type",
+        "interaction_id",
+        "interaction_type",
+        "outcome",
+        "has_follow_up",
     }
 )
 
@@ -217,6 +231,15 @@ def evaluate_conditions(conditions: Dict[str, Any], context: Dict[str, Any]) -> 
             has = context.get("agent_id") is not None
             if has != bool(expected):
                 return False, "assignee_mismatch"
+        elif key == "interaction_type":
+            if context.get("interaction_type") != expected:
+                return False, "interaction_type_mismatch"
+        elif key == "outcome":
+            if context.get("outcome") != expected:
+                return False, "outcome_mismatch"
+        elif key == "has_follow_up":
+            if bool(context.get("has_follow_up")) != bool(expected):
+                return False, "follow_up_mismatch"
         else:
             return False, "unknown_condition"
     return True, "matched"
@@ -345,6 +368,27 @@ DEFAULT_TEMPLATES: List[Dict[str, Any]] = [
                     "negotiation_followup",
                     "stale_deal_reminder",
                 ],
+            }
+        ],
+        "cooldown_hours": 0,
+    },
+    {
+        "name": "Call no-answer follow-up",
+        "rule_key": "tpl_call_no_answer",
+        "event_type": "interaction.created",
+        "conditions": {
+            "event_type": "interaction.created",
+            "interaction_type": "call",
+            "outcome": "no_answer",
+            "has_follow_up": True,
+        },
+        "actions": [
+            {
+                "type": "create_task",
+                "title_key": "call_no_answer_followup",
+                "due_days": 1,
+                "priority": "high",
+                "assignee": "context_agent",
             }
         ],
         "cooldown_hours": 0,

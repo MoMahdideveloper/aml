@@ -71,6 +71,130 @@ def customers():
     )
 
 
+@bp.route("/customers/<int:customer_id>")
+def customer_360(customer_id: int):
+    """Customer 360 — chronological activity timeline."""
+    if not session.get("user_id"):
+        return redirect(url_for("auth.login"))
+    from services.customer_timeline_service import TimelineError, customer_timeline_service
+
+    try:
+        customer = customer_timeline_service.get_customer_or_404(customer_id)
+    except TimelineError:
+        flash("Customer not found.", "error")
+        return redirect(url_for("customers.customers"))
+
+    itype = (request.args.get("type") or "").strip() or None
+    cursor = request.args.get("cursor")
+    page = customer_timeline_service.build_timeline(
+        customer_id, interaction_type=itype, cursor=cursor, limit=25
+    )
+    deals = [d for d in (customer.deals or []) if not getattr(d, "is_deleted", False)]
+    agents = database_service.get_agents()
+    return render_template(
+        "customers/customer_360.html",
+        customer=customer,
+        timeline=page,
+        deals=deals,
+        agents=agents,
+        filter_type=itype or "",
+    )
+
+
+@bp.route("/customers/<int:customer_id>/interactions", methods=["POST"])
+def create_interaction(customer_id: int):
+    if not session.get("user_id"):
+        return redirect(url_for("auth.login"))
+    from datetime import datetime
+
+    from services.customer_timeline_service import TimelineError, customer_timeline_service
+
+    try:
+        occurred = request.form.get("occurred_at")
+        follow = request.form.get("follow_up_at")
+        occurred_at = datetime.fromisoformat(occurred) if occurred else None
+        follow_up_at = datetime.fromisoformat(follow) if follow else None
+        deal_id = request.form.get("related_deal_id")
+        prop_id = request.form.get("related_property_id")
+        agent_id = request.form.get("agent_id")
+        create_task = request.form.get("create_follow_up") == "1"
+        customer_timeline_service.create_interaction(
+            customer_id=customer_id,
+            interaction_type=request.form.get("interaction_type") or "note",
+            subject=request.form.get("subject") or "",
+            body=request.form.get("body") or "",
+            outcome=request.form.get("outcome") or "",
+            occurred_at=occurred_at,
+            follow_up_at=follow_up_at,
+            actor_user_id=session.get("user_id"),
+            actor_label=session.get("user_name") or "user",
+            related_deal_id=int(deal_id) if deal_id else None,
+            related_property_id=int(prop_id) if prop_id else None,
+            agent_id_for_task=int(agent_id) if agent_id else None,
+            create_follow_up_task=create_task or bool(follow_up_at),
+        )
+        flash("Activity logged.", "success")
+    except TimelineError as e:
+        flash(e.message, "error")
+    except (TypeError, ValueError) as e:
+        flash("Invalid form data.", "error")
+    return redirect(url_for("customers.customer_360", customer_id=customer_id))
+
+
+@bp.route(
+    "/customers/<int:customer_id>/interactions/<int:interaction_id>/edit",
+    methods=["POST"],
+)
+def edit_interaction(customer_id: int, interaction_id: int):
+    if not session.get("user_id"):
+        return redirect(url_for("auth.login"))
+    from services.customer_timeline_service import TimelineError, customer_timeline_service
+
+    try:
+        row = customer_timeline_service.update_interaction(
+            interaction_id,
+            actor_user_id=session.get("user_id"),
+            actor_label=session.get("user_name") or "user",
+            subject=request.form.get("subject"),
+            body=request.form.get("body"),
+            outcome=request.form.get("outcome"),
+        )
+        if row.customer_id != customer_id:
+            flash("Interaction does not belong to this customer.", "error")
+    except TimelineError as e:
+        flash(e.message, "error")
+    return redirect(url_for("customers.customer_360", customer_id=customer_id))
+
+
+@bp.route(
+    "/customers/<int:customer_id>/interactions/<int:interaction_id>/delete",
+    methods=["POST"],
+)
+def delete_interaction(customer_id: int, interaction_id: int):
+    if not session.get("user_id"):
+        return redirect(url_for("auth.login"))
+    from services.customer_timeline_service import TimelineError, customer_timeline_service
+
+    try:
+        # ownership check
+        from sqlalchemy_models import CustomerInteraction
+        from database import db
+
+        row = db.session.get(CustomerInteraction, interaction_id)
+        if not row or row.customer_id != customer_id:
+            flash("Not found.", "error")
+            return redirect(url_for("customers.customer_360", customer_id=customer_id))
+        customer_timeline_service.delete_interaction(
+            interaction_id,
+            actor_user_id=session.get("user_id"),
+            actor_label=session.get("user_name") or "user",
+        )
+        flash("Activity deleted.", "success")
+    except TimelineError as e:
+        flash(e.message, "error")
+    return redirect(url_for("customers.customer_360", customer_id=customer_id))
+
+
 @bp.route("/customers/add", methods=["POST"])
 def add_customer():
     form = CustomerForm()

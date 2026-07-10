@@ -185,6 +185,8 @@ def _process_event(
         ctx["customer_id"] = row.aggregate_id
     elif row.aggregate_type == "task":
         ctx["task_id"] = row.aggregate_id
+    elif row.aggregate_type == "interaction":
+        ctx["interaction_id"] = row.aggregate_id
 
     rules = (
         AutomationRule.query.filter_by(trigger_type=row.event_type, enabled=True)
@@ -220,7 +222,9 @@ def _process_event(
         except Exception:
             actions = json.loads(rule.actions or "[]")
         for action in actions:
-            key = f"{rule.id}:{row.event_id}:{action.get('type')}"
+            # Prefer interaction ID as idempotency source when present
+            src = ctx.get("interaction_id") or row.event_id
+            key = f"{rule.id}:{src}:{action.get('type')}"
             existing = AutomationRun.query.filter_by(idempotency_key=key).first()
             if existing and existing.status == "succeeded" and not dry_run:
                 results.append({"rule_id": rule.id, "status": "idempotent_skip"})
