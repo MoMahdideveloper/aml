@@ -16,6 +16,7 @@ from flask import (
     url_for,
 )
 
+from services.hybrid_search import hybrid_search_service
 from services.saved_views_service import SavedViewError, saved_views_service
 from services.unified_search import (
     SearchValidationError,
@@ -68,7 +69,8 @@ def search_page():
             error=e.message,
             args=request.args,
         )
-    result = unified_search_service.search(req)
+    # Full page: hybrid orchestrator (keyword + optional semantic when flagged).
+    result = hybrid_search_service.search(req)
     return render_template("search/results.html", result=result, error=None, args=request.args)
 
 
@@ -93,16 +95,23 @@ def search_api():
         )
     except SearchValidationError as e:
         return jsonify({"error": e.code, "message": e.message}), 400
-    result = unified_search_service.search(req)
+    # Autocomplete remains keyword-only (hybrid short-circuits on mode).
+    result = hybrid_search_service.search(req)
     # slim payload for autocomplete
-    return jsonify(
-        {
-            "query": result["query"],
-            "total_count": result["total_count"],
-            "groups": result["groups"],
-            "counts": result["counts"],
+    payload = {
+        "query": result["query"],
+        "total_count": result["total_count"],
+        "groups": result["groups"],
+        "counts": result["counts"],
+    }
+    if result.get("hybrid"):
+        payload["hybrid"] = {
+            "mode": result["hybrid"].get("mode"),
+            "degraded": result["hybrid"].get("degraded"),
+            "chips": result["hybrid"].get("chips") or [],
         }
-    )
+    return jsonify(payload)
+
 
 
 @bp.route("/search/views", methods=["GET", "POST"])

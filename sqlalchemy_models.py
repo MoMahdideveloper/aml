@@ -1846,3 +1846,35 @@ class VocabReplacement(db.Model):
     status: Mapped[str] = mapped_column(String(20), default="active", index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
 
+
+class RelationshipEdge(db.Model):
+    """Derived CRM relationship edge (SQL graph; not Neo4j)."""
+
+    __tablename__ = "relationship_edges"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    src_type: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    src_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    dst_type: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    dst_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    edge_type: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    weight: Mapped[float] = mapped_column(Float, default=1.0)
+    evidence_json: Mapped[str] = mapped_column(Text, default="")  # small JSON, no PII bodies
+    computed_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+    source_run_id: Mapped[str] = mapped_column(String(64), default="")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "src_type": self.src_type,
+            "src_id": self.src_id,
+            "dst_type": self.dst_type,
+            "dst_id": self.dst_id,
+            "edge_type": self.edge_type,
+            "weight": self.weight,
+            "computed_at": self.computed_at.isoformat() if self.computed_at else None,
+            "source_run_id": self.source_run_id,
+            # evidence_json optional; callers parse if needed
+        }
+
+

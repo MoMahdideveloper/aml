@@ -91,6 +91,17 @@ def customer_360(customer_id: int):
     )
     deals = [d for d in (customer.deals or []) if not getattr(d, "is_deleted", False)]
     agents = database_service.get_agents()
+    from flask import current_app
+
+    related = None
+    if current_app.config.get("ENABLE_DERIVED_EDGES"):
+        try:
+            from services.relationship_graph import neighbors as graph_neighbors
+
+            related = graph_neighbors("customer", customer_id, depth=1, rebuild_if_empty=True)
+        except Exception:
+            related = {"neighbors": [], "error": True}
+
     return render_template(
         "customers/customer_360.html",
         customer=customer,
@@ -98,7 +109,10 @@ def customer_360(customer_id: int):
         deals=deals,
         agents=agents,
         filter_type=itype or "",
+        config=current_app.config,
+        related=related,
     )
+
 
 
 @bp.route("/customers/<int:customer_id>/interactions", methods=["POST"])

@@ -12,10 +12,14 @@
     <p class="text-sm text-on-surface-variant">
       {{ customer.email }} · {{ customer.phone }} · {{ customer.status }} · {{ customer.customer_type or 'buyer' }}
     </p>
-    <p class="text-sm mt-2">
+    <p class="text-sm mt-2 flex flex-wrap gap-3">
       <a class="text-primary underline" href="{{ url_for('documents.entity_documents', entity='customers', owner_id=customer.id) }}">Documents</a>
+      {% if config.get('ENABLE_AI_CONTEXT') %}
+      <a class="text-primary underline" href="{{ url_for('context_api.get_context', entity_type='customer', entity_id=customer.id) }}?purpose=brief" target="_blank" rel="noopener">AI context (JSON)</a>
+      {% endif %}
     </p>
   </header>
+
 
   {# Log activity #}
   <section class="mb-8 border border-outline-variant rounded-lg p-4 bg-surface-container-lowest" aria-labelledby="log-h">
@@ -90,8 +94,27 @@
     </form>
   </section>
 
+  {% if config.get('ENABLE_DERIVED_EDGES') and related and related.neighbors is defined %}
+  <section class="mb-8 border border-outline-variant rounded-lg p-4 bg-surface-container-lowest" aria-labelledby="rel-h">
+    <h2 id="rel-h" class="text-lg font-semibold mb-3">Related</h2>
+    {% if related.neighbors %}
+    <ul class="space-y-2 text-sm">
+      {% for n in related.neighbors %}
+      <li>
+        <a href="{{ n.url }}" class="text-primary underline">{{ n.label }}</a>
+        <span class="text-xs text-on-surface-variant">· {{ n.edge_type }}{% if n.entity_type %} · {{ n.entity_type }}{% endif %}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-sm text-on-surface-variant">No related entities yet.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+
   {# Filters #}
   <div class="flex flex-wrap gap-2 mb-4 text-sm">
+
     <a href="{{ url_for('customers.customer_360', customer_id=customer.id) }}" class="px-2 py-1 rounded border {% if not filter_type %}bg-primary text-on-primary{% endif %}">All</a>
     {% for t in ['note','call','email','meeting'] %}
     <a href="{{ url_for('customers.customer_360', customer_id=customer.id, type=t) }}" class="px-2 py-1 rounded border {% if filter_type==t %}bg-primary text-on-primary{% endif %}">{{ t|capitalize }}</a>

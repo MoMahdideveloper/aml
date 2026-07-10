@@ -240,6 +240,8 @@ def create_app(test_config=None):
     from views.reports import bp as reports_bp
     from views.documents import bp as documents_bp
     from views.vocab_admin import bp as vocab_admin_bp
+    from views.context_api import bp as context_api_bp
+    from views.related import bp as related_bp
 
     for bp in (
         main_bp,
@@ -258,8 +260,11 @@ def create_app(test_config=None):
         reports_bp,
         documents_bp,
         vocab_admin_bp,
+        context_api_bp,
+        related_bp,
     ):
         app.register_blueprint(bp)
+
 
     # Private document store (never under static/)
     import os as _os
@@ -282,6 +287,21 @@ def create_app(test_config=None):
     app.config["ENABLE_VOCAB_ENRICHMENT"] = (
         os.environ.get("ENABLE_VOCAB_ENRICHMENT", "0").strip() == "1"
     )
+    # Hybrid keyword+semantic property ranking on full search page (default off).
+    app.config["ENABLE_HYBRID_SEARCH"] = (
+        os.environ.get("ENABLE_HYBRID_SEARCH", "0").strip() == "1"
+    )
+    # Allowlisted AI context packets API (default off).
+    app.config["ENABLE_AI_CONTEXT"] = (
+        os.environ.get("ENABLE_AI_CONTEXT", "0").strip() == "1"
+    )
+    # Derived SQL relationship edges / related panel (default off).
+    app.config["ENABLE_DERIVED_EDGES"] = (
+        os.environ.get("ENABLE_DERIVED_EDGES", "0").strip() == "1"
+    )
+
+
+
 
     # Default-deny session gate (AUTH_DEFAULT_DENY_ENABLED, default on).
     register_auth_middleware(app)

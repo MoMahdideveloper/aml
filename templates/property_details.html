@@ -79,8 +79,27 @@
             {% endif %}
         </section>
 
+        {% if config is defined and config.get('ENABLE_DERIVED_EDGES') and graph_related and graph_related.neighbors is defined %}
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 shadow-ph-soft" aria-labelledby="graph-rel-h">
+            <h2 id="graph-rel-h" class="text-lg font-semibold text-primary mb-3">Related (CRM graph)</h2>
+            {% if graph_related.neighbors %}
+            <ul class="space-y-2 text-sm">
+                {% for n in graph_related.neighbors %}
+                <li>
+                    <a href="{{ n.url }}" class="text-primary underline">{{ n.label }}</a>
+                    <span class="text-xs text-secondary">· {{ n.edge_type }} · {{ n.entity_type }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-sm text-secondary">No graph relations yet.</p>
+            {% endif %}
+        </section>
+        {% endif %}
+
         {# Title, price, stats #}
         <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 md:p-8 shadow-ph-soft flex flex-col gap-8">
+
             <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-outline-variant pb-6">
                 <div class="min-w-0">
                     <div class="flex flex-wrap items-center gap-3 mb-2">

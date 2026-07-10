@@ -240,6 +240,18 @@ def property_detail(property_id):
         or url_for("properties.property_detail", property_id=property_id, _external=True),
     }
 
+    # SQL relationship-graph neighbors (not "related_properties" recommendations).
+    graph_related = None
+    if current_app.config.get("ENABLE_DERIVED_EDGES"):
+        try:
+            from services.relationship_graph import neighbors as graph_neighbors
+
+            graph_related = graph_neighbors(
+                "property", property_id, depth=1, rebuild_if_empty=True
+            )
+        except Exception:
+            graph_related = {"neighbors": [], "error": True}
+
     try:
         rendered_html = render_template(
             "property_details.html",
@@ -249,6 +261,8 @@ def property_detail(property_id):
             sharing=sharing,
             gallery=gallery,
             form_action=url_for("properties.schedule_viewing", property_id=property_id),
+            graph_related=graph_related,
+            config=current_app.config,
         )
     except TemplateNotFound:
         if current_app.testing or _wants_json():

@@ -33,6 +33,20 @@
     {% endif %}
   </p>
 
+  {% if result.hybrid and result.hybrid.enabled and result.hybrid.chips %}
+  <div class="flex flex-wrap gap-2 mb-4" aria-label="Search explain">
+    {% for chip in result.hybrid.chips %}
+    <span class="text-xs px-2 py-1 rounded-full border border-outline-variant bg-surface-container">{{ chip }}</span>
+    {% endfor %}
+    {% if result.hybrid.degraded %}
+    <span class="text-xs px-2 py-1 rounded-full border border-outline-variant text-on-surface-variant">Keyword only (semantic unavailable)</span>
+    {% elif result.hybrid.mode == 'hybrid' %}
+    <span class="text-xs px-2 py-1 rounded-full border border-green-700 text-green-800">Hybrid ranking</span>
+    {% endif %}
+  </div>
+  {% endif %}
+
+
   {% set order = ['customers','properties','deals','agents','tasks'] %}
   {% for key in order %}
     {% set items = result.groups.get(key, []) if result.groups else [] %}
@@ -46,7 +60,7 @@
         <li>
           <a href="{{ hit.url }}" class="block px-4 py-3 hover:bg-surface-container focus:bg-surface-container focus:outline-none">
             <span class="font-medium text-on-surface">{{ hit.title }}</span>
-            <span class="block text-xs text-on-surface-variant mt-0.5">{{ hit.subtitle }}{% if hit.status %} · {{ hit.status }}{% endif %}{% if hit.matched_field %} · matched {{ hit.matched_field }}{% endif %}</span>
+            <span class="block text-xs text-on-surface-variant mt-0.5">{{ hit.subtitle }}{% if hit.status %} · {{ hit.status }}{% endif %}{% if hit.matched_field %} · matched {{ hit.matched_field }}{% endif %}{% if hit.explain %} · {{ hit.explain }}{% endif %}</span>
           </a>
         </li>
         {% endfor %}

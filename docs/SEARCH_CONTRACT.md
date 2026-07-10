@@ -34,3 +34,7 @@ Cleanup: remove flag after one stable release cycle.
 
 ## Vocabulary expand (optional)
 `ENABLE_VOCAB_ENRICHMENT` — default `0`. When `1`, **property** free-text search may OR-match up to 8 expanded keys (synonyms / replacements). See `docs/VOCAB_CONTRACT.md`. Other entity scopes unchanged. Flag off = legacy keyword-only behavior.
+
+## Hybrid ranking (optional)
+`ENABLE_HYBRID_SEARCH` — default `0`. When `1`, full-page `/search` may re-rank **properties** with keyword + stored `PropertyEmbedding` cosine scores (weighted merge). Autocomplete stays keyword-only. Rule-based constraints (beds, price, type) apply as hard filters when confidence is high. If embeddings missing/provider fails → keyword path + `hybrid.degraded`. Never logs raw query. See `docs/CRM_INTELLIGENCE_CONTRACT.md`.
+

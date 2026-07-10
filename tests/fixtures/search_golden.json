@@ -1,0 +1,17 @@
+{
+  "cases": [
+    {
+      "id": "beds_filter",
+      "query": "3 bedroom apartment",
+      "scope": "properties",
+      "expect_title_contains": ["Big"],
+      "reject_title_contains": ["Tiny"]
+    },
+    {
+      "id": "type_villa",
+      "query": "villa",
+      "scope": "properties",
+      "expect_min_results": 0
+    }
+  ]
+}
