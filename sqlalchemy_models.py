@@ -1365,3 +1365,91 @@ class DashboardStatSnapshot(db.Model):
             "recent_properties_count": self.recent_properties_count,
             "recent_deals_count": self.recent_deals_count,
         }
+
+class ImportBatch(db.Model):
+    """CSV import batch metadata (source file not retained long-term)."""
+
+    __tablename__ = "import_batches"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    entity_type: Mapped[str] = mapped_column(String(32), nullable=False)  # customer|property|deal
+    status: Mapped[str] = mapped_column(String(32), default="uploaded", index=True)
+    # uploaded -> mapped -> previewed -> reviewing -> executing -> completed|failed
+    # rollback_pending -> rolled_back|rollback_partial
+    original_filename: Mapped[str] = mapped_column(String(255), default="")
+    file_hash: Mapped[str] = mapped_column(String(64), default="", index=True)
+    uploader_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    uploader_label: Mapped[str] = mapped_column(String(120), default="")
+    mapping_json: Mapped[str] = mapped_column(Text, default="{}")
+    mode: Mapped[str] = mapped_column(String(32), default="create_only")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    total_rows: Mapped[int] = mapped_column(Integer, default=0)
+    valid_rows: Mapped[int] = mapped_column(Integer, default=0)
+    invalid_rows: Mapped[int] = mapped_column(Integer, default=0)
+    duplicate_rows: Mapped[int] = mapped_column(Integer, default=0)
+    possible_duplicate_rows: Mapped[int] = mapped_column(Integer, default=0)
+    imported_rows: Mapped[int] = mapped_column(Integer, default=0)
+    skipped_rows: Mapped[int] = mapped_column(Integer, default=0)
+    failure_category: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    rollback_status: Mapped[str] = mapped_column(String(32), default="none")
+    temp_path: Mapped[str] = mapped_column(String(512), default="")
+
+    rows = relationship("ImportRowResult", back_populates="batch", cascade="all, delete-orphan")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "entity_type": self.entity_type,
+            "status": self.status,
+            "original_filename": self.original_filename,
+            "file_hash": self.file_hash,
+            "uploader_id": self.uploader_id,
+            "mode": self.mode,
+            "total_rows": self.total_rows,
+            "valid_rows": self.valid_rows,
+            "invalid_rows": self.invalid_rows,
+            "duplicate_rows": self.duplicate_rows,
+            "possible_duplicate_rows": self.possible_duplicate_rows,
+            "imported_rows": self.imported_rows,
+            "skipped_rows": self.skipped_rows,
+            "rollback_status": self.rollback_status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+        }
+
+
+class ImportRowResult(db.Model):
+    """Per-row outcome for an import batch (safe diagnostics only)."""
+
+    __tablename__ = "import_row_results"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    batch_id: Mapped[int] = mapped_column(Integer, ForeignKey("import_batches.id"), nullable=False, index=True)
+    row_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    outcome: Mapped[str] = mapped_column(String(32), default="pending", index=True)
+    # pending|valid|invalid|exact_duplicate|possible_duplicate|imported|skipped|failed|rolled_back
+    error_codes: Mapped[str] = mapped_column(String(255), default="")
+    diagnostic: Mapped[str] = mapped_column(String(500), default="")  # sanitized, no full PII dump
+    match_key: Mapped[str] = mapped_column(String(255), default="")
+    created_record_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    decision: Mapped[str] = mapped_column(String(32), default="")  # skip|import| (possible dups)
+    decision_by: Mapped[str] = mapped_column(String(120), default="")
+    decision_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    payload_json: Mapped[str] = mapped_column(Text, default="{}")  # validated normalized fields only
+
+    batch = relationship("ImportBatch", back_populates="rows")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "batch_id": self.batch_id,
+            "row_number": self.row_number,
+            "outcome": self.outcome,
+            "error_codes": self.error_codes,
+            "diagnostic": self.diagnostic,
+            "match_key": self.match_key,
+            "created_record_id": self.created_record_id,
+            "decision": self.decision,
+        }

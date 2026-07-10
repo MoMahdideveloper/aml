@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Duplicate review{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto p-4">
+  <h1 class="text-2xl font-semibold text-primary mb-4">Duplicates · batch #{{ batch.id }}</h1>
+  <form method="post" class="mb-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+    <button name="action" value="skip_all_exact" type="submit" class="px-3 py-2 border rounded-lg text-sm">Skip all exact duplicates</button>
+  </form>
+  <form method="post" class="space-y-3">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+    {% for r in rows %}
+    <div class="border border-outline-variant rounded-lg p-3">
+      <div class="text-sm font-medium">Row {{ r.row_number }} · {{ r.outcome }}</div>
+      <div class="text-xs text-on-surface-variant mb-2">{{ r.diagnostic }}</div>
+      <label class="text-sm mr-3"><input type="radio" name="decision_{{ r.id }}" value="skip" {% if r.decision!='import' %}checked{% endif %}> Skip</label>
+      {% if r.outcome == 'possible_duplicate' %}
+      <label class="text-sm"><input type="radio" name="decision_{{ r.id }}" value="import" {% if r.decision=='import' %}checked{% endif %}> Import as new</label>
+      {% endif %}
+    </div>
+    {% else %}
+    <p class="text-sm">No duplicates to review.</p>
+    {% endfor %}
+    <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm">Save decisions</button>
+    <a class="text-sm ml-3" href="{{ url_for('imports.preview', batch_id=batch.id) }}">Back to preview</a>
+  </form>
+</div>
+{% endblock %}

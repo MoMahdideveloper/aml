@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Data import{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto p-4">
+  <h1 class="text-2xl font-semibold text-primary mb-4">CSV imports</h1>
+  <p class="text-sm text-on-surface-variant mb-6">Create-only import with preview and duplicate review. Synthetic/test data only in development.</p>
+  <a href="{{ url_for('imports.upload') }}" class="inline-flex px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium">New upload</a>
+  <div class="mt-8 space-y-3">
+    {% for b in batches %}
+    <div class="border border-outline-variant rounded-lg p-4 bg-surface-container-lowest">
+      <div class="flex justify-between gap-2">
+        <div>
+          <div class="font-medium">#{{ b.id }} · {{ b.entity_type }} · {{ b.original_filename }}</div>
+          <div class="text-xs text-on-surface-variant">{{ b.status }} · rows {{ b.total_rows }} · imported {{ b.imported_rows }}</div>
+        </div>
+        <a class="text-sm text-primary underline" href="{{ url_for('imports.results', batch_id=b.id) }}">Open</a>
+      </div>
+    </div>
+    {% else %}
+    <p class="text-sm text-on-surface-variant">No batches yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Import rollback{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto p-4">
+  <h1 class="text-2xl font-semibold text-primary mb-4">Rollback batch #{{ batch.id }}</h1>
+  <p class="text-sm mb-2">Eligible to delete: {{ preview.eligible_count }}</p>
+  <p class="text-sm mb-4">Blocked (dependents/missing): {{ preview.blocked_count }}</p>
+  <ul class="text-xs mb-4 list-disc pl-5">
+    {% for b in preview.blocked[:20] %}
+    <li>id={{ b.id }} reason={{ b.reason }}</li>
+    {% endfor %}
+  </ul>
+  <form method="post" class="space-y-3">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+    <label class="text-sm flex items-center gap-2">
+      <input type="checkbox" name="confirm" value="yes" required>
+      I understand only untouched records created by this batch will be soft-deleted.
+    </label>
+    <button type="submit" class="px-4 py-2 rounded-lg bg-error-red text-white text-sm">Execute rollback</button>
+  </form>
+</div>
+{% endblock %}

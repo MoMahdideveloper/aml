@@ -235,6 +235,7 @@ def create_app(test_config=None):
     from views.vector import bp as vector_api_bp
     from views.automations import bp as automations_bp
     from views.auth import bp as auth_bp
+    from views.imports import bp as imports_bp
 
     for bp in (
         main_bp,
@@ -248,6 +249,7 @@ def create_app(test_config=None):
         vector_api_bp,
         automations_bp,
         auth_bp,
+        imports_bp,
     ):
         app.register_blueprint(bp)
 

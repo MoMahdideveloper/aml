@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Map columns{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto p-4">
+  <h1 class="text-2xl font-semibold text-primary mb-2">Map columns · batch #{{ batch.id }}</h1>
+  <p class="text-sm text-on-surface-variant mb-4">Entity: {{ batch.entity_type }}. Detected headers: {{ headers|join(', ') }}</p>
+  <form method="post" class="space-y-3 border border-outline-variant rounded-lg p-5 bg-surface-container-lowest">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+    {% for field in fields %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 items-center">
+      <label class="text-sm font-medium" for="map_{{ field }}">{{ field }}</label>
+      <select id="map_{{ field }}" name="map_{{ field }}" class="border border-outline-variant rounded-lg px-3 py-2 text-sm">
+        <option value="">— skip —</option>
+        {% for h in headers %}
+        <option value="{{ h }}" {% if current.get(field)==h %}selected{% endif %}>{{ h }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endfor %}
+    <button type="submit" class="mt-4 px-4 py-2 rounded-lg bg-primary text-on-primary text-sm">Save mapping &amp; preview</button>
+  </form>
+</div>
+{% endblock %}
