@@ -14,8 +14,9 @@ Incremental capabilities on the Flask CRM only (ADR-001 Track A). Track B / Neo4
 | Intelligence v2 (occurrences, evidence, task/agent, edges) | **shipped** | `ENABLE_VOCAB_OCCURRENCES` + existing |
 | Admin intelligence settings UI | **shipped** | `/admin/intelligence` (DB toggles) |
 | SearchIntent + context matches/briefs + match edges | **shipped** | extends hybrid/context/graph |
-
+| Grounded AI answers | **shipped** | `ENABLE_AI_ANSWER` / admin toggle |
 | LLM query parse | Optional later | `ENABLE_NL_QUERY_PARSE` |
+
 
 ## Privacy
 - Never log raw search queries, description bodies, or interaction note bodies.  
