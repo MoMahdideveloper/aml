@@ -5,9 +5,13 @@ Use this after deploy + `flask db upgrade` (head includes `x9y0z1a2b3c4` or late
 ## 0. Preflight
 
 - [ ] App boots: `python main.py`
-- [ ] Migrations current: `flask db current` shows latest head
-- [ ] Core smoke: `pytest -q tests/test_app_smoke.py tests/test_intelligence_eval_baseline.py`
+- [ ] Migrations current: `flask db current` shows latest head (includes `y0z1a2b3c4d5`, `z1a2b3c4d5e6` if present)
+- [ ] Core smoke: `pytest -q tests/test_app_smoke.py tests/test_intelligence_eval_baseline.py tests/test_intelligence_staging_smoke.py tests/test_embedding_coverage.py`
+- [ ] Baseline metrics (keyword + hybrid degraded):  
+      `pytest -q tests/test_intelligence_eval_baseline.py -s --tb=short`  
+      Look for `INTELLIGENCE_BASELINE_KEYWORD` and `INTELLIGENCE_BASELINE_HYBRID` printed lines
 - [ ] Admin can open `/admin/intelligence` and `/admin/vocab`
+- [ ] Admin shows **Property embedding coverage** counts
 
 ## 1. Safe defaults (leave unless needed)
 

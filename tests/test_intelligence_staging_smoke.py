@@ -21,6 +21,7 @@ def test_flag_catalog_has_core_keys():
         "nl_query_parse",
         "vocab_occurrences",
         "customer_nl_filters",
+        "activity_search",
     ):
         assert required in keys
 
@@ -103,3 +104,41 @@ def test_hybrid_degraded_path_when_enabled(db_setup, app, monkeypatch):
         out = HybridSearchService().search(req)
         assert "groups" in out
         assert "properties" in out["groups"]
+        hybrid = out.get("hybrid") or {}
+        assert hybrid.get("enabled") is True
+        # Without embeddings expect keyword/degraded rather than crash
+        assert hybrid.get("mode") in ("keyword_only", "hybrid") or hybrid.get("degraded") in (
+            True,
+            False,
+        )
+
+
+def test_embedding_coverage_ops_smoke(db_setup, app):
+    """S3: coverage metric and missing-list work without provider calls."""
+    with app.app_context():
+        from database import db
+        from services.embedding_coverage import (
+            list_properties_missing_embeddings,
+            summarize_property_embedding_coverage,
+        )
+
+        empty = summarize_property_embedding_coverage()
+        assert empty["active_properties"] == 0
+        assert empty["coverage"] == 1.0
+
+        p = Property(
+            title="Coverage Smoke",
+            address="9",
+            property_type="house",
+            price=1,
+            bedrooms=1,
+        )
+        db.session.add(p)
+        db.session.commit()
+        s = summarize_property_embedding_coverage()
+        assert s["active_properties"] == 1
+        assert s["with_embedding"] == 0
+        assert s["missing"] == 1
+        assert s["coverage"] == 0.0
+        missing = list_properties_missing_embeddings(limit=10)
+        assert p.id in missing

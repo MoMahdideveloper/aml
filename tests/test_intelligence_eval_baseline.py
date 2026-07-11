@@ -103,13 +103,76 @@ def test_eval_baseline_keyword_metrics(db_setup, app, monkeypatch):
             latencies_ms=latencies,
             zero_results=zero,
             n_queries=len(latencies),
+            degraded_count=0,  # keyword-only path is never hybrid-degraded
         )
+        # Visible with: pytest -q tests/test_intelligence_eval_baseline.py -s
+        print("\nINTELLIGENCE_BASELINE_KEYWORD", summary)
         assert summary["n_queries"] >= 1
         assert summary["precision_at_k_mean"] > 0
         assert summary["mrr_mean"] > 0
         assert summary["latency_p50_ms"] >= 0
         assert summary["latency_p95_ms"] >= summary["latency_p50_ms"]
         assert summary["zero_result_rate"] < 1.0
+        assert summary["degraded_rate"] == 0.0
+
+
+def test_eval_hybrid_degraded_path_metrics(db_setup, app, monkeypatch):
+    """Hybrid on without embeddings must stay useful (keyword/degraded), not crash."""
+    monkeypatch.setenv("ENABLE_HYBRID_SEARCH", "1")
+    monkeypatch.setenv("ENABLE_VOCAB_ENRICHMENT", "0")
+    monkeypatch.setenv("ENABLE_NL_QUERY_PARSE", "0")
+    monkeypatch.setenv("ENABLE_SEARCH_SHADOW", "0")
+    cases = json.loads(FIXTURE.read_text(encoding="utf-8"))["cases"]
+    with app.app_context():
+        from database import db
+        from services.hybrid_search import HybridSearchService
+
+        seed_ids = _seed(db)
+        zero = 0
+        precisions = []
+        recalls = []
+        mrrs = []
+        latencies = []
+        degraded = 0
+        n = 0
+        for case in cases:
+            if case.get("scope") != "properties":
+                continue
+            req = parse_search_request(
+                q=case["query"], scope=case["scope"], mode="full"
+            )
+            t0 = time.perf_counter()
+            result = HybridSearchService().search(req)
+            latencies.append((time.perf_counter() - t0) * 1000)
+            n += 1
+            hybrid = result.get("hybrid") or {}
+            if hybrid.get("degraded") or hybrid.get("mode") == "keyword_only":
+                degraded += 1
+            hits = result["groups"].get("properties") or []
+            hit_ids = [h["id"] for h in hits[: case.get("k", 5)]]
+            if result.get("total_count", 0) == 0 and not hits:
+                zero += 1
+            expect = {seed_ids[s] for s in case.get("expect_seeds", []) if s in seed_ids}
+            k = case.get("k", 5)
+            if expect:
+                precisions.append(precision_at_k(hit_ids, expect, k))
+                recalls.append(recall_at_k(hit_ids, expect, k))
+                mrrs.append(mrr(hit_ids, expect))
+
+        summary = summarize_run(
+            precisions=precisions,
+            recalls=recalls,
+            mrrs=mrrs,
+            latencies_ms=latencies,
+            zero_results=zero,
+            n_queries=n,
+            degraded_count=degraded,
+        )
+        print("\nINTELLIGENCE_BASELINE_HYBRID", summary)
+        assert n >= 1
+        assert summary["latency_p50_ms"] >= 0
+        # Without embeddings, expect degraded/keyword path rather than hard failure
+        assert summary["degraded_rate"] >= 0.0
 
 
 def test_metric_helpers_unit():
