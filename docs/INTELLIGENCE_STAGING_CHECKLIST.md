@@ -24,8 +24,17 @@ Use this after deploy + `flask db upgrade` (head includes `x9y0z1a2b3c4` or late
 - [ ] Search `/search?q=house&scope=properties` against a listing titled with villa/house
 - [ ] Confirm expand does not log raw queries (check structured logs only)
 
+## 2b. Customer NL (optional)
+
+- [ ] Enable **Customer NL structured filters** on `/admin/intelligence`
+- [ ] Search customers: `2 bedroom apartment under 500k` (or `two-bedroom …`)
+- [ ] Confirm structured chips/meta; free-text preferences never searched
+- [ ] Leave OFF if not needed
+
 ## 3. Hybrid (shadow first)
 
+- [ ] On `/admin/intelligence`, note **Property embedding coverage** (missing count)
+- [ ] Backfill missing embeddings asynchronously (`crm.sync_property_embedding`) if coverage is low
 - [ ] Enable **Hybrid / natural-language search** + **Hybrid shadow ranking**
 - [ ] Search `3 bedroom apartment under 500k` on properties
 - [ ] UI order stays keyword-like; chips may show shadow

@@ -54,3 +54,43 @@ def list_properties_missing_embeddings(*, limit: int = 50) -> List[int]:
         .all()
     )
     return [int(p.id) for p in rows]
+
+
+def enqueue_missing_property_embeddings(*, limit: int = 50) -> Dict[str, Any]:
+    """
+    Enqueue Celery embedding sync for missing properties (async only).
+
+    Never computes embeddings in-process. If Celery/broker unavailable, returns
+    ``enqueued=0`` with ``status=broker_unavailable`` and the id list for ops.
+    """
+    ids = list_properties_missing_embeddings(limit=limit)
+    if not ids:
+        return {"status": "ok", "enqueued": 0, "property_ids": [], "missing_selected": 0}
+
+    enqueued = 0
+    errors = 0
+    try:
+        from services.celery_tasks import sync_property_embedding_task
+    except Exception:
+        return {
+            "status": "broker_unavailable",
+            "enqueued": 0,
+            "property_ids": ids,
+            "missing_selected": len(ids),
+        }
+
+    for pid in ids:
+        try:
+            sync_property_embedding_task.delay(pid, "upsert")
+            enqueued += 1
+        except Exception:
+            errors += 1
+
+    status = "ok" if enqueued else ("broker_unavailable" if errors else "ok")
+    return {
+        "status": status,
+        "enqueued": enqueued,
+        "errors": errors,
+        "property_ids": ids,
+        "missing_selected": len(ids),
+    }
