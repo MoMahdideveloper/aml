@@ -45,6 +45,7 @@ SQLite and Postgres both supported for these tables.
 | 8 | `ENABLE_SEARCH_SHADOW` | `0` | Hybrid compute, keyword display order |
 | 9 | `ENABLE_DESCRIPTION_SEARCH` | `0` | Keyword search in property description |
 | 10 | `ENABLE_NL_QUERY_PARSE` | `0` | Optional LLM soft-constraint parse (fail-open) |
+| 11 | `ENABLE_ACTIVITY_SEARCH` | `0` | Interaction metadata search (`scope=activities`; type/outcome/id only) |
 
 Check **Property embedding coverage** on `/admin/intelligence` before enabling hybrid live.
 

@@ -99,6 +99,14 @@ FLAG_CATALOG: List[Dict[str, Any]] = [
         "default": False,
         "recommended": False,
     },
+    {
+        "key": "activity_search",
+        "env": "ENABLE_ACTIVITY_SEARCH",
+        "label": "Activity search (metadata only)",
+        "description": "Search customer interactions by type/outcome/id via scope=activities. Never searches body or subject. Default OFF.",
+        "default": False,
+        "recommended": False,
+    },
 ]
 
 
@@ -135,6 +143,7 @@ def get_or_create_settings() -> IntelligenceSettings:
         description_search=_env_bool("ENABLE_DESCRIPTION_SEARCH", False),
         nl_query_parse=_env_bool("ENABLE_NL_QUERY_PARSE", False),
         customer_nl_filters=_env_bool("ENABLE_CUSTOMER_NL_FILTERS", False),
+        activity_search=_env_bool("ENABLE_ACTIVITY_SEARCH", False),
         updated_by="system",
     )
 
@@ -246,6 +255,7 @@ def apply_to_app_config(app, row: Optional[IntelligenceSettings] = None) -> None
     app.config["ENABLE_CUSTOMER_NL_FILTERS"] = bool(
         getattr(row, "customer_nl_filters", False)
     )
+    app.config["ENABLE_ACTIVITY_SEARCH"] = bool(getattr(row, "activity_search", False))
 
 
 

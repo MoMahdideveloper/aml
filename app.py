@@ -2,6 +2,16 @@
 Flask application factory with device detection implementation.
 """
 
+from pathlib import Path
+
+# Load project .env before other app modules read os.environ (Gemini, DB, secrets).
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(Path(__file__).resolve().parent / ".env")
+except ImportError:  # pragma: no cover
+    pass
+
 import os
 import logging
 import time
@@ -317,8 +327,9 @@ def create_app(test_config=None):
     app.config["ENABLE_CUSTOMER_NL_FILTERS"] = (
         os.environ.get("ENABLE_CUSTOMER_NL_FILTERS", "0").strip() == "1"
     )
-
-
+    app.config["ENABLE_ACTIVITY_SEARCH"] = (
+        os.environ.get("ENABLE_ACTIVITY_SEARCH", "0").strip() == "1"
+    )
 
     # Vocabulary occurrence extraction index (default off).
     app.config["ENABLE_VOCAB_OCCURRENCES"] = (

@@ -1726,6 +1726,7 @@ class IntelligenceSettings(db.Model):
     description_search: Mapped[bool] = mapped_column(Boolean, default=False)
     nl_query_parse: Mapped[bool] = mapped_column(Boolean, default=False)
     customer_nl_filters: Mapped[bool] = mapped_column(Boolean, default=False)
+    activity_search: Mapped[bool] = mapped_column(Boolean, default=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
     updated_by: Mapped[str] = mapped_column(String(120), default="")
 
@@ -1742,6 +1743,7 @@ class IntelligenceSettings(db.Model):
             "description_search": bool(self.description_search),
             "nl_query_parse": bool(self.nl_query_parse),
             "customer_nl_filters": bool(getattr(self, "customer_nl_filters", False)),
+            "activity_search": bool(getattr(self, "activity_search", False)),
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "updated_by": self.updated_by,
         }

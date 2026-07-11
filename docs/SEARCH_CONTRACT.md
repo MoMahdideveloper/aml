@@ -1,7 +1,8 @@
 # Unified CRM search contract (Track A)
 
 ## Scope
-Customers, properties, deals, agents, tasks — SQLAlchemy only (no Elasticsearch/vector).
+Customers, properties, deals, agents, tasks — SQLAlchemy only (no Elasticsearch/vector).  
+Optional scope **`activities`** (customer interactions) when `ENABLE_ACTIVITY_SEARCH=1` — **not** included in default “all scopes”.
 
 ## Query rules
 | Rule | Value |
@@ -40,4 +41,7 @@ Cleanup: remove flag after one stable release cycle.
 
 ## Customer NL filters (optional)
 `ENABLE_CUSTOMER_NL_FILTERS` / admin key `customer_nl_filters` — default `0`. When on, customer scope applies high-confidence structured filters on `budget_*`, `preferred_bedrooms`, `preferred_type`, `location_preference`. Response may include `customer_nl.hard_filters` / `chips`. Free-text `preferences` is never searched. Flag off = classic name/email/phone/location keyword only.
+
+## Activity search (optional)
+`ENABLE_ACTIVITY_SEARCH` / admin key `activity_search` — default `0`. When on, `scope=activities` searches **only** `interaction_type`, `outcome`, and numeric id. **Never** `body` or `subject`. Soft-deleted interactions and customers excluded. Hits link to Customer 360.
 

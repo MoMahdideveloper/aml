@@ -15,6 +15,7 @@ _SCOPE_CUES = {
     "deals": ("deal", "deals", "pipeline", "offer"),
     "tasks": ("task", "tasks", "todo", "follow-up", "follow up"),
     "agents": ("agent", "agents", "broker"),
+    "activities": ("activity", "activities", "interaction", "interactions", "call", "email", "meeting"),
 }
 
 
@@ -51,14 +52,17 @@ class SearchIntent:
 
 
 def detect_scopes(query: str, requested: Optional[Set[str]] = None) -> Set[str]:
-    """If client already selected scopes, keep them; else infer from cues or all."""
+    """If client already selected scopes, keep them; else infer from cues or core default."""
+    from services.unified_search import ALL_SCOPES, ENTITY_SCOPES
+
     if requested:
-        return set(requested) & set(ENTITY_SCOPES) or set(ENTITY_SCOPES)
+        return set(requested) & set(ALL_SCOPES) or set(ENTITY_SCOPES)
     q = (query or "").casefold()
     found: Set[str] = set()
     for scope, cues in _SCOPE_CUES.items():
         if any(c in q for c in cues):
             found.add(scope)
+    # Default core five only (activities remain opt-in via explicit scope or cues).
     return found or set(ENTITY_SCOPES)
 
 

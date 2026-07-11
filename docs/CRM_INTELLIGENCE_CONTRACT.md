@@ -18,6 +18,7 @@ Incremental capabilities on the Flask CRM only (ADR-001 Track A). Track B / Neo4
 | LLM query parse | Optional later | `ENABLE_NL_QUERY_PARSE` |
 | Customer NL structured filters | **Shipped** | `ENABLE_CUSTOMER_NL_FILTERS` / admin `customer_nl_filters` (default `0`) |
 | Embedding coverage metric | **Shipped** | `/admin/intelligence` panel (counts only) |
+| Activity search (metadata) | **Shipped** | `ENABLE_ACTIVITY_SEARCH` / `activity_search` (default `0`) |
 | Customer completeness section | **Shipped** | Included in AI context when context on |
 
 

@@ -12,10 +12,14 @@ from sqlalchemy import and_, cast, func, or_, String
 from sqlalchemy.orm import joinedload
 
 from database import db
-from sqlalchemy_models import Agent, Customer, Deal, Property, Task
+from sqlalchemy_models import Agent, Customer, CustomerInteraction, Deal, Property, Task
 from utils.observability import log_event, record_business_counter
 
+# Default scopes (unchanged product behavior when scope omitted).
 ENTITY_SCOPES = ("customers", "properties", "deals", "agents", "tasks")
+# Opt-in scopes (valid when requested; not included in default "all").
+OPTIONAL_SCOPES = ("activities",)
+ALL_SCOPES = ENTITY_SCOPES + OPTIONAL_SCOPES
 MIN_QUERY_LEN = 2
 MAX_QUERY_LEN = 100
 AUTOCOMPLETE_PER_GROUP = 5
@@ -120,12 +124,16 @@ def parse_search_request(
     scopes: Set[str]
     if scope:
         scopes = {s.strip().lower() for s in scope.split(",") if s.strip()}
-        bad = scopes - set(ENTITY_SCOPES)
+        # accept singular aliases
+        aliases = {"activity": "activities", "interaction": "activities", "interactions": "activities"}
+        scopes = {aliases.get(s, s) for s in scopes}
+        bad = scopes - set(ALL_SCOPES)
         if bad:
             raise SearchValidationError("bad_scope", f"Unknown entity scope: {', '.join(sorted(bad))}")
         if not scopes:
             scopes = set(ENTITY_SCOPES)
     else:
+        # Default remains the five core entities (activities are opt-in via scope=).
         scopes = set(ENTITY_SCOPES)
 
     sort_v = (sort or "relevance").strip().lower()
@@ -195,6 +203,7 @@ def _entity_url(entity: str, entity_id: int) -> str:
         "deals": f"/deals?highlight={entity_id}",
         "agents": f"/agents/{entity_id}",
         "tasks": f"/tasks?highlight={entity_id}",
+        "activities": f"/customers/{entity_id}",  # interaction hits pass customer_id as url target
     }
     return paths.get(entity, f"/{entity}/{entity_id}")
 
@@ -634,6 +643,80 @@ class SearchRepository:
             )
         return self._finalize(hits, req)
 
+    def search_activities(self, req: SearchRequest) -> List[SearchHit]:
+        """Search customer interactions on allowlisted metadata only.
+
+        Allowed: interaction_type, outcome, id.
+        Never: body, subject (free text), actor free-text dumps.
+        Soft-deleted interactions and customers are excluded.
+        Gated by ENABLE_ACTIVITY_SEARCH / activity_search flag.
+        """
+        try:
+            from services.intelligence_settings import is_enabled
+
+            on = is_enabled("activity_search")
+        except Exception:
+            import os
+
+            on = os.environ.get("ENABLE_ACTIVITY_SEARCH", "0").strip() == "1"
+        if not on:
+            return []
+
+        q = req.normalized_query
+        query = (
+            CustomerInteraction.query.filter(CustomerInteraction.is_deleted.is_(False))
+            .join(Customer, Customer.id == CustomerInteraction.customer_id)
+            .filter(Customer.is_deleted.is_(False))
+        )
+        if q:
+            clauses = []
+            if q.isdigit():
+                clauses.append(CustomerInteraction.id == int(q))
+            like = f"%{q}%"
+            # Metadata only — never body/subject
+            clauses.extend(
+                [
+                    CustomerInteraction.interaction_type.ilike(like),
+                    CustomerInteraction.outcome.ilike(like),
+                ]
+            )
+            query = query.filter(or_(*clauses))
+        rows = (
+            query.order_by(CustomerInteraction.id.asc())
+            .limit(req.per_page * 3)
+            .all()
+        )
+        hits: List[SearchHit] = []
+        for row in rows:
+            cust = Customer.query.filter_by(id=row.customer_id, is_deleted=False).first()
+            cname = (cust.name if cust else None) or f"Customer #{row.customer_id}"
+            itype = row.interaction_type or "activity"
+            outcome = row.outcome or ""
+            if q and str(row.id) == q:
+                tier, matched = 0, "id"
+            else:
+                tier, matched = _tier_for_text(
+                    q,
+                    exact_vals=[itype, outcome],
+                    prefix_vals=[itype],
+                    contains_vals=[itype, outcome],
+                )
+            # URL targets customer 360 (interaction lives on customer timeline)
+            url = _entity_url("customers", row.customer_id)
+            hits.append(
+                SearchHit(
+                    entity_type="activities",
+                    id=row.id,
+                    title=f"{itype.title()} · {cname}",
+                    subtitle=(outcome or "activity")[:200],
+                    status=itype,
+                    url=url,
+                    matched_field=matched,
+                    rank_tier=tier,
+                )
+            )
+        return self._finalize(hits, req)
+
     def _finalize(self, hits: List[SearchHit], req: SearchRequest) -> List[SearchHit]:
         if req.sort == "id":
             hits.sort(key=lambda h: h.id)
@@ -653,8 +736,8 @@ class UnifiedSearchService:
 
     def search(self, req: SearchRequest) -> Dict[str, Any]:
         t0 = time.perf_counter()
-        groups: Dict[str, List[Dict[str, Any]]] = {k: [] for k in ENTITY_SCOPES}
-        counts: Dict[str, int] = {k: 0 for k in ENTITY_SCOPES}
+        groups: Dict[str, List[Dict[str, Any]]] = {k: [] for k in ALL_SCOPES}
+        counts: Dict[str, int] = {k: 0 for k in ALL_SCOPES}
 
         customer_chips: List[str] = []
         # Attach customer NL hard filters when enabled (fail-open; never mutates flag-off path)
@@ -687,8 +770,9 @@ class UnifiedSearchService:
             "deals": self.repo.search_deals,
             "agents": self.repo.search_agents,
             "tasks": self.repo.search_tasks,
+            "activities": self.repo.search_activities,
         }
-        for scope in ENTITY_SCOPES:
+        for scope in ALL_SCOPES:
             if scope not in req.scopes:
                 continue
             if not req.normalized_query and not req.status and not req.agent_id and not req.customer_type:
@@ -702,6 +786,8 @@ class UnifiedSearchService:
                 and not req.normalized_query
                 and not req.customer_hard_filters
             ):
+                continue
+            if scope == "activities" and not req.normalized_query:
                 continue
             hits = runners[scope](req)
             groups[scope] = [h.to_dict() for h in hits]
