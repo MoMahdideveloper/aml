@@ -48,6 +48,8 @@ def test_admin_page_and_post(client, db_setup, app):
     r = client.get("/admin/intelligence")
     assert r.status_code == 200
     assert b"Intelligence settings" in r.data or b"intelligence" in r.data.lower()
+    assert b"embedding coverage" in r.data.lower() or b"Coverage" in r.data
+    assert b"Customer NL" in r.data or b"customer_nl" in r.data.lower()
 
     r2 = client.post(
         "/admin/intelligence",
@@ -55,6 +57,7 @@ def test_admin_page_and_post(client, db_setup, app):
             "global_search": "1",
             "hybrid_search": "1",
             "vocab_enrichment": "1",
+            "customer_nl_filters": "1",
             # others off (unchecked)
         },
         follow_redirects=True,
@@ -65,5 +68,20 @@ def test_admin_page_and_post(client, db_setup, app):
         assert row.hybrid_search is True
         assert row.vocab_enrichment is True
         assert row.ai_context is False
+        assert row.customer_nl_filters is True
         assert app.config.get("ENABLE_HYBRID_SEARCH") is True
+        assert app.config.get("ENABLE_CUSTOMER_NL_FILTERS") is True
+
+
+def test_customer_nl_catalog_default_off(db_setup, app, monkeypatch):
+    monkeypatch.setenv("ENABLE_CUSTOMER_NL_FILTERS", "0")
+    from services.intelligence_settings import FLAG_CATALOG, is_enabled
+    from services.customer_query_constraints import feature_enabled as cust_nl
+
+    meta = next(f for f in FLAG_CATALOG if f["key"] == "customer_nl_filters")
+    assert meta["default"] is False
+    assert meta["env"] == "ENABLE_CUSTOMER_NL_FILTERS"
+    with app.app_context():
+        assert is_enabled("customer_nl_filters") is False
+        assert cust_nl() is False
 

@@ -32,7 +32,13 @@ _LOCATION_NEAR_RE = re.compile(
 
 
 def feature_enabled() -> bool:
-    """Env-only flag (no migration). Default off — preserves classic customer search."""
+    """Customer NL structured filters. Default off — preserves classic customer search."""
+    try:
+        from services.intelligence_settings import is_enabled
+
+        return is_enabled("customer_nl_filters")
+    except Exception:
+        pass
     try:
         from flask import current_app, has_app_context
 

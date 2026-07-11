@@ -37,13 +37,16 @@ SQLite and Postgres both supported for these tables.
 |------:|------|---------|----------------|
 | 1 | `ENABLE_VOCAB_ENRICHMENT` | `0` | Property search synonym/replacement expand |
 | 2 | `ENABLE_VOCAB_OCCURRENCES` | `0` | Extract/index term occurrences (Celery reindex) |
-| 3 | `ENABLE_HYBRID_SEARCH` | `0` | Full `/search` property hybrid re-rank + evidence |
-| 4 | `ENABLE_AI_CONTEXT` | `0` | `/api/context/...` (customer/property/deal/task/agent) |
-| 5 | `ENABLE_AI_ANSWER` | `0` | Grounded answers `POST .../answer` (needs context ON) |
-| 6 | `ENABLE_DERIVED_EDGES` | `0` | Related panel + `/api/related/...` |
-| 7 | `ENABLE_SEARCH_SHADOW` | `0` | Hybrid compute, keyword display order |
-| 8 | `ENABLE_DESCRIPTION_SEARCH` | `0` | Keyword search in property description |
-| 9 | `ENABLE_NL_QUERY_PARSE` | `0` | Optional LLM soft-constraint parse (fail-open) |
+| 3 | `ENABLE_CUSTOMER_NL_FILTERS` | `0` | Customer structured NL (beds/budget/type/location); admin toggle `customer_nl_filters` |
+| 4 | `ENABLE_HYBRID_SEARCH` | `0` | Full `/search` property hybrid re-rank + evidence |
+| 5 | `ENABLE_AI_CONTEXT` | `0` | `/api/context/...` (customer/property/deal/task/agent) |
+| 6 | `ENABLE_AI_ANSWER` | `0` | Grounded answers `POST .../answer` (needs context ON) |
+| 7 | `ENABLE_DERIVED_EDGES` | `0` | Related panel + `/api/related/...` |
+| 8 | `ENABLE_SEARCH_SHADOW` | `0` | Hybrid compute, keyword display order |
+| 9 | `ENABLE_DESCRIPTION_SEARCH` | `0` | Keyword search in property description |
+| 10 | `ENABLE_NL_QUERY_PARSE` | `0` | Optional LLM soft-constraint parse (fail-open) |
+
+Check **Property embedding coverage** on `/admin/intelligence` before enabling hybrid live.
 
 
 

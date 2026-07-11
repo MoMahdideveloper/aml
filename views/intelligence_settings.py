@@ -50,8 +50,16 @@ def intelligence_settings_page():
         settings = get_or_create_settings()
     except Exception:
         pass
+    embedding_coverage = None
+    try:
+        from services.embedding_coverage import summarize_property_embedding_coverage
+
+        embedding_coverage = summarize_property_embedding_coverage()
+    except Exception:
+        embedding_coverage = None
     return render_template(
         "admin_intelligence_settings.html",
         flags=flags,
         settings=settings,
+        embedding_coverage=embedding_coverage,
     )

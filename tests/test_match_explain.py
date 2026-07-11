@@ -37,3 +37,36 @@ def test_list_customer_matches(db_setup, app):
         assert rows[0]["property_title"] == "Matched Villa"
         assert rows[0]["why"] == ["Type match", "Budget in range"]
         assert rows[0]["match_score"] == 0.82
+        assert "score_components" in rows[0]
+        assert "property_id" in rows[0]
+
+
+def test_list_customer_matches_skips_deleted_property_and_customer(db_setup, app):
+    with app.app_context():
+        from database import db
+
+        c = Customer(name="MX2", email="mx2@example.com", phone="5559200002")
+        p = Property(
+            title="Gone",
+            address="1",
+            property_type="villa",
+            price=100,
+            is_deleted=True,
+        )
+        db.session.add_all([c, p])
+        db.session.flush()
+        db.session.add(
+            PropertyMatch(
+                customer_id=c.id,
+                property_id=p.id,
+                match_score=0.9,
+                status="pending",
+                match_reasons=json.dumps(["should not show"]),
+            )
+        )
+        db.session.commit()
+        assert list_customer_matches(c.id) == []
+
+        c.is_deleted = True
+        db.session.commit()
+        assert list_customer_matches(c.id) == []

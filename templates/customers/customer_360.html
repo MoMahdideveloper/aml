@@ -45,9 +45,25 @@
         {% else %}
         <p class="text-xs text-on-surface-variant mt-1">No structured reasons stored for this match.</p>
         {% endif %}
+        {% if m.score_components %}
+        <p class="text-xs text-on-surface-variant mt-2">
+          Components:
+          {% for k, v in m.score_components.items() %}
+          <span class="inline-block mr-2"><code>{{ k }}</code> {{ '%.2f'|format(v) }}</span>
+          {% endfor %}
+        </p>
+        {% endif %}
       </li>
       {% endfor %}
     </ul>
+  </section>
+  {% elif customer %}
+  <section class="mb-8 border border-dashed border-outline-variant rounded-lg p-4 bg-surface-container-lowest" aria-labelledby="why-match-empty-h">
+    <h2 id="why-match-empty-h" class="text-lg font-semibold mb-1">Property matches</h2>
+    <p class="text-xs text-on-surface-variant">
+      No stored match scores yet. Run recommendations or background matching to populate
+      <code>property_matches</code>, then reasons appear here without LLM ranking.
+    </p>
   </section>
   {% endif %}
 

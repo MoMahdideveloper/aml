@@ -20,8 +20,33 @@ def test_flag_catalog_has_core_keys():
         "description_search",
         "nl_query_parse",
         "vocab_occurrences",
+        "customer_nl_filters",
     ):
         assert required in keys
+
+
+def test_customer_nl_off_does_not_emit_hard_filters(db_setup, app, monkeypatch):
+    monkeypatch.setenv("ENABLE_CUSTOMER_NL_FILTERS", "0")
+    with app.app_context():
+        from database import db
+        from sqlalchemy_models import Customer
+
+        db.session.add(
+            Customer(
+                name="Staging Customer",
+                email="staging-c@example.com",
+                phone="5551110001",
+                preferred_bedrooms=2,
+                budget_max=400_000,
+                preferred_type="apartment",
+            )
+        )
+        db.session.commit()
+        req = parse_search_request(
+            q="2 bedroom apartment under 500k", scope="customers", mode="full"
+        )
+        result = unified_search_service.search(req)
+        assert not (result.get("customer_nl") or {}).get("hard_filters")
 
 
 def test_keyword_search_with_intelligence_off(db_setup, app, monkeypatch):

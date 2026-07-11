@@ -39,5 +39,5 @@ Cleanup: remove flag after one stable release cycle.
 `ENABLE_HYBRID_SEARCH` — default `0`. When `1`, full-page `/search` may re-rank **properties** with keyword + stored `PropertyEmbedding` cosine scores (weighted merge). Autocomplete stays keyword-only. Rule-based constraints (beds, price, type) apply as hard filters when confidence is high. If embeddings missing/provider fails → keyword path + `hybrid.degraded`. Never logs raw query. See `docs/CRM_INTELLIGENCE_CONTRACT.md`.
 
 ## Customer NL filters (optional)
-`ENABLE_CUSTOMER_NL_FILTERS` — default `0` (env only; no DB migration). When `1`, customer scope applies high-confidence structured filters on `budget_*`, `preferred_bedrooms`, `preferred_type`, `location_preference`. Response may include `customer_nl.hard_filters` / `chips`. Free-text `preferences` is never searched. Flag off = classic name/email/phone/location keyword only.
+`ENABLE_CUSTOMER_NL_FILTERS` / admin key `customer_nl_filters` — default `0`. When on, customer scope applies high-confidence structured filters on `budget_*`, `preferred_bedrooms`, `preferred_type`, `location_preference`. Response may include `customer_nl.hard_filters` / `chips`. Free-text `preferences` is never searched. Flag off = classic name/email/phone/location keyword only.
 

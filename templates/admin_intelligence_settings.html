@@ -52,12 +52,36 @@
   </p>
   {% endif %}
 
+  {% if embedding_coverage %}
+  <section class="mt-8 border border-outline-variant rounded-xl p-5 bg-surface-container-lowest" aria-labelledby="emb-h">
+    <h2 id="emb-h" class="font-semibold text-on-surface mb-2">Property embedding coverage</h2>
+    <p class="text-sm text-on-surface-variant mb-2">
+      Hybrid search quality depends on coverage. Counts only — no listing text.
+    </p>
+    <dl class="grid grid-cols-2 gap-2 text-sm">
+      <dt class="text-on-surface-variant">Active properties</dt>
+      <dd>{{ embedding_coverage.active_properties }}</dd>
+      <dt class="text-on-surface-variant">With embedding</dt>
+      <dd>{{ embedding_coverage.with_embedding }}</dd>
+      <dt class="text-on-surface-variant">Missing</dt>
+      <dd>{{ embedding_coverage.missing }}</dd>
+      <dt class="text-on-surface-variant">Coverage</dt>
+      <dd>{{ '%.1f'|format(embedding_coverage.coverage * 100) }}%</dd>
+    </dl>
+    <p class="text-xs text-on-surface-variant mt-3">
+      Backfill asynchronously via Celery task <code>crm.sync_property_embedding</code>
+      (never blocks property save). Enable hybrid after coverage is acceptable.
+    </p>
+  </section>
+  {% endif %}
+
   <section class="mt-8 text-sm text-on-surface-variant space-y-2" aria-labelledby="help-h">
     <h2 id="help-h" class="font-semibold text-on-surface">Suggested rollout</h2>
     <ol class="list-decimal list-inside space-y-1">
       <li>Keep <strong>Global CRM search</strong> on.</li>
       <li>Add terms under Vocabulary admin, then enable <strong>Vocabulary synonym expand</strong>.</li>
-      <li>Enable <strong>Hybrid / NL search</strong> after embeddings are available (optional).</li>
+      <li>Optionally enable <strong>Customer NL structured filters</strong> after seeding type/location synonyms.</li>
+      <li>Check embedding coverage above, then enable <strong>Hybrid / NL search</strong> (shadow first if available).</li>
       <li>Enable <strong>AI context</strong> and <strong>Related graph</strong> when staff need them.</li>
       <li><strong>Occurrences index</strong> is for concept extraction / graph mentions — run reindex jobs after enabling.</li>
     </ol>

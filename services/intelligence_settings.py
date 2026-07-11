@@ -91,6 +91,14 @@ FLAG_CATALOG: List[Dict[str, Any]] = [
         "default": False,
         "recommended": False,
     },
+    {
+        "key": "customer_nl_filters",
+        "env": "ENABLE_CUSTOMER_NL_FILTERS",
+        "label": "Customer NL structured filters",
+        "description": "Parse beds/budget/type/location from customer search queries. Never searches free-text preferences. Default OFF.",
+        "default": False,
+        "recommended": False,
+    },
 ]
 
 
@@ -126,6 +134,7 @@ def get_or_create_settings() -> IntelligenceSettings:
         search_shadow=_env_bool("ENABLE_SEARCH_SHADOW", False),
         description_search=_env_bool("ENABLE_DESCRIPTION_SEARCH", False),
         nl_query_parse=_env_bool("ENABLE_NL_QUERY_PARSE", False),
+        customer_nl_filters=_env_bool("ENABLE_CUSTOMER_NL_FILTERS", False),
         updated_by="system",
     )
 
@@ -234,6 +243,9 @@ def apply_to_app_config(app, row: Optional[IntelligenceSettings] = None) -> None
         getattr(row, "description_search", False)
     )
     app.config["ENABLE_NL_QUERY_PARSE"] = bool(getattr(row, "nl_query_parse", False))
+    app.config["ENABLE_CUSTOMER_NL_FILTERS"] = bool(
+        getattr(row, "customer_nl_filters", False)
+    )
 
 
 
