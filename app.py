@@ -2,16 +2,6 @@
 Flask application factory with device detection implementation.
 """
 
-from pathlib import Path
-
-# Load project .env before other app modules read os.environ (Gemini, DB, secrets).
-try:
-    from dotenv import load_dotenv
-
-    load_dotenv(Path(__file__).resolve().parent / ".env")
-except ImportError:  # pragma: no cover
-    pass
-
 import os
 import logging
 import time
