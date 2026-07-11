@@ -7,14 +7,20 @@ from services.customer_query_constraints import (
 
 
 def test_extract_beds_budget_type():
-    c = extract_customer_constraints(
-        "Find customers seeking renovated two-bedroom apartments below 500k"
-    )
-    # "two-bedroom" may not match \d+ bedroom pattern — use numeric form
     c2 = extract_customer_constraints(
         "customers seeking 2 bedroom apartment under 500k"
     )
     hard = c2.hard_filters()
+    assert hard.get("preferred_bedrooms_min") == 2
+    assert hard.get("budget_max") == 500_000
+    assert hard.get("preferred_type") == "apartment"
+
+
+def test_extract_spelled_two_bedroom():
+    c = extract_customer_constraints(
+        "Find customers seeking renovated two-bedroom apartments below 500k"
+    )
+    hard = c.hard_filters()
     assert hard.get("preferred_bedrooms_min") == 2
     assert hard.get("budget_max") == 500_000
     assert hard.get("preferred_type") == "apartment"

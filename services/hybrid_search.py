@@ -113,14 +113,24 @@ def _semantic_scores_for_query(
     property_ids: Optional[Sequence[int]] = None,
     limit: int = SEMANTIC_CANDIDATE_LIMIT,
 ) -> Tuple[Dict[int, float], bool, str]:
-    """Score stored property embeddings vs query. Degrades if none/embed fail."""
+    """Score stored property embeddings vs query. Degrades if none/embed fail.
+
+    When ``property_ids`` is an empty sequence, does **not** scan the embedding table
+    (avoids full-index cosine). Pass ``None`` only when intentionally scoring a
+    bounded default sample is acceptable — hybrid always passes explicit candidates.
+    """
     qvec, degraded, reason = _embed_query(query)
     if not qvec:
         return {}, True, reason
 
+    # Empty candidate list: never load entire embedding table.
+    if property_ids is not None and len(list(property_ids)) == 0:
+        return {}, True, "no_candidates"
+
     q = PropertyEmbedding.query
-    if property_ids:
-        q = q.filter(PropertyEmbedding.property_id.in_(list(property_ids)))
+    if property_ids is not None:
+        ids = list(property_ids)[: max(1, int(limit))]
+        q = q.filter(PropertyEmbedding.property_id.in_(ids))
     rows = q.limit(limit).all()
     if not rows:
         return {}, True, "no_property_embeddings"
@@ -280,10 +290,13 @@ class HybridSearchService:
         degraded = False
         reason = "ok"
         try:
-            candidate_ids = list(dict.fromkeys(kw_ids + [p.id for p in hard_props]))
+            candidate_ids = list(dict.fromkeys(kw_ids + [p.id for p in hard_props]))[
+                :SEMANTIC_CANDIDATE_LIMIT
+            ]
+            # Always pass explicit list (possibly empty) — never None full-table scan.
             semantic_scores, degraded, reason = _semantic_scores_for_query(
                 req.normalized_query,
-                property_ids=candidate_ids if candidate_ids else None,
+                property_ids=candidate_ids,
             )
             # filter semantic by hard
             if hard and semantic_scores:
@@ -298,6 +311,18 @@ class HybridSearchService:
                     pid: sc
                     for pid, sc in semantic_scores.items()
                     if pid in props and property_matches_hard(props[pid], hard)
+                }
+            # Post-merge auth: drop any deleted ids that snuck in via embedding rows
+            if semantic_scores:
+                live = {
+                    p.id
+                    for p in Property.query.filter(
+                        Property.id.in_(list(semantic_scores.keys())),
+                        Property.is_deleted.is_(False),
+                    ).all()
+                }
+                semantic_scores = {
+                    pid: sc for pid, sc in semantic_scores.items() if pid in live
                 }
         except Exception:
             semantic_scores = {}

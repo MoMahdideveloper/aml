@@ -69,8 +69,27 @@ def vocab_dashboard():
 
     terms = vocab_service.list_terms()
     replacements = vocab_service.list_replacements()
+    analytics_rows = []
+    analytics_property_type = (request.args.get("property_type") or "").strip()
+    analytics_field = (request.args.get("field") or "").strip() or None
+    try:
+        from services.vocab.analytics import top_terms
+        from services.vocab.occurrences import occurrences_feature_enabled
+
+        if occurrences_feature_enabled() or request.args.get("show_analytics") == "1":
+            analytics_rows = top_terms(
+                entity_type="property",
+                field=analytics_field,
+                property_type=analytics_property_type or None,
+                limit=25,
+            )
+    except Exception:
+        analytics_rows = []
     return render_template(
         "admin_vocab.html",
         terms=terms,
         replacements=replacements,
+        analytics_rows=analytics_rows,
+        analytics_property_type=analytics_property_type,
+        analytics_field=analytics_field or "",
     )

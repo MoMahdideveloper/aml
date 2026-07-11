@@ -48,6 +48,8 @@ Log `vocab_expanded`, `expanded_term_count`, duration, hit counts.
 - Table `vocab_occurrences`: entity_type, entity_id, field, normalized_key, term_id, source_hash, confidence, status.
 - Extract from allowlisted fields only; never rewrites description text.
 - Celery: `crm.reindex_vocab_occurrences`.
+- **Analytics:** `services/vocab/analytics.top_terms` + `/admin/vocab?show_analytics=1` (admin). Soft-deleted properties excluded. No source text returned.
+- Soft-delete of property/customer deactivates occurrences via `services/intelligence_cleanup`.
 
 ## Non-goals
 Neo4j, embedding-mined synonyms, auto-synonym from similarity.

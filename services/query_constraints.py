@@ -11,14 +11,22 @@ HARD_CONFIDENCE = 0.8
 # property_type keywords → canonical
 _TYPE_MAP = {
     "villa": "villa",
+    "villas": "villa",
     "house": "house",
+    "houses": "house",
     "home": "house",
+    "homes": "house",
     "apartment": "apartment",
+    "apartments": "apartment",
     "apt": "apartment",
+    "apts": "apartment",
     "flat": "apartment",
+    "flats": "apartment",
     "condo": "condo",
+    "condos": "condo",
     "condominium": "condo",
     "townhouse": "townhouse",
+    "townhouses": "townhouse",
     "land": "land",
     "office": "office",
     "commercial": "commercial",
@@ -32,6 +40,41 @@ _BEDS_PLUS_RE = re.compile(
     r"\b(\d+)\+\s*(?:bed(?:room)?s?|br)\b",
     re.IGNORECASE,
 )
+# Spelled English bedroom counts (two-bedroom / two bedroom / two bed)
+_WORD_BEDS = {
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+}
+_WORD_BEDS_RE = re.compile(
+    r"\b("
+    + "|".join(re.escape(w) for w in _WORD_BEDS)
+    + r")[\s-]*(?:bed(?:room)?s?|br)\b",
+    re.IGNORECASE,
+)
+
+
+def parse_bedrooms_min(query: str) -> Optional[int]:
+    """Extract minimum bedrooms from digits or common English words."""
+    q = query or ""
+    m = _BEDS_PLUS_RE.search(q) or _BEDS_RE.search(q)
+    if m:
+        beds = int(m.group(1))
+        if 0 < beds <= 20:
+            return beds
+    m = _WORD_BEDS_RE.search(q)
+    if m:
+        beds = _WORD_BEDS.get(m.group(1).casefold())
+        if beds and 0 < beds <= 20:
+            return beds
+    return None
 _PRICE_UNDER_RE = re.compile(
     r"\b(?:under|below|max(?:imum)?|<=?)\s*\$?\s*([\d,]+(?:\.\d+)?)\s*(k|m|million)?\b",
     re.IGNORECASE,
@@ -145,13 +188,11 @@ def extract_constraints(query: str) -> QueryConstraints:
         return c
     ql = q.casefold()
 
-    # bedrooms
-    m = _BEDS_PLUS_RE.search(q) or _BEDS_RE.search(q)
-    if m:
-        beds = int(m.group(1))
-        if 0 < beds <= 20:
-            c.bedrooms_min = beds
-            c.confidences["bedrooms_min"] = 0.9
+    # bedrooms (digits or spelled English)
+    beds = parse_bedrooms_min(q)
+    if beds is not None:
+        c.bedrooms_min = beds
+        c.confidences["bedrooms_min"] = 0.9
 
     # price
     m = _PRICE_UNDER_RE.search(q)

@@ -658,6 +658,16 @@ class DatabaseService:
             db.session.delete(property_obj)
         self._invalidate_property_caches(property_id)
 
+        # Derived intelligence indexes (embeddings, occurrences, edges) — fail-open
+        try:
+            from services.intelligence_cleanup import cleanup_property_derived
+
+            cleanup_property_derived(property_id)
+        except Exception as e:
+            self.logger.warning(
+                f"intelligence cleanup after property delete failed for {property_id}: {e}"
+            )
+
         # Log property deletion to activity log
         try:
             activity_log = PropertyActivityLog(
@@ -1295,6 +1305,15 @@ class DatabaseService:
                 deal.deleted_at = datetime.now(timezone.utc).replace(tzinfo=None)
         else:
             db.session.delete(customer)
+
+        try:
+            from services.intelligence_cleanup import cleanup_customer_derived
+
+            cleanup_customer_derived(customer_id)
+        except Exception as e:
+            self.logger.warning(
+                f"intelligence cleanup after customer delete failed for {customer_id}: {e}"
+            )
 
         self._invalidate_customer_caches(customer_id)
         self.logger.info(f"Deleted customer: {customer_name} (ID: {customer_id})")

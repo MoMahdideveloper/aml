@@ -12,13 +12,12 @@ from typing import Any, Dict, List, Optional
 
 from services.query_constraints import (
     HARD_CONFIDENCE,
-    _BEDS_PLUS_RE,
-    _BEDS_RE,
     _PRICE_BARE_K_RE,
     _PRICE_OVER_RE,
     _PRICE_UNDER_RE,
     _TYPE_MAP,
     _parse_money,
+    parse_bedrooms_min,
 )
 
 # Buyer/customer intent cues (scope hints, not hard filters alone)
@@ -121,13 +120,11 @@ def extract_customer_constraints(query: str) -> CustomerQueryConstraints:
         return c
     ql = q.casefold()
 
-    m = _BEDS_PLUS_RE.search(q) or _BEDS_RE.search(q)
-    if m:
-        beds = int(m.group(1))
-        if 0 < beds <= 20:
-            c.preferred_bedrooms_min = beds
-            # slightly lower if no buyer cue
-            c.confidences["preferred_bedrooms_min"] = 0.9 if _BUYER_CUES.search(q) else 0.85
+    beds = parse_bedrooms_min(q)
+    if beds is not None:
+        c.preferred_bedrooms_min = beds
+        # slightly lower if no buyer cue
+        c.confidences["preferred_bedrooms_min"] = 0.9 if _BUYER_CUES.search(q) else 0.85
 
     m = _PRICE_UNDER_RE.search(q)
     if m:
