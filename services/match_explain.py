@@ -38,6 +38,12 @@ def _parse_reasons(raw: str) -> List[str]:
 
 def list_customer_matches(customer_id: int, *, limit: int = 10) -> List[Dict[str, Any]]:
     """Top matches for a customer with property title and short why list."""
+    from sqlalchemy_models import Customer
+
+    cust = Customer.query.filter_by(id=customer_id, is_deleted=False).first()
+    if not cust:
+        return []
+
     rows = (
         PropertyMatch.query.filter_by(customer_id=customer_id)
         .filter(PropertyMatch.status != "dismissed")
@@ -48,9 +54,29 @@ def list_customer_matches(customer_id: int, *, limit: int = 10) -> List[Dict[str
     out: List[Dict[str, Any]] = []
     for m in rows:
         prop = Property.query.filter_by(id=m.property_id).first()
-        if prop and getattr(prop, "is_deleted", False):
+        if not prop or getattr(prop, "is_deleted", False):
             continue
-        title = (prop.title if prop else None) or f"Property #{m.property_id}"
+        title = prop.title or f"Property #{m.property_id}"
+        why = _parse_reasons(m.match_reasons or "")
+        # Optional live score components when reasons empty (no provider call)
+        score_components: Dict[str, Any] = {}
+        if not why:
+            try:
+                from services.vector_service import vector_service
+
+                breakdown = vector_service.score_breakdown(cust, prop)
+                if isinstance(breakdown, dict):
+                    score_components = {
+                        k: float(v)
+                        for k, v in breakdown.items()
+                        if isinstance(v, (int, float))
+                    }
+                    why = [
+                        f"{k}: {v:.2f}"
+                        for k, v in list(score_components.items())[:8]
+                    ]
+            except Exception:
+                pass
         out.append(
             {
                 "match_id": m.id,
@@ -60,7 +86,8 @@ def list_customer_matches(customer_id: int, *, limit: int = 10) -> List[Dict[str
                 "confidence_level": m.confidence_level or "",
                 "status": m.status or "",
                 "priority": m.priority or "",
-                "why": _parse_reasons(m.match_reasons or ""),
+                "why": why,
+                "score_components": score_components,
             }
         )
     return out

@@ -28,10 +28,11 @@ Does **not** rewrite stored listing text. Does **not** auto-create synonyms from
 
 ## Search integration
 - Flag: `ENABLE_VOCAB_ENRICHMENT` (default `0`).  
-- When on: property scope only (`title`, `address`, `neighborhood`, `file_code`, id).  
+- When on: property scope (`title`, `address`, `neighborhood`, `file_code`, id).  
 - When off: identical to pre-vocab keyword search.  
-- Customers / deals / agents / tasks: **no** expand in PR1.  
-- Description body: **not** newly searchable.  
+- **Customer expand (optional):** when `ENABLE_CUSTOMER_NL_FILTERS=1` **and** vocab enrichment on, expand may also match `location_preference` / `preferred_type` (never free-text `preferences`).  
+- Deals / agents / tasks: **no** expand.  
+- Description body: only if `ENABLE_DESCRIPTION_SEARCH=1`.  
 
 ## Admin
 - `/admin/vocab` — create/archive terms, synonyms, replacements.  

@@ -16,6 +16,8 @@ Incremental capabilities on the Flask CRM only (ADR-001 Track A). Track B / Neo4
 | SearchIntent + context matches/briefs + match edges | **shipped** | extends hybrid/context/graph |
 | Grounded AI answers | **shipped** | `ENABLE_AI_ANSWER` / admin toggle |
 | LLM query parse | Optional later | `ENABLE_NL_QUERY_PARSE` |
+| Customer NL structured filters | **Shipped** | `ENABLE_CUSTOMER_NL_FILTERS` (env, default `0`) |
+| Customer completeness section | **Shipped** | Included in AI context when context on |
 
 
 ## Privacy

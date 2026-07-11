@@ -24,12 +24,15 @@ class SearchIntent:
     normalized_query: str
     scopes: Set[str] = field(default_factory=set)
     constraints: Optional[QueryConstraints] = None
+    customer_constraints: Optional[Any] = None
     unresolved_phrases: List[str] = field(default_factory=list)
     hard_filters: Dict[str, Any] = field(default_factory=dict)
     soft_filters: Dict[str, Any] = field(default_factory=dict)
+    customer_hard_filters: Dict[str, Any] = field(default_factory=dict)
+    customer_soft_filters: Dict[str, Any] = field(default_factory=dict)
 
     def to_public_dict(self) -> Dict[str, Any]:
-        return {
+        out = {
             "scopes": sorted(self.scopes),
             "hard_filters": self.hard_filters,
             "soft_filters": self.soft_filters,
@@ -37,6 +40,14 @@ class SearchIntent:
             "constraints": self.constraints.to_public_dict() if self.constraints else {},
             # deliberately omit raw_query from public/logs
         }
+        if self.customer_hard_filters or self.customer_soft_filters:
+            out["customer_hard_filters"] = self.customer_hard_filters
+            out["customer_soft_filters"] = self.customer_soft_filters
+            if self.customer_constraints is not None and hasattr(
+                self.customer_constraints, "to_public_dict"
+            ):
+                out["customer_constraints"] = self.customer_constraints.to_public_dict()
+        return out
 
 
 def detect_scopes(query: str, requested: Optional[Set[str]] = None) -> Set[str]:
@@ -71,12 +82,27 @@ def interpret_query(
     hard = constraints.hard_filters()
     soft = constraints.soft_filters()
 
+    customer_constraints = None
+    customer_hard: Dict[str, Any] = {}
+    customer_soft: Dict[str, Any] = {}
+    try:
+        from services.customer_query_constraints import extract_customer_constraints
+
+        customer_constraints = extract_customer_constraints(q)
+        customer_hard = customer_constraints.hard_filters()
+        customer_soft = customer_constraints.soft_filters()
+    except Exception:
+        pass
 
     # Unresolved: tokens not used in hard filters (heuristic)
     used = set()
     for v in hard.values():
         used.add(str(v).casefold())
     for v in soft.values():
+        used.add(str(v).casefold())
+    for v in customer_hard.values():
+        used.add(str(v).casefold())
+    for v in customer_soft.values():
         used.add(str(v).casefold())
     unresolved = []
     for tok in q.split():
@@ -87,7 +113,22 @@ def interpret_query(
             continue
         if any(tl in str(u) or str(u) in tl for u in used):
             continue
-        if tl in ("with", "near", "below", "above", "under", "find", "show", "looking", "for", "and", "the"):
+        if tl in (
+            "with",
+            "near",
+            "below",
+            "above",
+            "under",
+            "find",
+            "show",
+            "looking",
+            "for",
+            "and",
+            "the",
+            "seeking",
+            "customers",
+            "customer",
+        ):
             continue
         unresolved.append(tok)
 
@@ -96,7 +137,10 @@ def interpret_query(
         normalized_query=q,
         scopes=scopes,
         constraints=constraints,
+        customer_constraints=customer_constraints,
         unresolved_phrases=unresolved[:12],
         hard_filters=hard,
         soft_filters=soft,
+        customer_hard_filters=customer_hard,
+        customer_soft_filters=customer_soft,
     )

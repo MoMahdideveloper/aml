@@ -41,6 +41,7 @@ PURPOSE_SECTION_PROFILES: Dict[str, Optional[Set[str]]] = {
             "deals",
             "concepts",
             "favorites",
+            "completeness",
         }
     ),
     "search_explain": frozenset(
@@ -52,6 +53,7 @@ PURPOSE_SECTION_PROFILES: Dict[str, Optional[Set[str]]] = {
             "concepts",
             "description",
             "features",
+            "completeness",
         }
     ),
 }
@@ -338,6 +340,12 @@ class ContextBuilder:
             },
             # deliberately omit: email, phone, customer.preferences free text
         }
+        try:
+            from services.customer_completeness import completeness_section_for_context
+
+            sections["completeness"] = completeness_section_for_context(c)
+        except Exception:
+            pass
 
         deals = (
             Deal.query.filter_by(customer_id=c.id, is_deleted=False)

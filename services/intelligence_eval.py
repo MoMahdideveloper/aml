@@ -51,6 +51,7 @@ def summarize_run(
     latencies_ms: Sequence[float],
     zero_results: int,
     n_queries: int,
+    degraded_count: int = 0,
 ) -> Dict[str, float]:
     n = max(1, int(n_queries))
     return {
@@ -59,6 +60,7 @@ def summarize_run(
         "recall_at_k_mean": sum(recalls) / max(1, len(recalls)) if recalls else 0.0,
         "mrr_mean": sum(mrrs) / max(1, len(mrrs)) if mrrs else 0.0,
         "zero_result_rate": float(zero_results) / float(n),
+        "degraded_rate": float(degraded_count) / float(n),
         "latency_p50_ms": percentile(latencies_ms, 50),
         "latency_p95_ms": percentile(latencies_ms, 95),
         "latency_mean_ms": sum(latencies_ms) / max(1, len(latencies_ms)) if latencies_ms else 0.0,

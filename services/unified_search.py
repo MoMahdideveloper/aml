@@ -48,6 +48,9 @@ class SearchRequest:
     sort: str = "relevance"
     mode: str = "full"  # full | autocomplete
     actor_id: Optional[int] = None
+    # Optional structured hard filters for customers (ENABLE_CUSTOMER_NL_FILTERS)
+    customer_hard_filters: Optional[Dict[str, Any]] = None
+    customer_soft_filters: Optional[Dict[str, Any]] = None
 
     @property
     def normalized_query(self) -> str:
@@ -266,27 +269,86 @@ class SearchRepository:
         if req.customer_type:
             query = query.filter(Customer.customer_type == req.customer_type)
 
+        hard = req.customer_hard_filters or {}
+        if hard:
+            if hard.get("preferred_type"):
+                query = query.filter(
+                    Customer.preferred_type.ilike(f"%{hard['preferred_type']}%")
+                )
+            if hard.get("preferred_bedrooms_min") is not None:
+                query = query.filter(
+                    Customer.preferred_bedrooms >= int(hard["preferred_bedrooms_min"])
+                )
+            if hard.get("budget_max") is not None:
+                qmax = float(hard["budget_max"])
+                # Prefer customers whose min is not above query max and max within slack
+                query = query.filter(
+                    or_(Customer.budget_min.is_(None), Customer.budget_min <= qmax)
+                )
+                query = query.filter(
+                    or_(
+                        Customer.budget_max.is_(None),
+                        Customer.budget_max == 0,
+                        Customer.budget_max <= qmax * 1.05,
+                    )
+                )
+            if hard.get("budget_min") is not None:
+                qmin = float(hard["budget_min"])
+                query = query.filter(
+                    or_(
+                        Customer.budget_max.is_(None),
+                        Customer.budget_max == 0,
+                        Customer.budget_max >= qmin,
+                    )
+                )
+            if hard.get("location_token"):
+                loc = str(hard["location_token"])
+                query = query.filter(Customer.location_preference.ilike(f"%{loc}%"))
+
+        # Keyword / vocab-expanded terms (never Customer.preferences free text)
+        search_terms: List[str] = []
         if q:
+            search_terms = [q]
+            try:
+                from services.customer_query_constraints import feature_enabled as cust_nl_on
+                from services.vocab.service import feature_enabled as vocab_on, expand_for_search
+
+                if cust_nl_on() and vocab_on():
+                    # Expand only for location-style matching; keep original q for name/email
+                    expanded = expand_for_search(q)
+                    for t in expanded:
+                        if t and t not in search_terms:
+                            search_terms.append(t)
+                    search_terms = search_terms[:8]
+            except Exception:
+                search_terms = [q]
+
+        # Keyword clause: required when no hard filters; optional when hard filters
+        # already restrict the set (pure NL constraint queries have no name hit).
+        if q and not hard:
             clauses = []
             if q.isdigit():
                 clauses.append(Customer.id == int(q))
-            like = f"%{q}%"
-            prefix = f"{q}%"
-            clauses.extend(
-                [
-                    Customer.email == q.lower(),
-                    Customer.email.ilike(prefix),
-                    Customer.name.ilike(prefix),
-                    Customer.name.ilike(like),
-                    Customer.email.ilike(like),
-                    Customer.phone.ilike(like),
-                    Customer.location_preference.ilike(like),
-                ]
-            )
+            for term in search_terms:
+                like = f"%{term}%"
+                prefix = f"{term}%"
+                clauses.extend(
+                    [
+                        Customer.email == term.lower(),
+                        Customer.email.ilike(prefix),
+                        Customer.name.ilike(prefix),
+                        Customer.name.ilike(like),
+                        Customer.email.ilike(like),
+                        Customer.phone.ilike(like),
+                        Customer.location_preference.ilike(like),
+                        Customer.preferred_type.ilike(like),
+                    ]
+                )
             dig = _digits(q)
             if dig and len(dig) >= 3:
                 clauses.append(Customer.phone.ilike(f"%{dig}%"))
-            query = query.filter(or_(*clauses))
+            if clauses:
+                query = query.filter(or_(*clauses))
 
         rows = (
             query.order_by(Customer.id.asc())
@@ -594,6 +656,30 @@ class UnifiedSearchService:
         groups: Dict[str, List[Dict[str, Any]]] = {k: [] for k in ENTITY_SCOPES}
         counts: Dict[str, int] = {k: 0 for k in ENTITY_SCOPES}
 
+        customer_chips: List[str] = []
+        # Attach customer NL hard filters when enabled (fail-open; never mutates flag-off path)
+        try:
+            from services.customer_query_constraints import (
+                extract_customer_constraints,
+                feature_enabled as customer_nl_enabled,
+            )
+
+            if (
+                customer_nl_enabled()
+                and "customers" in req.scopes
+                and req.normalized_query
+                and not req.customer_hard_filters
+            ):
+                cc = extract_customer_constraints(req.normalized_query)
+                hard = cc.hard_filters()
+                soft = cc.soft_filters()
+                if hard or soft:
+                    req.customer_hard_filters = hard or None
+                    req.customer_soft_filters = soft or None
+                    customer_chips = cc.chips()
+        except Exception:
+            pass
+
         # empty free-text: only return empty groups unless filters alone (skip free-text entities without filter)
         runners = {
             "customers": self.repo.search_customers,
@@ -609,6 +695,13 @@ class UnifiedSearchService:
                 continue
             # agents without query and without filters: skip
             if scope == "agents" and not req.normalized_query:
+                continue
+            # customers with only hard filters (NL) still run
+            if (
+                scope == "customers"
+                and not req.normalized_query
+                and not req.customer_hard_filters
+            ):
                 continue
             hits = runners[scope](req)
             groups[scope] = [h.to_dict() for h in hits]
@@ -632,10 +725,11 @@ class UnifiedSearchService:
             mode=req.mode,
             vocab_expanded=vocab_expanded,
             expanded_term_count=expanded_term_count,
+            customer_nl=bool(req.customer_hard_filters),
             # deliberately no query text
         )
         record_business_counter("crm_search_total", outcome="ok" if total else "zero")
-        return {
+        out: Dict[str, Any] = {
             "query": req.normalized_query,
             "total_count": total,
             "groups": groups,
@@ -647,6 +741,13 @@ class UnifiedSearchService:
             "vocab_expanded": vocab_expanded,
             "expanded_term_count": expanded_term_count,
         }
+        if req.customer_hard_filters or req.customer_soft_filters or customer_chips:
+            out["customer_nl"] = {
+                "hard_filters": req.customer_hard_filters or {},
+                "soft_filters": req.customer_soft_filters or {},
+                "chips": customer_chips,
+            }
+        return out
 
 
 unified_search_service = UnifiedSearchService()
