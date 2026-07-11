@@ -22,3 +22,9 @@
 - DB unavailable → readiness 503, liveness ok  
 - Provider timeout → provider metrics/logs without payload  
 - Job failure → `job_failed` event  
+
+## Integration
+
+Landed via `obs/production-telemetry` (`f750c3c`) on `005-template-replacement` (already ancestor as of `c3ac878`). See `tasks/NEXT_PLAN_observability.md`.  
+Also see delivery contract: `docs/DELIVERY_CONTRACT.md` / `docs/RELEASE_RUNBOOK.md` (from `cicd/safe-deployment`).
+

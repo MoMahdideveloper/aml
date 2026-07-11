@@ -1,8 +1,9 @@
 # Next Full Plan: CI/CD, Staging, and Safe Deployment
 
 **Worktree:** `.claude/worktrees/cicd-safe-deploy`  
-**Branch:** `cicd/safe-deployment`  
-**Base:** `f750c3c`
+**Branch:** `cicd/safe-deployment` (`c409335`)  
+**Base:** `f750c3c` (observability tip)  
+**Integration status:** **Integrated** into `005-template-replacement` (ancestor of `c3ac878`). No further merge required.
 
 ## Status
 
@@ -15,7 +16,21 @@
 | 12–15 Staging/prod workflows | Done — **manual / dry_run default; no live deploy** |
 | 16–18 Rollback + game day | Done — rollback workflow + docs |
 | 19–20 Governance + release runbook | Done |
+| 21 Merge to product branch | **Done** — commit already on `005-template-replacement` |
 
 ## Merge / commit
 
-Not done by plan author unless requested. No external GitHub settings changed.
+- Branch tip `c409335` is a full ancestor of `005-template-replacement`; do **not** re-merge or cherry-pick.
+- Workflows, `scripts/ci/*`, and delivery docs remain identical at product HEAD.
+- No external GitHub branch-protection settings applied by agents (see `docs/BRANCH_PROTECTION.md` for human checklist).
+- Staging/production/rollback workflows stay manual with `dry_run` default; live adapters not configured.
+- Do not commit or push unless a human explicitly requests it.
+
+## Verify (on product branch)
+
+```powershell
+python -m pytest -q tests/test_cicd_scripts.py --tb=short
+python scripts/ci/assert_workflow_safety.py
+```
+
+**Last verification (2026-07-11):** 8 cicd script tests passed; `WORKFLOW_SAFETY_OK`.
