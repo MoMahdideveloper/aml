@@ -25,6 +25,9 @@
             {% if csrf_token is defined %}
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             {% endif %}
+            {% with form_name='task', form_selector='#taskEditForm' %}
+            {% include 'components/ai_form_assist_panel.html' %}
+            {% endwith %}
             <div class="px-5 py-4 space-y-4 overflow-y-auto">
                 <div>
                     <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Title *</label>

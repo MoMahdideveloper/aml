@@ -283,7 +283,10 @@
             </button>
         </div>
 
-        <form method="POST" action="{{ url_for('add_customer') }}" class="space-y-4" data-loading>
+        <form method="POST" action="{{ url_for('add_customer') }}" class="space-y-4" data-loading id="addCustomerForm">
+            {% with form_name='customer', form_selector='#addCustomerForm' %}
+            {% include 'components/ai_form_assist_panel.html' %}
+            {% endwith %}
             <div>
                 <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Full Name *</label>
                 <input type="text" name="name" required
@@ -405,6 +408,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/ai-form-assist.js') }}" defer></script>
 <script>
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));

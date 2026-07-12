@@ -237,11 +237,14 @@
                 <span class="material-symbols-outlined text-[20px]">close</span>
             </button>
         </div>
-        <form method="POST" action="{{ url_for('add_agent') }}" class="flex flex-col flex-1 min-h-0">
+        <form method="POST" action="{{ url_for('add_agent') }}" class="flex flex-col flex-1 min-h-0" id="addAgentForm">
             {% if csrf_token is defined %}
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             {% endif %}
             <div class="px-5 py-4 space-y-4 overflow-y-auto">
+                {% with form_name='agent', form_selector='#addAgentForm' %}
+                {% include 'components/ai_form_assist_panel.html' %}
+                {% endwith %}
                 <div>
                     <label class="block text-xs font-medium text-on-surface-variant uppercase tracking-wide mb-1.5">Full name *</label>
                     <input type="text" name="name" required
@@ -294,6 +297,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/ai-form-assist.js') }}" defer></script>
 <script>
 function closeEditModal() {
   var modal = document.getElementById('agentEditModal');

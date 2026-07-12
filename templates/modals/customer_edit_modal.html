@@ -4,6 +4,9 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     {% endif %}
     <input type="hidden" name="_method" value="PUT">
+    {% with form_name='customer', form_selector='#customerEditForm' %}
+    {% include 'components/ai_form_assist_panel.html' %}
+    {% endwith %}
 
     <section>
         <h3 class="text-sm font-semibold text-primary uppercase tracking-wide mb-3">Basic information</h3>

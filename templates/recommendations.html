@@ -531,8 +531,13 @@ window.__allOpps[{{ oid|tojson }}] = {{ {
   <h2 class="text-headline-md text-primary mb-1">Add another need</h2>
   <p class="text-body-md text-secondary mb-6">Buy, sell for cash, exchange home, or invest — each with separate preferences.</p>
   <form method="POST" action="{{ url_for('main.create_customer_brief', customer_id=selected_customer.id) }}"
-        class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl">
+        class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl" id="addRecommendationBriefForm">
     {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+    <div class="sm:col-span-2">
+      {% with form_name='recommendation', form_selector='#addRecommendationBriefForm' %}
+      {% include 'components/ai_form_assist_panel.html' %}
+      {% endwith %}
+    </div>
     <div class="sm:col-span-2">
       <label class="ph-label">Title</label>
       <input name="title" required placeholder="e.g. Exchange home for larger villa" class="ph-stitch-input">
@@ -669,6 +674,7 @@ window.__allOpps[{{ oid|tojson }}] = {{ {
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/ai-form-assist.js') }}" defer></script>
 <script>
 window.__selectedCustomerId = window.__selectedCustomerId || null;
 window.__allOpps = window.__allOpps || {};

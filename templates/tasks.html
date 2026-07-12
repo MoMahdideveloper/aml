@@ -235,7 +235,10 @@
             </button>
         </div>
 
-        <form method="POST" action="{{ url_for('add_task') }}" class="p-6 overflow-y-auto flex flex-col gap-5" data-loading>
+        <form method="POST" action="{{ url_for('add_task') }}" class="p-6 overflow-y-auto flex flex-col gap-5" data-loading id="addTaskForm">
+            {% with form_name='task', form_selector='#addTaskForm' %}
+            {% include 'components/ai_form_assist_panel.html' %}
+            {% endwith %}
             <div class="flex flex-col gap-2">
                 <label class="font-label-md text-label-md text-on-surface">Task Title *</label>
                 <input type="text" name="title" required
@@ -296,4 +299,8 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/ai-form-assist.js') }}" defer></script>
 {% endblock %}

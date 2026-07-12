@@ -217,7 +217,10 @@
                 <span class="material-symbols-outlined" aria-hidden="true">close</span>
             </button>
         </div>
-        <form method="POST" action="{{ url_for('add_deal') }}" class="space-y-4" data-loading>
+        <form method="POST" action="{{ url_for('add_deal') }}" class="space-y-4" data-loading id="addDealForm">
+            {% with form_name='deal', form_selector='#addDealForm' %}
+            {% include 'components/ai_form_assist_panel.html' %}
+            {% endwith %}
             <div>
                 <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Property *</label>
                 <select name="property_id" required
@@ -309,6 +312,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/ai-form-assist.js') }}" defer></script>
 <script>
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
