@@ -97,3 +97,30 @@ Relationship IDs (`agent_id`, `property_id`, `customer_id`) are review-only / ne
 - CSRF token expected on review JSON posts from the browser.
 - Existing non-empty form fields are never auto-overwritten.
 - Human save remains the only CRM write path.
+
+## Release gate evidence (2026-07-13, branch `005-template-replacement`)
+
+Observed on local agent run (not production):
+
+| Gate | Result |
+|------|--------|
+| AI form suite (`tests/test_ai_form_*.py`) | **50 passed, 1 skipped** |
+| Track A UI (`test_platinum_heritage_ui`, `test_app_smoke`, `test_template_replacement`, `test_accessibility_shell`) | **67 passed** |
+| Security/config (`auth_default_deny`, `authz_deny_first`, `security_csrf`, `csrf_frontend_contract`, `production_config`, `health_readiness`) | **40 passed** |
+| Disposable Alembic | head `a1b2c3d4e5f6`; upgrade → downgrade to `z1a2b3c4d5e6` → re-upgrade **OK** |
+| `test_gemini_provider_multimodal` | **passed** |
+| `test_forms_templates` | **pre-existing fail** (`Form submissions with new templates not implemented`) — not caused by AI form assist |
+| Live Gemini smoke | **skipped** (no paid calls in gate) |
+| Browser E2E at 1440×900 / 390×844 | **not run** — human Checkpoint C/D |
+
+Feature remains **default off** (`ENABLE_AI_FORM_ASSIST=0`).
+
+### Staging enable (human)
+
+1. `flask db upgrade` to head `a1b2c3d4e5f6`
+2. Set `ENABLE_AI_FORM_ASSIST=1`, Gemini key, private `AI_FORM_AUDIT_STORAGE_ROOT`
+3. Restart web; smoke Property text path with consent
+4. Review accept/reject/undo; confirm normal Property save still works
+5. Optionally extend to Customer/Deal/Task/Agent panels
+6. Keep retention schedule off until first dry-run:  
+   `cleanup_expired_ai_form_audit(dry_run=True)`

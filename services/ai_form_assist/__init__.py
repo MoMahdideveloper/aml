@@ -1,4 +1,7 @@
-"""Multimodal AI form assist — deterministic core (Phase 1)."""
+"""Multimodal AI form assist (schema, normalize, confidence, extract, audit).
+
+Feature flag: ENABLE_AI_FORM_ASSIST (default off). Never writes CRM entities.
+"""
 
 from services.ai_form_assist.schema_registry import (
     UnknownAIFormField,
