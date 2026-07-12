@@ -97,6 +97,38 @@ def cleanup_old_matches_task() -> Dict[str, Any]:
         return {"status": "error", "message": str(exc)}
 
 
+@celery_app.task(name="crm.cleanup_ai_form_audit")
+@log_execution
+def cleanup_ai_form_audit_task(dry_run: bool = False) -> Dict[str, Any]:
+    """Purge expired AI form assist audit media/rows (opt-in schedule)."""
+    try:
+        from services.ai_form_assist.retention import cleanup_expired_ai_form_audit
+
+        report = cleanup_expired_ai_form_audit(dry_run=bool(dry_run), limit=200)
+        logger.info(
+            "AI form audit retention completed",
+            extra={
+                "task": "cleanup_ai_form_audit",
+                "status": "success",
+                "dry_run": report.get("dry_run"),
+                "candidate_count": report.get("candidate_count"),
+                "purged_count": report.get("purged_count"),
+            },
+        )
+        return {"status": "ok", **{k: report[k] for k in ("dry_run", "candidate_count", "purged_count", "error_count", "retention_days") if k in report}}
+    except Exception as exc:
+        logger.error(
+            "Failed AI form audit retention",
+            extra={
+                "task": "cleanup_ai_form_audit",
+                "status": "error",
+                "error": str(exc),
+                "error_type": type(exc).__name__,
+            },
+        )
+        return {"status": "error", "message": str(exc)}
+
+
 @celery_app.task(name="crm.send_notification_digest")
 @log_execution
 def send_notification_digest_task() -> Dict[str, Any]:

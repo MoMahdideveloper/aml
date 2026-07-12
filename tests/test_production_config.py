@@ -113,3 +113,18 @@ def test_production_security_headers(monkeypatch):
     assert "geolocation=()" in (resp.headers.get("Permissions-Policy") or "")
     assert "default-src 'self'" in (resp.headers.get("Content-Security-Policy") or "")
     assert "max-age=" in (resp.headers.get("Strict-Transport-Security") or "")
+
+
+def test_ai_form_assist_defaults_off_and_app_starts(monkeypatch):
+    """Missing Gemini key must not block CRM boot when AI form assist is off."""
+    monkeypatch.delenv("ENABLE_AI_FORM_ASSIST", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    app = _fresh_create_app(
+        monkeypatch,
+        FLASK_ENV="production",
+        SESSION_SECRET="prod-test-secret-not-for-real-use-32chars",
+    )
+    assert app.config.get("ENABLE_AI_FORM_ASSIST") is False
+    app.config.update(TESTING=True)
+    assert app.test_client().get("/healthz").status_code == 200

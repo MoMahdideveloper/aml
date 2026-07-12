@@ -22,7 +22,7 @@ def _rematch_queue_interval_seconds() -> int:
 
 
 def get_celery_beat_schedule() -> dict:
-    return {
+    schedule = {
         "process-rematch-queue": {
             "task": "crm.process_rematch_queue",
             "schedule": _rematch_queue_interval_seconds(),
@@ -56,6 +56,13 @@ def get_celery_beat_schedule() -> dict:
             ),
         },
     }
+    # Opt-in: AI form audit retention (media + rows). Off by default.
+    if os.environ.get("AI_FORM_RETENTION_SCHEDULE_ENABLED", "0").strip() == "1":
+        schedule["cleanup-ai-form-audit"] = {
+            "task": "crm.cleanup_ai_form_audit",
+            "schedule": crontab(hour=3, minute=15),
+        }
+    return schedule
 
 
 flask_app = create_app()

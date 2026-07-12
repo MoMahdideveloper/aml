@@ -112,7 +112,28 @@ $env:POSTGRES_PASSWORD = "your-strong-db-password"
 
 Volumes: `postgres_data` (DB), `uploads_data` (property media). Redis is included in the `prod` profile for optional cache/Celery.
 
-## 4. Health checks
+## 4. Optional: AI form assist
+
+Default **off**. When enabled, authenticated users get multimodal suggestions on CRM forms; AI never auto-saves records.
+
+```bash
+export ENABLE_AI_FORM_ASSIST=0   # keep off until staging review
+# export ENABLE_AI_FORM_ASSIST=1
+# export GOOGLE_API_KEY=...
+# export AI_FORM_AUDIT_STORAGE_ROOT=/var/lib/gptvli/ai_form_audit  # not under static/
+# export AI_FORM_RETENTION_DAYS=90
+# export AI_FORM_RETENTION_SCHEDULE_ENABLED=0  # set 1 only with Celery Beat
+```
+
+Operator contract: `docs/AI_FORM_ASSIST_OPERATOR.md`. Manual purge:
+
+```python
+from services.ai_form_assist.retention import cleanup_expired_ai_form_audit
+cleanup_expired_ai_form_audit(dry_run=True)   # inventory
+cleanup_expired_ai_form_audit(dry_run=False)  # authorized delete
+```
+
+## 5. Health checks
 
 | Path | Purpose |
 |------|---------|
@@ -126,7 +147,7 @@ CI/CD delivery: `docs/DELIVERY_CONTRACT.md`, `docs/RELEASE_RUNBOOK.md`, `docs/BR
 
 Wire these into load balancers / Kubernetes probes.
 
-## 5. Image packaging boundary
+## 6. Image packaging boundary
 
 Production `Dockerfile` builds from a filtered context (see `.dockerignore`):
 
@@ -143,7 +164,7 @@ python scripts/audit_template_references.py
 pytest -q tests/test_template_references.py tests/test_docker_context.py
 ```
 
-## 6. CSS workflow
+## 7. CSS workflow
 
 | Mode | How |
 |------|-----|
@@ -153,7 +174,7 @@ pytest -q tests/test_template_references.py tests/test_docker_context.py
 
 After template class changes, re-run `npm run build:css` before shipping.
 
-## 7. Security checklist
+## 8. Security checklist
 
 - [ ] `SESSION_SECRET` is unique and long (production refuses default secret)
 - [ ] HTTPS terminated (cookie `Secure` + HSTS headers when `FLASK_ENV=production`)
@@ -164,7 +185,7 @@ After template class changes, re-run `npm run build:css` before shipping.
 - [ ] Backups for `DATABASE_URL` / upload volume (`static/uploads`)
 - [ ] Recovery drills documented and tested — see [BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md) and [BACKUP_RECOVERY_CONTRACT.md](BACKUP_RECOVERY_CONTRACT.md)
 
-## 8. Post-deploy smoke
+## 9. Post-deploy smoke
 
 ```bash
 curl -fsS https://your-host/healthz
@@ -173,7 +194,7 @@ curl -fsSI https://your-host/ | head
 # Browser: login → dashboard → properties → map → recommendations
 ```
 
-## 9. Rollback
+## 10. Rollback
 
 1. Redeploy previous app image / git tag  
 2. `flask db downgrade -1` only if the failed release added a migration you must reverse — prefer **explicit revision** targets when heads were merged  
@@ -190,7 +211,7 @@ python scripts/backup_sqlite.py --source ./real_estate_crm.db --dest-dir ./backu
 python scripts/backup_postgres.py --dest-dir ./backups
 ```
 
-## 10. CI (GitHub Actions)
+## 11. CI (GitHub Actions)
 
 Workflow: `.github/workflows/tests.yml`
 
