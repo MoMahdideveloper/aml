@@ -29,14 +29,49 @@ def _utcnow_naive() -> datetime:
     return datetime.now(UTC).replace(tzinfo=None)
 
 
+# Paths that must never become post-login redirects (browser probes, assets, health).
+_BLOCKED_NEXT_PREFIXES = (
+    "/static/",
+    "/favicon",
+    "/robots.txt",
+    "/apple-touch-icon",
+    "/site.webmanifest",
+    "/healthz",
+    "/readyz",
+    "/metrics",
+)
+_BLOCKED_NEXT_EXACT = frozenset(
+    {
+        "/favicon.ico",
+        "/robots.txt",
+        "/healthz",
+        "/readyz",
+        "/metrics",
+    }
+)
+
+
 @log_execution
 def _is_safe_next_url(target: str | None) -> bool:
+    """Allow only relative app paths; reject open redirects and browser asset probes."""
     if not target:
         return False
-    if target.startswith("//"):
+    target = target.strip()
+    if not target.startswith("/") or target.startswith("//"):
         return False
     parsed = urlparse(target)
-    return parsed.scheme == "" and parsed.netloc == ""
+    if parsed.scheme or parsed.netloc:
+        return False
+    path = (parsed.path or "").lower()
+    if path in _BLOCKED_NEXT_EXACT:
+        return False
+    if any(path.startswith(p) for p in _BLOCKED_NEXT_PREFIXES):
+        return False
+    # No path-only junk like empty path after strip
+    if path in ("", "/"):
+        # "/" is ok as home, but prefer dashboard; still "safe"
+        return True
+    return True
 
 
 def _login_rate_limit_exempt() -> bool:
@@ -112,6 +147,7 @@ def login():
                 path=request.path,
             )
             flash(f"Welcome back, {user.full_name or user.username}!", "success")
+            session.pop("next_url", None)
             if _is_safe_next_url(next_url):
                 return redirect(next_url)
             return redirect(url_for("main.dashboard"))

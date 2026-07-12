@@ -154,6 +154,50 @@ def test_open_redirect_protocol_relative_rejected(monkeypatch):
     assert "evil.example" not in location
 
 
+def test_favicon_next_url_rejected_after_login(monkeypatch):
+    """Browser favicon probes must not become post-login destinations."""
+    app = _build_app(monkeypatch)
+    client = app.test_client()
+
+    with client.session_transaction() as sess:
+        sess["next_url"] = "/favicon.ico"
+
+    response = client.post(
+        "/auth/login",
+        data={"username": "agent1", "password": "password123"},
+        follow_redirects=False,
+    )
+    assert response.status_code in (301, 302)
+    location = response.headers.get("Location") or ""
+    assert "favicon" not in location.lower()
+    assert "dashboard" in location or location.rstrip("/").endswith("/")
+
+
+def test_favicon_probe_does_not_overwrite_next_url(monkeypatch):
+    """Unauthenticated /favicon.ico must not clobber a real next_url."""
+    app = _build_app(monkeypatch)
+    client = app.test_client()
+
+    with client.session_transaction() as sess:
+        sess["next_url"] = "/customers"
+
+    # Probe as anonymous (default deny on)
+    fav = client.get("/favicon.ico", follow_redirects=False)
+    # 204 from public favicon route, or redirect to login without changing next
+    assert fav.status_code in (204, 301, 302, 404)
+
+    with client.session_transaction() as sess:
+        assert sess.get("next_url") == "/customers"
+
+    response = client.post(
+        "/auth/login",
+        data={"username": "agent1", "password": "password123"},
+        follow_redirects=False,
+    )
+    location = response.headers.get("Location") or ""
+    assert "/customers" in location
+
+
 def test_disabled_user_cannot_login(monkeypatch):
     app = _build_app(monkeypatch)
     client = app.test_client()

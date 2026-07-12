@@ -110,11 +110,22 @@ def register_auth_middleware(flask_app: Flask) -> None:
         if _is_api_request():
             return jsonify({"error": "Unauthorized. Please log in."}), 401
 
-        # Relative path only — absolute URLs fail _is_safe_next_url after login.
-        next_path = request.path
-        if request.query_string:
-            next_path = f"{request.path}?{request.query_string.decode()}"
-        session["next_url"] = next_path
+        # Never store browser asset probes as post-login redirects (favicon, etc.).
+        path_l = (request.path or "").lower()
+        skip_next = (
+            path_l.startswith("/static/")
+            or path_l.startswith("/favicon")
+            or path_l in ("/favicon.ico", "/robots.txt", "/healthz", "/readyz", "/metrics")
+            or path_l.endswith(".ico")
+            or path_l.endswith(".map")
+            or path_l.endswith(".webmanifest")
+        )
+        if not skip_next:
+            # Relative path only — absolute URLs fail _is_safe_next_url after login.
+            next_path = request.path
+            if request.query_string:
+                next_path = f"{request.path}?{request.query_string.decode()}"
+            session["next_url"] = next_path
         return redirect(url_for("auth.login"))
 
 
@@ -445,6 +456,11 @@ def create_app(test_config=None):
                 error_category=err_cat,
             )
         return resp
+
+    @app.route("/favicon.ico")
+    def favicon():
+        """Avoid 404 / accidental post-login next_url=/favicon.ico browser probes."""
+        return Response(status=204)
 
     @app.route("/healthz")
     def healthz():
