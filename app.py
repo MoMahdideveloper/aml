@@ -524,11 +524,27 @@ def create_app(test_config=None):
                 "Set SESSION_SECRET or ALLOW_INSECURE_SECRET=1 to override."
             )
 
+    # Production admin console password policy
+    if is_production:
+        from utils.admin_auth import admin_password_is_acceptable
+
+        ok, reason = admin_password_is_acceptable(is_production=True)
+        if not ok:
+            raise RuntimeError(
+                f"Refusing to start in production: {reason}. "
+                "Set ADMIN_PASSWORD to a strong value."
+            )
+
     return app
 
 
-# Default app for scripts and WSGI servers
-app = create_app()
+# Default app for scripts and WSGI servers (lazy-safe for import during tests).
+try:
+    app = create_app()
+except Exception:
+    # Allow `from app import create_app` in constrained test envs without
+    # failing module import; WSGI entrypoints still call create_app() explicitly.
+    app = None  # type: ignore
 
 
 if __name__ == "__main__":

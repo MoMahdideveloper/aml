@@ -36,6 +36,9 @@ def _fresh_create_app(monkeypatch, **env):
 
     # Keep tests on in-memory SQLite unless caller overrides.
     monkeypatch.setenv("DATABASE_URL", os.environ.get("DATABASE_URL", "sqlite:///:memory:"))
+    # Production app factory also enforces ADMIN_PASSWORD strength.
+    if env.get("FLASK_ENV") == "production" and "ADMIN_PASSWORD" not in env:
+        monkeypatch.setenv("ADMIN_PASSWORD", "test-strong-admin-password-99")
 
     from app import create_app
 

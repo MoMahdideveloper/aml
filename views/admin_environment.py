@@ -52,20 +52,24 @@ def require_admin_auth(f):
                 decoded_credentials = base64.b64decode(encoded_credentials).decode('utf-8')
                 username, password = decoded_credentials.split(':', 1)
                 
-                # Simple hardcoded admin credentials - in production use proper user management
-                admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
-                if username == 'admin' and password == admin_password:
+                # Admin console password (env ADMIN_PASSWORD). Weak defaults blocked in prod.
+                from utils.admin_auth import verify_admin_password
+
+                if username == 'admin' and verify_admin_password(password):
                     session['admin_authenticated'] = True
                     session['admin_user'] = username
                     return f(*args, **kwargs)
             except Exception as e:
                 logging.error(f"Authentication error: {e}")
         
-        # Check for form-based login
-        if request.method == 'POST' and request.form.get('admin_password'):
-            password = request.form.get('admin_password')
-            admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
-            if password == admin_password:
+        # Check for form-based login (template field is "password")
+        if request.method == 'POST' and (
+            request.form.get('password') or request.form.get('admin_password')
+        ):
+            password = request.form.get('password') or request.form.get('admin_password')
+            from utils.admin_auth import verify_admin_password
+
+            if verify_admin_password(password or ""):
                 session['admin_authenticated'] = True
                 session['admin_user'] = 'admin'
                 return f(*args, **kwargs)
@@ -475,9 +479,10 @@ def get_validation_summary():
 def admin_login():
     """Admin login page"""
     if request.method == 'POST':
-        password = request.form.get('password')
-        admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
-        if password == admin_password:
+        password = request.form.get('password') or request.form.get('admin_password') or ""
+        from utils.admin_auth import verify_admin_password
+
+        if verify_admin_password(password):
             session['admin_authenticated'] = True
             session['admin_user'] = 'admin'
             return redirect(url_for('admin_environment.environment'))
