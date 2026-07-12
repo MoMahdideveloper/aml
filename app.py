@@ -254,6 +254,7 @@ def create_app(test_config=None):
     from views.context_api import bp as context_api_bp
     from views.related import bp as related_bp
     from views.intelligence_settings import bp as intelligence_settings_bp
+    from views.ai_form_assist import bp as ai_form_assist_bp
 
     for bp in (
         main_bp,
@@ -275,6 +276,7 @@ def create_app(test_config=None):
         context_api_bp,
         related_bp,
         intelligence_settings_bp,
+        ai_form_assist_bp,
     ):
         app.register_blueprint(bp)
 
@@ -330,6 +332,9 @@ def create_app(test_config=None):
     )
     app.config["ENABLE_ACTIVITY_SEARCH"] = (
         os.environ.get("ENABLE_ACTIVITY_SEARCH", "0").strip() == "1"
+    )
+    app.config["ENABLE_AI_FORM_ASSIST"] = (
+        os.environ.get("ENABLE_AI_FORM_ASSIST", "0").strip() == "1"
     )
 
     # Vocabulary occurrence extraction index (default off).

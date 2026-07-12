@@ -1,0 +1,50 @@
+{# Multimodal AI form assist panel — suggestions only; form remains save path. #}
+{% set form_name = form_name|default('property') %}
+{% set form_selector = form_selector|default('form') %}
+<div
+  class="ai-form-assist border border-outline-variant rounded-xl p-4 mb-4 bg-surface-container-lowest"
+  data-ai-form-assist
+  data-form-name="{{ form_name }}"
+  data-form-selector="{{ form_selector }}"
+  data-endpoint="{{ url_for('ai_form_assist.create_extraction') }}"
+  data-enabled="{{ '1' if config.get('ENABLE_AI_FORM_ASSIST') or (request and request.environ.get('ENABLE_AI_FORM_ASSIST')=='1') else '0' }}"
+>
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <h3 class="text-sm font-semibold text-on-surface">AI form assist</h3>
+    <span class="text-xs text-on-surface-variant" data-ai-status role="status" aria-live="polite">Idle</span>
+  </div>
+  <p class="text-xs text-on-surface-variant mb-3">
+    Extract suggestions from text, image, or audio. High-confidence empty fields can auto-fill;
+    existing values are never overwritten. You still save the form yourself.
+  </p>
+  <label class="block text-xs text-on-surface-variant mb-1" for="ai-form-text-{{ form_name }}">Text notes</label>
+  <textarea
+    id="ai-form-text-{{ form_name }}"
+    data-ai-text
+    rows="3"
+    class="w-full border border-outline-variant rounded-lg px-3 py-2 text-sm mb-3"
+    placeholder="Paste listing description or notes…"
+  ></textarea>
+  <div class="flex flex-wrap gap-3 mb-3">
+    <label class="text-xs">
+      <span class="block text-on-surface-variant mb-1">Images</span>
+      <input type="file" data-ai-images accept="image/*" multiple class="text-xs" />
+    </label>
+    <label class="text-xs">
+      <span class="block text-on-surface-variant mb-1">Audio</span>
+      <input type="file" data-ai-audio accept="audio/*" class="text-xs" />
+    </label>
+  </div>
+  <label class="flex items-center gap-2 text-xs mb-3">
+    <input type="checkbox" data-ai-consent class="rounded" />
+    <span>I confirm this content may be processed for form suggestions (not stored as listing text).</span>
+  </label>
+  <button
+    type="button"
+    data-ai-process
+    class="px-3 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium disabled:opacity-50"
+  >
+    Process with AI
+  </button>
+  <ul class="mt-4 space-y-2 text-sm" data-ai-review-list aria-label="AI suggestions"></ul>
+</div>

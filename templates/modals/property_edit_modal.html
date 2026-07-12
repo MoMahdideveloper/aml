@@ -38,6 +38,9 @@
 
             <form id="propertyEditForm" method="POST" novalidate enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+                {% with form_name='property', form_selector='#propertyEditForm' %}
+                {% include 'components/ai_form_assist_panel.html' %}
+                {% endwith %}
                 <input type="hidden" name="_method" value="PUT">
                 <input type="hidden" name="property_id" value="{{ property.id if property is defined else '' }}">
 

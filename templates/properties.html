@@ -310,7 +310,10 @@
             </button>
         </div>
 
-        <form method="POST" action="{{ url_for('add_property') }}" class="space-y-5" data-loading>
+        <form method="POST" action="{{ url_for('add_property') }}" class="space-y-5" data-loading id="addPropertyForm">
+            {% with form_name='property', form_selector='#addPropertyForm' %}
+            {% include 'components/ai_form_assist_panel.html' %}
+            {% endwith %}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div class="md:col-span-2">
                     <label class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Property Title *</label>
@@ -424,6 +427,7 @@
 <script src="{{ url_for('static', filename='js/property-view-modal.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/property-modal-system.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/property-edit-modal.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/ai-form-assist.js') }}" defer></script>
 <script>
 // Prefer full-page edit if editProperty not provided by edit-modal JS
 if (typeof window.editProperty !== 'function') {
