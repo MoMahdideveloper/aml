@@ -191,7 +191,18 @@ class GeminiFormExtractor:
         Extract field suggestions for an allowlisted form.
 
         Retries malformed JSON once. Does not retry auth/invalid-model blindly.
+        When AI_FORM_ASSIST_MOCK=1, returns deterministic local suggestions (no network).
         """
+        if os.environ.get("AI_FORM_ASSIST_MOCK", "0").strip() == "1":
+            from services.ai_form_assist.mock_extractor import mock_extract
+
+            return mock_extract(
+                form=form,
+                text=text,
+                image_parts=image_parts,
+                audio_parts=audio_parts,
+            )
+
         schema = get_form_schema(form)
         field_names = list(field_filter) if field_filter else list(schema.fields.keys())
         prompt = (

@@ -9,7 +9,8 @@ Users accept/reject fields and submit the normal form.
 | Env | Default | Meaning |
 |-----|---------|---------|
 | `ENABLE_AI_FORM_ASSIST` | `0` | Master switch. API returns 404 when off; panels still render but processing fails closed. |
-| `GOOGLE_API_KEY` / `GEMINI_API_KEY` | unset | Required for live Gemini extraction when feature is on. |
+| `AI_FORM_ASSIST_MOCK` | `0` | When `1`, deterministic local extraction (no Gemini network). Use for browser/staging smoke. |
+| `GOOGLE_API_KEY` / `GEMINI_API_KEY` | unset | Required for live Gemini extraction when feature is on and mock is off. |
 | `AI_FORM_AUDIT_STORAGE_ROOT` | `instance/ai_form_audit` | Private media directory (**must not** be under `static/`). |
 | `AI_FORM_RETENTION_DAYS` | `90` | Age after which audit extractions are eligible for purge. |
 | `AI_FORM_RETENTION_SCHEDULE_ENABLED` | `0` | When `1`, Celery Beat schedules nightly purge (`crm.cleanup_ai_form_audit`). |
@@ -117,10 +118,32 @@ Feature remains **default off** (`ENABLE_AI_FORM_ASSIST=0`).
 
 ### Staging enable (human)
 
-1. `flask db upgrade` to head `a1b2c3d4e5f6`
-2. Set `ENABLE_AI_FORM_ASSIST=1`, Gemini key, private `AI_FORM_AUDIT_STORAGE_ROOT`
-3. Restart web; smoke Property text path with consent
-4. Review accept/reject/undo; confirm normal Property save still works
-5. Optionally extend to Customer/Deal/Task/Agent panels
+1. `flask db upgrade` to head `a1b2c3d4e5f6` (required — missing tables → API 500)
+2. Zero-cost mock smoke (recommended before live Gemini):
+
+```powershell
+$env:ENABLE_AI_FORM_ASSIST="1"
+$env:AI_FORM_ASSIST_MOCK="1"
+$env:AUTH_DEFAULT_DENY_ENABLED="0"
+python -c "import os; os.environ.update({'ENABLE_AI_FORM_ASSIST':'1','AI_FORM_ASSIST_MOCK':'1'}); from app import create_app; create_app().run(host='127.0.0.1', port=55555, debug=False, use_reloader=False)"
+```
+
+3. Open Properties → Add New Property → paste notes → consent → Process with AI  
+4. Confirm suggestions list, auto_fill of empty high-confidence fields, Accept/Reject/Undo  
+5. For live Gemini: set `AI_FORM_ASSIST_MOCK=0` and provide API key  
 6. Keep retention schedule off until first dry-run:  
    `cleanup_expired_ai_form_audit(dry_run=True)`
+
+### Browser smoke (2026-07-13, mock mode)
+
+Observed after `flask db upgrade` + `ENABLE_AI_FORM_ASSIST=1` + `AI_FORM_ASSIST_MOCK=1`:
+
+| Check | Result |
+|-------|--------|
+| Login → `/properties` | OK |
+| Add New Property modal shows AI panel + Record | OK |
+| Process without migration | 500 (tables missing) — expected |
+| Process after migration | **201**, status “Review suggestions” |
+| Suggestions | title, bedrooms=3, bathrooms=2, sale_price, listing_type, address, description |
+| Auto-fill empty fields | title + bedrooms + bathrooms applied |
+| Screenshots | `artifacts/ai-form-assist-property-mock-smoke.png` (+ mobile) |

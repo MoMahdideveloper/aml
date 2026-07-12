@@ -25,15 +25,23 @@
     class="w-full border border-outline-variant rounded-lg px-3 py-2 text-sm mb-3"
     placeholder="Paste listing description or notes…"
   ></textarea>
-  <div class="flex flex-wrap gap-3 mb-3">
+  <div class="flex flex-wrap gap-3 mb-3 items-end">
     <label class="text-xs">
       <span class="block text-on-surface-variant mb-1">Images</span>
       <input type="file" data-ai-images accept="image/*" multiple class="text-xs" />
     </label>
     <label class="text-xs">
-      <span class="block text-on-surface-variant mb-1">Audio</span>
+      <span class="block text-on-surface-variant mb-1">Audio file</span>
       <input type="file" data-ai-audio accept="audio/*" class="text-xs" />
     </label>
+    <div class="flex gap-2 text-xs">
+      <button type="button" data-ai-record class="px-2 py-1 rounded border border-outline-variant hover:bg-surface-container">
+        Record
+      </button>
+      <button type="button" data-ai-record-stop class="px-2 py-1 rounded border border-outline-variant hover:bg-surface-container" disabled>
+        Stop
+      </button>
+    </div>
   </div>
   <label class="flex items-center gap-2 text-xs mb-3">
     <input type="checkbox" data-ai-consent class="rounded" />

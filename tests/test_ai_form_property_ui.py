@@ -11,5 +11,6 @@ def test_properties_page_includes_panel_and_script(db_setup, app, monkeypatch):
     assert "data-ai-form-assist" in html
     assert "ai-form-assist.js" in html
     assert "AI form assist" in html
+    assert "data-ai-record" in html
     assert 'name="title"' in html
     assert 'name="sale_price"' in html or 'name="sale_price"' in html

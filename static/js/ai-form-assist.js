@@ -1,6 +1,7 @@
 /**
  * AI form assist panel — idle → collecting → processing → reviewing → applied/error.
  * Applies only allowlisted input_name values; never overwrites non-empty fields automatically.
+ * MediaRecorder when supported; file upload always available as fallback.
  */
 (function () {
   function csrfToken() {
@@ -39,8 +40,9 @@
     if (!el) return false;
     var cur = (el.value || "").trim();
     if (cur && !force) return false;
-    var undo = el.getAttribute("data-ai-undo");
-    if (undo === null) el.setAttribute("data-ai-undo", el.value || "");
+    if (!el.hasAttribute("data-ai-undo")) {
+      el.setAttribute("data-ai-undo", el.value || "");
+    }
     el.value = value == null ? "" : String(value);
     el.dispatchEvent(new Event("input", { bubbles: true }));
     el.dispatchEvent(new Event("change", { bubbles: true }));
@@ -111,7 +113,6 @@
       });
       list.appendChild(li);
 
-      // Auto-fill empty high-confidence only
       if (s.action === "auto_fill") {
         applyValue(form, s.input_name || s.field, s.value, false);
       }
@@ -129,6 +130,10 @@
       credentials: "same-origin",
       body: JSON.stringify({ decisions: decisions }),
     }).catch(function () {});
+  }
+
+  function recordedBlob(root) {
+    return root._aiRecordedBlob || null;
   }
 
   function process(root) {
@@ -151,7 +156,10 @@
         fd.append("images", f);
       });
     }
-    if (audEl && audEl.files && audEl.files[0]) {
+    var rec = recordedBlob(root);
+    if (rec) {
+      fd.append("audios", rec, "recording.webm");
+    } else if (audEl && audEl.files && audEl.files[0]) {
       fd.append("audios", audEl.files[0]);
     }
     setStatus(root, "Processing…");
@@ -170,7 +178,7 @@
       })
       .then(function (res) {
         if (!res.ok) {
-          setStatus(root, res.body.message || res.body.error || "Error " + res.status);
+          setStatus(root, (res.body && (res.body.message || res.body.error)) || "Error " + res.status);
           return;
         }
         setStatus(root, "Review suggestions");
@@ -184,15 +192,83 @@
       });
   }
 
-  function bind(root) {
-    var btn = root.querySelector("[data-ai-process]");
-    if (btn) btn.addEventListener("click", function () {
-      process(root);
+  function bindRecorder(root) {
+    var recBtn = root.querySelector("[data-ai-record]");
+    var stopBtn = root.querySelector("[data-ai-record-stop]");
+    if (!recBtn) return;
+    var supported =
+      typeof navigator !== "undefined" &&
+      navigator.mediaDevices &&
+      typeof MediaRecorder !== "undefined";
+    if (!supported) {
+      recBtn.disabled = true;
+      recBtn.title = "Recording not supported — use audio file upload";
+      if (stopBtn) stopBtn.disabled = true;
+      return;
+    }
+    var mediaRecorder = null;
+    var chunks = [];
+    recBtn.addEventListener("click", function () {
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then(function (stream) {
+          chunks = [];
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.ondataavailable = function (e) {
+            if (e.data && e.data.size) chunks.push(e.data);
+          };
+          mediaRecorder.onstop = function () {
+            stream.getTracks().forEach(function (t) {
+              t.stop();
+            });
+            root._aiRecordedBlob = new Blob(chunks, { type: "audio/webm" });
+            setStatus(root, "Recording ready (" + Math.round(root._aiRecordedBlob.size / 1024) + " KB)");
+            recBtn.disabled = false;
+            if (stopBtn) stopBtn.disabled = true;
+          };
+          mediaRecorder.start();
+          recBtn.disabled = true;
+          if (stopBtn) stopBtn.disabled = false;
+          setStatus(root, "Recording…");
+        })
+        .catch(function () {
+          setStatus(root, "Microphone permission denied — use file upload");
+        });
     });
+    if (stopBtn) {
+      stopBtn.disabled = true;
+      stopBtn.addEventListener("click", function () {
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+          mediaRecorder.stop();
+        }
+      });
+    }
+  }
+
+  function bind(root) {
+    if (root.getAttribute("data-ai-bound") === "1") return;
+    root.setAttribute("data-ai-bound", "1");
+    var btn = root.querySelector("[data-ai-process]");
+    if (btn) {
+      btn.addEventListener("click", function () {
+        process(root);
+      });
+    }
+    bindRecorder(root);
   }
 
   function init() {
     document.querySelectorAll("[data-ai-form-assist]").forEach(bind);
+  }
+
+  // Re-bind when modals inject/show panels after first paint
+  if (typeof MutationObserver !== "undefined") {
+    var mo = new MutationObserver(function () {
+      init();
+    });
+    if (document.documentElement) {
+      mo.observe(document.documentElement, { childList: true, subtree: true });
+    }
   }
 
   if (document.readyState === "loading") {
@@ -200,4 +276,6 @@
   } else {
     init();
   }
+
+  window.AIFormAssist = { init: init, bind: bind };
 })();
