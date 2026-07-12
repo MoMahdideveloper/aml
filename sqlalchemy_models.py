@@ -1925,6 +1925,160 @@ class VocabOccurrence(db.Model):
     extracted_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
 
 
+class AIFormExtraction(db.Model):
+    """Audit record for multimodal AI form extraction (suggestions only; never CRM writes)."""
+
+    __tablename__ = "ai_form_extractions"
+    __table_args__ = (
+        # Unique idempotency per actor
+        # (enforced in migration too)
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    actor_user_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True)
+    actor_label: Mapped[str] = mapped_column(String(120), default="")
+    form_name: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    target_record_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True)
+    status: Mapped[str] = mapped_column(
+        String(20), default="pending", index=True
+    )  # pending|ready|failed|expired
+    source_type: Mapped[str] = mapped_column(String(20), default="text")
+    model_id: Mapped[str] = mapped_column(String(80), default="")
+    idempotency_key: Mapped[str] = mapped_column(String(80), default="", index=True)
+    input_meta_json: Mapped[str] = mapped_column(Text, default="")  # sizes/mimes only, no raw body
+    error_code: Mapped[str] = mapped_column(String(40), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive, index=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
+
+    media = relationship("AIFormMedia", back_populates="extraction", lazy="selectin")
+    suggestions = relationship(
+        "AIFormSuggestion", back_populates="extraction", lazy="selectin"
+    )
+    decisions = relationship(
+        "AIFormReviewDecision", back_populates="extraction", lazy="selectin"
+    )
+
+    def to_dict(self, *, include_private_paths: bool = False) -> Dict[str, Any]:
+        data = {
+            "id": self.id,
+            "actor_user_id": self.actor_user_id,
+            "actor_label": self.actor_label,
+            "form_name": self.form_name,
+            "target_record_id": self.target_record_id,
+            "status": self.status,
+            "source_type": self.source_type,
+            "model_id": self.model_id,
+            "idempotency_key": self.idempotency_key,
+            "error_code": self.error_code,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "suggestion_count": len(self.suggestions or []),
+            "media_count": len(self.media or []),
+        }
+        if include_private_paths:
+            data["input_meta_json"] = self.input_meta_json
+        return data
+
+
+class AIFormMedia(db.Model):
+    """Private media metadata for an extraction (bytes live on disk, not DB)."""
+
+    __tablename__ = "ai_form_media"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    extraction_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("ai_form_extractions.id"), nullable=False, index=True
+    )
+    storage_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), default="")
+    mime_type: Mapped[str] = mapped_column(String(80), default="")
+    byte_size: Mapped[int] = mapped_column(Integer, default=0)
+    original_filename: Mapped[str] = mapped_column(String(200), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+
+    extraction = relationship("AIFormExtraction", back_populates="media")
+
+    def to_dict(self, *, include_storage_key: bool = False) -> Dict[str, Any]:
+        data = {
+            "id": self.id,
+            "extraction_id": self.extraction_id,
+            "mime_type": self.mime_type,
+            "byte_size": self.byte_size,
+            "sha256": self.sha256,
+            "original_filename": self.original_filename,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+        if include_storage_key:
+            data["storage_key"] = self.storage_key
+        return data
+
+
+class AIFormSuggestion(db.Model):
+    """Per-field AI suggestion with provenance (not applied to CRM automatically)."""
+
+    __tablename__ = "ai_form_suggestions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    extraction_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("ai_form_extractions.id"), nullable=False, index=True
+    )
+    field_name: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    raw_value_json: Mapped[str] = mapped_column(Text, default="")
+    normalized_value_json: Mapped[str] = mapped_column(Text, default="")
+    confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    action: Mapped[str] = mapped_column(String(20), default="review")
+    reasons_json: Mapped[str] = mapped_column(Text, default="")
+    source_type: Mapped[str] = mapped_column(String(20), default="text")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+
+    extraction = relationship("AIFormExtraction", back_populates="suggestions")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "extraction_id": self.extraction_id,
+            "field_name": self.field_name,
+            "confidence": self.confidence,
+            "action": self.action,
+            "source_type": self.source_type,
+            "raw_value_json": self.raw_value_json,
+            "normalized_value_json": self.normalized_value_json,
+            "reasons_json": self.reasons_json,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class AIFormReviewDecision(db.Model):
+    """User accept/reject/edit decision for a suggestion (never writes CRM)."""
+
+    __tablename__ = "ai_form_review_decisions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    extraction_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("ai_form_extractions.id"), nullable=False, index=True
+    )
+    suggestion_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True)
+    field_name: Mapped[str] = mapped_column(String(80), default="")
+    decision: Mapped[str] = mapped_column(String(20), default="pending")  # accept|reject|edit
+    edited_value_json: Mapped[str] = mapped_column(Text, default="")
+    actor_user_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+
+    extraction = relationship("AIFormExtraction", back_populates="decisions")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "extraction_id": self.extraction_id,
+            "suggestion_id": self.suggestion_id,
+            "field_name": self.field_name,
+            "decision": self.decision,
+            "edited_value_json": self.edited_value_json,
+            "actor_user_id": self.actor_user_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
 class RelationshipEdge(db.Model):
     """Derived CRM relationship edge (SQL graph; not Neo4j)."""
 

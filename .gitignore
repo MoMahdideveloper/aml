@@ -187,3 +187,6 @@ out/
 .dist/
 .output/
 .cache/
+# AI form audit media (never under static/)
+instance/ai_form_audit/
+

@@ -86,11 +86,13 @@ class ValidatedFieldSuggestion(BaseModel):
 
 
 class ExtractionResult(BaseModel):
+    """Provider extraction output (raw suggestions; not yet policy-classified)."""
+
     model_config = ConfigDict(extra="forbid")
 
     form: str
     source_type: SourceType = SourceType.text
-    suggestions: List[ValidatedFieldSuggestion] = Field(default_factory=list)
+    suggestions: List[RawFieldSuggestion] = Field(default_factory=list)
     model_id: str = ""
     degraded: bool = False
     error: Optional[str] = None
