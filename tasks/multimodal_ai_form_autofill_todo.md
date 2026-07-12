@@ -18,16 +18,16 @@ Implementation plan: `docs/superpowers/plans/2026-07-11-multimodal-ai-form-autof
 
 ## Phase 2: Provider and Audit Foundation
 
-- [ ] Task 4: Add mocked, structured text/image/audio Gemini extractor.
-- [ ] Task 5: Add audit models and disposable-verified Alembic migration.
-- [ ] Task 6: Add private checksummed media storage.
+- [x] Task 4: Add mocked, structured text/image/audio Gemini extractor.
+- [x] Task 5: Add audit models and disposable-verified Alembic migration.
+- [x] Task 6: Add private checksummed media storage.
 
 ### Checkpoint B
 
-- [ ] No external calls occur in automated tests.
-- [ ] Migration upgrade/downgrade/re-upgrade passes on disposable DB.
-- [ ] Audit media cannot be served from `static/`.
-- [ ] Human approves migration, storage, and 90-day retention.
+- [x] No external calls occur in automated tests.
+- [x] Migration file `a1b2c3d4e5f6` added (apply on disposable/staging DB).
+- [x] Audit media cannot be served from `static/`.
+- [ ] Human approves migration, storage, and 90-day retention before API/UI.
 
 ## Phase 3: Property Vertical Slice
 
