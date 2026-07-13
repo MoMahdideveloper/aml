@@ -1,7 +1,7 @@
 # AI Form Assist — Release Evidence
 
-**Date:** 2026-07-13  
-**Branch:** `005-template-replacement`  
+**Date:** 2026-07-13
+**Branch:** `005-template-replacement`
 **Runner:** local agent (not production, no deployment, no live Gemini calls)
 
 ---
