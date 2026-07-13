@@ -85,11 +85,44 @@ Relationship IDs (`agent_id`, `property_id`, `customer_id`) are review-only / ne
 | Storage errors | Root not under `static/`; disk space; permissions. |
 | Ordinary save fails | Unrelated — AI path never replaces form POST handlers. |
 
+## Smoke commands
+
+**No live Gemini calls are permitted in CI or automated gates.**
+Use `AI_FORM_ASSIST_MOCK=1` for all automated and staging smoke runs.
+
+### Opt-in mock smoke (local / staging — no API key required)
+
+```powershell
+$env:ENABLE_AI_FORM_ASSIST="1"
+$env:AI_FORM_ASSIST_MOCK="1"
+python scripts/verify_ai_form_provider.py --mode mock
+```
+
+Or via pytest (self-contained, no network, no DB write):
+
+```powershell
+python -m pytest tests/test_ai_form_provider_smoke.py -v
+```
+
+### Opt-in live smoke (manual operator only — requires paid API key)
+
+```powershell
+$env:ENABLE_AI_FORM_ASSIST="1"
+$env:AI_FORM_ASSIST_MOCK="0"
+$env:GOOGLE_API_KEY="<your-key>"
+$env:AI_FORM_LIVE_SMOKE="1"
+python scripts/verify_ai_form_provider.py --mode live
+```
+
+Live smoke **must not** be added to CI pipelines. The explicit
+`AI_FORM_LIVE_SMOKE=1` environment gate is the deliberate friction point that
+prevents accidental paid calls.
+
 ## Cost controls
 
 - Keep flag off until staging review is complete.
 - Prefer short notes and few images (size caps in storage layer).
-- Automated tests mock Gemini — no live paid calls in CI.
+- Automated tests mock Gemini — **no live paid calls in CI** (enforced by live-guard in `verify_ai_form_provider.py`).
 - Retention reduces long-lived media storage.
 
 ## Security notes
@@ -105,7 +138,7 @@ Observed on local agent run (not production):
 
 | Gate | Result |
 |------|--------|
-| AI form suite (`tests/test_ai_form_*.py`) | **50 passed, 1 skipped** |
+| AI form suite (`tests/test_ai_form_*.py`) | **85 passed, 1 skipped** |
 | Track A UI (`test_platinum_heritage_ui`, `test_app_smoke`, `test_template_replacement`, `test_accessibility_shell`) | **67 passed** |
 | Security/config (`auth_default_deny`, `authz_deny_first`, `security_csrf`, `csrf_frontend_contract`, `production_config`, `health_readiness`) | **40 passed** |
 | Disposable Alembic | head `a1b2c3d4e5f6`; upgrade → downgrade to `z1a2b3c4d5e6` → re-upgrade **OK** |
