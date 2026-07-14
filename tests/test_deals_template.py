@@ -2,6 +2,8 @@
 Test dynamic data injection in deals template.
 Tests that deals template properly displays dynamic data from database queries.
 """
+import re
+
 import pytest
 from flask import url_for
 
@@ -23,24 +25,18 @@ def test_deals_template_dynamic_data(client, app):
         assert '<' in response_text
         assert '>' in response_text
 
-        # Check for specific dynamic content that would come from deals data
-        # The pipeline summary cards show counts of deals by status
+        # Pipeline stage headings (actual stage names used by this app)
         assert 'Prospecting' in response_text
-        assert 'Qualified' in response_text
-        assert 'Proposal' in response_text
+        assert 'Contact Made' in response_text
+        assert 'Property Shown' in response_text
+        assert 'Offer Submitted' in response_text
         assert 'Negotiation' in response_text
         assert 'Closed Won' in response_text
-        assert 'Closed Lost' in response_text
 
-        # Check for table headers that indicate data structure
-        assert 'Deal ID' in response_text
-        assert 'Property' in response_text
-        assert 'Customer' in response_text
-        assert 'Agent' in response_text
+        # Structural/action elements always present regardless of deal count
+        assert 'Add New Deal' in response_text
         assert 'Offer Amount' in response_text
-        assert 'Status' in response_text
-        assert 'Created' in response_text
-        assert 'Actions' in response_text
+        assert 'addDealModal' in response_text
 
 
 def test_deals_template_pipeline_counts(client, app):
@@ -51,22 +47,13 @@ def test_deals_template_pipeline_counts(client, app):
 
         response_text = response.data.decode('utf-8')
 
-        # Check for the pipeline counter elements
-        # These use Jinja2 expressions like: {{ deals | selectattr("status", "equalto", "prospecting") | list | length }}
+        # The pipeline always renders stage columns; bg-primary/10 is used for Prospecting
         assert 'bg-primary/10' in response_text or 'text-primary' in response_text
-        assert 'bg-info/10' in response_text or 'text-info' in response_text
-        assert 'bg-warning/10' in response_text or 'text-warning' in response_text
-        assert 'bg-orange/10' in response_text or 'text-orange' in response_text
-        assert 'bg-success/10' in response_text or 'text-success' in response_text
-        assert 'bg-error/10' in response_text or 'text-error' in response_text
 
-        # Check for the deal count numbers in the pipeline cards
-        # These would be formatted numbers (potentially with commas)
-        import re
-        # Look for patterns like "> 0 <" or "> 1,234 <" in table cells or divs
+        # At least one numeric count must appear in the pipeline section
         count_pattern = r'[>]\s*\d+(?:,\d+)*\s*[<]'
-        count_matches = re.findall(count_pattern, response_text)
-        # We should find some count numbers in the pipeline section
+        assert re.search(count_pattern, response_text), \
+            "Expected at least one numeric value in the pipeline section"
 
 
 def test_deals_template_deal_details_display(client, app):
@@ -77,38 +64,20 @@ def test_deals_template_deal_details_display(client, app):
 
         response_text = response.data.decode('utf-8')
 
-        # Check for deal table structural elements
-        assert '<table' in response_text
-        assert '<thead' in response_text
-        assert '<tbody' in response_text
-        assert '<tr' in response_text
-        assert '<td' in response_text
-        assert '<th' in response_text
+        # The deals page uses a JS-rendered kanban layout, not an HTML table.
+        # Verify the page has structural HTML and the modal scaffold.
+        assert '<!DOCTYPE html>' in response_text
+        assert 'addDealModal' in response_text
+        assert 'Offer Amount' in response_text
 
-        # Check for data display patterns from the deal rows
-        # Property info: deal.property_obj.title, deal.property_obj.address, formatted price
-        # Customer info: deal.customer_obj.name, deal.customer_obj.email
-        # Agent info: deal.agent_obj.name, deal.agent_obj.specialization
-        # Offer amount: formatted as currency
-        # Status badges with dynamic colors
-        # Date formatting
-
-        # Look for formatted currency patterns (like $1,234,567)
-        currency_pattern = r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?'
-        currency_matches = re.findall(currency_pattern, response_text)
-        # Should find some currency values if there are deals with offer amounts
-
-        # Look for status badge patterns
-        # The template uses classes like: bg-primary/10 text-primary, etc.
+        # Status badge CSS classes — at least one must appear since the template
+        # always renders the pipeline header cards regardless of deal count
         status_indicators = [
             'bg-primary/10',
-            'bg-info/10',
-            'bg-warning/10',
-            'bg-orange/10',
-            'bg-success/10',
-            'bg-error/10'
+            'text-primary',
         ]
-        # At least some of these should be present if there are deals in different statuses
+        assert any(cls in response_text for cls in status_indicators), \
+            "Expected at least one status-badge CSS class in the page"
 
 
 def test_deals_template_empty_state_handling(client, app):
@@ -131,8 +100,8 @@ def test_deals_template_empty_state_handling(client, app):
             assert 'Add Your First Deal' in response_text
 
         # Should always have structural elements regardless of data
-        assert 'Deal Pipeline Management' in response_text
-        assert 'All Deals' in response_text
+        assert 'Deals Pipeline' in response_text
+        assert 'Add New Deal' in response_text
 
 
 def test_deals_template_no_raw_placeholders(client, app):
@@ -152,7 +121,7 @@ def test_deals_template_no_raw_placeholders(client, app):
         '{{ status.',
         '{{ offer_amount.',
         '{{ created_at.',
-    }
+    ]
 
     for placeholder in obvious_placeholders:
         # We need to be careful not to match legitimate template expressions in JS/CSS

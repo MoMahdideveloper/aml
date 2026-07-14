@@ -65,6 +65,11 @@ def app():
 
 @pytest.fixture()
 def client(app):
+    import sqlalchemy_models  # noqa: F401 — registers all ORM metadata
+    from database import db
+
+    with app.app_context():
+        db.create_all()  # idempotent; restores tables after any db_setup teardown
     return app.test_client()
 
 
