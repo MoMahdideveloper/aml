@@ -1,6 +1,6 @@
 # Staging Release Rehearsal (Track A)
 
-**Scope:** Disposable/local targets only. Never points at production.  
+**Scope:** Disposable/local targets only. Never points at production.
 **No automatic destructive actions.** Live execution requires explicit `--live` + `--opt-in`.
 
 ---
