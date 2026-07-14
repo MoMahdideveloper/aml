@@ -39,6 +39,7 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+rehearsal-*.json
 .pytest_cache/
 
 # Translations

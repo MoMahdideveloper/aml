@@ -145,6 +145,8 @@ Observability contract: `docs/OBSERVABILITY_CONTRACT.md`. Alerts (proposal only)
 
 CI/CD delivery: `docs/DELIVERY_CONTRACT.md`, `docs/RELEASE_RUNBOOK.md`, `docs/BRANCH_PROTECTION.md` (settings not applied automatically). Staging/production GitHub Actions are **manual + dry_run by default**.
 
+Staging rehearsal (local, disposable): `docs/STAGING_RELEASE_REHEARSAL.md` — run `scripts/staging_release_rehearsal.py --dry-run --opt-in` to validate gate wiring without external binaries.
+
 Wire these into load balancers / Kubernetes probes.
 
 ## 6. Image packaging boundary
