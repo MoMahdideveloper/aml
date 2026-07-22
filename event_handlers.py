@@ -15,12 +15,15 @@ class EventHandlers:
     Heavy matching work is delegated to worker scheduler jobs.
     """
 
+    _handlers_registered_globally = False
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self._registered = False
 
     def register_handlers(self):
-        if self._registered:
+        if self._registered or EventHandlers._handlers_registered_globally:
+            self._registered = True
             return
 
         event.listen(Property, "after_insert", self._on_property_created)
@@ -35,6 +38,7 @@ class EventHandlers:
         event.listen(Session, "after_rollback", self._on_session_after_rollback)
 
         self._registered = True
+        EventHandlers._handlers_registered_globally = True
         self.logger.info("Database event handlers registered")
 
     def _enqueue_rematch(self, connection, entity_type: str, entity_id: int, reason: str) -> None:

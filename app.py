@@ -181,6 +181,12 @@ def create_app(test_config=None):
     # Initialize database and Flask-Migrate (via database.init_db).
     init_db(app)
 
+    # Register ORM mutation handlers for the always-on rematch queue.
+    if os.environ.get("EVENT_HANDLERS_ENABLED", "1").strip() != "0":
+        from event_handlers import event_handlers
+
+        event_handlers.register_handlers()
+
     # Cache + rate limiter (memory storage by default — see extensions.py)
     from extensions import init_extensions
 

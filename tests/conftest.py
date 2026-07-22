@@ -51,7 +51,18 @@ if "gemini_service" not in sys.modules:
 
 @pytest.fixture(scope="session")
 def app():
-    from app import app as flask_app
+    from app import create_app
+
+    # Build a fresh factory app instead of reusing app.py's module-global app.
+    # Migration tests intentionally import create_app under isolated env vars;
+    # reusing the module-global instance would leak those settings here.
+    flask_app = create_app(
+        {
+            "TESTING": True,
+            "AUTH_DEFAULT_DENY_ENABLED": False,
+            "WTF_CSRF_ENABLED": False,
+        }
+    )
 
     # Ensure session-scoped app stays open for legacy CRM tests even if the
     # process imported create_app while AUTH_DEFAULT_DENY_ENABLED was on.
