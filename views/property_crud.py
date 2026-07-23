@@ -399,7 +399,7 @@ def update_property(property_id, property_obj):
     bathrooms = _parse_int_field("bathrooms", 0)
     square_feet = _parse_int_field("square_feet", 0)
     description = (request.form.get("description") or "").strip()
-    year_built = _parse_optional_int("year_built")
+    year_built = _parse_optional_int(request.form.get("year_built"), "year built")
     parking_spaces = _parse_int_field("parking_spaces", 0)
     floors = _parse_int_field("floors", 1)
     units = _parse_int_field("units", 1)
@@ -412,39 +412,39 @@ def update_property(property_id, property_obj):
     if listing_type not in ["sale", "rental"]:
         listing_type = "sale"
     property_features = (request.form.get("property_features") or "").strip()
-    agent_id = _parse_optional_int("agent_id")
+    agent_id = _parse_optional_int(request.form.get("agent_id"), "agent id")
     document_type = (request.form.get("document_type") or "").strip() or None
-    floor_number = _parse_optional_int("floor_number")
-    built_area = _parse_optional_int("built_area")
-    land_area = _parse_optional_int("land_area")
+    floor_number = _parse_optional_int(request.form.get("floor_number"), "floor number")
+    built_area = _parse_optional_int(request.form.get("built_area"), "built area")
+    land_area = _parse_optional_int(request.form.get("land_area"), "land area")
     floor_covering = (request.form.get("floor_covering") or "").strip() or None
     facade_type = (request.form.get("facade_type") or "").strip() or None
     wall_covering = (request.form.get("wall_covering") or "").strip() or None
     cabinet_type = (request.form.get("cabinet_type") or "").strip() or None
     property_direction = (request.form.get("property_direction") or "").strip() or None
     is_exchangeable = bool(request.form.get("is_exchangeable"))
-    boundary_width = _parse_optional_number("boundary_width")
+    boundary_width = _parse_optional_number(request.form.get("boundary_width"), "boundary width")
     density = (request.form.get("density") or "").strip() or None
     commercial_status = (request.form.get("commercial_status") or "").strip() or None
     usage_type = (request.form.get("usage_type") or "").strip() or None
-    ceiling_count = _parse_optional_int("ceiling_count")
+    ceiling_count = _parse_optional_int(request.form.get("ceiling_count"), "ceiling count")
     permit_ceiling = (request.form.get("permit_ceiling") or "").strip() or None
-    property_length = _parse_optional_number("property_length")
-    property_height = _parse_optional_number("property_height")
-    price_per_meter = _parse_optional_int("price_per_meter")
-    latitude = _parse_optional_number("latitude")
-    longitude = _parse_optional_number("longitude")
+    property_length = _parse_optional_number(request.form.get("property_length"), "property length")
+    property_height = _parse_optional_number(request.form.get("property_height"), "property height")
+    price_per_meter = _parse_optional_int(request.form.get("price_per_meter"), "price per meter")
+    latitude = _parse_optional_number(request.form.get("latitude"), "latitude")
+    longitude = _parse_optional_number(request.form.get("longitude"), "longitude")
     custom_fields = (request.form.get("custom_fields") or "").strip()
 
     # Set pricing fields based on listing type
     if listing_type == "sale":
-        price = _parse_optional_int("sale_price", 0) or 0
+        price = _parse_optional_int(request.form.get("sale_price"), "sale price") or 0
         rahn = None
         ejare = None
     else:
         price = 0
-        rahn = _parse_optional_int("rahn")
-        ejare = _parse_optional_int("ejare")
+        rahn = _parse_optional_int(request.form.get("rahn"), "rahn")
+        ejare = _parse_optional_int(request.form.get("ejare"), "ejare")
 
     try:
         updated_property = database_service.update_property(
