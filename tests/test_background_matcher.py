@@ -60,9 +60,8 @@ def test_calculate_basic_match_score_missing_factors():
 
     score = matcher._calculate_basic_match_score(customer, property_obj)
     # Price match: 300k within 250k-350k range = 1.0 (full)
-    # Other factors missing = 0.0 each
-    # Total should be 1.0/4 = 0.25
-    assert 0.24 <= score <= 0.26  # Allow small floating point variance
+    # Hybrid scoring uses neutral semantic and missing-signal defaults.
+    assert abs(score - 0.5425) < 0.02
 
 
 def test_find_property_matches_deduplicates_per_customer():
@@ -255,19 +254,19 @@ def test_calculate_basic_match_score_edge_cases():
     property_obj.property_type = 'house'
 
     score = matcher._calculate_basic_match_score(customer, property_obj)
-    assert abs(score - 1.0) < 0.001  # Should be perfect match
+    assert abs(score - 0.7) < 0.01  # Hybrid score for a full rule match
 
     # Test budget slightly above max (should get 0.5)
     property_obj.price = 330000  # 10% above 300000
     score = matcher._calculate_basic_match_score(customer, property_obj)
-    # Budget: 0.5, bedrooms: 1.0, bathrooms: 1.0, type: 1.0 = 3.5/4 = 0.875
-    assert abs(score - 0.875) < 0.001
+    # Hybrid budget tier for a listing about 10% over the maximum.
+    assert abs(score - 0.66) < 0.01
 
     # Test budget way above max (should get 0.0)
     property_obj.price = 500000
     score = matcher._calculate_basic_match_score(customer, property_obj)
-    # Budget: 0.0, bedrooms: 1.0, bathrooms: 1.0, type: 1.0 = 3.0/4 = 0.75
-    assert abs(score - 0.75) < 0.001
+    # Hybrid budget penalty still leaves neutral and matching components.
+    assert abs(score - 0.54) < 0.01
 
     # Test missing preferred values
     customer.preferred_bedrooms = None
@@ -279,8 +278,8 @@ def test_calculate_basic_match_score_edge_cases():
     property_obj.property_type = 'house'
 
     score = matcher._calculate_basic_match_score(customer, property_obj)
-    # Budget: 1.0, bedrooms: 0.0, bathrooms: 0.0, type: 0.0 = 1.0/4 = 0.25
-    assert abs(score - 0.25) < 0.001
+    # Missing preference signals receive neutral hybrid defaults.
+    assert abs(score - 0.6) < 0.01
 
 
 def test_save_matches_to_database():

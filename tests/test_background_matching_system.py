@@ -20,7 +20,7 @@ class TestBackgroundMatchingSystem:
     def test_background_matcher_initialization(self):
         """Test that BackgroundMatcher initializes correctly"""
         assert background_matcher is not None
-        assert background_matcher.min_match_score == 0.5
+        assert background_matcher.min_match_score == 0.4
         assert background_matcher.notification_threshold == 0.7
         assert background_matcher.high_priority_threshold == 0.85
     
