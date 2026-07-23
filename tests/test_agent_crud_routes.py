@@ -1,235 +1,165 @@
-"""
-Integration tests for agent CRUD routes
-"""
+"""Tests for the current agent list, JSON, and form routes."""
 
-import pytest
-from flask import url_for
 from services.database_service import database_service
-from services.monitoring_service import monitoring_service
+
+
+def _seed_agent(app, *, name="Test Agent", email="test@example.com") -> int:
+    """Create an agent and return only its scalar ID after the session closes."""
+    with app.app_context():
+        agent = database_service.add_agent(
+            name=name,
+            email=email,
+            phone="123-456-7890",
+            specialization="Residential",
+            bio="Test bio",
+        )
+        return agent.id
+
+
+def _agent_json(client, agent_id):
+    response = client.get(f"/api/agents/{agent_id}")
+    assert response.status_code == 200
+    return response.get_json()
 
 
 class TestAgentCRUDRoutes:
-    """Test agent CRUD route functionality"""
+    """Exercise the live form-based agent routes and JSON read endpoint."""
 
-    def test_agent_edit_route_get(self, client, app, db_setup):
-        """Test GET /agents/<id>/edit route"""
-        with app.app_context():
-            # Create test agent
-            agent = database_service.add_agent(
-                name="Test Agent",
-                email="test@example.com",
-                phone="123-456-7890",
-                specialization="Residential",
-                bio="Test bio"
-            )
-            
-            # Test GET request for edit form
-            response = client.get(f'/agents/{agent.id}/edit', 
-                                headers={'X-Requested-With': 'XMLHttpRequest'})
-            
-            assert response.status_code == 200
-            data = response.get_json()
-            assert data is not None, f"Expected JSON response, got: {response.data}"
-            assert 'agent' in data
-            assert data['agent']['name'] == "Test Agent"
-            assert data['agent']['email'] == "test@example.com"
+    def test_agents_list_page_loads(self, client, app, db_setup):
+        _seed_agent(app)
 
-    def test_agent_edit_route_get_not_found(self, client, app, db_setup):
-        """Test GET /agents/<id>/edit route with non-existent agent"""
-        with app.app_context():
-            response = client.get('/agents/99999/edit',
-                                headers={'X-Requested-With': 'XMLHttpRequest'})
-            
-            assert response.status_code == 404
-            data = response.get_json()
-            assert 'error' in data
-            assert data['error'] == 'Agent not found'
+        response = client.get("/agents")
 
-    def test_agent_update_route_success(self, client, app, db_setup):
-        """Test PUT /agents/<id> route with valid data"""
-        with app.app_context():
-            # Create test agent
-            agent = database_service.add_agent(
-                name="Test Agent",
-                email="test@example.com",
-                phone="123-456-7890"
-            )
-            
-            # Test update
-            response = client.post(f'/agents/{agent.id}',
-                                 data={
-                                     'name': 'Updated Agent',
-                                     'email': 'updated@example.com',
-                                     'phone': '987-654-3210',
-                                     'specialization': 'Commercial',
-                                     'bio': 'Updated bio',
-                                     '_method': 'PUT'
-                                 },
-                                 headers={'X-Requested-With': 'XMLHttpRequest'})
-            
-            assert response.status_code == 200
-            data = response.get_json()
-            assert data['success'] is True
-            assert 'Agent "Updated Agent" updated successfully!' in data['message']
-            
-            # Verify agent was updated
-            updated_agent = database_service.get_agent(agent.id)
-            assert updated_agent.name == 'Updated Agent'
-            assert updated_agent.email == 'updated@example.com'
+        assert response.status_code == 200
+        assert b"Test Agent" in response.data
 
-    def test_agent_update_route_validation_error(self, client, app, db_setup):
-        """Test PUT /agents/<id> route with invalid data"""
-        with app.app_context():
-            # Create test agent
-            agent = database_service.add_agent(
-                name="Test Agent",
-                email="test@example.com",
-                phone="123-456-7890"
-            )
-            
-            # Test update with invalid email
-            response = client.post(f'/agents/{agent.id}',
-                                 data={
-                                     'name': 'Updated Agent',
-                                     'email': 'invalid-email',  # Invalid email
-                                     'phone': '987-654-3210',
-                                     '_method': 'PUT'
-                                 },
-                                 headers={'X-Requested-With': 'XMLHttpRequest'})
-            
-            assert response.status_code == 400
-            data = response.get_json()
-            assert data['error'] == 'Validation failed'
-            assert 'errors' in data
+    def test_agent_json_api_success(self, client, app, db_setup):
+        agent_id = _seed_agent(app)
 
-    def test_agent_update_route_not_found(self, client, app, db_setup):
-        """Test PUT /agents/<id> route with non-existent agent"""
-        with app.app_context():
-            response = client.post('/agents/99999',
-                                 data={
-                                     'name': 'Updated Agent',
-                                     'email': 'updated@example.com',
-                                     'phone': '987-654-3210',
-                                     '_method': 'PUT'
-                                 },
-                                 headers={'X-Requested-With': 'XMLHttpRequest'})
-            
-            assert response.status_code == 404
-            data = response.get_json()
-            assert data['error'] == 'Agent not found'
+        data = _agent_json(client, agent_id)
 
-    def test_agent_delete_route_success(self, client, app, db_setup):
-        """Test DELETE /agents/<id> route"""
-        with app.app_context():
-            # Create test agent
-            agent = database_service.add_agent(
-                name="Test Agent",
-                email="test@example.com",
-                phone="123-456-7890"
-            )
-            
-            # Test delete
-            response = client.delete(f'/agents/{agent.id}',
-                                   headers={'X-Requested-With': 'XMLHttpRequest'})
-            
-            assert response.status_code == 200
-            data = response.get_json()
-            assert data['success'] is True
-            assert 'Agent "Test Agent" deleted successfully!' in data['message']
-            
-            # Verify agent was deleted
-            deleted_agent = database_service.get_agent(agent.id)
-            assert deleted_agent is None
+        assert data["id"] == agent_id
+        assert data["name"] == "Test Agent"
+        assert data["email"] == "test@example.com"
+        assert data["phone"] == "123-456-7890"
+        assert data["specialization"] == "Residential"
+        assert data["bio"] == "Test bio"
 
-    def test_agent_delete_route_not_found(self, client, app, db_setup):
-        """Test DELETE /agents/<id> route with non-existent agent"""
-        with app.app_context():
-            response = client.delete('/agents/99999',
-                                   headers={'X-Requested-With': 'XMLHttpRequest'})
-            
-            assert response.status_code == 404
-            data = response.get_json()
-            assert data['error'] == 'Agent not found'
+    def test_agent_json_api_not_found(self, client, app, db_setup):
+        response = client.get("/api/agents/99999")
 
-    def test_agent_routes_html_fallback(self, client, app, db_setup):
-        """Test that routes work with HTML requests (non-AJAX)"""
-        with app.app_context():
-            # Create test agent
-            agent = database_service.add_agent(
-                name="Test Agent",
-                email="test@example.com",
-                phone="123-456-7890"
-            )
-            
-            # Test HTML update request
-            response = client.post(f'/agents/{agent.id}',
-                                 data={
-                                     'name': 'Updated Agent',
-                                     'email': 'updated@example.com',
-                                     'phone': '987-654-3210',
-                                     '_method': 'PUT'
-                                 },
-                                 follow_redirects=True)
-            
-            assert response.status_code == 200
-            
-            # Test HTML delete request
-            response = client.delete(f'/agents/{agent.id}',
-                                   follow_redirects=True)
-            
-            assert response.status_code == 200
+        assert response.status_code == 404
+        assert response.get_json() == {"error": "Agent not found"}
 
-    def test_agent_edit_email_uniqueness_validation(self, client, app, db_setup):
-        """Test email uniqueness validation in agent edit"""
-        with app.app_context():
-            # Create two test agents
-            agent1 = database_service.add_agent(
-                name="Agent 1",
-                email="agent1@example.com",
-                phone="123-456-7890"
-            )
-            
-            agent2 = database_service.add_agent(
-                name="Agent 2", 
-                email="agent2@example.com",
-                phone="987-654-3210"
-            )
-            
-            # Try to update agent2 with agent1's email
-            response = client.post(f'/agents/{agent2.id}',
-                                 data={
-                                     'name': 'Agent 2',
-                                     'email': 'agent1@example.com',  # Duplicate email
-                                     'phone': '987-654-3210',
-                                     '_method': 'PUT'
-                                 },
-                                 headers={'X-Requested-With': 'XMLHttpRequest'})
-            
-            assert response.status_code == 400
-            data = response.get_json()
-            assert data['error'] == 'Validation failed'
-            assert 'email' in data['errors']
+    def test_agent_edit_via_post_persists_changes(self, client, app, db_setup):
+        agent_id = _seed_agent(app)
 
-    def test_agent_edit_same_email_allowed(self, client, app, db_setup):
-        """Test that agent can keep their own email when editing"""
-        with app.app_context():
-            # Create test agent
-            agent = database_service.add_agent(
-                name="Test Agent",
-                email="test@example.com",
-                phone="123-456-7890"
-            )
-            
-            # Update agent with same email (should be allowed)
-            response = client.post(f'/agents/{agent.id}',
-                                 data={
-                                     'name': 'Updated Agent',
-                                     'email': 'test@example.com',  # Same email
-                                     'phone': '987-654-3210',
-                                     '_method': 'PUT'
-                                 },
-                                 headers={'X-Requested-With': 'XMLHttpRequest'})
-            
-            assert response.status_code == 200
-            data = response.get_json()
-            assert data['success'] is True
+        response = client.post(
+            f"/agents/{agent_id}/edit",
+            data={
+                "name": "Updated Agent",
+                "email": "updated@example.com",
+                "phone": "987-654-3210",
+                "specialization": "Commercial",
+                "bio": "Updated bio",
+            },
+        )
+
+        assert response.status_code == 302
+        assert response.location.endswith("/agents")
+        updated = _agent_json(client, agent_id)
+        assert updated["name"] == "Updated Agent"
+        assert updated["email"] == "updated@example.com"
+        assert updated["phone"] == "987-654-3210"
+        assert updated["specialization"] == "Commercial"
+        assert updated["bio"] == "Updated bio"
+
+    def test_invalid_email_is_rejected_without_mutation(self, client, app, db_setup):
+        agent_id = _seed_agent(app)
+        before = _agent_json(client, agent_id)
+
+        response = client.post(
+            f"/agents/{agent_id}/edit",
+            data={
+                "name": "Should Not Persist",
+                "email": "invalid-email",
+                "phone": "000",
+                "specialization": "Invalid",
+                "bio": "Invalid",
+            },
+            follow_redirects=True,
+        )
+
+        assert response.status_code == 200
+        assert b"Invalid email address" in response.data
+        assert _agent_json(client, agent_id) == before
+
+    def test_duplicate_email_is_rejected_without_mutation(self, client, app, db_setup):
+        agent_id = _seed_agent(app)
+        _seed_agent(app, name="Other Agent", email="other@example.com")
+        before = _agent_json(client, agent_id)
+
+        response = client.post(
+            f"/agents/{agent_id}/edit",
+            data={
+                "name": "Should Not Persist",
+                "email": "other@example.com",
+                "phone": "000",
+                "specialization": "Invalid",
+                "bio": "Invalid",
+            },
+            follow_redirects=True,
+        )
+
+        assert response.status_code == 200
+        assert b"already in use by another agent" in response.data
+        assert _agent_json(client, agent_id) == before
+
+    def test_same_email_is_allowed_on_edit(self, client, app, db_setup):
+        agent_id = _seed_agent(app)
+
+        response = client.post(
+            f"/agents/{agent_id}/edit",
+            data={
+                "name": "Renamed Agent",
+                "email": "test@example.com",
+                "phone": "987-654-3210",
+                "specialization": "Commercial",
+                "bio": "Renamed bio",
+            },
+        )
+
+        assert response.status_code == 302
+        updated = _agent_json(client, agent_id)
+        assert updated["name"] == "Renamed Agent"
+        assert updated["email"] == "test@example.com"
+
+    def test_agent_delete_via_post_soft_deletes(self, client, app, db_setup):
+        agent_id = _seed_agent(app)
+
+        response = client.post(f"/agents/{agent_id}/delete")
+
+        assert response.status_code == 302
+        assert response.location.endswith("/agents")
+        deleted = client.get(f"/api/agents/{agent_id}")
+        assert deleted.status_code == 404
+        assert deleted.get_json() == {"error": "Agent not found"}
+
+    def test_agent_edit_missing_agent_redirects(self, client, app, db_setup):
+        response = client.post(
+            "/agents/99999/edit",
+            data={
+                "name": "Missing",
+                "email": "missing@example.com",
+                "phone": "000",
+            },
+        )
+
+        assert response.status_code == 302
+        assert response.location.endswith("/agents")
+
+    def test_agent_delete_missing_agent_redirects(self, client, app, db_setup):
+        response = client.post("/agents/99999/delete")
+
+        assert response.status_code == 302
+        assert response.location.endswith("/agents")
