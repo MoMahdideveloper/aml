@@ -13,6 +13,29 @@ def _utcnow_naive() -> datetime:
     return datetime.now(UTC).replace(tzinfo=None)
 
 
+class VoiceHistory(db.Model):
+    """Persisted voice memo metadata and optional transcription results."""
+
+    __tablename__ = "voice_history"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    entity_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    entity_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    audio_filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    audio_file_size: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    audio_duration_seconds: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    transcription: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    transcription_confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    language_detected: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    ai_model_used: Mapped[str] = mapped_column(String(50), nullable=False, default="gemini-pro")
+    processing_status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow_naive, onupdate=_utcnow_naive)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+
 class SuggestionItem(db.Model):
     __tablename__ = "suggestion_items"
 
@@ -76,7 +99,8 @@ class Property(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     address: Mapped[str] = mapped_column(Text, nullable=False)
-    price: Mapped[int] = mapped_column(BigInteger, default=0)
+    # Nullable so rentals can omit sale price (use rahn/ejare instead).
+    price: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True, default=0)
     property_type: Mapped[str] = mapped_column(String(50), nullable=False)
     bedrooms: Mapped[int] = mapped_column(Integer, default=0)
     bathrooms: Mapped[int] = mapped_column(Integer, default=0)

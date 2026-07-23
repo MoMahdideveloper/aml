@@ -62,8 +62,8 @@ def test_reconciliation_revision_has_canonical_parent():
     config.set_main_option("script_location", str(Path("migrations").resolve()))
     scripts = ScriptDirectory.from_config(config)
 
-    assert scripts.get_heads() == ["c3d4e5f6a7b8"]
-    assert scripts.get_revision("c3d4e5f6a7b8").down_revision == "a0b1c2d3e4f5"
+    assert scripts.get_heads() == ["d4e5f6a7b8c9"]
+    assert scripts.get_revision("d4e5f6a7b8c9").down_revision == "c3d4e5f6a7b8"
     assert all(revision.revision != "a2b3c4d5e6f7" for revision in scripts.walk_revisions())
 
 
