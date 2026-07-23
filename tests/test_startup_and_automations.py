@@ -26,14 +26,15 @@ def test_automations_api_create_and_list_rule(client, db_setup):
         data=json.dumps(
             {
                 "name": "Deal Stage Follow-up",
-                "trigger_type": "deal_stage_changed",
+                "trigger_type": "deal.stage_changed",
                 "enabled": True,
-                "conditions": {"new_status": "qualified"},
+                "conditions": {"stage": "qualified"},
                 "actions": [
                     {
                         "type": "create_task",
-                        "title": "Follow up with qualified lead",
+                        "title_key": "negotiation_followup",
                         "priority": "high",
+                        "due_days": 2,
                     }
                 ],
             }

@@ -171,6 +171,14 @@ def create_app(test_config=None):
         # Load the test config if passed in
         app.config.from_mapping(test_config)
 
+    # Celery owns scheduled jobs; web processes expose this flag for callers but
+    # keep in-process scheduler startup disabled by default.
+    if "SCHEDULER_ENABLED" in app.config:
+        scheduler_enabled = bool(app.config["SCHEDULER_ENABLED"])
+    else:
+        scheduler_enabled = os.environ.get("ENABLE_SCHEDULER", "0") == "1"
+    app.config["SCHEDULER_ENABLED"] = scheduler_enabled
+
     # Ensure the instance folder exists
     try:
         os.makedirs(app.instance_path)
