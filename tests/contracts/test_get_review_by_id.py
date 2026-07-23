@@ -1,8 +1,10 @@
+import pytest
 import requests
 import uuid
 
 BASE_URL = "http://localhost:5678/webhook"
 
+@pytest.mark.skip(reason="External n8n webhook contract; requires localhost:5678 and is outside the Flask suite")
 def test_get_review_by_id():
     """Test getting a UI review report by ID."""
     # Use a dummy UUID for testing

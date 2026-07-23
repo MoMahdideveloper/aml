@@ -1,3 +1,4 @@
+import pytest
 import requests
 import json
 import uuid
@@ -5,6 +6,7 @@ import uuid
 # Base URL for n8n webhooks (adjust as needed)
 BASE_URL = "http://localhost:5678/webhook"
 
+@pytest.mark.skip(reason="External n8n webhook contract; requires localhost:5678 and is outside the Flask suite")
 def test_create_review():
     """Test creating a new UI review report."""
     url = f"{BASE_URL}/reviews"
