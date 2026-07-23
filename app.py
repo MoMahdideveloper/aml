@@ -40,7 +40,11 @@ def register_auth_middleware(flask_app: Flask) -> None:
     non-public endpoints are redirected to login (HTML) or return 401 (API).
     Set AUTH_DEFAULT_DENY_ENABLED=0 to disable (legacy open-CRM / most tests).
     """
-    auth_enabled = os.environ.get("AUTH_DEFAULT_DENY_ENABLED", "1") == "1"
+    # Explicit config (e.g. test_config passed to create_app) wins over the env var.
+    if "AUTH_DEFAULT_DENY_ENABLED" in flask_app.config:
+        auth_enabled = bool(flask_app.config["AUTH_DEFAULT_DENY_ENABLED"])
+    else:
+        auth_enabled = os.environ.get("AUTH_DEFAULT_DENY_ENABLED", "1") == "1"
     flask_app.config["AUTH_DEFAULT_DENY_ENABLED"] = auth_enabled
 
     public_endpoints = {
