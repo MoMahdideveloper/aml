@@ -13,30 +13,86 @@ from sqlalchemy_models import Customer, Property
 from services.llm.providers.base import LLMProvider
 
 
+# A6API-preferred Gemini models (OpenAI-compatible /v1 or native /v1beta).
+# Override via GEMINI_MODEL / GEMINI_MODEL_FALLBACKS.
+_DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"
+_DEFAULT_MODEL_FALLBACKS = (
+    "gemini-3.5-flash",
+    "gemini-3.1-pro-preview",
+    "gemini-2.5-flash",
+)
+
+
+def _split_keys(raw: str) -> List[str]:
+    return [part.strip().strip('"').strip("'") for part in (raw or "").split(",") if part.strip()]
+
+
 class GeminiProvider(LLMProvider):
     """Gemini-first provider using the newer google-genai SDK."""
 
     def __init__(self) -> None:
         self.logger = logging.getLogger("services.llm.providers.gemini")
-        self.model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
-        self.api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        self.model = (
+            os.environ.get("GEMINI_MODEL", _DEFAULT_GEMINI_MODEL).strip()
+            or _DEFAULT_GEMINI_MODEL
+        )
+        raw_fallbacks = os.environ.get("GEMINI_MODEL_FALLBACKS", "").strip()
+        if raw_fallbacks:
+            fallbacks = [m.strip() for m in raw_fallbacks.split(",") if m.strip()]
+        else:
+            fallbacks = list(_DEFAULT_MODEL_FALLBACKS)
+        # Primary first, then unique fallbacks (skip duplicates of primary).
+        ordered: List[str] = [self.model]
+        for m in fallbacks:
+            if m not in ordered:
+                ordered.append(m)
+        self.models = ordered
         self.request_timeout_seconds = int(os.environ.get("GEMINI_REQUEST_TIMEOUT_SECONDS", "45"))
         self.max_retries = max(0, int(os.environ.get("GEMINI_REQUEST_RETRIES", "1")))
+        # Keep Google AI Studio and A6API credentials completely separate.
+        self.a6api_api_key = os.environ.get("GEMINI_A6API_API_KEY", "").strip().strip('"').strip("'")
+        google_keys = _split_keys(os.environ.get("GOOGLE_API_KEYS", ""))
+        if not google_keys:
+            google_keys = _split_keys(os.environ.get("GOOGLE_API_KEY", ""))
+        if not google_keys:
+            # Legacy alias for Google-native credentials only; never an A6API key.
+            google_keys = _split_keys(os.environ.get("GEMINI_API_KEY", ""))
+        self.google_api_keys = google_keys
+        self.credential_provider = "google" if google_keys else "a6api"
+        self.api_keys = google_keys or ([self.a6api_api_key] if self.a6api_api_key else [])
+        self.api_key = self.api_keys[0] if self.api_keys else ""
+        self.base_url = "" if google_keys else (
+            os.environ.get("GEMINI_A6API_BASE_URL")
+            or os.environ.get("GEMINI_BASE_URL")
+            or os.environ.get("GOOGLE_GENAI_BASE_URL")
+            or os.environ.get("GOOGLE_API_BASE")
+            or ""
+        ).strip().rstrip("/")
         self.client = None
 
         if genai is None:
             self.logger.warning("google-genai SDK not available; Gemini provider disabled")
             return
 
-        if not self.api_key:
+        if not self.api_keys:
             self.logger.warning("No Gemini API key set; Gemini provider disabled")
             return
 
         try:
-            self.client = genai.Client(api_key=self.api_key)
+            self.client = self._client_for(self.api_keys[0])
         except Exception as exc:  # pragma: no cover
             self.logger.warning(f"Failed to initialize Gemini client: {exc}")
             self.client = None
+
+    def _client_for(self, api_key: str, base_url: Optional[str] = None):
+        """Build a client bound to one credential and its provider endpoint."""
+        kwargs: Dict[str, Any] = {"api_key": api_key}
+        endpoint = self.base_url if base_url is None else base_url
+        if endpoint:
+            from google.genai import types as genai_types
+
+            kwargs["http_options"] = genai_types.HttpOptions(base_url=endpoint)
+        return genai.Client(**kwargs)
 
     @property
     def is_available(self) -> bool:
@@ -51,10 +107,16 @@ class GeminiProvider(LLMProvider):
             return match.group(0)
         return None
 
-    def _generate_text_once(self, prompt: str, include_timeout: bool) -> str:
+    def _generate_text_once(
+        self,
+        prompt: str,
+        *,
+        model: str,
+        include_timeout: bool,
+    ) -> str:
         if not self.client:
             return ""
-        kwargs: Dict[str, Any] = {"model": self.model, "contents": prompt}
+        kwargs: Dict[str, Any] = {"model": model, "contents": prompt}
         if include_timeout and self.request_timeout_seconds > 0:
             kwargs["request_options"] = {"timeout": self.request_timeout_seconds}
         response = self.client.models.generate_content(**kwargs)
@@ -66,31 +128,68 @@ class GeminiProvider(LLMProvider):
             return ""
         from utils.observability import timed_provider
 
-        attempts = self.max_retries + 1
+        last_exc: Optional[Exception] = None
         with timed_provider("gemini", "generate") as _obs:
-            for attempt in range(1, attempts + 1):
-                try:
-                    return self._generate_text_once(prompt, include_timeout=True)
-                except TypeError:
-                    # Some SDK versions do not accept request_options; retry without it.
+            google_keys = self.google_api_keys or self.api_keys
+            for key_index, api_key in enumerate(google_keys):
+                if key_index:
                     try:
-                        return self._generate_text_once(prompt, include_timeout=False)
+                        self.client = self._client_for(api_key)
                     except Exception as exc:
-                        self.logger.warning(
-                            "Gemini text generation failed (attempt %s/%s): %s",
-                            attempt,
-                            attempts,
-                            type(exc).__name__,
+                        last_exc = exc
+                        continue
+                for model in self.models:
+                    for attempt in range(1, self.max_retries + 2):
+                        try:
+                            text = self._generate_text_once(
+                                prompt, model=model, include_timeout=True
+                            )
+                            if text:
+                                return text
+                        except TypeError:
+                            try:
+                                text = self._generate_text_once(
+                                    prompt, model=model, include_timeout=False
+                                )
+                                if text:
+                                    return text
+                            except Exception as exc:
+                                last_exc = exc
+                        except Exception as exc:
+                            last_exc = exc
+                            msg = str(exc)
+                            if "404" in msg or "NOT_FOUND" in msg or "no longer available" in msg:
+                                break
+                            if "429" in msg or "RESOURCE_EXHAUSTED" in msg or "quota" in msg.lower():
+                                break
+                            self.logger.warning(
+                                "Gemini text generation failed model=%s attempt=%s: %s",
+                                model,
+                                attempt,
+                                type(exc).__name__,
+                            )
+            # A6API is a separate provider fallback, with its own credential
+            # and endpoint. Never send an A6API key to Google's native host.
+            if self.google_api_keys and self.a6api_api_key:
+                a6_base_url = (
+                    os.environ.get("GEMINI_A6API_BASE_URL")
+                    or os.environ.get("GEMINI_BASE_URL")
+                    or ""
+                ).strip().rstrip("/")
+                try:
+                    self.client = self._client_for(self.a6api_api_key, a6_base_url)
+                    for model in self.models:
+                        text = self._generate_text_once(
+                            prompt, model=model, include_timeout=True
                         )
+                        if text:
+                            return text
                 except Exception as exc:
-                    self.logger.warning(
-                        "Gemini text generation failed (attempt %s/%s): %s",
-                        attempt,
-                        attempts,
-                        type(exc).__name__,
-                    )
+                    last_exc = exc
             _obs["outcome"] = "error"
             _obs["error_category"] = "dependency"
+            if last_exc is not None:
+                self.logger.warning("Gemini generate exhausted all models: %s", type(last_exc).__name__)
             return ""
 
     def generate_recommendation_reasoning(
@@ -265,26 +364,39 @@ class GeminiProvider(LLMProvider):
                 )
             content = types.Content(parts=parts)
 
-            kwargs: Dict[str, Any] = {
-                "model": self.model,
-                "contents": [content],
-                "config": {"response_mime_type": "application/json"},
-            }
-            if self.request_timeout_seconds > 0:
-                kwargs["request_options"] = {"timeout": self.request_timeout_seconds}
-
-            try:
-                response = self.client.models.generate_content(**kwargs)
-            except TypeError:
-                # SDK compatibility fallback if config/request_options signature differs.
-                kwargs.pop("request_options", None)
+            text = ""
+            for model in self.models:
+                kwargs: Dict[str, Any] = {
+                    "model": model,
+                    "contents": [content],
+                    "config": {"response_mime_type": "application/json"},
+                }
+                if self.request_timeout_seconds > 0:
+                    kwargs["request_options"] = {"timeout": self.request_timeout_seconds}
                 try:
-                    response = self.client.models.generate_content(**kwargs)
-                except TypeError:
-                    kwargs.pop("config", None)
-                    response = self.client.models.generate_content(**kwargs)
+                    try:
+                        response = self.client.models.generate_content(**kwargs)
+                    except TypeError:
+                        kwargs.pop("request_options", None)
+                        try:
+                            response = self.client.models.generate_content(**kwargs)
+                        except TypeError:
+                            kwargs.pop("config", None)
+                            response = self.client.models.generate_content(**kwargs)
+                    text = getattr(response, "text", None) or ""
+                    if text:
+                        break
+                except Exception as model_exc:
+                    msg = str(model_exc)
+                    if any(x in msg for x in ("404", "NOT_FOUND", "429", "RESOURCE_EXHAUSTED", "no longer available")):
+                        self.logger.warning(
+                            "Gemini smart-context model %s failed (%s); trying next",
+                            model,
+                            type(model_exc).__name__,
+                        )
+                        continue
+                    raise
 
-            text = getattr(response, "text", None) or ""
             payload_str = self._extract_json_object(text) or text
             parsed = json.loads(payload_str) if payload_str else {}
             if not isinstance(parsed, dict):
@@ -322,12 +434,27 @@ class GeminiProvider(LLMProvider):
                 ]
             )
 
-            response = self.client.models.generate_content(
-                model=self.model,
-                contents=[content]
-            )
-            
-            text = getattr(response, "text", None)
+            text = ""
+            for model in self.models:
+                try:
+                    response = self.client.models.generate_content(
+                        model=model,
+                        contents=[content],
+                    )
+                    text = getattr(response, "text", None) or ""
+                    if text:
+                        break
+                except Exception as model_exc:
+                    msg = str(model_exc)
+                    if any(x in msg for x in ("404", "NOT_FOUND", "429", "RESOURCE_EXHAUSTED", "no longer available")):
+                        self.logger.warning(
+                            "Gemini image model %s failed (%s); trying next",
+                            model,
+                            type(model_exc).__name__,
+                        )
+                        continue
+                    raise
+
             if not text:
                 return {}
 
