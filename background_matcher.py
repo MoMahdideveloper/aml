@@ -24,8 +24,8 @@ class BackgroundMatcher:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         # Make thresholds configurable via environment variables for tuning
-        # 0.40 default: without Gemini embeddings pure-rule hybrids often land 40–55%
-        self.min_match_score = float(os.environ.get("MATCHER_MIN_SCORE", "0.40"))
+        # 0.50 default: only reasonably strong matches enter the saved funnel.
+        self.min_match_score = float(os.environ.get("MATCHER_MIN_SCORE", "0.50"))
         self.notification_threshold = float(os.environ.get("MATCHER_NOTIFICATION_THRESHOLD", "0.7"))
         self.high_priority_threshold = float(os.environ.get("MATCHER_HIGH_PRIORITY_THRESHOLD", "0.85"))
         # Notify on score rise only when improvement is meaningful (avoid spam)
@@ -382,10 +382,41 @@ class BackgroundMatcher:
         return matches
 
     def _calculate_basic_match_score(self, customer: Customer, property_obj: Property) -> float:
-        """0–1 score via multi-parameter hybrid (shared with vector_service)."""
+        """Return a deterministic 0–1 score from budget, rooms, type, and baths.
+
+        This lightweight fallback deliberately treats missing criteria as zero,
+        unlike the broader hybrid/vector scorer, which uses neutral values for
+        unavailable signals.
+        """
         try:
-            return vector_service.score_breakdown(customer, property_obj, 50.0)["hybrid"] / 100.0
-        except Exception:
+            price = float(property_obj.price or 0)
+            minimum = float(customer.budget_min or 0)
+            maximum = float(customer.budget_max or 0)
+            if minimum <= price <= maximum and maximum > 0:
+                budget_score = 1.0
+            elif maximum > 0 and price <= maximum * 1.1:
+                budget_score = 0.5
+            else:
+                budget_score = 0.0
+
+            preferred_bedrooms = customer.preferred_bedrooms
+            bedrooms = property_obj.bedrooms
+            bedroom_score = (
+                1.0 if preferred_bedrooms is not None and bedrooms == preferred_bedrooms else 0.0
+            )
+
+            preferred_bathrooms = customer.preferred_bathrooms
+            bathrooms = property_obj.bathrooms
+            bathroom_score = (
+                1.0 if preferred_bathrooms is not None and bathrooms == preferred_bathrooms else 0.0
+            )
+
+            preferred_type = (customer.preferred_type or "").strip().lower()
+            actual_type = (property_obj.property_type or "").strip().lower()
+            type_score = 1.0 if preferred_type and preferred_type == actual_type else 0.0
+
+            return (budget_score + bedroom_score + bathroom_score + type_score) / 4.0
+        except (AttributeError, TypeError, ValueError):
             return 0.0
 
     def save_matches_to_database(self, matches: List[Dict]) -> List[PropertyMatch]:

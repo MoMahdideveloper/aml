@@ -148,8 +148,8 @@ def test_create_agent_notifications_handles_monitoring_failure():
 
     # Mock saved matches that should create notifications
     saved_matches = [
-        Mock(id=1, match_score=0.8, agent_id=101, property_match_id=1),
-        Mock(id=2, match_score=0.9, agent_id=102, property_match_id=2)
+        Mock(id=1, match_score=0.8, agent_id=101, property_match_id=1, _notify_kind="new"),
+        Mock(id=2, match_score=0.9, agent_id=102, property_match_id=2, _notify_kind="new")
     ]
 
     with patch('background_matcher.db.session') as mock_session, \
@@ -162,6 +162,9 @@ def test_create_agent_notifications_handles_monitoring_failure():
         mock_notif1.property_match_id = 1
         mock_notif2.property_match_id = 2
         mock_create_notif.side_effect = [mock_notif1, mock_notif2]  # Two notifications
+
+        # No existing unread notifications for these mocked matches.
+        mock_session.query.return_value.filter.return_value.first.return_value = None
 
         # Mock monitoring service to fail on first call, succeed on second
         mock_monitoring.log_notification_activity.side_effect = [
