@@ -42,27 +42,33 @@ def test_get_agent_notifications_filters_unread(client, app, db_setup):
     with app.app_context():
         seeded = _seed_agent_with_notifications()
 
-    response = client.get(f"/agents/{seeded['agent_id']}/notifications?status=unread&limit=20")
+    response = client.get(
+        f"/api/agents/{seeded['agent_id']}/notifications?status=unread&limit=20"
+    )
     assert response.status_code == 200
 
     payload = response.get_json()
-    assert payload["count"] == 1
-    assert payload["notifications"][0]["id"] == seeded["unread_notification_id"]
-    assert payload["notifications"][0]["status"] == "unread"
+    assert isinstance(payload, list)
+    assert len(payload) == 1
+    assert payload[0]["id"] == seeded["unread_notification_id"]
+    assert payload[0]["status"] == "unread"
 
 
 def test_mark_notification_read_updates_status_and_summary(client, app, db_setup):
     with app.app_context():
         seeded = _seed_agent_with_notifications()
 
-    summary_before = client.get(f"/api/agents/{seeded['agent_id']}/notifications/summary").get_json()
+    summary_before = client.get(
+        f"/api/agents/{seeded['agent_id']}/notifications/summary"
+    ).get_json()
     assert summary_before["unread_count"] == 1
 
     mark_response = client.post(
-        f"/agents/{seeded['agent_id']}/notifications/{seeded['unread_notification_id']}/read"
+        f"/api/agents/{seeded['agent_id']}/notifications/"
+        f"{seeded['unread_notification_id']}/read"
     )
     assert mark_response.status_code == 200
-    assert mark_response.get_json()["success"] is True
+    assert mark_response.get_json()["status"] == "success"
 
     with app.app_context():
         updated = db.session.get(AgentNotification, seeded["unread_notification_id"])
@@ -70,7 +76,9 @@ def test_mark_notification_read_updates_status_and_summary(client, app, db_setup
         assert updated.status == "read"
         assert updated.read_at is not None
 
-    summary_after = client.get(f"/api/agents/{seeded['agent_id']}/notifications/summary").get_json()
+    summary_after = client.get(
+        f"/api/agents/{seeded['agent_id']}/notifications/summary"
+    ).get_json()
     assert summary_after["unread_count"] == 0
 
 
@@ -79,10 +87,11 @@ def test_dismiss_notification_updates_status(client, app, db_setup):
         seeded = _seed_agent_with_notifications()
 
     response = client.post(
-        f"/agents/{seeded['agent_id']}/notifications/{seeded['unread_notification_id']}/dismiss"
+        f"/api/agents/{seeded['agent_id']}/notifications/"
+        f"{seeded['unread_notification_id']}/dismiss"
     )
     assert response.status_code == 200
-    assert response.get_json()["success"] is True
+    assert response.get_json()["status"] == "success"
 
     with app.app_context():
         updated = db.session.get(AgentNotification, seeded["unread_notification_id"])
@@ -99,7 +108,7 @@ def test_mark_notification_read_not_found_returns_404(client, app, db_setup):
         )
         agent_id = agent.id
 
-    response = client.post(f"/agents/{agent_id}/notifications/99999/read")
+    response = client.post(f"/api/agents/{agent_id}/notifications/99999/read")
     assert response.status_code == 404
     payload = response.get_json()
-    assert payload["success"] is False
+    assert "error" in payload
