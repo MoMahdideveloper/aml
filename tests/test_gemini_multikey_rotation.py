@@ -32,6 +32,35 @@ def test_chat_google_key_rotates_on_rate_limit(monkeypatch):
     assert [call["api_key"] for call in clients] == ["google-key-1", "google-key-2"]
 
 
+def test_chat_quota_error_skips_remaining_models_on_exhausted_key(monkeypatch):
+    from services.llm.providers import gemini_provider as module
+
+    monkeypatch.setenv("GOOGLE_API_KEYS", "google-key-1,google-key-2")
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    monkeypatch.setenv("GEMINI_MODEL", "model-1")
+    monkeypatch.setenv("GEMINI_MODEL_FALLBACKS", "model-1,model-2,model-3")
+    calls = []
+
+    def fake_client(**kwargs):
+        key = kwargs["api_key"]
+
+        class Models:
+            def generate_content(self, **request):
+                calls.append((key, request["model"]))
+                if key == "google-key-1":
+                    raise RuntimeError("429 RESOURCE_EXHAUSTED")
+                return SimpleNamespace(text="ok")
+
+        return SimpleNamespace(models=Models())
+
+    monkeypatch.setattr(module, "genai", SimpleNamespace(Client=fake_client))
+    provider = module.GeminiProvider()
+
+    assert provider._generate_text("hello") == "ok"
+    assert calls == [("google-key-1", "model-1"), ("google-key-2", "model-1")]
+
+
 def test_chat_a6api_key_stays_separate(monkeypatch):
     from services.llm.providers import gemini_provider as module
 

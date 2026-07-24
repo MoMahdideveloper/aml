@@ -138,6 +138,7 @@ class GeminiProvider(LLMProvider):
                     except Exception as exc:
                         last_exc = exc
                         continue
+                key_quota_exhausted = False
                 for model in self.models:
                     for attempt in range(1, self.max_retries + 2):
                         try:
@@ -161,6 +162,7 @@ class GeminiProvider(LLMProvider):
                             if "404" in msg or "NOT_FOUND" in msg or "no longer available" in msg:
                                 break
                             if "429" in msg or "RESOURCE_EXHAUSTED" in msg or "quota" in msg.lower():
+                                key_quota_exhausted = True
                                 break
                             self.logger.warning(
                                 "Gemini text generation failed model=%s attempt=%s: %s",
@@ -168,6 +170,8 @@ class GeminiProvider(LLMProvider):
                                 attempt,
                                 type(exc).__name__,
                             )
+                    if key_quota_exhausted:
+                        break
             # A6API is a separate provider fallback, with its own credential
             # and endpoint. Never send an A6API key to Google's native host.
             if self.google_api_keys and self.a6api_api_key:
