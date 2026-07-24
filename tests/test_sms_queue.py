@@ -77,24 +77,53 @@ def test_sms_temporary_failure_retries_then_fails(app, db_setup, monkeypatch):
         assert msg_after_second.attempts == 2
 
 
-def test_sms_api_contract_send_and_history(client, db_setup):
-    send_response = client.post(
-        "/api/sms/send",
-        json={"recipients": ["09121234567", "09121234567"], "message": "api contract test"},
+def test_sms_form_send_queues_deduplicated_recipients_and_records_history(client, app, db_setup):
+    """Live form contract: POST /sms/send queues + processes, then history is service-backed."""
+    response = client.post(
+        "/sms/send",
+        data={
+            "message": "api contract test",
+            "segment": "all",
+            "manual_phones": "09121234567,09121234567",
+            "provider": "log",
+        },
+        follow_redirects=False,
     )
-    assert send_response.status_code == 200
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/sms-broadcast")
 
-    send_payload = send_response.get_json()
-    assert send_payload["success"] is True
-    assert "queued_count" in send_payload
-    assert "messages" in send_payload
-    assert send_payload["queued_count"] == 1  # deduplicated recipient list
+    with app.app_context():
+        history = sms_service.get_history(limit=10)
+        assert len(history) == 1  # recipients are deduplicated
+        assert history[0].recipient == "09121234567"
+        assert history[0].status == "sent"
+        assert history[0].message == "api contract test"
 
-    history_response = client.get("/api/sms/history?limit=10")
-    assert history_response.status_code == 200
-    history_payload = history_response.get_json()
 
-    assert history_payload["success"] is True
-    assert "count" in history_payload
-    assert "messages" in history_payload
-    assert isinstance(history_payload["messages"], list)
+def test_opportunity_sms_api_contract(client, app, db_setup):
+    """Live JSON contract used by opportunity workflows."""
+    from services.database_service import database_service
+
+    with app.app_context():
+        customer = database_service.add_customer(
+            name="SMS Opportunity Client",
+            email="sms.opportunity@example.com",
+            phone="09129876543",
+        )
+        customer_id = customer.id
+
+    response = client.post(
+        "/api/opportunities/send-sms",
+        json={
+            "customer_id": customer_id,
+            "message": "opportunity sms contract",
+            "provider": "log",
+            "also_log_thread": False,
+        },
+    )
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["ok"] is True
+    assert payload["queued"] == 1
+    assert payload["stats"]["sent"] == 1
+    assert payload["phone"] == "09129876543"
