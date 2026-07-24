@@ -6,6 +6,9 @@ import pytest
 
 # Use in-memory SQLite for tests and avoid touching local files
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+# Keep Celery tests hermetic; no local Redis service is required for unit tests.
+os.environ.setdefault("CELERY_BROKER_URL", "memory://")
+os.environ.setdefault("CELERY_RESULT_BACKEND", "cache+memory://")
 # Most legacy tests hit CRM routes without login. Force default-deny off for the
 # session-scoped app (setdefault is not enough if the shell already exported 1).
 # Security tests that need deny rebuild the app after monkeypatch.setenv(...="1").
@@ -96,3 +99,82 @@ def db_setup(app):
         yield db
         db.session.remove()
         db.drop_all()
+
+
+@pytest.fixture()
+def sample_data(db_setup, app):
+    """
+    Shared test data fixture for template and integration tests.
+    Creates minimal Agent, Property, and Customer records.
+    Returns eagerly-loaded dict copies to avoid DetachedInstanceError.
+    """
+    from sqlalchemy_models import Agent, Property, Customer
+    from database import db
+
+    with app.app_context():
+        # Create agent (only required fields)
+        agent = Agent(
+            name="Test Agent",
+            email="agent@test.com",
+            phone="555-1234"
+        )
+        db.session.add(agent)
+        db.session.flush()
+
+        # Create property (only required fields)
+        property_obj = Property(
+            title="Luxury Villa",
+            address="123 Main Street",
+            price=500000,
+            listing_type="sale",
+            property_type="villa",
+            bedrooms=4,
+            bathrooms=3
+        )
+        db.session.add(property_obj)
+        db.session.flush()
+
+        # Create customer (only required fields)
+        customer = Customer(
+            name="John Doe",
+            email="john@example.com",
+            phone="555-5678"
+        )
+        db.session.add(customer)
+        db.session.flush()
+
+        db.session.commit()
+
+        # Eagerly load all attributes before leaving app context
+        agent_data = {
+            'id': agent.id,
+            'name': agent.name,
+            'email': agent.email,
+            'phone': agent.phone
+        }
+
+        property_data = {
+            'id': property_obj.id,
+            'title': property_obj.title,
+            'address': property_obj.address,
+            'price': property_obj.price
+        }
+
+        customer_data = {
+            'id': customer.id,
+            'name': customer.name,
+            'email': customer.email,
+            'phone': customer.phone
+        }
+
+        # Return plain dicts to avoid DetachedInstanceError
+        # Keep both ORM objects and dict copies for compatibility
+        db.session.expunge_all()  # Detach all objects from session
+
+        return {
+            'agent': agent,
+            'property': property_obj,
+            'customer': customer,
+            'customers': [customer_data],
+            'properties': [property_data]
+        }
