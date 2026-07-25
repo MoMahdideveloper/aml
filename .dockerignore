@@ -37,7 +37,10 @@
 !environment_loader.py
 
 # --- Application packages ---
-!api/
+# NOTE: api/ is deliberately NOT re-included. The api/ tree at the repo root is an
+# untracked Node/Next.js sibling project (package.json, pages/, jsconfig.json) with
+# zero Python files and zero importers in this app — re-including it added ~20MB of
+# dead weight to the image.
 !application/
 !domain/
 !infrastructure/
@@ -55,6 +58,7 @@
 !docker/
 
 # --- Re-exclude junk that lives inside allowed dirs ---
+templates/_archive/
 **/__pycache__/
 **/*.pyc
 **/*.pyo

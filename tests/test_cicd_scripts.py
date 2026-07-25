@@ -81,6 +81,14 @@ def test_dockerfile_pins_python_311_and_nonroot():
 
 
 def test_dockerignore_excludes_secrets_and_track_b():
-    text = (ROOT / ".dockerignore").read_text(encoding="utf-8")
+    """Secrets and Track-B service trees must not reach the build context.
+
+    The ignore file is an allowlist ("*" first, then "!" re-includes), so the old
+    substring check no longer describes correctness -- a name being absent from the
+    file is exactly how it stays excluded. Delegate to the resolver in
+    tests/test_docker_context.py, which evaluates Docker's last-match-wins order.
+    """
+    from tests.test_docker_context import _is_excluded
+
     for token in (".env", "chroma_db", "api", "matcher", "ingestor", "chatbot", "tests"):
-        assert token in text
+        assert _is_excluded(token), f"{token} must be excluded from the build context"
