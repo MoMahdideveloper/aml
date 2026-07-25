@@ -1,88 +1,64 @@
-# VCS / CI / agents
-.git
-.github
-.claude
-.kilocode
-.roo
-.agents
-.brv
-.serena
-.spec-workflow
-.playwright-mcp
+# Allowlist .dockerignore — exclude everything, then re-include only what the app needs.
+# Rationale: repo root contains many unrelated sibling projects (similarweb-research*,
+# mobitoepub, neo4j, pdf-tools-site, backups, chroma_db) which made the build context 1.1GB.
+# MUST stay LF-only: CRLF makes Docker read patterns as ".git\r" and match nothing.
+*
 
-# Python envs / caches
-.venv
-venv
-env
-__pycache__
-*.pyc
-*.pyo
-.pytest_cache
-.mypy_cache
-.ruff_cache
-.coverage
-htmlcov
+# --- Python package/deps manifests ---
+!requirements.txt
 
-# Node (CSS is prebuilt into static/css in the image build stage)
-node_modules
-api/node_modules
-matcher/node_modules
+# --- Frontend build inputs (css stage) ---
+!package.json
+!package-lock.json
+!tailwind.config.js
+!babel.cfg
 
-# Local data / secrets
-chroma_db
-instance
-*.db
-*.db-journal
-celerybeat-schedule*
-celery_broker.db
-celery_results.db
-.env
-.env.*
-!.env.example
-flask.out
-flask.err
-server.log
-*.pid
+# --- Application entrypoints / top-level modules ---
+!app.py
+!main.py
+!celery_app.py
+!worker.py
+!models.py
+!sqlalchemy_models.py
+!database.py
+!database_service.py
+!database_transaction_manager.py
+!extensions.py
+!forms.py
+!schemas.py
+!error_handlers.py
+!event_handlers.py
+!property_error_handlers.py
+!background_matcher.py
+!gemini_service.py
+!maskan_field_constants.py
+!vector_init.py
+!vector_service.py
+!environment_loader.py
 
-# Design references & generated graphs (not runtime)
-stitch_kpi_performance_dashboard
-graphify-out
-**/graphify-out
-docs
-specs
-testsprite_tests
-artifacts
-tmp
-tmp/
-%CLAUDE_CODE_TMPDIR%
+# --- Application packages ---
+!api/
+!application/
+!domain/
+!infrastructure/
+!repositories/
+!services/
+!tasks/
+!utils/
+!views/
+!migrations/
 
-# Tests stay out of production image
-tests
-test_*.py
-*_test.py
+# --- Assets / i18n / container scripts ---
+!templates/
+!static/
+!translations/
+!docker/
 
-# Archived / duplicate source trees (root Track A only)
-templates/_archive
-platinum-heritage-runnable
-api
-matcher
-ingestor
-chatbot
-
-# Scratch / agent docs
-*.md
-!README.md
-MEMORY.md
-AI_PROMPT_TEMPLATE.md
-
-# Extra bulk / local caches
-backups
-uploads
+# --- Re-exclude junk that lives inside allowed dirs ---
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/.pytest_cache/
+**/node_modules/
 static/uploads/**
 !static/uploads/.gitkeep
-deep_think
-n8n_workflows
-attached_assets
-.playwright-mcp
-server.pid
-*.log

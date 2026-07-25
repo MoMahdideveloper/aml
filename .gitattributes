@@ -1,0 +1,14 @@
+# Normalize text files by default; let git decide per-file.
+* text=auto
+
+# CRITICAL: these MUST stay LF in the working tree.
+# core.autocrlf=true would otherwise check them out with CRLF, and:
+#   - Docker reads .dockerignore patterns literally, so ".git\r" matches nothing
+#     (this silently ballooned the build context from ~27MB to 1.1GB).
+#   - /bin/sh refuses CRLF shell scripts inside the Linux image
+#     ("\r: not found" / bad interpreter).
+.dockerignore text eol=lf
+.gitignore text eol=lf
+Dockerfile text eol=lf
+*.sh text eol=lf
+docker/entrypoint.sh text eol=lf

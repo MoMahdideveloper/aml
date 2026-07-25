@@ -13,8 +13,12 @@ RUN npm run build:css
 # Stage 2: Python runtime
 FROM python:3.11-slim AS runtime
 
+# PYTHONPATH=/app is required: console scripts (celery, gunicorn, flask) put their
+# own bin dir on sys.path[0], not the CWD, so top-level modules such as
+# background_matcher / gemini_service fail to import from inside Celery tasks.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
     FLASK_ENV=production \
     USE_TAILWIND_CDN=0 \
     ENABLE_CSRF=1 \

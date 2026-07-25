@@ -38,6 +38,11 @@ services:
     profiles: ["prod"]
     ports:
       - "${WEB_PORT:-8000}:8000"
+    # .env supplies app secrets (ADMIN_PASSWORD, provider API keys). The explicit
+    # `environment:` block below is applied after env_file, so container-network
+    # wiring (DATABASE_URL, REDIS_URL, ENABLE_SCHEDULER) always wins over .env.
+    env_file:
+      - .env
     environment:
       FLASK_ENV: production
       SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
@@ -51,10 +56,19 @@ services:
       GEOCODE_PROVIDER: ${GEOCODE_PROVIDER:-auto}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/1}
+      # Celery beat owns scheduling; never start an in-process scheduler in web.
+      ENABLE_SCHEDULER: "0"
+      READYZ_REQUIRE_REDIS: ${READYZ_REQUIRE_REDIS:-1}
+      DOCUMENT_STORAGE_ROOT: ${DOCUMENT_STORAGE_ROOT:-/app/instance/document_store}
     volumes:
       - uploads_data:/app/static/uploads
+      - document_store_data:/app/instance/document_store
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
@@ -64,6 +78,107 @@ services:
       timeout: 5s
       retries: 5
       start_period: 60s
+
+  # Celery worker — executes queued tasks (matching, SMS, scoring, digests).
+  # RUN_MIGRATIONS=0: web is the single migration owner, so workers never race it.
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gptvli-worker
+    profiles: ["prod"]
+    env_file:
+      - .env
+    environment:
+      FLASK_ENV: production
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gptvli}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-gptvli}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/1}
+      RUN_MIGRATIONS: "0"
+      ENABLE_SCHEDULER: "0"
+      SMS_PROVIDER: ${SMS_PROVIDER:-log}
+      GEOCODE_PROVIDER: ${GEOCODE_PROVIDER:-auto}
+      DOCUMENT_STORAGE_ROOT: ${DOCUMENT_STORAGE_ROOT:-/app/instance/document_store}
+    volumes:
+      - uploads_data:/app/static/uploads
+      - document_store_data:/app/instance/document_store
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+    command:
+      - celery
+      - -A
+      - celery_app.celery_app
+      - worker
+      - -l
+      - ${CELERY_LOG_LEVEL:-info}
+      - --concurrency
+      - "${CELERY_CONCURRENCY:-2}"
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A celery_app.celery_app inspect ping -d celery@$$(hostname) || exit 1"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 60s
+
+  # Celery beat — SOLE scheduler for periodic jobs. Exactly one replica.
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gptvli-beat
+    profiles: ["prod"]
+    env_file:
+      - .env
+    environment:
+      FLASK_ENV: production
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gptvli}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-gptvli}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/1}
+      RUN_MIGRATIONS: "0"
+      ENABLE_SCHEDULER: "0"
+    volumes:
+      - beat_data:/app/instance
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+    # Override the image-level HTTP /healthz probe: beat serves no HTTP port, so
+    # the inherited check always fails. Probe scheduler process liveness instead
+    # (no procps in the slim image, so scan /proc with stdlib python).
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import os,sys;
+          sys.exit(0 if any('beat' in open('/proc/'+p+'/cmdline','rb').read().decode('utf-8','ignore')
+          for p in os.listdir('/proc') if p.isdigit()) else 1)"
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    command:
+      - celery
+      - -A
+      - celery_app.celery_app
+      - beat
+      - -l
+      - ${CELERY_LOG_LEVEL:-info}
+      - --schedule
+      - /app/instance/celerybeat-schedule
 
   redis:
     image: redis:7-alpine
@@ -220,3 +335,5 @@ volumes:
   redis_data:
   postgres_data:
   uploads_data:
+  document_store_data:
+  beat_data:
