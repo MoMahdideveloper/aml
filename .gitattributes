@@ -12,3 +12,8 @@
 Dockerfile text eol=lf
 *.sh text eol=lf
 docker/entrypoint.sh text eol=lf
+
+# Makefile recipes use backslash line continuations; a trailing CR after the
+# backslash breaks the continuation, so `make test-core` would run a truncated
+# command. Tabs are also significant, but CRLF is the silent failure mode.
+Makefile text eol=lf

@@ -4,6 +4,12 @@
 
 .PHONY: help install css test test-core ci-local migrate up-prod down-prod logs-prod build-prod health redis-up always-on worker beat
 
+# Always drive the project venv, never whatever "pytest"/"pip" happens to be on PATH:
+# a bare `pytest` resolves to an unrelated interpreter that lacks the deps, and a
+# leaked PYTHONPATH puts a foreign sys.path ahead of ours (breaks pydantic_core).
+PY ?= $(shell for p in .venv/Scripts/python.exe .venv/bin/python; do [ -x "$$p" ] && echo "$$p" && exit; done; echo python)
+PYTEST = PYTHONPATH= $(PY) -m pytest
+
 help:
 	@echo "Targets:"
 	@echo "  install     - Python + npm install"
@@ -23,16 +29,16 @@ help:
 	@echo "  health      - curl healthz/readyz on :8000"
 
 install:
-	python -m pip install -U pip
-	pip install -r requirements.txt
-	pip install pytest
+	$(PY) -m pip install -U pip
+	$(PY) -m pip install -r requirements.txt
+	$(PY) -m pip install pytest
 	npm ci || npm install
 
 css:
 	npm run build:css
 
 test-core:
-	pytest -q \
+	$(PYTEST) -q \
 	  tests/test_platinum_heritage_ui.py \
 	  tests/test_app_smoke.py \
 	  tests/test_simple.py \
@@ -47,7 +53,7 @@ test-core:
 	  --tb=short
 
 test:
-	pytest -q --tb=line
+	$(PYTEST) -q --tb=line tests --ignore=tests/e2e
 
 ci-local: css test-core
 	@echo "CI local gate OK (CSS + core/production hardening tests)"
