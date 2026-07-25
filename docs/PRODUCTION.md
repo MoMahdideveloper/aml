@@ -62,25 +62,38 @@ python main.py
 
 Multi-stage `Dockerfile` builds Tailwind then runs gunicorn as non-root.
 
+The `prod` profile brings up five services: `db`, `redis`, `web` (gunicorn),
+`worker` (Celery worker) and `beat` (Celery scheduler). All three app services
+read `.env` via compose `env_file:`, then override the infra wiring
+(`db`/`redis` hostnames, `RUN_MIGRATIONS`) from the explicit `environment:` block.
+
 **Required env vars (no weak defaults):**
 - `SESSION_SECRET` — long random secret (app refuses the default in production)
 - `POSTGRES_PASSWORD` — explicit DB password (compose fails without it)
+- `ADMIN_PASSWORD` — min 12 chars, not a known-weak value; the app **refuses to
+  boot** otherwise. Because it is supplied through `.env`, a missing `env_file:`
+  shows up as a health-check failure, not an obvious config error.
 
 ```bash
 # Required
 export SESSION_SECRET="$(openssl rand -hex 32)"
 export POSTGRES_PASSWORD="$(openssl rand -hex 24)"
-# Optional: WEB_PORT, GOOGLE_API_KEY, RUN_MIGRATIONS=1
+# ADMIN_PASSWORD lives in .env (gitignored), e.g.
+#   python -c "import secrets; print(secrets.token_urlsafe(20))"
+# Optional: WEB_PORT, GOOGLE_API_KEYS, RUN_MIGRATIONS=1
 
-# Build & start Postgres + web
+# Build & start the full stack (db + redis + web + worker + beat)
 docker compose --profile prod up -d --build
 
 # Probes: liveness vs DB readiness
 curl -fsS http://127.0.0.1:8000/healthz
 curl -fsS http://127.0.0.1:8000/readyz
 
+# All five containers should report (healthy)
+docker compose --profile prod ps
+
 # Logs / stop
-docker compose --profile prod logs -f web
+docker compose --profile prod logs -f web worker beat
 docker compose --profile prod down
 ```
 
@@ -88,6 +101,22 @@ Container entrypoint runs `flask db upgrade heads` when `RUN_MIGRATIONS=1` (defa
 Migration failures **exit non-zero** after bounded retries (`MIGRATION_RETRIES`,
 `MIGRATION_RETRY_DELAY`) so Gunicorn does not start on a broken schema.
 Set `RUN_MIGRATIONS=0` only when migrations are applied externally.
+
+**`web` is the sole migration owner.** Compose pins `RUN_MIGRATIONS=0` on `worker`
+and `beat` so three services cannot race the same `alembic upgrade`. Expect
+exactly one "Running database migrations" line in `web`, and
+"RUN_MIGRATIONS=0 — skipping" in the other two.
+
+**`beat` is the sole scheduler.** Never run a second beat or enable in-process
+schedulers alongside it, or every periodic task fires twice.
+
+The image sets `PYTHONPATH=/app`. This is required, not cosmetic: the `celery`,
+`gunicorn` and `flask` console scripts put their own `bin` directory on
+`sys.path[0]`, so `WORKDIR /app` alone leaves root modules such as
+`background_matcher` unimportable and tasks fail with `No module named ...`.
+Note that `docker exec … python -c "import background_matcher"` will *succeed*
+even when this is broken, because bare `python` adds the cwd — verify through the
+real entrypoint instead.
 
 Or via Makefile (Git Bash / WSL / Linux):
 
@@ -110,7 +139,19 @@ $env:POSTGRES_PASSWORD = "your-strong-db-password"
 
 `up-prod.ps1` waits for **`/readyz`** (not only `/healthz`).
 
-Volumes: `postgres_data` (DB), `uploads_data` (property media). Redis is included in the `prod` profile for optional cache/Celery.
+Volumes: `postgres_data` (DB), `uploads_data` (property media), `beat_data`
+(Celery beat schedule state — keep it so beat does not replay or drop schedules
+across restarts).
+
+Redis is **required**, not optional: it is the Celery broker and result backend
+for `worker` and `beat`. Both services `depends_on` it with
+`condition: service_healthy`.
+
+`.dockerignore` is an **allowlist** (`*` first, then `!` re-includes). Add new
+runtime files/dirs there or they will silently be missing from the image. It must
+stay LF-only — CRLF makes Docker read `.git\r`, which matches nothing and
+previously inflated the build context from ~27MB to 1.1GB. `.gitattributes` pins
+this.
 
 ## 4. Optional: AI form assist
 
