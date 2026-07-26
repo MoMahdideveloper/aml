@@ -49,6 +49,9 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
         self.model = self.models[0]
         self._dimension = int(os.environ.get("EMBEDDING_DIM", "768"))
         self.client = None
+        # Indices of the most recent embed() batch that came back as non-semantic
+        # fallbacks. Callers must not cache these as if they were real vectors.
+        self.last_fallback_indices: set[int] = set()
 
         if genai is None:
             return
@@ -130,10 +133,12 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
         return self._l2_normalize(values + [0.0] * (self._dimension - len(values)))
 
     def embed(self, texts: List[str]) -> List[List[float]]:
+        self.last_fallback_indices = set()
         if not texts:
             return []
 
         if not self.client:
+            self.last_fallback_indices = set(range(len(texts)))
             return [
                 self._fallback_vector(t, reason="embedding client not initialized")
                 for t in texts
@@ -182,6 +187,7 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
                     break
             if embedded:
                 continue
+            self.last_fallback_indices.add(len(results))
             results.append(
                 self._fallback_vector(
                     text,

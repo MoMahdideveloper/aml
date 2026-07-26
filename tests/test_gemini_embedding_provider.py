@@ -9,6 +9,7 @@ Covers two failure modes that are invisible from the outside:
 
 import logging
 import math
+from types import SimpleNamespace
 
 import pytest
 
@@ -140,3 +141,50 @@ class TestFallbackVisibility:
             assert provider.embed([]) == []
 
         assert not [r for r in caplog.records if r.levelno == logging.WARNING]
+
+
+class TestFallbackIndexReporting:
+    """embed() must tell callers which vectors are fake.
+
+    A fallback vector hashes cleanly, so a caller that caches it by source_hash
+    would treat the poison as a valid embedding and never retry the row once the
+    provider recovers. Reporting the indices is what makes that avoidable.
+    """
+
+    def test_all_indices_flagged_when_client_missing(self, provider):
+        provider.embed(["one", "two", "three"])
+
+        assert provider.last_fallback_indices == {0, 1, 2}
+
+    def test_indices_reset_between_batches(self, provider):
+        provider.embed(["one"])
+        assert provider.last_fallback_indices == {0}
+
+        provider.embed([])
+
+        assert provider.last_fallback_indices == set()
+
+    def test_only_failing_rows_are_flagged(self, provider, monkeypatch):
+        """A partial outage flags just the rows that fell back."""
+        provider.client = object()
+        provider.api_keys = ["k"]
+        provider.models = ["m"]
+        real = [0.5, 0.5, 0.5, 0.5]
+
+        def fake_embed_content(model, contents, **kwargs):
+            if contents == "bad":
+                raise RuntimeError("429 RESOURCE_EXHAUSTED")
+            return SimpleNamespace(embeddings=[SimpleNamespace(values=real)])
+
+        monkeypatch.setattr(
+            provider,
+            "client",
+            SimpleNamespace(models=SimpleNamespace(embed_content=fake_embed_content)),
+        )
+
+        vectors = provider.embed(["good", "bad", "good"])
+
+        assert provider.last_fallback_indices == {1}
+        assert vectors[0] == pytest.approx(real)
+        assert vectors[2] == pytest.approx(real)
+        assert vectors[1] != pytest.approx(real)

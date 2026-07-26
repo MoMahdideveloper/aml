@@ -273,7 +273,15 @@ class VectorService:
                 return True
 
             vectors = embedding_provider.embed(texts)
-            for prop, text_blob, vector in zip(todo, texts, vectors):
+            # Non-semantic fallback vectors must never be persisted: they carry a
+            # valid source_hash, so the cache check above would treat them as a
+            # good embedding and never retry the property once the provider
+            # recovers. Skip them and let the next run try again.
+            fallback_indices = getattr(embedding_provider, "last_fallback_indices", set()) or set()
+            stored = 0
+            for index, (prop, text_blob, vector) in enumerate(zip(todo, texts, vectors)):
+                if index in fallback_indices:
+                    continue
                 source_hash = self._embedding_hash(text_blob)
                 payload = json.dumps(vector)
                 record = PropertyEmbedding.query.filter_by(property_id=prop.id).first()
@@ -293,9 +301,18 @@ class VectorService:
                     record.dimension = len(vector) if vector else embedding_provider.dimension
                 db.session.flush()
                 self._store_pgvector_embedding(prop.id, vector)
+                stored += 1
 
             db.session.commit()
-            self.logger.info("Indexed %s property embeddings", len(todo))
+            skipped = len(todo) - stored
+            if skipped:
+                self.logger.warning(
+                    "Indexed %s property embeddings; skipped %s degraded (non-semantic) vectors",
+                    stored,
+                    skipped,
+                )
+            else:
+                self.logger.info("Indexed %s property embeddings", stored)
             return True
         except Exception as exc:
             db.session.rollback()
