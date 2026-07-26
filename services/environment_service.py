@@ -66,7 +66,10 @@ class EnvironmentService:
         normalized = (key or "").strip().upper()
         if normalized in self._protected_infra_keys:
             return True
-        if normalized.endswith("_API_KEY"):
+        # Cover both the singular name and the plural rotation-array form
+        # (e.g. GOOGLE_API_KEYS, GEMINI_EMBED_API_KEYS). Provider credentials
+        # must always come from the process environment/.env, never the DB.
+        if normalized.endswith("_API_KEY") or normalized.endswith("_API_KEYS"):
             return True
         return False
 

@@ -502,3 +502,41 @@ class TestEnvironmentService:
         
         # Should be removed from runtime
         assert 'RUNTIME_INTEGRATION' not in os.environ
+
+    @pytest.mark.parametrize(
+        'key',
+        [
+            'GOOGLE_API_KEY',
+            'GOOGLE_API_KEYS',
+            'GEMINI_API_KEY',
+            'GEMINI_EMBED_API_KEY',
+            'GEMINI_EMBED_API_KEYS',
+            'GEMINI_A6API_API_KEY',
+        ],
+    )
+    def test_provider_credentials_are_protected(self, service, key):
+        """Provider credentials must never be DB-managed.
+
+        Covers the plural rotation-array form (``*_API_KEYS``) alongside the
+        singular name, so multi-key rotation credentials cannot be written to
+        the database through the admin environment UI.
+        """
+        assert service._is_protected_key(key) is True
+
+        allowed, message = service._is_db_managed_key_allowed(key)
+        assert allowed is False
+        assert 'protected' in message.lower()
+
+    @pytest.mark.parametrize(
+        'key',
+        [
+            'GEMINI_MODEL',
+            'GEMINI_EMBED_MODEL',
+            'GEMINI_A6API_BASE_URL',
+            'LLM_PROVIDER',
+            'EMBEDDING_PROVIDER',
+        ],
+    )
+    def test_non_secret_provider_knobs_stay_db_managed(self, service, key):
+        """Model names, base URLs and provider selection remain editable."""
+        assert service._is_protected_key(key) is False
