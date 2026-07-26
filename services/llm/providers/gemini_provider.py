@@ -118,7 +118,20 @@ class GeminiProvider(LLMProvider):
             return ""
         kwargs: Dict[str, Any] = {"model": model, "contents": prompt}
         if include_timeout and self.request_timeout_seconds > 0:
-            kwargs["request_options"] = {"timeout": self.request_timeout_seconds}
+            # google-genai has no `request_options` kwarg -- passing one raised
+            # TypeError on every first attempt, so the timeout never applied and
+            # each call silently retried without one. The timeout belongs in
+            # HttpOptions.timeout, expressed in MILLISECONDS.
+            try:
+                from google.genai import types as genai_types
+
+                kwargs["config"] = genai_types.GenerateContentConfig(
+                    http_options=genai_types.HttpOptions(
+                        timeout=self.request_timeout_seconds * 1000,
+                    ),
+                )
+            except Exception:  # pragma: no cover - older SDKs lack these types
+                pass
         response = self.client.models.generate_content(**kwargs)
         text = getattr(response, "text", None)
         return text.strip() if isinstance(text, str) else ""

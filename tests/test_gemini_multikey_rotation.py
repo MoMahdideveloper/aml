@@ -136,3 +136,69 @@ def test_a6api_fallback_uses_only_a6_key_and_endpoint(monkeypatch):
     assert clients[0]["api_key"] == "google-key"
     assert clients[-1]["api_key"] == "a6-key"
     assert clients[-1]["http_options"].base_url == "https://a6.a6api.com"
+
+
+def test_request_timeout_uses_supported_kwarg(monkeypatch):
+    """The timeout must reach the SDK without raising TypeError.
+
+    google-genai has no ``request_options`` parameter. Passing one made every
+    first attempt raise TypeError, so the configured timeout never applied and
+    each call silently retried with no timeout at all. Pin the supported shape:
+    ``config.http_options.timeout``, in milliseconds.
+    """
+    from services.llm.providers import gemini_provider as module
+
+    monkeypatch.setenv("GOOGLE_API_KEYS", "google-key")
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    monkeypatch.setenv("GEMINI_REQUEST_TIMEOUT_SECONDS", "45")
+    requests = []
+
+    def fake_client(**kwargs):
+        class Models:
+            def generate_content(self, **request):
+                # Mirror the real SDK: unknown kwargs are a hard TypeError.
+                allowed = {"model", "contents", "config"}
+                unexpected = set(request) - allowed
+                if unexpected:
+                    raise TypeError(
+                        f"unexpected keyword argument {sorted(unexpected)[0]!r}"
+                    )
+                requests.append(request)
+                return SimpleNamespace(text="ok")
+
+        return SimpleNamespace(models=Models())
+
+    monkeypatch.setattr(module, "genai", SimpleNamespace(Client=fake_client))
+    provider = module.GeminiProvider()
+
+    assert provider._generate_text("hello") == "ok"
+    # Exactly one call: no TypeError-triggered retry.
+    assert len(requests) == 1
+    assert "request_options" not in requests[0]
+    assert requests[0]["config"].http_options.timeout == 45000
+
+
+def test_request_timeout_omitted_when_disabled(monkeypatch):
+    """A non-positive timeout sends no http_options at all."""
+    from services.llm.providers import gemini_provider as module
+
+    monkeypatch.setenv("GOOGLE_API_KEYS", "google-key")
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    monkeypatch.setenv("GEMINI_REQUEST_TIMEOUT_SECONDS", "0")
+    requests = []
+
+    def fake_client(**kwargs):
+        class Models:
+            def generate_content(self, **request):
+                requests.append(request)
+                return SimpleNamespace(text="ok")
+
+        return SimpleNamespace(models=Models())
+
+    monkeypatch.setattr(module, "genai", SimpleNamespace(Client=fake_client))
+    provider = module.GeminiProvider()
+
+    assert provider._generate_text("hello") == "ok"
+    assert "config" not in requests[0]
