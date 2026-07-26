@@ -832,9 +832,12 @@ def update_match_preferences(customer_id):
 @bp.route("/get_customer_recommendations/<int:customer_id>")
 def get_customer_recommendations(customer_id):
     """Get AI-powered property recommendations for a specific customer"""
-    from database_service import database_service
-    from gemini_service import gemini_service
-
+    # NOTE: no function-local re-imports here. `database_service` and
+    # `gemini_service` are already imported at module scope (see top of file).
+    # Re-importing them inside the view rebinds the names as function locals,
+    # which shadows the module attributes and makes the view untestable:
+    # patching `views.main.gemini_service` has no effect because the local
+    # import overwrites it on every call.
     customer = database_service.get_customer(customer_id)
     if not customer:
         flash("Customer not found", "error")

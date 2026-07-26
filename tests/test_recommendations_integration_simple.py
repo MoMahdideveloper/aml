@@ -81,7 +81,7 @@ class TestRecommendationsIntegrationSimple:
             with patch('services.gemini_service.gemini_service.get_property_recommendations') as mock_ai:
                 mock_ai.return_value = mock_recommendations
                 
-                response = client.get(f'/recommendations/{customer.id}')
+                response = client.get(f'/get_customer_recommendations/{customer.id}')
                 
                 assert response.status_code == 200
                 
@@ -153,7 +153,7 @@ class TestRecommendationsIntegrationSimple:
             with patch('services.gemini_service.gemini_service.get_property_recommendations') as mock_ai:
                 mock_ai.return_value = mock_recommendations
                 
-                response = client.get(f'/recommendations/{customer.id}')
+                response = client.get(f'/get_customer_recommendations/{customer.id}')
                 
                 assert response.status_code == 200
                 soup = BeautifulSoup(response.data, 'html.parser')
@@ -186,7 +186,7 @@ class TestRecommendationsIntegrationSimple:
         """Test error scenarios and proper error message display in the UI"""
         
         # Test 1: Non-existent customer ID
-        response = client.get('/recommendations/99999')
+        response = client.get('/get_customer_recommendations/99999')
         # Custom error handler redirects to dashboard or referrer
         assert response.status_code == 302
         
@@ -235,7 +235,7 @@ class TestRecommendationsIntegrationSimple:
                     )
                 ]
                 
-                response = client.get(f'/recommendations/{customer.id}')
+                response = client.get(f'/get_customer_recommendations/{customer.id}')
                 
                 assert response.status_code == 200
                 assert "AI service temporarily unavailable" in response.data.decode()
@@ -275,14 +275,14 @@ class TestRecommendationsIntegrationSimple:
             assert len(highlighted_cards) == 0
             
             # Verify "Get Recommendations" buttons have correct URLs
-            recommendation_links = soup.find_all('a', href=lambda x: x and '/recommendations/' in x)
+            recommendation_links = soup.find_all('a', href=lambda x: x and '/get_customer_recommendations/' in x)
             assert len(recommendation_links) == 2
             
             # Test 2: Customer-specific recommendations route
             with patch('services.gemini_service.gemini_service.get_property_recommendations') as mock_ai:
                 mock_ai.return_value = []
                 
-                response = client.get(f'/recommendations/{customer1.id}')
+                response = client.get(f'/get_customer_recommendations/{customer1.id}')
                 assert response.status_code == 200
                 
                 soup = BeautifulSoup(response.data, 'html.parser')
@@ -317,18 +317,18 @@ class TestRecommendationsIntegrationSimple:
             soup = BeautifulSoup(response.data, 'html.parser')
             
             # Find and verify customer recommendation link exists
-            customer_link = soup.find('a', href=f'/recommendations/{customer1.id}')
+            customer_link = soup.find('a', href=f'/get_customer_recommendations/{customer1.id}')
             assert customer_link is not None
             
             # Test the customer-specific route
             with patch('services.gemini_service.gemini_service.get_property_recommendations') as mock_ai:
                 mock_ai.return_value = []
                 
-                response = client.get(f'/recommendations/{customer1.id}')
+                response = client.get(f'/get_customer_recommendations/{customer1.id}')
                 assert response.status_code == 200
                 
                 # Verify we can navigate to another customer
-                response = client.get(f'/recommendations/{customer2.id}')
+                response = client.get(f'/get_customer_recommendations/{customer2.id}')
                 assert response.status_code == 200
                 
                 # Verify the new customer is now highlighted
@@ -357,7 +357,7 @@ class TestRecommendationsIntegrationSimple:
             with patch('services.gemini_service.gemini_service.get_property_recommendations') as mock_ai:
                 mock_ai.return_value = []
                 
-                response = client.get(f'/recommendations/{customer.id}')
+                response = client.get(f'/get_customer_recommendations/{customer.id}')
                 assert response.status_code == 200
                 
                 # Should handle empty recommendations gracefully
@@ -416,7 +416,7 @@ class TestRecommendationsIntegrationSimple:
                     )
                 ]
                 
-                response = client.get(f'/recommendations/{customer.id}')
+                response = client.get(f'/get_customer_recommendations/{customer.id}')
                 
                 assert response.status_code == 200
                 assert "AI service temporarily unavailable" in response.data.decode()
@@ -475,7 +475,7 @@ class TestRecommendationsIntegrationSimple:
                     )
                 ]
                 
-                response = client.get(f'/recommendations/{customer.id}')
+                response = client.get(f'/get_customer_recommendations/{customer.id}')
                 assert response.status_code == 200
                 
                 soup = BeautifulSoup(response.data, 'html.parser')
