@@ -81,8 +81,19 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
     def dimension(self) -> int:
         return self._dimension
 
-    def _fallback_vector(self, text: str) -> List[float]:
-        # Deterministic low-cost fallback vector when provider unavailable.
+    def _fallback_vector(self, text: str, reason: str = "provider unavailable") -> List[float]:
+        """Deterministic low-cost pseudo-vector used when the provider fails.
+
+        This vector carries NO semantic meaning -- it is a hash, so similarity
+        against real embeddings is noise. Always warn, otherwise a degraded
+        provider looks identical to healthy semantic search from the outside.
+        Never log the text itself: embedded content includes customer PII.
+        """
+        self.logger.warning(
+            "Using non-semantic fallback embedding (%s); similarity results are unreliable. chars=%d",
+            reason,
+            len(text),
+        )
         digest = hashlib.sha256(text.encode("utf-8")).digest()
         vec = []
         for i in range(self._dimension):
@@ -90,20 +101,43 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
             vec.append((byte_val / 255.0) * 2 - 1)
         return vec
 
-    def _truncate_or_pad(self, values: List[float]) -> List[float]:
-        """Align provider vectors to EMBEDDING_DIM for local vector store stability."""
-        if len(values) == self._dimension:
+    @staticmethod
+    def _l2_normalize(values: List[float]) -> List[float]:
+        """Scale a vector to unit length so cosine similarity stays meaningful.
+
+        Gemini only guarantees normalized output at its native 3072 dimensions.
+        Any other output_dimensionality -- and any client-side slicing we do --
+        breaks unit length, which silently distorts every cosine score compared
+        against the matcher threshold. Normalizing an already-unit vector is a
+        no-op, so this is safe to apply unconditionally.
+        """
+        magnitude = sum(component * component for component in values) ** 0.5
+        if magnitude <= 0.0:
             return values
+        return [component / magnitude for component in values]
+
+    def _truncate_or_pad(self, values: List[float]) -> List[float]:
+        """Align provider vectors to EMBEDDING_DIM for local vector store stability.
+
+        Re-normalizes whenever the vector is resized: truncating drops part of
+        the magnitude and zero-padding leaves it unchanged while the dimension
+        grows, so in both cases the result is no longer unit length.
+        """
+        if len(values) == self._dimension:
+            return self._l2_normalize(values)
         if len(values) > self._dimension:
-            return values[: self._dimension]
-        return values + [0.0] * (self._dimension - len(values))
+            return self._l2_normalize(values[: self._dimension])
+        return self._l2_normalize(values + [0.0] * (self._dimension - len(values)))
 
     def embed(self, texts: List[str]) -> List[List[float]]:
         if not texts:
             return []
 
         if not self.client:
-            return [self._fallback_vector(t) for t in texts]
+            return [
+                self._fallback_vector(t, reason="embedding client not initialized")
+                for t in texts
+            ]
 
         results: List[List[float]] = []
         for text in texts:
@@ -148,6 +182,11 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
                     break
             if embedded:
                 continue
-            results.append(self._fallback_vector(text))
+            results.append(
+                self._fallback_vector(
+                    text,
+                    reason=f"all {len(self.api_keys)} key(s) x {len(self.models)} model(s) failed",
+                )
+            )
 
         return results
