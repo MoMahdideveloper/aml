@@ -11,7 +11,11 @@
 
 services:
   db:
-    image: postgres:16-alpine
+    # pgvector build of Postgres 16 — the embeddings migration runs
+    # `CREATE EXTENSION vector`, which plain postgres:16-alpine cannot satisfy
+    # (it has no $libdir/vector, leaving an orphaned extension record that
+    # breaks every read of property_embeddings and even pg_dump).
+    image: pgvector/pgvector:pg16
     container_name: gptvli-db
     profiles: ["prod"]
     environment:
@@ -62,9 +66,23 @@ services:
       ENABLE_SCHEDULER: "0"
       READYZ_REQUIRE_REDIS: ${READYZ_REQUIRE_REDIS:-1}
       DOCUMENT_STORAGE_ROOT: ${DOCUMENT_STORAGE_ROOT:-/app/instance/document_store}
+      # Maskan scraper integration. Reached over the shared network by DNS alias,
+      # never localhost — 127.0.0.1 inside this container is the web container.
+      # Hardcoded (not ${...}) on purpose: .env holds the HOST value
+      # http://127.0.0.1:8001 for local dev, and inside this container 127.0.0.1
+      # is the web container itself. Container wiring must win over .env, same as
+      # DATABASE_URL/REDIS_URL above.
+      MASKAN_LIVE_API_BASE_URL: http://maskan-api:8000
+      MASKAN_LIVE_API_KEY: ${MASKAN_LIVE_API_KEY:-}
+      MASKAN_LIVE_API_KEY_HEADER: ${MASKAN_LIVE_API_KEY_HEADER:-X-API-Key}
+      MASKAN_LIVE_TIMEOUT_SECONDS: ${MASKAN_LIVE_TIMEOUT_SECONDS:-15}
+      MASKAN_LIVE_INCREMENTAL_LIMIT: ${MASKAN_LIVE_INCREMENTAL_LIMIT:-200}
     volumes:
       - uploads_data:/app/static/uploads
       - document_store_data:/app/instance/document_store
+    networks:
+      default: {}
+      maskan_shared: {}
     depends_on:
       db:
         condition: service_healthy
@@ -101,9 +119,19 @@ services:
       SMS_PROVIDER: ${SMS_PROVIDER:-log}
       GEOCODE_PROVIDER: ${GEOCODE_PROVIDER:-auto}
       DOCUMENT_STORAGE_ROOT: ${DOCUMENT_STORAGE_ROOT:-/app/instance/document_store}
+      # Worker executes the maskan sync task, so it needs the same scraper wiring.
+      # Hardcoded for the same reason as web: .env's 127.0.0.1:8001 is host-only.
+      MASKAN_LIVE_API_BASE_URL: http://maskan-api:8000
+      MASKAN_LIVE_API_KEY: ${MASKAN_LIVE_API_KEY:-}
+      MASKAN_LIVE_API_KEY_HEADER: ${MASKAN_LIVE_API_KEY_HEADER:-X-API-Key}
+      MASKAN_LIVE_TIMEOUT_SECONDS: ${MASKAN_LIVE_TIMEOUT_SECONDS:-15}
+      MASKAN_LIVE_INCREMENTAL_LIMIT: ${MASKAN_LIVE_INCREMENTAL_LIMIT:-200}
     volumes:
       - uploads_data:/app/static/uploads
       - document_store_data:/app/instance/document_store
+    networks:
+      default: {}
+      maskan_shared: {}
     depends_on:
       db:
         condition: service_healthy
@@ -146,6 +174,9 @@ services:
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/1}
       RUN_MIGRATIONS: "0"
       ENABLE_SCHEDULER: "0"
+      # Beat only dispatches task names (the worker does the HTTP calls), but keep
+      # the value container-correct so .env's host URL can never leak in here.
+      MASKAN_LIVE_API_BASE_URL: http://maskan-api:8000
     volumes:
       - beat_data:/app/instance
     depends_on:
@@ -337,3 +368,10 @@ volumes:
   uploads_data:
   document_store_data:
   beat_data:
+
+networks:
+  # Cross-project bridge shared with the Maskan scraper stack. Declared
+  # identically in both compose files, so whichever stack starts first creates
+  # it and the other joins.
+  maskan_shared:
+    name: maskan_shared
