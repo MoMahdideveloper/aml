@@ -282,6 +282,61 @@ def run_immediate_matching_task(
         return {"status": "error", "message": str(exc)}
 
 
+@celery_app.task(name="crm.sync_maskan_properties")
+@log_execution
+def sync_maskan_properties_task() -> Dict[str, Any]:
+    """Pull new/changed listings from the Maskan scraper API into the CRM.
+
+    Cursor state lives in SyncState, so each run resumes where the last
+    successful run stopped. Safe to replay: upserts match on file_code.
+    """
+    import os
+
+    if os.environ.get("MASKAN_LIVE_SYNC_ENABLED", "1").strip() == "0":
+        return {"status": "skipped", "reason": "disabled"}
+
+    try:
+        from services.maskan_live_service import maskan_live_service
+
+        if not maskan_live_service.is_enabled:
+            logger.warning(
+                "Maskan sync skipped: MASKAN_LIVE_API_BASE_URL not configured",
+                extra={"task": "sync_maskan_properties", "status": "skipped"},
+            )
+            return {"status": "skipped", "reason": "not_configured"}
+
+        max_pages = int(os.environ.get("MASKAN_LIVE_SYNC_MAX_PAGES", "10"))
+        include_pii = os.environ.get("MASKAN_LIVE_INCLUDE_PII", "0").strip() == "1"
+
+        result = maskan_live_service.sync_properties_to_local_db(
+            max_pages=max_pages,
+            include_pii=include_pii,
+        )
+        logger.info(
+            "Maskan sync completed",
+            extra={
+                "task": "sync_maskan_properties",
+                "status": "success",
+                "created": result.get("created"),
+                "updated": result.get("updated"),
+                "fetched": result.get("fetched"),
+                "pages": result.get("pages"),
+            },
+        )
+        return {"status": "ok", "sync": result}
+    except Exception as exc:
+        logger.error(
+            "Maskan sync failed",
+            extra={
+                "task": "sync_maskan_properties",
+                "status": "error",
+                "error": str(exc),
+                "error_type": type(exc).__name__,
+            },
+        )
+        return {"status": "error", "message": str(exc)}
+
+
 @celery_app.task(name="crm.sync_property_embedding")
 @log_execution
 def sync_property_embedding_task(property_id: int, action: str = "upsert") -> Dict[str, Any]:
