@@ -72,7 +72,11 @@ class VectorService:
         price_range = self._get_price_range_description(property_obj.price)
         features = property_obj.property_features if property_obj.property_features else "standard features"
         condition = property_obj.property_condition or "well-maintained"
+        # Title carries the street number / plaque that distinguishes otherwise
+        # identical listings; without it, neighbours with matching specs collapse
+        # onto the same vector and similarity search cannot separate them.
         return (
+            f"{property_obj.title or 'Property'}. "
             f"A {condition} {property_obj.property_type} in {property_obj.neighborhood or 'prime area'} at {property_obj.address}. "
             f"It has {property_obj.bedrooms} bedrooms, {property_obj.bathrooms} bathrooms, {property_obj.square_feet} sqft. "
             f"Price {property_obj.price} ({price_range}). Features: {features}. Description: {property_obj.description}."
