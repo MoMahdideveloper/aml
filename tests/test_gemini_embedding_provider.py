@@ -166,21 +166,30 @@ class TestFallbackIndexReporting:
 
     def test_only_failing_rows_are_flagged(self, provider, monkeypatch):
         """A partial outage flags just the rows that fell back."""
-        provider.client = object()
         provider.api_keys = ["k"]
         provider.models = ["m"]
         real = [0.5, 0.5, 0.5, 0.5]
 
         def fake_embed_content(model, contents, **kwargs):
-            if contents == "bad":
-                raise RuntimeError("429 RESOURCE_EXHAUSTED")
-            return SimpleNamespace(embeddings=[SimpleNamespace(values=real)])
+            # Batched: contents is now a list. Batch calls fail if any "bad" text is
+            # present. Single-item calls succeed unless that one item is "bad".
+            if len(contents) == 1:
+                if contents[0] == "bad":
+                    raise RuntimeError("429 RESOURCE_EXHAUSTED")
+                return SimpleNamespace(embeddings=[SimpleNamespace(values=real)])
+            # Multi-item batch: fail if any "bad" present (triggers per-item retry)
+            if "bad" in contents:
+                raise RuntimeError("429 RESOURCE_EXHAUSTED (batch poisoned)")
+            result = [SimpleNamespace(values=real) for _ in contents]
+            return SimpleNamespace(embeddings=result)
 
-        monkeypatch.setattr(
-            provider,
-            "client",
-            SimpleNamespace(models=SimpleNamespace(embed_content=fake_embed_content)),
-        )
+        fake_client = SimpleNamespace(models=SimpleNamespace(embed_content=fake_embed_content))
+
+        def fake_client_for(api_key):
+            return fake_client
+
+        monkeypatch.setattr(provider, "_client_for", fake_client_for)
+        provider.client = fake_client
 
         vectors = provider.embed(["good", "bad", "good"])
 

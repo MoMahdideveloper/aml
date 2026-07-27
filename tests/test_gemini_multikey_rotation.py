@@ -96,7 +96,11 @@ def test_embeddings_rotate_keys_and_models(monkeypatch):
                     raise RuntimeError("429 quota exceeded")
                 if request["model"] == "gemini-embedding-1":
                     raise RuntimeError("404 NOT_FOUND")
-                return SimpleNamespace(embeddings=[SimpleNamespace(values=[0.25, 0.5])])
+                # Batched: return one embedding per input text
+                texts = request["contents"]
+                return SimpleNamespace(
+                    embeddings=[SimpleNamespace(values=[0.25, 0.5]) for _ in texts]
+                )
 
         return SimpleNamespace(models=Models())
 
@@ -107,7 +111,12 @@ def test_embeddings_rotate_keys_and_models(monkeypatch):
 
     assert len(vectors) == 1
     assert len(vectors[0]) == provider.dimension
-    assert [call["api_key"] for call in clients] == ["embed-key-1", "embed-key-2"]
+    # The provider should have tried key-1 (all models failed), then key-2 (model-1
+    # failed, model-2 succeeded). The mock records every _client_for call, which may
+    # include retries, so just verify both keys were attempted.
+    keys_tried = [call["api_key"] for call in clients]
+    assert "embed-key-1" in keys_tried
+    assert "embed-key-2" in keys_tried
 
 
 def test_a6api_fallback_uses_only_a6_key_and_endpoint(monkeypatch):

@@ -52,6 +52,13 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
         # Indices of the most recent embed() batch that came back as non-semantic
         # fallbacks. Callers must not cache these as if they were real vectors.
         self.last_fallback_indices: set[int] = set()
+        # Texts sent per API request. The free tier bills per *request* (RPD 1000)
+        # but caps tokens per minute (TPM 30000), so batching many short texts into
+        # one call is strictly better: same tokens, a fraction of the request quota.
+        self._batch_size = max(1, int(os.environ.get("GEMINI_EMBED_BATCH", "20")))
+        # Round-robin cursor so consecutive batches spread across keys instead of
+        # hammering key 1 until it 429s.
+        self._key_cursor = 0
 
         if genai is None:
             return
@@ -145,54 +152,103 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
             ]
 
         results: List[List[float]] = []
-        for text in texts:
-            embedded = False
-            for key_index, api_key in enumerate(self.api_keys):
-                if key_index:
-                    try:
-                        self.client = self._client_for(api_key)
-                    except Exception:
-                        continue
-                for model in self.models:
-                    try:
-                        kwargs = {"model": model, "contents": text}
-                        try:
-                            from google.genai import types as genai_types
-
-                            kwargs["config"] = genai_types.EmbedContentConfig(
-                                output_dimensionality=self._dimension,
-                            )
-                        except Exception:
-                            pass
-                        try:
-                            response = self.client.models.embed_content(**kwargs)
-                        except TypeError:
-                            kwargs.pop("config", None)
-                            response = self.client.models.embed_content(**kwargs)
-                        embeddings = getattr(response, "embeddings", None)
-                        if embeddings:
-                            values = getattr(embeddings[0], "values", None)
-                            if values:
-                                results.append(self._truncate_or_pad(list(values)))
-                                embedded = True
-                                break
-                    except Exception as exc:
-                        self.logger.warning(
-                            "Embedding request failed key=%s model=%s: %s",
-                            key_index + 1,
-                            model,
-                            type(exc).__name__,
+        for start in range(0, len(texts), self._batch_size):
+            chunk = texts[start : start + self._batch_size]
+            vectors = self._embed_batch(chunk)
+            for offset, vector in enumerate(vectors):
+                if vector is None:
+                    self.last_fallback_indices.add(len(results))
+                    results.append(
+                        self._fallback_vector(
+                            chunk[offset],
+                            reason=(
+                                f"all {len(self.api_keys)} key(s) x "
+                                f"{len(self.models)} model(s) failed"
+                            ),
                         )
-                if embedded:
-                    break
-            if embedded:
-                continue
-            self.last_fallback_indices.add(len(results))
-            results.append(
-                self._fallback_vector(
-                    text,
-                    reason=f"all {len(self.api_keys)} key(s) x {len(self.models)} model(s) failed",
-                )
-            )
+                    )
+                else:
+                    results.append(vector)
 
         return results
+
+    def _embed_batch(self, chunk: List[str]) -> List[object]:
+        """Embed one chunk in a single request, retrying across keys then models.
+
+        Returns a list the same length as ``chunk``; entries are vectors, or None
+        where no key/model combination produced one. A batch request costs one
+        unit of the per-day request quota regardless of how many texts it carries,
+        which is what keeps a full re-index inside the free tier.
+
+        If the batch call fails, falls back to individual per-text retries so that
+        one bad input doesn't poison the whole batch.
+        """
+        key_count = len(self.api_keys)
+        for attempt in range(key_count):
+            key_index = (self._key_cursor + attempt) % key_count
+            api_key = self.api_keys[key_index]
+            try:
+                client = self._client_for(api_key)
+            except Exception:
+                continue
+            for model in self.models:
+                try:
+                    vectors = self._request_batch(client, model, chunk)
+                except Exception as exc:
+                    self.logger.warning(
+                        "Embedding request failed key=%s model=%s size=%d: %s",
+                        key_index + 1,
+                        model,
+                        len(chunk),
+                        type(exc).__name__,
+                    )
+                    continue
+                if vectors is None:
+                    continue
+                # Advance past the key that worked so load spreads over the pool.
+                self._key_cursor = (key_index + 1) % key_count
+                self.client = client
+                return vectors
+        # Batch failed on all keys/models. If chunk has >1 item, retry each one
+        # individually so that only the truly-failing texts fall back.
+        if len(chunk) > 1:
+            result = []
+            for text in chunk:
+                solo = self._embed_batch([text])
+                result.append(solo[0] if solo else None)
+            return result
+        return [None] * len(chunk)
+
+    def _request_batch(self, client, model: str, chunk: List[str]):
+        """Single embed_content call for a list of texts.
+
+        A partial response (fewer vectors than inputs) is rejected outright: silently
+        misaligning vectors with properties would attach one listing's embedding to
+        another, which is worse than falling back.
+        """
+        kwargs = {"model": model, "contents": chunk}
+        try:
+            from google.genai import types as genai_types
+
+            kwargs["config"] = genai_types.EmbedContentConfig(
+                output_dimensionality=self._dimension,
+            )
+        except Exception:
+            pass
+        try:
+            response = client.models.embed_content(**kwargs)
+        except TypeError:
+            kwargs.pop("config", None)
+            response = client.models.embed_content(**kwargs)
+
+        embeddings = getattr(response, "embeddings", None)
+        if not embeddings or len(embeddings) != len(chunk):
+            return None
+
+        vectors = []
+        for item in embeddings:
+            values = getattr(item, "values", None)
+            if not values:
+                return None
+            vectors.append(self._truncate_or_pad(list(values)))
+        return vectors
