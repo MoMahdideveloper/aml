@@ -320,6 +320,17 @@ def sync_property_embedding_task(property_id: int, action: str = "upsert") -> Di
                 return {"status": "deleted", "property_id": property_id}
 
         ok = vector_service.index_properties([property_obj])
+
+        # index_properties returns True even when it skipped all vectors because
+        # the provider degraded to a fallback (the non-persistence guard in
+        # vector_service is working, but the task can't tell from `ok` alone).
+        # Check the provider's fallback state so we never report success on a
+        # run that wrote nothing.
+        from services.embeddings import embedding_provider as _embed_provider
+        was_degraded = bool(
+            getattr(_embed_provider, "last_fallback_indices", set())
+        )
+
         if not ok:
             logger.warning(
                 "Failed embedding sync for property",
@@ -327,10 +338,22 @@ def sync_property_embedding_task(property_id: int, action: str = "upsert") -> Di
                     "task": "sync_property_embedding",
                     "status": "warning",
                     "action": action,
-                    "property_id": property_id
+                    "property_id": property_id,
                 }
             )
             return {"status": "failed", "property_id": property_id}
+        elif was_degraded:
+            logger.warning(
+                "Property embedding skipped: provider returned non-semantic fallback. "
+                "Existing row untouched; will retry on next tick.",
+                extra={
+                    "task": "sync_property_embedding",
+                    "status": "degraded",
+                    "action": action,
+                    "property_id": property_id,
+                }
+            )
+            return {"status": "skipped_degraded", "property_id": property_id}
         else:
             logger.info(
                 "Property embedding synced successfully",
@@ -338,7 +361,7 @@ def sync_property_embedding_task(property_id: int, action: str = "upsert") -> Di
                     "task": "sync_property_embedding",
                     "status": "success",
                     "action": "upsert",
-                    "property_id": property_id
+                    "property_id": property_id,
                 }
             )
             return {"status": "upserted", "property_id": property_id}

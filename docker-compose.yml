@@ -126,6 +126,13 @@ services:
       MASKAN_LIVE_API_KEY_HEADER: ${MASKAN_LIVE_API_KEY_HEADER:-X-API-Key}
       MASKAN_LIVE_TIMEOUT_SECONDS: ${MASKAN_LIVE_TIMEOUT_SECONDS:-15}
       MASKAN_LIVE_INCREMENTAL_LIMIT: ${MASKAN_LIVE_INCREMENTAL_LIMIT:-200}
+      # Embedding API key rotation pool — must be explicit here because the
+      # `environment:` block is applied after env_file and any key named here
+      # without a value would shadow the env_file value with an empty string.
+      # These pass-throughs preserve what env_file loaded.
+      GEMINI_EMBED_API_KEYS: ${GEMINI_EMBED_API_KEYS:-}
+      GEMINI_EMBED_API_KEY: ${GEMINI_EMBED_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
     volumes:
       - uploads_data:/app/static/uploads
       - document_store_data:/app/instance/document_store
@@ -177,6 +184,12 @@ services:
       # Beat only dispatches task names (the worker does the HTTP calls), but keep
       # the value container-correct so .env's host URL can never leak in here.
       MASKAN_LIVE_API_BASE_URL: http://maskan-api:8000
+      # Embedding keys: beat doesn't call the API itself, but the provider is
+      # imported at startup and will log a warning if keys are absent. Pass them
+      # through so the startup check stays clean.
+      GEMINI_EMBED_API_KEYS: ${GEMINI_EMBED_API_KEYS:-}
+      GEMINI_EMBED_API_KEY: ${GEMINI_EMBED_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
     volumes:
       - beat_data:/app/instance
     depends_on:
