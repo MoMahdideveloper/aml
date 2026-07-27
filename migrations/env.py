@@ -11,7 +11,14 @@ config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-fileConfig(config.config_file_name)
+#
+# disable_existing_loggers must be False: fileConfig() defaults to True, which
+# silently disables every logger created before this point. In-process callers
+# (flask_migrate.upgrade() from the app or the test suite) already hold live
+# loggers such as "observability" and "security.events"; disabling them makes
+# structured events vanish for the rest of the process with no error.
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 logger = logging.getLogger('alembic.env')
 
 
