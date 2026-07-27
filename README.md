@@ -137,6 +137,11 @@ Root `database_service.py` / `gemini_service.py` are **compatibility shims** re-
 | `REMATCH_QUEUE_INTERVAL_SECONDS` | Always-on queue drain (default `60`) |
 | `MATCHING_INTERVAL_MINUTES` | Full match sweep (default `15`) |
 | `MATCHER_*` / `*_WEIGHT` | Score thresholds and hybrid weights |
+| `MASKAN_LIVE_API_BASE_URL` | Maskan scraper API endpoint (container: `http://maskan-api:8000`) |
+| `MASKAN_LIVE_API_KEY` | API key with `read` scope for listing sync |
+| `MASKAN_LIVE_SYNC_ENABLED` | `1` (default) to enable 10-min beat job; `0` to disable |
+| `MASKAN_LIVE_SYNC_INTERVAL_MINUTES` | Beat interval (default `10`) |
+| `MASKAN_LIVE_SYNC_MAX_PAGES` | Per-run page limit (default `10` = ~400 listings) |
 
 Full flags: `docs/architecture.md` and `.env.example`.
 
@@ -154,6 +159,7 @@ python -m pytest tests/test_app_smoke.py tests/test_platinum_heritage_ui.py test
 
 - **CRM infra (Redis):** `docker compose --profile crm up -d`
 - **Production-style web + Postgres:** see `docs/PRODUCTION.md` (`--profile prod`)
+- **Maskan scraper integration:** Requires external scraper running at `MASKAN_LIVE_API_BASE_URL` with valid `MASKAN_LIVE_API_KEY`. The compose file declares a `maskan_shared` network and `maskan-api` service alias for container-to-container communication when both are composed together.
 - **Experimental matching stack:** `docker compose --profile matching up -d`  
   **Do not use for normal development.** Details: [docs/matching-platform.md](docs/matching-platform.md)
 

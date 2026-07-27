@@ -56,6 +56,13 @@ def get_celery_beat_schedule() -> dict:
             ),
         },
     }
+    # Maskan scraper -> CRM listing sync. On by default; needs
+    # MASKAN_LIVE_API_BASE_URL set or the task no-ops.
+    if os.environ.get("MASKAN_LIVE_SYNC_ENABLED", "1").strip() != "0":
+        schedule["sync-maskan-properties"] = {
+            "task": "crm.sync_maskan_properties",
+            "schedule": int(os.environ.get("MASKAN_LIVE_SYNC_INTERVAL_MINUTES", "10")) * 60,
+        }
     # Opt-in: AI form audit retention (media + rows). Off by default.
     if os.environ.get("AI_FORM_RETENTION_SCHEDULE_ENABLED", "0").strip() == "1":
         schedule["cleanup-ai-form-audit"] = {
